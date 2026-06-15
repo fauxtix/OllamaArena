@@ -12,7 +12,7 @@ builder.Services.AddFluentUIComponents();
 
 builder.Services.AddScoped(sp => new HttpClient());
 
-//builder.Services.AddTransient<IAiChatService, OllamaChatService>();
+builder.Services.AddTransient<IOllamaGpuService, OllamaGpuService>();
 
 var app = builder.Build();
 

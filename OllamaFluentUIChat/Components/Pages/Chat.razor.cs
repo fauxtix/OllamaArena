@@ -2,27 +2,39 @@ using Markdig;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Mvc.Razor.Internal;
+using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.JSInterop;
 using OllamaFluentUIChat.Components.Layout;
 using OllamaFluentUIChat.Components.Pages.Components;
 using OllamaFluentUIChat.Models.DTO;
+using OllamaFluentUIChat.Services.Interfaces.Services;
 using System.Text;
 using System.Text.Json;
+using static OllamaFluentUIChat.Models.DTO.OllamaModels;
 
 namespace OllamaFluentUIChat.Components.Pages
 {
     public partial class Chat
     {
 
+        [Inject] public IOllamaGpuService? GpuService { get; set; }
+        [Inject] public IDialogService? DialogService { get; set; }
+
         private List<ChatMessage> _messages = new();
         private string _currentMessage = string.Empty;
         private int _inputKey = 0;
         private bool _isThinking = false;
 
+        private GpuStatus? _gpuReport;
+
         private ElementReference messagesDiv;
         private bool userAtBottom = true;
 
-        private HistoryPanel historyPanel;
+        protected bool GPUDialogVisibility = false;
+
+        private HistoryPanel? historyPanel;
+
+        private GpuInfoDialog gpuDialog;
 
         // Token para conseguir cancelar o HttpClient a meio do streaming
         private CancellationTokenSource? _cts;
@@ -45,13 +57,51 @@ namespace OllamaFluentUIChat.Components.Pages
                     if (!string.IsNullOrEmpty(savedModel))
                     {
                         ModelName = savedModel;
-                        StateHasChanged(); // Força o cabeçalho do chat a atualizar com o nome real do modelo
                     }
+
+                    var allModels = await GpuService.GetLocalModelsAsync();
+
+                    var currentModelDetails = allModels?.Models?
+                        .FirstOrDefault(m => m.Name.Equals(ModelName, StringComparison.OrdinalIgnoreCase)
+                                          || m.Model.Equals(ModelName, StringComparison.OrdinalIgnoreCase));
+
+                    if (currentModelDetails != null)
+                    {
+                        _gpuReport = GpuService.CheckGpuCompatibility(currentModelDetails.SizeInBytes);
+                    }
+
+                    StateHasChanged(); 
+
                 }
                 catch { }
             }
         }
 
+        private async Task ShowGpuInfoDialogAsync()
+        {
+            if (DialogService == null) return;
+
+            string textoInformativo =
+                "O que significa 'CPU Fallback'?\n\n" +
+                "A sua placa gráfica (GPU) não tem memória de vídeo (VRAM) suficiente livre para carregar este modelo de Inteligência Artificial por completo.\n\n" +
+                "O que vai acontecer agora?\n" +
+                "• O Ollama vai dividir o modelo, enviando o processamento para a memória RAM normal e para a CPU.\n" +
+                "• O chat VAI FUNCIONAR e responderá corretamente.\n" +
+                "• No entanto, a velocidade de resposta será bastante mais lenta (as letras aparecem mais devagar), porque a CPU não foi desenhada para a carga matemática dos LLMs.\n\n" +
+                "Dica: Para velocidades máximas, tente usar modelos mais pequenos (como versões '2B' ou 'mini').";
+
+            var parameters = new DialogParameters()
+            {
+                Title = "Informação do Sistema",
+                PrimaryAction = "Fechar",
+                PrimaryActionEnabled = true,
+                SecondaryAction = null,
+                Width = "500px"
+            };
+
+            // Esta chamada contorna o bug do ShowInfoAsync e usa o provider que já tens no Layout
+            await DialogService.ShowDialogAsync<MessageBox>(textoInformativo, parameters);
+        }
         private void OpenHistory()
         {
             historyPanel?.Open();
