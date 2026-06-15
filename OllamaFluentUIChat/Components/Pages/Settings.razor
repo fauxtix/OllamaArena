@@ -1,0 +1,105 @@
+﻿@page "/settings"
+@using Microsoft.FluentUI.AspNetCore.Components.Extensions
+@rendermode InteractiveServer
+@inject IJSRuntime JS
+
+@* Mantemos o teu componente de tema original exatamente como estava *@
+<FluentDesignTheme @bind-Mode="@Mode"
+                   @bind-OfficeColor="@OfficeColor"
+                   OnLoaded="@OnLoaded"
+                   OnLuminanceChanged="@OnLuminanceChanged"
+                   StorageName="theme" />
+
+<div style="min-height: 250px; padding: 20px;">
+    <FluentGrid>
+        @* Configuração do Tema *@
+        <FluentGridItem>
+            <FluentSelect Label="Theme"
+                          Width="250px"
+                          Items="@(Enum.GetValues<DesignThemeModes>())"
+                          @bind-SelectedOption="@Mode" />
+        </FluentGridItem>
+
+        @* Configuração da Cor *@
+        <FluentGridItem>
+            <FluentSelect Label="Color"
+                          Items="@(Enum.GetValues<OfficeColor>().Select(i => (OfficeColor?)i))"
+                          Height="200px"
+                          Width="250px"
+                          @bind-SelectedOption="@OfficeColor">
+                <OptionTemplate>
+                    <FluentStack>
+                        <FluentIcon Value="@(new Icons.Filled.Size20.RectangleLandscape())"
+                                    Color="Color.Custom"
+                                    CustomColor="@(@context.ToAttributeValue() != "default" ? context.ToAttributeValue() : "#036ac4" )" />
+                        <FluentLabel>@context</FluentLabel>
+                    </FluentStack>
+                </OptionTemplate>
+            </FluentSelect>
+            <FluentButton Appearance="Appearance.Accent" OnClick="PickRandomColor">Feeling lucky?</FluentButton>
+        </FluentGridItem>
+
+        @* NOVO: Configuração do Modelo do Ollama *@
+        <FluentGridItem xs="12" Style="margin-top: 20px;">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Bottom" Style="gap: 12px;">
+                <FluentSelect Label="Modelo Ollama"
+                              Width="250px"
+                              Items="@_availableModels"
+                              @bind-SelectedOption="@_selectedModel" />
+
+                <FluentButton Appearance="Appearance.Accent" OnClick="SaveModelAsync">
+                    Guardar Modelo
+                </FluentButton>
+            </FluentStack>
+        </FluentGridItem>
+    </FluentGrid>
+
+    <FluentStack Style="margin: 30px 0px; padding: 30px; border: 1px solid var(--accent-fill-rest);">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Airplane())" />
+        <FluentLabel>Example of content</FluentLabel>
+        <FluentButton Appearance="Appearance.Outline">Outline button</FluentButton>
+        <FluentButton Appearance="Appearance.Accent">Accent button</FluentButton>
+    </FluentStack>
+</div>
+
+@code
+{
+    public DesignThemeModes Mode { get; set; }
+    public OfficeColor? OfficeColor { get; set; }
+
+    // Variáveis para os Modelos
+    private List<string> _availableModels = new() { "phi4-mini:latest", "mistral:latest", "qwen3.5:latest" };
+    private string _selectedModel = "phi4-mini:latest";
+
+    // Quando a página carrega, lê o modelo que estava guardado
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var savedModel = await JS.InvokeAsync<string>("localStorage.getItem", "ollama_model");
+                if (!string.IsNullOrEmpty(savedModel) && _availableModels.Contains(savedModel))
+                {
+                    _selectedModel = savedModel;
+                    StateHasChanged();
+                }
+            }
+            catch { }
+        }
+    }
+
+    // Grava o modelo escolhido no localStorage
+    private async Task SaveModelAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", "ollama_model", _selectedModel);
+        }
+        catch { }
+    }
+
+    void OnLoaded(LoadedEventArgs e) { Mode = e.Mode; }
+    void OnLuminanceChanged(LuminanceChangedEventArgs e) { Mode = e.Mode; }
+    void PickRandomColor() { OfficeColor = OfficeColorUtilities.GetRandom(); }
+}

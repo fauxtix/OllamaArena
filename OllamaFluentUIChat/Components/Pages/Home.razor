@@ -1,0 +1,42 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<FluentStack HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" VerticalGap="24">
+    <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+        <FluentCard>
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalAlignment="VerticalAlignment.Center">
+                <FluentIcon Value="@(new Icons.Regular.Size24.DeviceEq())" />
+                <FluentLabel Typo="Typography.H3">
+                    Asset Management
+                </FluentLabel>
+            </FluentStack>
+            <FluentLabel>
+                Easily add, organize, and monitor your digital assets in one place.
+            </FluentLabel>
+        </FluentCard>
+        <FluentCard>
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalAlignment="VerticalAlignment.Center">
+                <FluentIcon Value="@(new Icons.Regular.Size24.PeopleAdd())" />
+                <FluentLabel Typo="Typography.H3">
+                    Agent Enrollments
+                </FluentLabel>
+            </FluentStack>
+            <FluentLabel>
+                Deploy and manage digital agents to automate and streamline your workflows.
+            </FluentLabel>
+        </FluentCard>
+        <FluentCard>
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalAlignment="VerticalAlignment.Center">
+                <FluentIcon Value="@(new Icons.Regular.Size24.ChartMultiple())" />
+                <FluentLabel Typo="Typography.H3">
+                    Insights & Analytics
+                </FluentLabel>
+            </FluentStack>
+            <FluentLabel>
+                Visualize trends, track performance, and make data-driven decisions with confidence.
+            </FluentLabel>
+        </FluentCard>
+    </FluentStack>
+</FluentStack>
+

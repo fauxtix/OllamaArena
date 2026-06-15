@@ -1,0 +1,137 @@
+﻿@using Microsoft.FluentUI.AspNetCore.Components
+@using OllamaFluentUIChat.Models.DTO
+@inject IJSRuntime JS
+
+@if (IsOpen)
+{
+    <div class="history-overlay" @onclick="Close"></div>
+}
+
+<div class="history-aside @(IsOpen ? "open" : "")" @onclick:stopPropagation>
+    <div class="header">
+        <h3>Histórico de Execuções</h3>
+        <FluentButton Appearance="Appearance.Stealth" OnClick="@Close">Fechar</FluentButton>
+    </div>
+
+    @if (History == null)
+    {
+        <p>A carregar...</p>
+    }
+    else if (History.Count == 0)
+    {
+        <p>Sem histórico.</p>
+    }
+    else
+    {
+        <FluentPaginator State="@pagination" SummaryTemplate="@template" />
+
+        <FluentDataGrid Items="@History.AsQueryable()"
+                        GridLines="GridLines.Both"
+                        Pagination="@pagination">
+
+            <PropertyColumn Property="@(h => h.Model)" Title="Modelo" />
+            <PropertyColumn Property="@(h => h.Prompt)" Title="Prompt" Width="320px" />
+            <PropertyColumn Property="@(h => h.DateDisplay)" Title="Data" />
+            <PropertyColumn Property="@(h => h.DurationDisplay)" Title="Tempo" />
+        </FluentDataGrid>
+
+
+
+        <FluentButton Appearance="Appearance.Accent" OnClick="@ClearHistory">
+            Limpar Histórico
+        </FluentButton>
+    }
+</div>
+
+@code {
+    public bool IsOpen { get; set; }
+    public List<HistoryEntry>? History { get; set; }
+
+    PaginationState pagination = new PaginationState() { ItemsPerPage = 5 };
+    private RenderFragment template = @<span />;
+
+    public async Task Open()
+    {
+        Console.WriteLine("HistoryPanel.Open() chamado");
+
+        try
+        {
+            var raw = await JS.InvokeAsync<string>("localStorage.getItem", "ollama_history");
+            Console.WriteLine("RAW localStorage: " + raw);
+
+            History = await JS.InvokeAsync<List<HistoryEntry>>("ollamaHistory.getHistory");
+            Console.WriteLine("History carregado: " + (History?.Count ?? -1));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERRO em Open(): " + ex.Message);
+        }
+
+        IsOpen = true;
+        StateHasChanged();
+    }
+
+    public void Close()
+    {
+        IsOpen = false;
+    }
+
+    public async Task ClearHistory()
+    {
+        await JS.InvokeVoidAsync("ollamaHistory.clear");
+        History = new();
+        StateHasChanged();
+    }
+}
+
+<style>
+    /* Overlay escurecido */
+    .history-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.35);
+        z-index: 9998;
+        animation: fadeIn 0.25s ease;
+    }
+
+    /* Painel lateral */
+    .history-aside {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 820px;
+        height: 100vh;
+        background: var(--neutral-layer-1);
+        color: var(--neutral-foreground-rest);
+        box-shadow: -4px 0 12px rgba(0,0,0,0.2);
+        padding: 16px;
+        overflow-y: auto;
+        z-index: 9999;
+        transform: translateX(100%);
+        transition: transform 0.35s ease;
+    }
+
+        .history-aside.open {
+            transform: translateX(0);
+        }
+
+        .history-aside .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+    /* Fade-in do overlay */
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+</style>
