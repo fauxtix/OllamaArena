@@ -28,11 +28,16 @@
         <FluentDataGrid Items="@History.AsQueryable()"
                         GridLines="GridLines.Both"
                         Pagination="@pagination">
-
-            <PropertyColumn Property="@(h => h.Model)" Title="Modelo" />
-            <PropertyColumn Property="@(h => h.Prompt)" Title="Prompt" Width="320px" />
-            <PropertyColumn Property="@(h => h.DateDisplay)" Title="Data" />
-            <PropertyColumn Property="@(h => h.DurationDisplay)" Title="Tempo" />
+            <PropertyColumn Property="@(h => h.Model)"
+                            Title="Modelo" />
+            <PropertyColumn Property="@(h => h.Prompt)"
+                            Title="Prompt"
+                            Width="320px"
+                            Tooltip="true" />
+            <PropertyColumn Property="@(h => h.DateDisplay)"
+                            Title="Data" />
+            <PropertyColumn Property="@(h => h.DurationDisplay)"
+                            Title="Tempo" />
         </FluentDataGrid>
 
 
