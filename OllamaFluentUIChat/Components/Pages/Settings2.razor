@@ -1,0 +1,140 @@
+﻿@page "/settings2"
+@using Microsoft.FluentUI.AspNetCore.Components.Extensions
+@using System.Text.Json
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+<FluentDesignTheme @bind-Mode="@Mode"
+                   @bind-OfficeColor="@OfficeColor"
+                   OnLoaded="@OnLoaded"
+                   OnLuminanceChanged="@OnLuminanceChanged"
+                   StorageName="theme" />
+
+<div style="padding: 20px; max-width: 700px;">
+
+    <FluentGrid>
+
+        <!-- Tema -->
+        <FluentGridItem>
+            <FluentSelect Label="Theme"
+                          Width="250px"
+                          Items="@(Enum.GetValues<DesignThemeModes>())"
+                          @bind-SelectedOption="@Mode" />
+        </FluentGridItem>
+
+        <!-- Cor -->
+        <FluentGridItem>
+            <FluentSelect Label="Color"
+                          Items="@(Enum.GetValues<OfficeColor>().Select(i => (OfficeColor?)i))"
+                          Height="200px"
+                          Width="250px"
+                          @bind-SelectedOption="@OfficeColor">
+                <OptionTemplate>
+                    <FluentStack>
+                        <FluentIcon Value="@(new Icons.Filled.Size20.RectangleLandscape())"
+                                    Color="Color.Custom"
+                                    CustomColor="@(@context.ToAttributeValue() != "default" ? context.ToAttributeValue() : "#036ac4")" />
+                        <FluentLabel>@context</FluentLabel>
+                    </FluentStack>
+                </OptionTemplate>
+            </FluentSelect>
+
+            <FluentButton Appearance="Appearance.Accent" OnClick="PickRandomColor">
+                Feeling lucky?
+            </FluentButton>
+        </FluentGridItem>
+
+        <!-- Gestão de Modelos -->
+        <FluentGridItem xs="12" Style="margin-top: 30px;">
+            <FluentLabel Style="font-size: 18px; font-weight: bold;">
+                Gestão de Modelos Ollama
+            </FluentLabel>
+
+            <FluentStack Orientation="Orientation.Horizontal" Gap="10" Style="margin-top: 12px;">
+                <FluentTextField Placeholder="Nome do modelo (ex: phi4:latest)"
+                                 Width="300px"
+                                 @bind-Value="NewModel" />
+
+                <FluentButton Appearance="Appearance.Accent" OnClick="AddModel">
+                    Adicionar
+                </FluentButton>
+            </FluentStack>
+
+            <FluentStack Orientation="Orientation.Vertical" Gap="8" Style="margin-top: 20px;">
+                @if (Models.Count == 0)
+                {
+                    <FluentLabel Style="opacity: 0.6;">Nenhum modelo adicionado.</FluentLabel>
+                }
+                else
+                {
+                    @foreach (var model in Models)
+                    {
+                        <FluentCard Style="padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <FluentLabel>@model</FluentLabel>
+
+                            <FluentButton Appearance="Appearance.Stealth"
+                                          OnClick="@(() => RemoveModel(model))">
+                                Remover
+                            </FluentButton>
+                        </FluentCard>
+                    }
+                }
+            </FluentStack>
+        </FluentGridItem>
+
+    </FluentGrid>
+</div>
+
+@code {
+    public DesignThemeModes Mode { get; set; }
+    public OfficeColor? OfficeColor { get; set; }
+
+    // Gestão dinâmica de modelos
+    private List<string> Models = new();
+    private string NewModel = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var stored = await JS.InvokeAsync<string>("localStorage.getItem", "ollama_models");
+
+            if (!string.IsNullOrEmpty(stored))
+                Models = JsonSerializer.Deserialize<List<string>>(stored) ?? new();
+        }
+        catch
+        {
+            Models = new();
+        }
+    }
+
+    private async Task AddModel()
+    {
+        if (string.IsNullOrWhiteSpace(NewModel))
+            return;
+
+        if (!Models.Contains(NewModel))
+        {
+            Models.Add(NewModel);
+            await SaveModels();
+        }
+
+        NewModel = "";
+    }
+
+    private async Task RemoveModel(string model)
+    {
+        Models.Remove(model);
+        await SaveModels();
+    }
+
+    private async Task SaveModels()
+    {
+        await JS.InvokeVoidAsync("localStorage.setItem", "ollama_models",
+            JsonSerializer.Serialize(Models));
+    }
+
+    void OnLoaded(LoadedEventArgs e) => Mode = e.Mode;
+    void OnLuminanceChanged(LuminanceChangedEventArgs e) => Mode = e.Mode;
+    void PickRandomColor() => OfficeColor = OfficeColorUtilities.GetRandom();
+}

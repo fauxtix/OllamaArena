@@ -9,15 +9,15 @@
         <FluentNavMenu Id="main-menu" Collapsible="true" Width="250" Title="Navigation menu" @bind-Expanded="expanded" >
             <FluentNavLink Href="/" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Home())" IconColor="Color.Accent">Home</FluentNavLink>
             <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
-            <FluentNavLink Href="/settings" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Settings())" IconColor="Color.Accent">Settings</FluentNavLink>
-            <FluentNavLink Href="/chat" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Chat())" IconColor="Color.Accent">Chat</FluentNavLink>
+            <FluentNavLink Href="/settings"  Icon="@(new Icons.Regular.Size20.Settings())" IconColor="Color.Accent">Settings</FluentNavLink>
+            <FluentNavLink Href="/settings2"  Icon="@(new Icons.Regular.Size20.Settings())" IconColor="Color.Accent">Settings II</FluentNavLink>
+            <FluentNavLink Href="/chat" Icon="@(new Icons.Regular.Size20.Chat())" IconColor="Color.Accent">Chat</FluentNavLink>
         </FluentNavMenu>
     </nav>
 </div>
 
 @code {
     private bool expanded = true;
-
 }
 
 <style>

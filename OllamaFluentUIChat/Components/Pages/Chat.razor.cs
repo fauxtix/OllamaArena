@@ -39,9 +39,27 @@ namespace OllamaFluentUIChat.Components.Pages
         // Token para conseguir cancelar o HttpClient a meio do streaming
         private CancellationTokenSource? _cts;
 
-        private string ModelName { get; set; } = "phi4-mini:latest";
+        private string _modelName = "phi4-mini:latest";
 
+        private ElementReference inputRef;
+        private DotNetObjectReference<Chat>? _dotNetRef;
+        private ElementReference chatInputRef;
+
+        private string ModelName
+        {
+            get => _modelName;
+            set
+            {
+                if (_modelName == value) return;
+                _modelName = value;
+                _ = OnModelChangedAsync(); // dispara atualização GPU + gravação
+            }
+        }
         private const string OllamaEndpoint = "http://localhost:11434/api/chat";
+
+        private List<string> _models = new();
+
+
         protected override void OnInitialized()
         {
             _messages.Add(new ChatMessage { User = "Ollama", Text = "Olá! Como posso ajudar?" });
@@ -51,29 +69,42 @@ namespace OllamaFluentUIChat.Components.Pages
         {
             if (firstRender)
             {
+                _dotNetRef = DotNetObjectReference.Create(this); // ✔ criar aqui, dentro do if
+
                 try
                 {
+                    // 1) Carregar lista dinâmica de modelos
+                    var storedList = await JS.InvokeAsync<string>("localStorage.getItem", "ollama_models");
+                    if (!string.IsNullOrEmpty(storedList))
+                        _models = JsonSerializer.Deserialize<List<string>>(storedList) ?? new();
+                    else
+                        _models = new();
+
+                    // 2) Carregar modelo selecionado anteriormente
                     var savedModel = await JS.InvokeAsync<string>("localStorage.getItem", "ollama_model");
                     if (!string.IsNullOrEmpty(savedModel))
                     {
                         ModelName = savedModel;
+                        await OnModelChangedAsync();
                     }
 
-                    var allModels = await GpuService.GetLocalModelsAsync();
+                    // 3) Atualizar GPUReport
+                    var allModels = await GpuService!.GetLocalModelsAsync();
 
                     var currentModelDetails = allModels?.Models?
-                        .FirstOrDefault(m => m.Name.Equals(ModelName, StringComparison.OrdinalIgnoreCase)
-                                          || m.Model.Equals(ModelName, StringComparison.OrdinalIgnoreCase));
+                        .FirstOrDefault(m =>
+                            m.Name.Equals(ModelName, StringComparison.OrdinalIgnoreCase) ||
+                            m.Model.Equals(ModelName, StringComparison.OrdinalIgnoreCase));
 
                     if (currentModelDetails != null)
-                    {
                         _gpuReport = GpuService.CheckGpuCompatibility(currentModelDetails.SizeInBytes);
-                    }
 
-                    StateHasChanged(); 
-
+                    StateHasChanged();
                 }
                 catch { }
+
+                // ✔ chamar handlers só aqui, no fim, quando o DOM já existe
+                await JS.InvokeVoidAsync("chatInput.attachHandlers", chatInputRef, _dotNetRef);
             }
         }
 
@@ -342,6 +373,42 @@ namespace OllamaFluentUIChat.Components.Pages
             {
                 await SendMessage();
             }
+        }
+       
+
+        private async Task HandleJsKey(KeyboardEventArgs e)
+        {
+            await JS.InvokeVoidAsync("chatInput.handleKey", e, _dotNetRef);
+        }
+
+        private async Task OnModelChangedAsync()
+        {
+            try
+            {
+                // Guardar modelo selecionado
+                await JS.InvokeVoidAsync("localStorage.setItem", "ollama_model", ModelName);
+
+                // Recalcular GPU compatibility
+                var allModels = await GpuService!.GetLocalModelsAsync();
+
+                var currentModelDetails = allModels?.Models?
+                    .FirstOrDefault(m =>
+                        m.Name.Equals(ModelName, StringComparison.OrdinalIgnoreCase) ||
+                        m.Model.Equals(ModelName, StringComparison.OrdinalIgnoreCase));
+
+                if (currentModelDetails != null)
+                    _gpuReport = GpuService.CheckGpuCompatibility(currentModelDetails.SizeInBytes);
+
+                StateHasChanged();
+            }
+            catch { }
+        }
+
+        [JSInvokable]
+        public async Task OnEnterPressedFromJs()
+        {
+            if (!_isThinking)
+                await SendMessage();
         }
 
         private void NewChat()
