@@ -19,6 +19,7 @@ namespace OllamaFluentUIChat.Components.Pages
         [Inject] public IOllamaGpuService? GpuService { get; set; }
         [Inject] public IDialogService? DialogService { get; set; }
         [Inject] public IBenchmarkRepository? BenchmarkRepo { get; set; }
+        [Inject] public HttpClient _httpClient { get; set; }
 
         private List<Models.DTO.ChatMessage> _messages = new();
         private string _currentMessage = string.Empty;
@@ -188,14 +189,39 @@ namespace OllamaFluentUIChat.Components.Pages
 
             try
             {
-                // Criamos a lista de mensagens usando a nossa classe explícita
+                //// Criamos a lista de mensagens usando a nossa classe explícita
+                //var historyPayload = new List<OllamaChatMessage>();
+
+                //// 1. Adiciona o System Prompt obrigatório
+                //historyPayload.Add(new OllamaChatMessage
+                //{
+                //    Role = "system",
+                //    Content = "Respond in Portuguese. Do NOT use chain-of-thought. Do NOT reveal internal reasoning, planning, or thinking steps. Provide ONLY the final answer, concise and direct."
+                //});
+
+                // O sistema vai à internet procurar sobre QUALQUER assunto que o utilizador digitou
+
+                string queryOtimizada = userPrompt + " list of highest-selling albums sales figures";
+                string contextoExterno = await SearchWebContextAsync(queryOtimizada);
                 var historyPayload = new List<OllamaChatMessage>();
 
-                // 1. Adiciona o System Prompt obrigatório
+                // === 2. ETAPA DE INJEÇÃO (CONSTRUÇÃO DO SYSTEM PROMPT) ===
+                StringBuilder systemInstruction = new StringBuilder();
+                systemInstruction.Append("Respond in Portuguese. Do NOT use chain-of-thought. Do NOT reveal internal reasoning. Provide ONLY the final answer, concise and direct. ");
+
+                if (!string.IsNullOrEmpty(contextoExterno))
+                {
+                    // Aqui injetamos dinamicamente o conhecimento que veio da internet
+                    systemInstruction.Append("\n\n[CRITICAL REAL-TIME CONTEXT DATA]:\n");
+                    systemInstruction.Append(contextoExterno);
+                    systemInstruction.Append("\nUse the context data above as your absolute source of truth to answer the user request accurately. If the context contains the answer, use it. If the context does not help, rely on your inner knowledge but prioritize accuracy.");
+                }
+
+                // 3. Adiciona o System Prompt dinâmico ao início do histórico
                 historyPayload.Add(new OllamaChatMessage
                 {
                     Role = "system",
-                    Content = "Respond in Portuguese. Do NOT use chain-of-thought. Do NOT reveal internal reasoning, planning, or thinking steps. Provide ONLY the final answer, concise and direct."
+                    Content = systemInstruction.ToString()
                 });
 
                 // 2. Mapeia o histórico da UI filtrando de forma robusta para o formato do Ollama
@@ -260,7 +286,7 @@ namespace OllamaFluentUIChat.Components.Pages
                 using var request = new HttpRequestMessage(HttpMethod.Post, OllamaEndpoint);
                 request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                using var response = await Http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, _cts.Token);
+                using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, _cts.Token);
                 response.EnsureSuccessStatusCode();
 
                 using var stream = await response.Content.ReadAsStreamAsync(_cts.Token);
@@ -562,27 +588,38 @@ namespace OllamaFluentUIChat.Components.Pages
             return html.Replace("<p>", "<div>").Replace("</p>", "</div>");
         }
 
-        private async Task<string> BuscarContextoWebAsync(string query)
+        private async Task<string> SearchWebContextAsync(string query)
         {
             try
             {
-                using var client = new HttpClient();
-                // Forçamos o User-Agent para o DuckDuckGo aceitar o pedido
-                client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
 
-                // Pedido à versão leve do DuckDuckGo
-                var html = await client.GetStringAsync($"https://html.duckduckgo.com/html/?q={Uri.EscapeDataString(query)}");
+                // REQUISITO CRÍTICO: Mudar os cabeçalhos para parecer um browser real (Chrome/Windows)
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+                _httpClient.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8");
+                _httpClient.DefaultRequestHeaders.Add("Accept-Language", "pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7");
 
-                // Um parsing simples de texto para extrair os primeiros resultados relevantes
-                // Nota: Isto é uma solução leve. Para produção, usar Bing Search ou Google API é mais robusto.
+                // Usamos a versão HTML "html" ou "lite" do DuckDuckGo
+                string url = $"https://html.duckduckgo.com/html/?q={Uri.EscapeDataString(query)}";
+
+                var response = await _httpClient.GetAsync(url);
+
+                // Se ainda assim der erro, isto vai lançar a exceção para o catch
+                response.EnsureSuccessStatusCode();
+
+                var html = await response.Content.ReadAsStringAsync();
+
                 var doc = new HtmlAgilityPack.HtmlDocument();
                 doc.LoadHtml(html);
 
+                // No DuckDuckGo HTML, os snippets de texto estão nesta classe
                 var snippets = doc.DocumentNode.SelectNodes("//a[@class='result__snippet']");
-                if (snippets == null) return "Não foram encontrados dados recentes sobre este assunto.";
+
+                if (snippets == null || !snippets.Any())
+                    return "Não foram encontrados dados externos relevantes.";
 
                 var sb = new StringBuilder();
-                foreach (var snippet in snippets.Take(3)) // Pega nos 3 primeiros resultados
+                foreach (var snippet in snippets.Take(3)) // Garante apenas os 3 primeiros resultados
                 {
                     sb.AppendLine(snippet.InnerText.Trim());
                 }
@@ -591,10 +628,11 @@ namespace OllamaFluentUIChat.Components.Pages
             }
             catch (Exception ex)
             {
-                return $"[Erro ao aceder à internet: {ex.Message}]";
+                // Se falhar, devolve vazio para o chat não crashar e o Ollama responder com o que sabe
+                System.Diagnostics.Debug.WriteLine($"[RAG ERROR] {ex.Message}");
+                return string.Empty;
             }
         }
-
         public void Dispose()
         {
             try
