@@ -6,5 +6,6 @@ namespace OllamaFluentUIChat.Services.Interfaces.Services
     {
         public IDbConnection CreateConnection();
         public void Execute(Action<IDbConnection> @event);
+
     }
 }

@@ -1,6 +1,6 @@
-﻿using System.Data;
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.Sqlite;
 using OllamaFluentUIChat.Services.Interfaces.Services;
+using System.Data;
 
 namespace OllamaFluentUIChat.Services.Implementations.Services
 {
@@ -11,7 +11,7 @@ namespace OllamaFluentUIChat.Services.Implementations.Services
         public DapperContext(IConfiguration configuration)
         {
             _configuration = configuration;
-            _connectionString = _configuration.GetConnectionString("SqlServerCon");
+            _connectionString = _configuration.GetConnectionString("SqliteConnection");
         }
 
         public void Execute(Action<IDbConnection> @event)
@@ -22,6 +22,6 @@ namespace OllamaFluentUIChat.Services.Implementations.Services
                 @event(connection);
             }
         }
-        public IDbConnection CreateConnection() => new SqlConnection(_connectionString);
+        public IDbConnection CreateConnection() => new SqliteConnection(_connectionString);
     }
 }

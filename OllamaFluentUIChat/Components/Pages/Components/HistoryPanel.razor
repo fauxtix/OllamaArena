@@ -52,7 +52,7 @@
     public bool IsOpen { get; set; }
     public List<HistoryEntry>? History { get; set; }
 
-    PaginationState pagination = new PaginationState() { ItemsPerPage = 5 };
+    PaginationState pagination = new PaginationState() { ItemsPerPage = 12 };
     private RenderFragment template = @<span />;
 
     public async Task Open()

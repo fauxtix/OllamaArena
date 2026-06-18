@@ -1,0 +1,340 @@
+﻿@page "/analise-benchmarks"
+@rendermode InteractiveServer
+
+@using Microsoft.FluentUI.AspNetCore.Components
+@using OllamaFluentUIChat.Models.Entities
+@using OllamaFluentUIChat.Services.Interfaces.Repositories
+@inject IBenchmarkRepository BenchmarkRepo
+@inject IDialogService DialogService
+
+<div class="analise-container">
+
+    <div class="painel-superior">
+        <div class="painel-header">
+            <h2>Análise de Qualidade e Métricas (SQLite)</h2>
+            <FluentButton Appearance="Appearance.Accent" IconEnd="@(new Icons.Regular.Size16.ArrowClockwise())" OnClick="GetDataAsync">
+                Atualizar Dados
+            </FluentButton>
+        </div>
+
+        @if (_promptsList == null)
+        {
+            <div class="loading-state">
+                <FluentProgressRing></FluentProgressRing>
+                <p>A carregar o histórico do SQLite...</p>
+            </div>
+        }
+        else if (!_promptsList.Any())
+        {
+            <div class="empty-state">
+                <p>Nenhum registo de benchmark encontrado na Base de Dados.</p>
+            </div>
+        }
+        else
+        {
+            <div class="grid-wrapper">
+                <FluentPaginator State="@_pagination" />
+
+                <FluentDataGrid Items="@_promptsQueryable"
+                                TGridItem="BenchmarkPrompt"
+                                RowClass="@(p => p == _selectedPrompt ? "linha-selecionada" : "")"
+                                Pagination="@_pagination">
+
+                    <PropertyColumn Property="@(p => p.Id)" Title="ID" Width="60px" Sortable="true" />
+
+                    <PropertyColumn Property="@(p => p.TextoPrompt)" Title="Prompt Executado" Width="1fr" Tooltip="true" />
+
+                    <PropertyColumn Property="@(p => p.DataCriacaoFormatada)" Title="Data/Hora" Width="160px" Sortable="true" />
+
+                    <TemplateColumn Title="Modelos Testados" Width="150px">
+                        <FluentBadge Appearance="Appearance.Neutral">@context.Answers.Count modelos</FluentBadge>
+                    </TemplateColumn>
+
+                    <TemplateColumn Title="Ações" Width="180px" Align="Align.Center">
+                        <FluentButton Appearance="Appearance.Lightweight"
+                                      IconStart="@(new Icons.Regular.Size16.Eye())"
+                                      OnClick="@(() => SeleccionarPrompt(context))">
+                        </FluentButton>
+
+                        <FluentButton Appearance="Appearance.Lightweight"
+                                      Color="Color.Error"
+                                      IconStart="@(new Icons.Regular.Size16.Delete())"
+                                      OnClick="@( async () => await ApagarPromptAsync(context))">
+                        </FluentButton>
+                    </TemplateColumn>
+                </FluentDataGrid>
+            </div>
+        }
+    </div>
+
+    <hr class="divisor-painel" />
+
+    <div class="painel-inferior">
+        @if (_selectedPrompt == null)
+        {
+            <div class="placeholder-inferior">
+                <FluentIcon Value="@(new Icons.Regular.Size32.DocumentSearch())" Color="Color.Neutral" />
+                <p>Selecione um prompt na tabela superior para analisar as respostas dos modelos.</p>
+            </div>
+        }
+        else
+        {
+            <div class="detalhe-header">
+                <h3>Respostas Geradas para o Prompt #@_selectedPrompt.Id</h3>
+                <blockquote class="prompt-citacao">"@_selectedPrompt.TextoPrompt"</blockquote>
+            </div>
+
+            @if (!_selectedPrompt.Answers.Any())
+            {
+                <FluentMessageBar Intent="MessageIntent.Warning" AllowClose="false">
+                    Este prompt foi guardado, mas não existem respostas associadas na tabela.
+                </FluentMessageBar>
+            }
+            else
+            {
+                <div class="cartoes-respostas-container">
+                    @foreach (var resp in _selectedPrompt.Answers)
+                    {
+                        <div class="cartao-resposta">
+                            <div class="cartao-header">
+
+                                <div class="modelo-info">
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" Color="Color.Neutral" />
+                                    <h4>@resp.ModeloNome</h4>
+                                </div>
+                                <div class="metricas-tags">
+                                    <FluentBadge Appearance="Appearance.Accent">@resp.TokensPorSegundo T/s</FluentBadge>
+                                    <FluentBadge Appearance="Appearance.Neutral">Eval: @(resp.TempoPuroMs)ms</FluentBadge>
+                                    <FluentBadge Appearance="Appearance.Neutral">Load: @(resp.TempoCargaMs)ms</FluentBadge>
+                                    <FluentBadge Appearance="Appearance.Neutral">Tokens: @resp.TamanhoTokens</FluentBadge>
+                                </div>
+                            </div>
+                            <div class="cartao-corpo">
+                                <div class="texto-resposta-raw">
+                                    @((MarkupString)ConverterQuebrasLinha(resp.TextoResposta))
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<FluentDialogProvider />
+
+@code {
+    private List<BenchmarkPrompt>? _promptsList;
+    private BenchmarkPrompt? _selectedPrompt;
+    private IQueryable<BenchmarkPrompt>? _promptsQueryable; 
+
+    private PaginationState _pagination = new() { ItemsPerPage = 5 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetDataAsync();
+    }
+
+    private async Task GetDataAsync()
+    {
+        _promptsList = null;
+        StateHasChanged();
+
+        // Usa a lógica Multi-Mapping já construída no teu repositório
+        _promptsList = await BenchmarkRepo.GetAllBenchmarksAsync();
+        _promptsQueryable = _promptsList?.AsQueryable();
+
+        // Mantém a seleção atualizada se a lista for recarregada
+        if (_selectedPrompt != null && _promptsList != null)
+        {
+            _selectedPrompt = _promptsList.FirstOrDefault(p => p.Id == _selectedPrompt.Id);
+        }
+
+
+        StateHasChanged();
+    }
+
+    private void SeleccionarPrompt(BenchmarkPrompt prompt)
+    {
+        _selectedPrompt = prompt;
+        StateHasChanged();
+    }
+
+    private async Task ApagarPromptAsync(BenchmarkPrompt prompt)
+    {
+        if (prompt == null || DialogService == null) return;
+
+        try
+        {
+            // 1. Garante uma contagem segura contra Nulls
+            int totalRespostas = prompt.Answers?.Count ?? 0;
+
+            // 2. Dispara o diálogo assíncrono
+            var confirmacao = await DialogService.ShowConfirmationAsync(
+                $"Tem a certeza que deseja apagar o Prompt #{prompt.Id}? " +
+                $"Isto irá remover permanentemente todas as {totalRespostas} respostas associadas (Cascading Delete).",
+                "Sim, Apagar",
+                "Cancelar",
+                "Aviso de Eliminação");
+
+            // 3. Validação crucial: o FluentUI pode devolver nulo se o circuito SignalR falhar o frame
+            if (confirmacao == null) return;
+
+            var resultado = await confirmacao.Result;
+
+            if (resultado != null && !resultado.Cancelled)
+            {
+                bool eliminado = await BenchmarkRepo.DeletePromptAndHistoryAsync(prompt.Id);
+
+                if (eliminado)
+                {
+                    if (_selectedPrompt?.Id == prompt.Id)
+                    {
+                        _selectedPrompt = null;
+                    }
+
+                    await GetDataAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Escreve o erro real exato na consola de depuração do VS (Output window)
+            System.Diagnostics.Debug.WriteLine($"[Erro DialogService]: {ex.Message} -> {ex.StackTrace}");
+        }
+    }
+
+    // Auxiliar simples para formatar quebras de linha da resposta da IA sem precisar do pipeline Markdig complexo
+    private string ConverterQuebrasLinha(string? texto)
+    {
+        if (string.IsNullOrEmpty(texto)) return string.Empty;
+        return System.Net.WebUtility.HtmlEncode(texto).Replace("\n", "<br />");
+    }
+}
+
+<style>
+    .analise-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 60px); /* Ajusta à altura do layout da tua app */
+        padding: 16px;
+        box-sizing: border-box;
+        gap: 8px;
+    }
+
+    .painel-superior {
+        flex: 1; /* Ocupa exatamente metade do ecrã */
+        min-height: 0; /* Crítico para o scroll interno do DataGrid funcionar */
+        display: flex;
+        flex-direction: column;
+    }
+
+    .painel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .grid-wrapper {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .divisor-painel {
+        border: 0;
+        height: 1px;
+        background: var(--neutral-stroke-rest);
+        margin: 8px 0;
+    }
+
+    .painel-inferior {
+        flex: 1; /* Ocupa a outra metade do ecrã */
+        min-height: 0;
+        overflow-y: auto;
+        background: var(--neutral-layer-2);
+        border-radius: 8px;
+        padding: 16px;
+        border: 1px solid var(--neutral-stroke-rest);
+    }
+
+    /* Linha ativa selecionada no FluentDataGrid */
+    .deep .linha-selecionada {
+        background-color: var(--accent-fill-rest) !important;
+        color: var(--foreground-on-accent) !important;
+    }
+
+    .placeholder-inferior {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--neutral-foreground-hint);
+        gap: 12px;
+    }
+
+    .prompt-citacao {
+        border-left: 4px solid var(--accent-fill-rest);
+        margin: 8px 0;
+        padding-left: 12px;
+        font-style: italic;
+        color: var(--neutral-foreground-rest);
+    }
+
+    .cartoes-respostas-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .cartao-resposta {
+        background: var(--neutral-layer-1);
+        border: 1px solid var(--neutral-stroke-rest);
+        border-radius: 6px;
+        padding: 16px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .cartao-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--neutral-stroke-divider);
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+    }
+
+    .modelo-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .modelo-info h4 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+    .metricas-tags {
+        display: flex;
+        gap: 6px;
+    }
+
+    .texto-resposta-raw {
+        font-family: var(--body-font);
+        line-height: 1.6;
+        white-space: pre-wrap; /* Garante que a tabulação e quebras são interpretadas se o br falhar */
+    }
+
+    .loading-state, .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        text-align: center;
+    }
+</style>

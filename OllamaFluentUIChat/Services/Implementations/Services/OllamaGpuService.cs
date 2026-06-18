@@ -67,24 +67,30 @@ namespace OllamaFluentUIChat.Services.Implementations.Services
         {
             long vramBytes = GetAvailableVramInBytes();
 
-            // Se não conseguir ler a GPU, assume por segurança que não cabe
             if (vramBytes == 0)
             {
                 return new GpuStatus { FitsInGpu = false, AvailableVramGB = 0, EstimatedRequiredMemoryGB = 0 };
             }
 
-            // Margem de segurança de 20% para acomodar o Contexto (KV Cache) da conversa
+            // 1. Margem de segurança para o Contexto (KV Cache)
             double estimatedRequiredBytes = modelSizeInBytes * 1.2;
 
-            // Conversão de Bytes para Gigabytes (GB)
-            double vramGB = (double)vramBytes / (1024 * 1024 * 1024);
+            // 2. CRÍTICO PARA O TEU PC: Subtrair o lixo que o Windows/Browser já estão a gastar
+            // Vamos assumir que o SO consome cerca de 350 MB fixos da tua gráfica
+            long windowsOverheadBytes = 350L * 1024 * 1024;
+            long realUsableVramBytes = vramBytes - windowsOverheadBytes;
+
+            if (realUsableVramBytes < 0) realUsableVramBytes = 0;
+
+            // 3. Conversão para Gigabytes para a Interface Gráfica
+            double usableVramGB = (double)realUsableVramBytes / (1024 * 1024 * 1024);
             double requiredGB = estimatedRequiredBytes / (1024 * 1024 * 1024);
 
-            // Devolve a classe GpuStatus preenchida
+            // 4. A decisão agora é baseada na VRAM útil que resta!
             return new GpuStatus
             {
-                FitsInGpu = vramBytes > estimatedRequiredBytes,
-                AvailableVramGB = Math.Round(vramGB, 2),
+                FitsInGpu = realUsableVramBytes > estimatedRequiredBytes,
+                AvailableVramGB = Math.Round(usableVramGB, 2),
                 EstimatedRequiredMemoryGB = Math.Round(requiredGB, 2)
             };
         }

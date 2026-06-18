@@ -23,9 +23,9 @@
                      HorizontalAlignment="HorizontalAlignment.Stretch"
                      VerticalAlignment="VerticalAlignment.Center"
                      Style="border-bottom: 1px solid var(--neutral-stroke-layer-rest);
-                                    padding-bottom: 12px;
-                                    margin-bottom: 12px;
-                                    justify-content: space-between;">
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+            justify-content: space-between;">
 
             <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
                 <FluentPersona Name="Ollama Streaming AI"
@@ -105,14 +105,8 @@
                         background-color: @(msg.IsCurrentUser ? "var(--accent-fill-rest)" : "var(--neutral-layer-2)");
                         color: @(msg.IsCurrentUser ? "var(--foreground-on-accent-rest)" : "var(--neutral-foreground-rest)");">
 
-                        @if (ModelName is not null && ModelName.ToLower().Contains("mistral"))
-                        {
-                            @((MarkupString)FormatMistralMessage(msg.Text, msg.IsCurrentUser))
-                        }
-                        else
-                        {
-                            @((MarkupString)FormatMessage(msg.Text))
-                        }
+                        @((MarkupString)FormatMessage(msg.Text))
+
                     </div>
                 </div>
             }
@@ -140,13 +134,6 @@
                       disabled="@_isThinking">
             </textarea>
 
-            <div>
-                @* <button 
-                        @onclick="SendMessage"
-                        disabled="@(_isThinking || string.IsNullOrWhiteSpace(_currentMessage))">
-                    <span class="fa fa-paper-plane"></span>
-                </button> *@
-            </div>
             @if (!_isThinking)
             {
                 <FluentButton Appearance="Appearance.Accent"
@@ -257,7 +244,6 @@
         color: black;
         display: flex;
         align-items: center;
-        /* justify-content: center; */
         cursor: pointer;
         transition: all .2s ease;
     }

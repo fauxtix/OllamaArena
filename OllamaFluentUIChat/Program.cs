@@ -1,6 +1,8 @@
-using Microsoft.FluentUI.AspNetCore.Components;
+﻿using Microsoft.FluentUI.AspNetCore.Components;
 using OllamaFluentUIChat.Components;
+using OllamaFluentUIChat.Services.Implementations.Repositories;
 using OllamaFluentUIChat.Services.Implementations.Services;
+using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,7 +14,9 @@ builder.Services.AddFluentUIComponents();
 
 builder.Services.AddScoped(sp => new HttpClient());
 
+builder.Services.AddTransient<IDapperContext, DapperContext>();
 builder.Services.AddTransient<IOllamaGpuService, OllamaGpuService>();
+builder.Services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
 
 var app = builder.Build();
 
