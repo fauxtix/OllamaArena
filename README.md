@@ -90,7 +90,7 @@ ollama list
 
 ## ⚙️ Configuração da Aplicação & Gestão Dinâmica de Modelos
 
-Acedendo ao ecrã `/settings2`, o utilizador pode parametrizar o ecossistema da aplicação sem interferir na base de dados SQLite.
+Acedendo à opção 'Settings', o utilizador pode parametrizar o ecossistema da aplicação sem interferir na base de dados SQLite.
 
 ### 1. Personalização do Tema Visível
 - **Theme**: Permite forçar o modo Claro, Escuro ou herdar automaticamente as configurações do Sistema Operativo.
