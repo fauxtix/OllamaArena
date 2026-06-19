@@ -1,0 +1,353 @@
+﻿@page "/benchmarks"
+@rendermode InteractiveServer
+
+@using Microsoft.FluentUI.AspNetCore.Components
+@using OllamaFluentUIChat.Models.Entities
+@using OllamaFluentUIChat.Services.Interfaces.Repositories
+@inject IBenchmarkRepository BenchmarkRepo
+@inject IDialogService DialogService
+
+<div class="analise-container-horizontal">
+
+    <!-- HEADER GLOBAL DA PÁGINA -->
+    <div class="pagina-header">
+        <h2>Análise de Qualidade e Métricas (SQLite)</h2>
+        <FluentButton Appearance="Appearance.Accent" IconEnd="@(new Icons.Regular.Size16.ArrowClockwise())" OnClick="GetDataAsync">
+            Atualizar Dados
+        </FluentButton>
+    </div>
+
+    @if (_promptsList == null)
+    {
+        <div class="loading-state">
+            <FluentProgressRing></FluentProgressRing>
+            <p>A carregar o histórico do SQLite...</p>
+        </div>
+    }
+    else if (!_promptsList.Any())
+    {
+        <div class="empty-state">
+            <p>Nenhum registo de benchmark encontrado na Base de Dados.</p>
+        </div>
+    }
+    else
+    {
+        <!-- SPLITTER PARA PERMITIR REDIMENSIONAR LADO A LADO -->
+        <FluentSplitter Orientation="Orientation.Horizontal"
+                        BarSize="6"
+                        Panel1MinSize="300px"
+                        Panel2MinSize="400px"
+                        Style="height: calc(100vh - 120px); width: 100%;">
+
+            <!-- PAINEL ESQUERDO: LISTA DE PROMPTS EM CARDS -->
+            <Panel1>
+                <div class="painel-esquerdo-scroll">
+                    <div class="lista-cards-prompts">
+                        @foreach (var prompt in _promptsList)
+                        {
+                            <FluentCard MinimalStyle="true"
+                                        Class="@($"card-prompt-item {(prompt == _selectedPrompt ? "card-selecionado" : "")}")"
+                                        @onclick="@(() => SeleccionarPrompt(prompt))">
+
+                                <div class="card-prompt-header">
+                                    <span class="prompt-id-badge">#@prompt.Id</span>
+                                    <span class="prompt-data">@prompt.DataCriacaoFormatada</span>
+                                </div>
+
+                                <div class="card-prompt-body">
+                                    <p class="prompt-texto-curto">@prompt.TextoPrompt</p>
+                                </div>
+
+                                <div class="card-prompt-footer">
+                                    <FluentBadge Appearance="Appearance.Neutral">@(prompt.Answers?.Count ?? 0) modelos</FluentBadge>
+
+                                    <FluentButton Appearance="Appearance.Stealth"
+                                                  Color="Color.Error"
+                                                  IconStart="@(new Icons.Regular.Size16.Delete())"
+                                                  OnClick="@( async () => await ApagarPromptAsync(prompt))"
+                                                  StopPropagation="true">
+                                        <!-- StopPropagation impede que o clique no botão selecione o card -->
+                                    </FluentButton>
+                                </div>
+                            </FluentCard>
+                        }
+                    </div>
+                </div>
+            </Panel1>
+
+            <!-- PAINEL DIREITO: DETALHES DAS RESPOSTAS -->
+            <Panel2>
+                <div class="painel-direito-scroll">
+                    @if (_selectedPrompt == null)
+                    {
+                        <div class="placeholder-direito">
+                            <FluentIcon Value="@(new Icons.Regular.Size32.DocumentSearch())" Color="Color.Neutral" />
+                            <p>Selecione um prompt na lista da esquerda para analisar as respostas dos modelos.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="detalhe-header">
+                            <h3>Respostas Geradas para o Prompt #@_selectedPrompt.Id</h3>
+                            <blockquote class="prompt-citacao">"@_selectedPrompt.TextoPrompt"</blockquote>
+                        </div>
+
+                        @if (!_selectedPrompt.Answers.Any())
+                        {
+                            <FluentMessageBar Intent="MessageIntent.Warning" AllowClose="false">
+                                Este prompt foi guardado, mas não existem respostas associadas na tabela.
+                            </FluentMessageBar>
+                        }
+                        else
+                        {
+                            <div class="cartoes-respostas-container">
+                                @foreach (var resp in _selectedPrompt.Answers)
+                                {
+                                    <div class="cartao-resposta">
+                                        <div class="cartao-header">
+                                            <div class="modelo-info">
+                                                <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" Color="Color.Neutral" />
+                                                <h4>@resp.ModeloNome</h4>
+                                            </div>
+                                            <div class="metricas-tags">
+                                                <FluentBadge Appearance="Appearance.Accent">@resp.TokensPorSegundo T/s</FluentBadge>
+                                                <FluentBadge Appearance="Appearance.Neutral">Eval: @(resp.TempoPuroMs)ms</FluentBadge>
+                                                <FluentBadge Appearance="Appearance.Neutral">Load: @(resp.TempoCargaMs)ms</FluentBadge>
+                                                <FluentBadge Appearance="Appearance.Neutral">Tokens: @resp.TamanhoTokens</FluentBadge>
+                                            </div>
+                                        </div>
+                                        <div class="cartao-corpo">
+                                            <div class="texto-resposta-raw">
+                                                @((MarkupString)ConverterQuebrasLinha(resp.TextoResposta))
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            </Panel2>
+
+        </FluentSplitter>
+    }
+</div>
+
+<FluentDialogProvider />
+
+@code {
+    // O bloco @code permanece exatamente IGUAL ao seu original, não necessita de qualquer alteração na lógica C#
+    private List<BenchmarkPrompt>? _promptsList;
+    private BenchmarkPrompt? _selectedPrompt;
+    private IQueryable<BenchmarkPrompt>? _promptsQueryable;
+    private PaginationState _pagination = new() { ItemsPerPage = 5 };
+
+    protected override async Task OnInitializedAsync() => await GetDataAsync();
+
+    private async Task GetDataAsync()
+    {
+        _promptsList = null;
+        StateHasChanged();
+        _promptsList = await BenchmarkRepo.GetAllBenchmarksAsync();
+        _promptsQueryable = _promptsList?.AsQueryable();
+        if (_selectedPrompt != null && _promptsList != null)
+        {
+            _selectedPrompt = _promptsList.FirstOrDefault(p => p.Id == _selectedPrompt.Id);
+        }
+        StateHasChanged();
+    }
+
+    private void SeleccionarPrompt(BenchmarkPrompt prompt)
+    {
+        _selectedPrompt = prompt;
+        StateHasChanged();
+    }
+
+    private async Task ApagarPromptAsync(BenchmarkPrompt prompt)
+    {
+        if (prompt == null || DialogService == null) return;
+        try
+        {
+            int totalRespostas = prompt.Answers?.Count ?? 0;
+            var confirmacao = await DialogService.ShowConfirmationAsync(
+                $"Tem a certeza que deseja apagar o Prompt #{prompt.Id}? " +
+                $"Isto irá remover permanentemente todas as {totalRespostas} respostas associadas (Cascading Delete).",
+                "Sim, Apagar",
+                "Cancelar",
+                "Aviso de Eliminação");
+
+            if (confirmacao == null) return;
+            var resultado = await confirmacao.Result;
+
+            if (resultado != null && !resultado.Cancelled)
+            {
+                bool eliminado = await BenchmarkRepo.DeletePromptAndHistoryAsync(prompt.Id);
+                if (eliminado)
+                {
+                    if (_selectedPrompt?.Id == prompt.Id) _selectedPrompt = null;
+                    await GetDataAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Erro DialogService]: {ex.Message} -> {ex.StackTrace}");
+        }
+    }
+
+    private string ConverterQuebrasLinha(string? texto) => texto?.Replace("\n", "<br />") ?? "";
+}
+
+                    <style>
+    .analise-container-horizontal {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 40px); 
+        overflow: hidden;
+    }
+
+    .pagina-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 16px;
+        background-color: var(--neutral-layer-1);
+    }
+
+    .painel-esquerdo-scroll,
+    .painel-direito-scroll {
+        height: 100%;
+        overflow-y: auto;
+        padding: 16px;
+        box-sizing: border-box;
+    }
+
+    .painel-esquerdo-scroll {
+        background-color: var(--neutral-layer-2);
+        border-right: 1px solid var(--neutral-stroke-rest);
+    }
+
+    .lista-cards-prompts {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .card-prompt-item {
+        cursor: pointer;
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
+        padding: 12px;
+        border: 1px solid var(--neutral-stroke-rest);
+    }
+
+        .card-prompt-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--elevation-shadow-card-hover);
+        }
+
+    .card-selecionado {
+        border-left: 4px solid var(--accent-fill-rest) !important;
+        background-color: var(--neutral-layer-3) !important;
+    }
+
+    .card-prompt-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+    }
+
+    .prompt-id-badge {
+        font-weight: bold;
+        color: var(--accent-fill-rest);
+    }
+
+    .prompt-data {
+        font-size: 11px;
+        color: var(--neutral-foreground-hint);
+    }
+
+    .prompt-texto-curto {
+        margin: 4px 0 10px 0;
+        font-size: 13px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2; 
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .card-prompt-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .placeholder-direito {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 70%;
+        color: var(--neutral-foreground-hint);
+    }
+
+    .cartoes-respostas-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .cartao-resposta {
+        background: var(--neutral-layer-1);
+        border: 1px solid var(--neutral-stroke-rest);
+        border-radius: 4px;
+        padding: 16px;
+    }
+
+    .cartao-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--neutral-stroke-divider);
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+    }
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    }
+
+    .modelo-info h4 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .metricas-tags {
+        display: flex;
+        gap: 6px;
+    }
+
+    .detalhe-header h3 {
+        margin-top: 0;
+    }
+
+    .prompt-citacao {
+        margin: 8px 0 16px 0;
+        padding-left: 12px;
+        border-left: 3px solid var(--neutral-stroke-rest);
+        font-style: italic;
+        color: var(--neutral-foreground-hint);
+    }
+
+    .cartao-corpo {
+        font-size: 13.5px;
+        line-height: 1.5;
+    }
+
+    .texto-resposta-raw {
+        word-break: break-word; 
+    }
+
+</style>

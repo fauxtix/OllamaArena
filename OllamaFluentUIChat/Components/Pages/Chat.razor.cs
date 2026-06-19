@@ -10,6 +10,7 @@ using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
 using System.Text;
 using System.Text.Json;
+using System.Web;
 using static OllamaFluentUIChat.Models.DTO.OllamaModels;
 
 namespace OllamaFluentUIChat.Components.Pages
@@ -19,7 +20,7 @@ namespace OllamaFluentUIChat.Components.Pages
         [Inject] public IOllamaGpuService? GpuService { get; set; }
         [Inject] public IDialogService? DialogService { get; set; }
         [Inject] public IBenchmarkRepository? BenchmarkRepo { get; set; }
-        [Inject] public HttpClient _httpClient { get; set; }
+        [Inject] public HttpClient? _httpClient { get; set; }
 
         private List<Models.DTO.ChatMessage> _messages = new();
         private string _currentMessage = string.Empty;
@@ -189,42 +190,20 @@ namespace OllamaFluentUIChat.Components.Pages
 
             try
             {
-                //// Criamos a lista de mensagens usando a nossa classe explícita
-                //var historyPayload = new List<OllamaChatMessage>();
-
-                //// 1. Adiciona o System Prompt obrigatório
-                //historyPayload.Add(new OllamaChatMessage
-                //{
-                //    Role = "system",
-                //    Content = "Respond in Portuguese. Do NOT use chain-of-thought. Do NOT reveal internal reasoning, planning, or thinking steps. Provide ONLY the final answer, concise and direct."
-                //});
-
-                // O sistema vai à internet procurar sobre QUALQUER assunto que o utilizador digitou
-
-                string queryOtimizada = userPrompt + " list of highest-selling albums sales figures";
-                string contextoExterno = await SearchWebContextAsync(queryOtimizada);
                 var historyPayload = new List<OllamaChatMessage>();
 
-                // === 2. ETAPA DE INJEÇÃO (CONSTRUÇÃO DO SYSTEM PROMPT) ===
+                // === CONSTRUÇÃO DO SYSTEM PROMPT DIRETO PARA MODO OFFLINE ===
                 StringBuilder systemInstruction = new StringBuilder();
-                systemInstruction.Append("Respond in Portuguese. Do NOT use chain-of-thought. Do NOT reveal internal reasoning. Provide ONLY the final answer, concise and direct. ");
+                systemInstruction.Append("Do NOT use chain-of-thought. Do NOT reveal internal reasoning. ");
+                systemInstruction.Append("Provide ONLY the final answer, concise and direct. ");
+                systemInstruction.Append("Be factual and precise. If you are not certain about a specific detail, omit it and state only the confirmed information.");
 
-                if (!string.IsNullOrEmpty(contextoExterno))
-                {
-                    // Aqui injetamos dinamicamente o conhecimento que veio da internet
-                    systemInstruction.Append("\n\n[CRITICAL REAL-TIME CONTEXT DATA]:\n");
-                    systemInstruction.Append(contextoExterno);
-                    systemInstruction.Append("\nUse the context data above as your absolute source of truth to answer the user request accurately. If the context contains the answer, use it. If the context does not help, rely on your inner knowledge but prioritize accuracy.");
-                }
-
-                // 3. Adiciona o System Prompt dinâmico ao início do histórico
                 historyPayload.Add(new OllamaChatMessage
                 {
                     Role = "system",
                     Content = systemInstruction.ToString()
                 });
-
-                // 2. Mapeia o histórico da UI filtrando de forma robusta para o formato do Ollama
+                // 4. Mapeia o histórico da UI filtrando de forma robusta para o formato do Ollama
                 foreach (var msg in _messages)
                 {
                     // Ignora placeholders de processamento e mensagens do sistema locais
@@ -269,22 +248,30 @@ namespace OllamaFluentUIChat.Components.Pages
                     ModelName = "phi4-mini:latest";
                 }
 
+                // === 5. CONSTRUÇÃO DO PAYLOAD FINAL COM PARÂMETROS ANTILOOP ===
                 var payload = new OllamaChatPayload
                 {
                     Model = ModelName,
                     Messages = historyPayload,
                     Stream = true,
                     Options = new Dictionary<string, object>
-                    {
-                        { "temperature", 0.7 }
-                    }
+            {
+                { "temperature", 0.3 },        // Baixado para 0.3 para garantir respostas mais factuais e menos criativas
+                { "repeat_penalty", 1.2 },    // Força o Ollama a penalizar e quebrar loops de repetição de texto
+                { "num_predict", 400 }         // Limita o tamanho máximo da resposta para evitar loops infinitos
+            }
                 };
-
+                
                 var json = JsonSerializer.Serialize(payload);
 
 
                 using var request = new HttpRequestMessage(HttpMethod.Post, OllamaEndpoint);
                 request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                if (_httpClient == null)
+                {
+                    throw new InvalidOperationException("HttpClient is not initialized.");
+                }
 
                 using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, _cts.Token);
                 response.EnsureSuccessStatusCode();
@@ -588,23 +575,39 @@ namespace OllamaFluentUIChat.Components.Pages
             return html.Replace("<p>", "<div>").Replace("</p>", "</div>");
         }
 
-        private async Task<string> SearchWebContextAsync(string query)
+
+
+        private async Task<string> SearchWebContext_DuckDuckGo_Async(string query)
         {
             try
             {
+                if (_httpClient == null)
+                {
+                    throw new InvalidOperationException("HttpClient is not initialized.");
+                }
 
-                // REQUISITO CRÍTICO: Mudar os cabeçalhos para parecer um browser real (Chrome/Windows)
+                // 1. Limpar rigorosamente a query de espaços ou quebras de linha nas pontas
+                string cleanQuery = query?.Trim() ?? string.Empty;
+
+                if (string.IsNullOrEmpty(cleanQuery))
+                    return "Pesquisa vazia.";
+
+                // 2. Limpar e reconfigurar cabeçalhos idênticos a um browser real
                 _httpClient.DefaultRequestHeaders.Clear();
                 _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
                 _httpClient.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8");
                 _httpClient.DefaultRequestHeaders.Add("Accept-Language", "pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7");
+                _httpClient.DefaultRequestHeaders.Add("Sec-Fetch-Dest", "document");
+                _httpClient.DefaultRequestHeaders.Add("Sec-Fetch-Mode", "navigate");
+                _httpClient.DefaultRequestHeaders.Add("Sec-Fetch-Site", "none");
 
-                // Usamos a versão HTML "html" ou "lite" do DuckDuckGo
-                string url = $"https://html.duckduckgo.com/html/?q={Uri.EscapeDataString(query)}";
+                // 3. Montar o URL absoluto usando o construtor Uri para evitar falhas de Hostname no Blazor
+                string baseUrl = "https://duckduckgo.com";
+                string queryString = $"?q={Uri.EscapeDataString(cleanQuery)}&v=l&kl=pt-pt";
+                Uri requestUri = new Uri(baseUrl + queryString, UriKind.Absolute);
 
-                var response = await _httpClient.GetAsync(url);
-
-                // Se ainda assim der erro, isto vai lançar a exceção para o catch
+                // 4. Fazer o pedido GET usando o objeto Uri
+                var response = await _httpClient.GetAsync(requestUri);
                 response.EnsureSuccessStatusCode();
 
                 var html = await response.Content.ReadAsStringAsync();
@@ -612,24 +615,136 @@ namespace OllamaFluentUIChat.Components.Pages
                 var doc = new HtmlAgilityPack.HtmlDocument();
                 doc.LoadHtml(html);
 
-                // No DuckDuckGo HTML, os snippets de texto estão nesta classe
-                var snippets = doc.DocumentNode.SelectNodes("//a[@class='result__snippet']");
+                // 5. Selecionar os links dos resultados na estrutura do DDG Lite
+                var titleNodes = doc.DocumentNode.SelectNodes("//a[@class='result-link']");
 
-                if (snippets == null || !snippets.Any())
+                if (titleNodes == null || !titleNodes.Any())
+                {
+                    // Fallback caso o DDG use tags normais sem classes na região especificada
+                    titleNodes = doc.DocumentNode.SelectNodes("//td[@class='result-snippet']/preceding::tr//a");
+                }
+
+                if (titleNodes == null || !titleNodes.Any())
                     return "Não foram encontrados dados externos relevantes.";
 
                 var sb = new StringBuilder();
-                foreach (var snippet in snippets.Take(3)) // Garante apenas os 3 primeiros resultados
+                int count = 0;
+
+                foreach (var titleNode in titleNodes)
                 {
-                    sb.AppendLine(snippet.InnerText.Trim());
+                    if (count >= 3) break; // Mantém o limite dos 3 primeiros resultados
+
+                    string title = HtmlAgilityPack.HtmlEntity.DeEntitize(titleNode.InnerText.Trim());
+                    string rawUrl = titleNode.GetAttributeValue("href", "");
+
+                    // Ignorar publicidade interna ou links vazios
+                    if (string.IsNullOrEmpty(rawUrl) || rawUrl.Contains("://duckduckgo.com"))
+                        continue;
+
+                    // Converter links relativos em absolutos
+                    string link = rawUrl;
+                    if (link.StartsWith("//"))
+                    {
+                        link = $"https:{link}";
+                    }
+                    else if (link.StartsWith("/"))
+                    {
+                        link = $"https://duckduckgo.com{link}";
+                    }
+
+                    // Extrair o URL real que vem dentro do redirecionamento do DuckDuckGo (parâmetro uddg)
+                    if (link.Contains("uddg="))
+                    {
+                        try
+                        {
+                            var uri = new Uri(link);
+                            var queryParams = HttpUtility.ParseQueryString(uri.Query);
+                            string realUrl = queryParams["uddg"];
+                            if (!string.IsNullOrEmpty(realUrl))
+                            {
+                                link = realUrl;
+                            }
+                        }
+                        catch
+                        {
+                            if (!Uri.IsWellFormedUriString(link, UriKind.Absolute)) continue;
+                        }
+                    }
+
+                    // Validação final da integridade do URL do link extraído
+                    if (!Uri.IsWellFormedUriString(link, UriKind.Absolute))
+                        continue;
+
+                    // Procurar o snippet na linha (tr) seguinte da tabela HTML
+                    var parentTr = titleNode.SelectSingleNode("./ancestor::tr");
+                    var nextTr = parentTr?.NextSibling;
+
+                    while (nextTr != null && nextTr.Name != "tr")
+                    {
+                        nextTr = nextTr.NextSibling;
+                    }
+
+                    var snippetNode = nextTr?.SelectSingleNode(".//td[@class='result-snippet']");
+                    string snippet = snippetNode != null
+                        ? HtmlAgilityPack.HtmlEntity.DeEntitize(snippetNode.InnerText.Trim())
+                        : "Sem descrição disponível.";
+
+                    // Montar o bloco formatado para o contexto do Ollama
+                    sb.AppendLine($"[Fonte {count + 1}]");
+                    sb.AppendLine($"Título: {title}");
+                    sb.AppendLine($"Link: {link}");
+                    sb.AppendLine($"Contexto: {snippet}");
+                    sb.AppendLine();
+
+                    count++;
                 }
 
                 return sb.ToString();
             }
             catch (Exception ex)
             {
-                // Se falhar, devolve vazio para o chat não crashar e o Ollama responder com o que sabe
                 System.Diagnostics.Debug.WriteLine($"[RAG ERROR] {ex.Message}");
+                return string.Empty;
+            }
+        }
+        private async Task<string> SearchWebContext_Wikipedia_Async(string query)
+        {
+            try
+            {
+                if (_httpClient == null)
+                {
+                    throw new InvalidOperationException("HttpClient is not initialized.");
+                }
+
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+                _httpClient.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8");
+                _httpClient.DefaultRequestHeaders.Add("Accept-Language", "pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7");
+
+                //_httpClient.DefaultRequestHeaders.Add("User-Agent", "BlazorBenchmarkApp/1.0 (fauxtix.luix@hotmail.com)");
+
+                // Procura diretamente na Wikipedia em português
+                string url = $"https://pt.wikipedia.org/w/api.php?action=query&list=search&srsearch={Uri.EscapeDataString(query)}&format=json&origin=*";
+
+                var response = await _httpClient.GetStringAsync(url);
+                using var jsonDoc = JsonDocument.Parse(response);
+
+                var searchResults = jsonDoc.RootElement.GetProperty("query").GetProperty("search");
+
+                var sb = new StringBuilder();
+                foreach (var item in searchResults.EnumerateArray().Take(4)) // Paga os 4 melhores artigos
+                {
+                    string snippet = item.GetProperty("snippet").GetString() ?? "";
+                    // Limpa as tags HTML <span> que a Wikipedia envia
+                    snippet = snippet.Replace("<span class=\"searchmatch\">", "").Replace("</span>", "");
+                    sb.AppendLine(snippet);
+                }
+
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[RAG FAILURE] {ex.Message}");
                 return string.Empty;
             }
         }
@@ -638,7 +753,7 @@ namespace OllamaFluentUIChat.Components.Pages
             try
             {
                 _cts?.Dispose();
-                _dotNetRef?.Dispose(); // Liberta a referência que o JS tem do C#
+                _dotNetRef?.Dispose();
             }
             catch { }
         }
