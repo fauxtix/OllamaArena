@@ -2,7 +2,15 @@
 
 Uma aplicação web moderna desenvolvida em **.NET 8 / Blazor** que funciona como um laboratório de testes locais para Modelos de Linguagem Pequenos (SLMs). A aplicação combina uma interface de chat fluida em tempo real com um painel de telemetria avançado e avaliação de qualidade (*LLM-as-a-Judge*).
 
-O projeto foi desenhado sob restrições estritas de hardware, sendo otimizado para correr eficientemente em ambientes com **1GB de VRAM**, gerindo a paginação de memória de forma inteligente entre o GPU e o CPU através do **Ollama**.
+---
+
+## 💻 Notas Importantes sobre o Hardware e Desempenho
+
+### Ambiente de Teste Inicial (Máquina Antiga)
+Este laboratório foi projetado e testado inicialmente numa **máquina antiga limitada a apenas 1GB de VRAM**. Sob estas restrições estritas, o sistema funciona de forma híbrida: o **Ollama** faz a gestão inteligente da memória, enviando o que não cabe na placa gráfica para processamento direto na memória RAM e processador (CPU) do computador.
+
+### Upgrade Recomendado para Modelos Maiores
+Para obter respostas com maior maturidade intelectual e menor índice de alucinações, **devem ser utilizadas placas gráficas (GPUs) modernas e dedicadas**. Um upgrade de hardware permitirá carregar localmente modelos muito mais potentes, que exigem maior capacidade de processamento gráfico para entregar resultados de qualidade superior em tempo útil.
 
 ---
 
@@ -11,14 +19,14 @@ O projeto foi desenhado sob restrições estritas de hardware, sendo otimizado p
 ### 1. Chat Local em Tempo Real (Modo Offline)
 - Interface de chat interativa desenvolvida com **Microsoft FluentUI Blazor Components v4**.
 - Processamento de texto por fluxo de rede (*Streaming HTTP*) de alto desempenho com processamento por blocos brutos (`buffer`).
-- Configuração determinista controlada (`temperature: 0.3` / `repeat_penalty: 1.2`), mitigando alucinações históricas ou loops infinitos de texto em modelos pequenos.
+- Configuração determinista controlada (`temperature: 0.3` / `repeat_penalty: 1.2`), mitigando alucinações ou loops infinitos de texto em modelos de pequena escala.
 
 ### 2. Laboratório de Benchmarks & Telemetria
 - Captura em nanossegundos das métricas oficiais do Ollama quando o fluxo termina (`done = true`).
 - Gravação automática de estatísticas críticas na base de dados:
   - **Tokens por Segundo (T/s)**: Desempenho real de geração de texto.
   - **Tempo Puro (Eval Ms)**: Velocidade estrita do processamento de tokens.
-  - **Tempo de Carga (Load Ms)**: O tempo que o Ollama demora a carregar/paginar o modelo para a RAM/VRAM.
+  - **Tempo de Carga (Load Ms)**: O tempo que o Ollama demora a carregar/paginar o modelo para a memória.
   - **Tamanho (Count)**: Contagem total de tokens gerados.
 
 ### 3. Painel de Análise Master-Detail (Layout Proporcional 1/3 e 2/3)
@@ -43,39 +51,14 @@ O projeto foi desenhado sob restrições estritas de hardware, sendo otimizado p
 
 ---
 
-## 📊 Modelos Atualmente em Teste (Benchmark Base)
+## 📊 Modelos Utilizados nos Testes
 
-Devido ao teto estrito de 1GB de VRAM, o laboratório foca-se na monitorização e comportamento dos seguintes modelos:
-- `qwen2.5:0.5b` (Ultrarápido, executa quase integralmente na VRAM)
-- `llama3.2:1b` (Equilibrado, excelente para lógica simples)
-- `qwen2.5:1.5b` (Excelente coesão em inglês, propenso a offloading)
-- `gemma2:2b` (Surpreendentemente forte em conhecimento geral offline)
-- `phi4-mini:latest` (O mais pesado, corre maioritariamente em CPU, alta precisão factual em inglês)
-
----
-
-## 🏗️ Arquitetura de Dados (SQLite)
-
-O repositório utiliza o Dapper para persistir as entidades através de uma relação Um-para-Muitos (*One-to-Many*):
-
-### Tabela: `Prompts`
-- `Id` (INTEGER PRIMARY KEY)
-- `TextoPrompt` (TEXT)
-- `DataCriacao` (DATETIME)
-
-### Tabela: `Respostas`
-- `Id` (INTEGER PRIMARY KEY)
-- `PromptId` (INTEGER FK &rightarrow; Prompts)
-- `ModeloNome` (TEXT)
-- `TextoResposta` (TEXT)
-- `TokensPorSegundo` (REAL)
-- `TempoPuroMs` (REAL)
-- `TempoCargaMs` (REAL)
-- `TamanhoTokens` (INTEGER)
-- `GeminiRating` (INTEGER NULL)
-- `GeminiFeedback` (TEXT)
-- `ChatGptRating` (INTEGER NULL)
-- `ChatGptFeedback` (TEXT)
+Os seguintes modelos de pequena escala (SLMs) foram escolhidos especificamente para avaliar o comportamento do ecossistema sob cenários de baixa memória e paginação por CPU:
+- **`qwen2.5:0.5b`** (Ultrarápido; devido ao tamanho reduzido, executa quase na totalidade dentro do teto de 1GB de VRAM).
+- **`llama3.2:1b`** (Equilibrado; modelo compacto e eficiente da Meta para lógica simples).
+- **`qwen2.5:1.5b`** (Excelente coesão estrutural em inglês; começa a exigir *offloading* acrescido para o CPU).
+- **`gemma2:2b`** (Modelo da Google surpreendentemente forte em conhecimento geral para o tamanho que tem).
+- **`phi4-mini:latest`** (O modelo mais pesado da lista, com cerca de 3.8B de parâmetros; corre maioritariamente no CPU nesta máquina antiga, demonstrando alta precisão factual em inglês, mas com um tempo de processamento mais elevado).
 
 ---
 
@@ -84,31 +67,24 @@ O repositório utiliza o Dapper para persistir as entidades através de uma rela
 ### 1. Como Instalar o Ollama
 Para correr os modelos de inteligência artificial localmente na sua máquina, siga os passos conforme o seu sistema operativo:
 
-- **Windows**: Transfira o instalador oficial em [://ollama.com](https://://ollama.com). Execute o ficheiro `.exe` e siga o assistente até ao fim. O Ollama passará a correr em segundo plano na barra de tarefas (systray).
+- **Windows**: Transfira o instalador oficial em [://ollama.com](https://://ollama.com). Execute o ficheiro `.exe` e siga o assistente até ao fim.
 - **Linux**: Abra o terminal e execute o comando oficial de instalação automática:
   ```bash
   curl -fsSL https://ollama.com | sh
   ```
 - **macOS**: Transfira o ficheiro `.zip` oficial no site do Ollama, descomprima-o e arraste a aplicação para a pasta *Applications*.
 
-*Nota para Máquinas com Baixa VRAM (1GB):* O Ollama deteta automaticamente o seu hardware. Se o modelo exceder 1GB, ele dividirá o processamento dinamicamente com o processador (CPU), garantindo que a aplicação não crasha por falta de memória de vídeo.
-
 ### 2. Como Carregar os Modelos para Testar
-Antes de abrir a aplicação Blazor, precisa de descarregar os 5 modelos configurados para o laboratório de testes. Abra o seu terminal (CMD, PowerShell ou Bash) e execute os seguintes comandos, um de cada vez:
+Abra o seu terminal (CMD, PowerShell ou Bash) e execute os seguintes comandos para descarregar a suite exata de modelos utilizada nos nossos testes:
 
 ```bash
-# Descarregar os modelos mais leves (0.5B e 1B)
 ollama pull qwen2.5:0.5b
 ollama pull llama3.2:1b
-
-# Descarregar os modelos intermédios (1.5B e 2B)
 ollama pull qwen2.5:1.5b
 ollama pull gemma2:2b
-
-# Descarregar o modelo de maior precisão do laboratório (3.8B)
 ollama pull phi4-mini:latest
 ```
-Para verificar se os modelos foram guardados com sucesso no seu disco, execute:
+Para verificar a lista de modelos guardados com sucesso no seu disco, execute:
 ```bash
 ollama list
 ```
@@ -117,7 +93,7 @@ ollama list
 
 ## 🚀 Como Executar o Projeto
 
-1. Certifique-se de que o daemon do Ollama está ativo no sistema.
+1. Certifique-se de que o daemon do Ollama está ativo no sistema (`ollama serve`).
 2. Configure a Connection String do SQLite no ficheiro `appsettings.json`.
 3. Abra a pasta do projeto no terminal e execute o comando .NET:
    ```bash
@@ -145,7 +121,7 @@ No painel direito (2/3) da aplicação, após selecionar um prompt, terá acesso
 6. Clique em **"Gravar Avaliação"** para persistir as notas no SQLite através do Dapper utilizando reflexão automática de propriedades (`WHERE Id = @Id`).
 
 ### 3. O Prompt Padrão para dar ao Gemini / ChatGPT
-Para obter respostas consistentes, curtas e fáceis de transcrever para a sua aplicação, envie exatamente o seguinte prompt estruturado para o Gemini e para o ChatGPT:
+Para obter respostas consistentes, envie exatamente o seguinte prompt estruturado para as interfaces do Gemini e do ChatGPT:
 
 > **Prompt de Avaliação (Juiz de IA):**
 > 
