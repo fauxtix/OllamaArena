@@ -10,5 +10,9 @@
         public double TempoPuroMs { get; set; }
         public double TempoCargaMs { get; set; }
         public int TamanhoTokens { get; set; }
+        public int? GeminiRating { get; set; }
+        public string GeminiFeedback { get; set; } = string.Empty;
+        public int? ChatGptRating { get; set; }
+        public string ChatGptFeedback { get; set; } = string.Empty;
     }
 }
