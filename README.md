@@ -1,6 +1,6 @@
 # Ollama FluentUI Chat & Benchmark Laboratory 🚀
 
-Uma aplicação web moderna desenvolvida em **.NET 8 / Blazor** que funciona como um laboratório de testes locais para Modelos de Linguagem Pequenos (SLMs). A aplicação combina uma interface de chat fluida em tempo real com um painel de telemetria avançado e avaliação de qualidade (*LLM-as-a-Judge*).
+Uma aplicação web moderna desenvolvida em **.NET 10 / Blazor** que funciona como um laboratório de testes locais para Modelos de Linguagem Pequenos (SLMs). A aplicação combina uma interface de chat em tempo real com um painel de telemetria e avaliação de qualidade (*LLM-as-a-Judge*).
 
 ---
 
@@ -22,7 +22,7 @@ Para obter respostas com maior maturidade intelectual e menor índice de alucina
 - Configuração determinista controlada (`temperature: 0.3` / `repeat_penalty: 1.2`), mitigando alucinações ou loops infinitos de texto em modelos de pequena escala.
 
 ### 2. Laboratório de Benchmarks & Telemetria
-- Captura em nanossegundos das métricas oficiais do Ollama quando o fluxo termina (`done = true`).
+- Captura das métricas oficiais do Ollama quando o fluxo termina (`done = true`).
 - Gravação automática de estatísticas críticas na base de dados:
   - **Tokens por Segundo (T/s)**: Desempenho real de geração de texto.
   - **Tempo Puro (Eval Ms)**: Velocidade estrita do processamento de tokens.
@@ -30,24 +30,23 @@ Para obter respostas com maior maturidade intelectual e menor índice de alucina
   - **Tamanho (Count)**: Contagem total de tokens gerados.
 
 ### 3. Painel de Análise Master-Detail (Layout Proporcional 1/3 e 2/3)
-- **Painel Esquerdo (1/3)**: Lista cronológica de prompts executados, dispostos em `FluentCard` com efeitos hover e truncagem inteligente.
-- **Painel Direito (2/3)**: Cabeçalho fixo com o prompt selecionado e área de scroll independente para os cartões de resposta das IAs lado a lado.
-- Interface dividida por um **`FluentSplitter`** responsivo, adaptável a qualquer monitor ou portátil.
+- **Painel Esquerdo**: Lista cronológica de prompts executados, dispostos em `FluentCard` com efeitos hover e truncagem inteligente.
+- **Painel Direito**: Cabeçalho fixo com o prompt selecionado e área de scroll independente para os cartões de resposta das IAs lado a lado.
 
 ### 4. Avaliação Cruzada (LLM-as-a-Judge)
-- Painel integrado para introdução de métricas de qualidade qualitativa baseadas em modelos de fronteira (**Google Gemini** e **OpenAI ChatGPT**).
-- Permite atribuir classificações de 1 a 5 (`FluentNumberField`) e justificações de erros/alucinações (`FluentTextArea` de 3 linhas com redimensionamento vertical).
-- Persistência imediata via **Dapper** para fechar o ciclo de análise: *Velocidade Local vs. Qualidade Global*.
+- Painel integrado para introdução de métricas de qualidade baseadas em modelos de fronteira (**Google Gemini** e **OpenAI ChatGPT**).
+- Permite atribuir classificações de 1 a 5 e justificações de erros/alucinações com redimensionamento vertical).
+- Persistência via **Dapper** para fechar o ciclo de análise.
 
 ---
 
 ## 🛠️ Stack Tecnológica
 
-- **Frontend**: Blazor Web Assembly / Server (InteractiveServer Mode)
+- **Frontend**: Blazor Server (InteractiveServer Mode)
 - **Componentes UI**: Microsoft FluentUI Blazor Library v4.1.2
 - **Motor Local de IA**: Ollama API (`/api/chat`)
-- **Base de Dados**: SQLite (Leve, local e em ficheiro)
-- **Micro-ORM**: Dapper (Mapeamento de alto desempenho por reflexão de objetos)
+- **Base de Dados**: SQLite
+- **Micro-ORM**: Dapper (Mapeamento por reflexão de objetos)
 
 ---
 
@@ -89,6 +88,37 @@ Para verificar a lista de modelos guardados com sucesso no seu disco, execute:
 ollama list
 ```
 
+## ⚙️ Configuração da Aplicação & Gestão Dinâmica de Modelos
+
+Acedendo ao ecrã `/settings2`, o utilizador pode parametrizar o ecossistema da aplicação sem interferir na base de dados SQLite.
+
+### 1. Personalização do Tema Visível
+- **Theme**: Permite forçar o modo Claro, Escuro ou herdar automaticamente as configurações do Sistema Operativo.
+- **Color**: Altera a cor de destaque principal (*Accent Color*) utilizando tokens do ecossistema Fluent UI (Word, Excel, Access, etc.), incluindo suporte a um algoritmo de cores aleatórias através do botão *"Feeling lucky?"*.
+- **Persistência**: Os estados visuais são serializados de forma automática sob a chave de armazenamento `"theme"`.
+
+### 2. Como Incluir/Excluir Modelos na Aplicação
+A lista de modelos disponíveis para seleção na interface é gerida de forma dinâmica de modo a que a aplicação consiga crescer à medida que descarrega novos modelos do ecossistema Ollama.
+
+#### **Como Incluir um Novo Modelo:**
+1. Execute primeiro o `ollama pull [nome-do-modelo]` no terminal do seu sistema operativo para garantir que os ficheiros binários existem localmente.
+2. No ecrã de Definições da app, localize o campo **"Gestão de Modelos Ollama"**.
+3. Introduza a Tag exata do modelo no campo de texto (ex: `phi4:latest` ou `mistral:7b`).
+4. Clique no botão **"Adicionar"**. A lista será atualizada e o modelo passará a estar disponível para testes no Chat.
+
+#### **Como Excluir um Modelo:**
+1. Na listagem de modelos exibida em formato de cartões na página de definições, localize o modelo que deseja ocultar.
+2. Clique no botão **"Remover"**.
+3. O modelo é instantaneamente expurgado da memória ativa da aplicação.
+
+#### **Mecanismo de Persistência Técnica:**
+Sempre que um modelo é incluído ou excluído, o Blazor invoca o método assíncrono `SaveModels()`, que serializa a lista em formato string JSON e injeta-a de forma persistente na sandbox do navegador utilizando a API Web Storage:
+```csharp
+await JS.InvokeVoidAsync("localStorage.setItem", "ollama_models", JsonSerializer.Serialize(Models));
+```
+Ao iniciar a aplicação (`OnInitializedAsync`), o estado é automaticamente reidratado a partir da chave `"ollama_models"`.
+
+---
 ---
 
 ## 🚀 Como Executar o Projeto
