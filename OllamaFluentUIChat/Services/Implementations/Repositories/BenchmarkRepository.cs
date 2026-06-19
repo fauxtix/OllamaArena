@@ -2,6 +2,7 @@
 using OllamaFluentUIChat.Models.Entities;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
+using System.Text;
 
 namespace OllamaFluentUIChat.Services.Implementations.Repositories
 {
@@ -160,5 +161,17 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
             int AffectedLines = await connection.ExecuteAsync(sql, new { Id = responseId });
             return AffectedLines > 0;
         }
+
+        public async Task<bool> UpdateResponseEvaluationAsync(BenchmarkResponse res)
+        {
+            StringBuilder sb = new();
+            sb.Append("UPDATE Respostas SET GeminiRating = @GeminiRating, GeminiFeedback = @GeminiFeedback, ");
+            sb.Append("ChatGptRating = @ChatGptRating, ChatGptFeedback = @ChatGptFeedback WHERE Id = @Id");
+            var sql = sb.ToString();
+            using var connection = _context.CreateConnection();
+            int AffectedLines = await connection.ExecuteAsync(sql, res);
+            return AffectedLines > 0;
+        }
+
     }
 }

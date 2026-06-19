@@ -8,12 +8,10 @@
     <nav class="sitenav" aria-labelledby="main-menu" onclick="document.getElementById('navmenu-toggle').click();">
         <FluentNavMenu Id="main-menu" Collapsible="true" Width="250" Title="Navigation menu" @bind-Expanded="expanded" >
             <FluentNavLink Href="/" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Home())" IconColor="Color.Accent">Home</FluentNavLink>
-            <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
-            <FluentNavLink Href="/settings2"  Icon="@(new Icons.Regular.Size20.Settings())" IconColor="Color.Accent">Settings II</FluentNavLink>
             <FluentNavLink Href="/chat" Icon="@(new Icons.Regular.Size20.Chat())" IconColor="Color.Accent">Chat</FluentNavLink>
-            <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
-            <FluentNavLink Href="/analise-benchmarks" Icon="@(new Icons.Regular.Size20.Chat())" IconColor="Color.Accent">Análise de Benchmarks</FluentNavLink>
             <FluentNavLink Href="/benchmarks" Icon="@(new Icons.Regular.Size20.Chat())" IconColor="Color.Accent">Benchmarks II</FluentNavLink>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
+            <FluentNavLink Href="/settings2" Icon="@(new Icons.Regular.Size20.Settings())" IconColor="Color.Accent">Settings</FluentNavLink>
         </FluentNavMenu>
     </nav>
 </div>

@@ -110,6 +110,7 @@
                                     @foreach (var resp in _selectedPrompt.Answers)
                                     {
                                         <div class="cartao-resposta">
+                                            <!-- CABEÇALHO DO CARTÃO (MANTÉM-SE) -->
                                             <div class="cartao-header">
                                                 <div class="modelo-info">
                                                     <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" Color="Color.Neutral" />
@@ -122,9 +123,61 @@
                                                     <FluentBadge Appearance="Appearance.Neutral">Tokens: @resp.TamanhoTokens</FluentBadge>
                                                 </div>
                                             </div>
+
+                                            <!-- CORPO DA RESPOSTA (MANTÉM-SE) -->
                                             <div class="cartao-corpo">
                                                 <div class="texto-resposta-raw">
                                                     @((MarkupString)ConverterQuebrasLinha(resp.TextoResposta))
+                                                </div>
+                                            </div>
+
+                                            <hr class="divisor-avaliacao" />
+
+                                            <!-- NOVA SECÇÃO: PAINEL DE AVALIAÇÃO EDITÁVEL -->
+                                            <div class="zona-avaliacao-editavel">
+                                                <h5>Avaliação Externa (Juiz de IA)</h5>
+
+                                                <div class="grelha-avaliacao">
+                                                    <!-- COLUNA GEMINI -->
+                                                    <div class="coluna-juiz">
+                                                        <div class="juiz-titulo">
+                                                            <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())" Color="Color.Accent" />
+                                                            <span>Google Gemini</span>
+                                                        </div>
+                                                        <FluentNumberField Min="1" Max="5" @bind-Value="resp.GeminiRating" Label="Rating (1-5)" Style="width: 100%;" />
+
+                                                        <!-- ALTERADO: Mudança para FluentTextArea com 3 linhas de altura -->
+                                                        <FluentTextArea @bind-Value="resp.GeminiFeedback"
+                                                                        Label="Problemas Encontrados"
+                                                                        Rows="3"
+                                                                        Placeholder="Insira o feedback resumido..."
+                                                                        Style="width: 100%; resize: vertical;" />
+                                                    </div>
+
+                                                    <!-- COLUNA CHATGPT -->
+                                                    <div class="coluna-juiz">
+                                                        <div class="juiz-titulo">
+                                                            <FluentIcon Value="@(new Icons.Regular.Size16.Lightbulb())" Color="Color.Warning" />
+                                                            <span>OpenAI ChatGPT</span>
+                                                        </div>
+                                                        <FluentNumberField Min="1" Max="5" @bind-Value="resp.ChatGptRating" Label="Rating (1-5)" Style="width: 100%;" />
+
+                                                        <!-- ALTERADO: Mudança para FluentTextArea com 3 linhas de altura -->
+                                                        <FluentTextArea @bind-Value="resp.ChatGptFeedback"
+                                                                        Label="Problemas Encontrados"
+                                                                        Rows="3"
+                                                                        Placeholder="Insira o feedback resumido..."
+                                                                        Style="width: 100%; resize: vertical;" />
+                                                    </div>
+                                                </div>
+
+                                                <!-- BOTÃO PARA ATUALIZAR APENAS ESTA RESPOSTA -->
+                                                <div class="acoes-avaliacao">
+                                                    <FluentButton Appearance="Appearance.Lightweight"
+                                                                  IconStart="@(new Icons.Regular.Size16.Save())"
+                                                                  OnClick="@(async () => await GuardarAvaliacaoAsync(resp))">
+                                                        Gravar Avaliação
+                                                    </FluentButton>
                                                 </div>
                                             </div>
                                         </div>
@@ -203,6 +256,42 @@
     }
 
     private string ConverterQuebrasLinha(string? texto) => texto?.Replace("\n", "<br />") ?? "";
+
+    private async Task GuardarAvaliacaoAsync(BenchmarkResponse resposta)
+    {
+        if (resposta == null || BenchmarkRepo == null) return;
+
+        try
+        {
+            // Validação básica local para garantir que os valores estão no intervalo correto
+            if (resposta.GeminiRating is < 1 or > 5 || resposta.ChatGptRating is < 1 or > 5)
+            {
+                if (DialogService != null)
+                {
+                    await DialogService.ShowErrorAsync("O rating introduzido deve situar-se estritamente entre 1 e 5.", "Erro de Validação");
+                }
+                return;
+            }
+
+            // Chamar o método do repositório para fazer o Update na base de dados
+            // Nota: Certifique-se de que adiciona esta assinatura 'UpdateResponseEvaluationAsync' na interface IBenchmarkRepository
+            bool guardado = await BenchmarkRepo.UpdateResponseEvaluationAsync(resposta);
+
+            if (guardado && DialogService != null)
+            {
+                // Notificação leve de sucesso (opcional, pode remover se preferir silencioso)
+                System.Diagnostics.Debug.WriteLine($"[BENCHMARK] Avaliação do modelo {resposta.ModeloNome} guardada com sucesso.");
+
+                // Exemplo de caixa de sucesso nativa do FluentUI
+                await DialogService.ShowInfoAsync($"Avaliação do modelo {resposta.ModeloNome} atualizada com sucesso no SQLite.", "Sucesso");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SQLITE ERROR] Falha ao atualizar avaliação: {ex.Message}");
+        }
+    }
+
 }
 
 <style>
@@ -383,5 +472,48 @@
         max-width: 850px; 
     }
 
+    /* --- SECÇÃO DE AVALIAÇÃO EDITÁVEL --- */
+    .divisor-avaliacao {
+        border: 0;
+        border-top: 1px dashed var(--neutral-stroke-divider);
+        margin: 16px 0 12px 0;
+    }
+
+    .zona-avaliacao-editavel h5 {
+        margin: 0 0 12px 0;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--neutral-foreground-hint);
+    }
+
+    .grelha-avaliacao {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 12px;
+    }
+
+    .coluna-juiz {
+        flex: 1; /* Divide o espaço igualmente (50% Gemini, 50% ChatGPT) */
+        background-color: var(--neutral-layer-2);
+        padding: 12px;
+        border-radius: 4px;
+        border: 1px solid var(--neutral-stroke-divider);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .juiz-titulo {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .acoes-avaliacao {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 8px;
     }
 </style>
