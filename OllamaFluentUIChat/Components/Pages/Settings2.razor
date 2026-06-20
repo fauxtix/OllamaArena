@@ -51,8 +51,7 @@
             </FluentLabel>
 
             <FluentStack Orientation="Orientation.Horizontal" Gap="10" Style="margin-top: 12px;">
-                <FluentTextField Placeholder="Nome do modelo (ex: phi4:latest)"
-                                 Width="300px"
+                <FluentTextField Placeholder="Nome do modelo (ex: phi4:latest)" Style="width: 300px;"
                                  @bind-Value="NewModel" />
 
                 <FluentButton Appearance="Appearance.Accent" OnClick="AddModel">
@@ -69,10 +68,10 @@
                 {
                     @foreach (var model in Models)
                     {
-                        <FluentCard Style="padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <FluentCard Style="width:400px;padding: 10px; display: flex; justify-content: space-between; align-items: center;">
                             <FluentLabel>@model</FluentLabel>
 
-                            <FluentButton Appearance="Appearance.Stealth"
+                            <FluentButton Appearance="Appearance.Neutral"
                                           OnClick="@(() => RemoveModel(model))">
                                 Remover
                             </FluentButton>
