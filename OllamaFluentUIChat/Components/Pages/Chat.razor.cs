@@ -21,6 +21,7 @@ namespace OllamaFluentUIChat.Components.Pages
         [Inject] public IDialogService? DialogService { get; set; }
         [Inject] public IBenchmarkRepository? BenchmarkRepo { get; set; }
         [Inject] public HttpClient? _httpClient { get; set; }
+        [Inject] public ILogger<App>? _logger { get; set; }
 
         private List<Models.DTO.ChatMessage> _messages = new();
         private string _currentMessage = string.Empty;
@@ -76,6 +77,7 @@ namespace OllamaFluentUIChat.Components.Pages
                 try
                 {
                     // 1) Carregas a lista de modelos da cache
+                    _logger?.LogInformation("Carregando lista de modelos da cache...");
                     var storedList = await JS.InvokeAsync<string>("localStorage.getItem", "ollama_models");
                     if (!string.IsNullOrEmpty(storedList))
                     {
@@ -90,7 +92,7 @@ namespace OllamaFluentUIChat.Components.Pages
                         }
                         else if (_models.Any())
                         {
-                            ModelName = _models.First(); 
+                            ModelName = _models.First();
                         }
                     }
 
@@ -103,11 +105,15 @@ namespace OllamaFluentUIChat.Components.Pages
                     if (currentModelDetails != null)
                         _gpuReport = GpuService.CheckGpuCompatibility(currentModelDetails.SizeInBytes);
 
-                    StateHasChanged(); 
+                    StateHasChanged();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "Erro detetado no OnAfterRenderAsync do Chat");
+                }
 
                 await JS.InvokeVoidAsync("chatInput.attachHandlers", chatInputRef, _dotNetRef);
+                _logger?.LogInformation("Chat component initialized.");
             }
         }
         private async Task ShowGpuInfoDialogAsync()
@@ -261,7 +267,7 @@ namespace OllamaFluentUIChat.Components.Pages
                 { "num_predict", 400 }         // Limita o tamanho máximo da resposta para evitar loops infinitos
             }
                 };
-                
+
                 var json = JsonSerializer.Serialize(payload);
 
 
@@ -282,7 +288,7 @@ namespace OllamaFluentUIChat.Components.Pages
 
                 bool firstChunk = true;
 
-                if(_cts is null)
+                if (_cts is null)
                 {
                     _cts = new CancellationTokenSource();
                 }

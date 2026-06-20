@@ -1,0 +1,80 @@
+﻿@using System.Text.Json
+@using OllamaFluentUIChat.Models.Entities
+
+<FluentDialog Hidden="@(!Visible)"
+              Modal="true"
+              TrapFocus="true"
+              Width="650px"
+              AriaLabel="Detalhes do Log">
+
+    <FluentDialogHeader Visible="true">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
+            <FluentIcon Value="@(new Icons.Regular.Size24.DocumentText())" />
+            <FluentLabel Typo="Typography.PaneHeader">Detalhes do Registo #@Log?.Id</FluentLabel>
+        </FluentStack>
+    </FluentDialogHeader>
+
+    <FluentDialogBody>
+        @if (Log != null)
+        {
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+                <div>
+                    <FluentLabel Weight="FontWeight.Bold">Mensagem:</FluentLabel>
+                    <p style="background: var(--neutral-layer-2); padding: 12px; border-radius: 4px; white-space: pre-wrap; word-break: break-word; margin: 6px 0 0 0; font-size: 14px; line-height: 1.4;">
+                        @Log.RenderedMessage
+                    </p>
+                </div>
+
+                @if (!string.Equals(Log.Level, "Information", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(Log.Properties))
+                {
+                    <div>
+                        <FluentLabel Weight="FontWeight.Bold">Metadados do Sistema:</FluentLabel>
+                        <pre style="background: var(--neutral-layer-3); padding: 12px; border-radius: 4px; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px; margin: 6px 0 0 0; white-space: pre-wrap; word-break: break-all;">@FormatarJson(Log.Properties)</pre>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Log.Exception))
+                {
+                    <div>
+                        <FluentLabel Weight="FontWeight.Bold" Color="Color.Error">Exceção / Erro:</FluentLabel>
+                        <pre style="background: #ff000010; color: var(--fluent-color-status-danger); padding: 12px; border-radius: 4px; max-height: 250px; overflow-y: auto; font-family: monospace; font-size: 11px; margin: 6px 0 0 0; white-space: pre-wrap; word-break: break-all;">@Log.Exception</pre>
+                    </div>
+                }
+            </FluentStack>
+        }
+    </FluentDialogBody>
+
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="Fechar">Fechar</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    [Parameter, EditorRequired] public LogEntity? Log { get; set; }
+    [Parameter, EditorRequired] public bool Visible { get; set; } = false;
+    [Parameter, EditorRequired] public EventCallback<bool> VisibleChanged { get; set; }
+
+    private async Task OnVisibleChanged(bool value)
+    {
+        Visible = value;
+        await VisibleChanged.InvokeAsync(value);
+    }
+
+    private async Task Fechar()
+    {
+        await OnVisibleChanged(false);
+    }
+
+    private string FormatarJson(string jsonBruto)
+    {
+        try
+        {
+            using var jsonDoc = JsonDocument.Parse(jsonBruto);
+            return JsonSerializer.Serialize(jsonDoc, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch
+        {
+            return jsonBruto;
+        }
+    }
+}

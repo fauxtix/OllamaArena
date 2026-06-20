@@ -1,0 +1,144 @@
+﻿@page "/system-logs"
+@using Microsoft.AspNetCore.Components.Web
+@using OllamaFluentUIChat.Components.Pages.Components
+@using OllamaFluentUIChat.Models.Entities
+@using OllamaFluentUIChat.Services.Interfaces.Repositories
+@inject ILogRepository LogRepository
+@inject IDialogService DialogService
+@rendermode InteractiveServer
+
+<PageTitle>Logs do Sistema</PageTitle>
+
+<FluentStack VerticalGap="15" Orientation="Orientation.Vertical">
+    
+    <!-- Topo da Página -->
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Right">
+        <FluentLabel Typo="Typography.PageTitle">Logs do Sistema</FluentLabel>
+        <FluentSpacer />
+        <FluentButton Appearance="Appearance.Accent" 
+                      IconStart="@(new Icons.Regular.Size16.Delete())" 
+                      OnClick="ConfirmarLimpezaLogs">
+            Limpar Todos os Logs
+        </FluentButton>
+    </FluentStack>
+
+    <!-- Grelha de Dados -->
+    @if (_logs == null)
+    {
+        <FluentProgressRing>A carregar registos...</FluentProgressRing>
+    }
+    else if (!_logs.Any())
+    {
+        <FluentMessageBox Type="MessageBoxType.Info" Title="Sem Registos">
+            Não existem logs gravados na base de dados SQLite de momento.
+        </FluentMessageBox>
+    }
+    else
+    {
+        <div style="width: 100%; overflow-x: auto;">
+            <FluentDataGrid Items="@_logs.AsQueryable()" Pagination="@_pagination" TGridItem="LogEntity" ResizableColumns="true">
+                <PropertyColumn Property="@(p => p.Id)" Title="ID" Sortable="true" Width="70px" />
+                
+                <PropertyColumn Property="@(p => p.Timestamp)" Title="Data/Hora" Sortable="true" Width="180px" />
+                
+                <TemplateColumn Title="Nível" Sortable="true" SortBy="@_sortByLevel" Width="120px">
+                    @{
+                        var level = context.Level ?? "Information";
+                        var badgeAppearance = level.Contains("Error") || level.Contains("Fatal") ? Appearance.Accent :
+                                             level.Contains("Warning") ? Appearance.Neutral : Appearance.Lightweight;
+                        
+                        var customStyle = level.Contains("Error") || level.Contains("Fatal") ? "background-color: var(--fluent-color-status-danger); color: white;" :
+                                          level.Contains("Warning") ? "background-color: var(--fluent-color-status-warning); color: black;" :
+                                          "background-color: var(--fluent-color-status-success); color: white;";
+                    }
+                    <FluentBadge Appearance="@badgeAppearance" Style="@customStyle">
+                        @level
+                    </FluentBadge>
+                </TemplateColumn>
+
+                <PropertyColumn Property="@(p => p.RenderedMessage)" Title="Mensagem" Sortable="true" />
+
+                <TemplateColumn Title="Ações" Align="Align.Center" Width="100px">
+                    <FluentButton Appearance="Appearance.Stealth" 
+                                  IconStart="@(new Icons.Regular.Size16.Eye())" 
+                                  OnClick="@(() => AbrirDetalhesLog(context))" 
+                                  Title="Ver Detalhes" />
+                </TemplateColumn>
+            </FluentDataGrid>
+        </div>
+
+        <FluentPaginator State="@_pagination" />
+    }
+</FluentStack>
+
+<!-- Chamada Declarativa do Componente Separado com Binding Bidirecional -->
+<LogDetailDialog Log="@_logSelecionado" Visible="@_isDialogVisible" VisibleChanged="@(() => _isDialogVisible = false)" />
+<FluentDialogProvider />
+
+
+@code {
+    private List<LogEntity>? _logs;
+    private PaginationState _pagination = new() { ItemsPerPage = 10 };
+    private GridSort<LogEntity> _sortByLevel = GridSort<LogEntity>
+        .ByAscending(p => p.Level ?? "");
+
+    // Variáveis de controlo do estado do diálogo declarativo
+    private LogEntity? _logSelecionado;
+    private bool _isDialogVisible = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarLogsAsync();
+    }
+
+    private async Task CarregarLogsAsync()
+    {
+        _logs = await LogRepository.GetAllLogsAsync();
+    }
+
+    private void AbrirDetalhesLog(LogEntity log)
+    {
+        _logSelecionado = log;
+        _isDialogVisible = true; // Ativa a visibilidade e abre a modal
+    }
+
+    private async Task ConfirmarLimpezaLogs()
+    {
+        var dialog = await DialogService.ShowConfirmationAsync(
+            "Tem a certeza de que deseja eliminar permanentemente todos os logs do banco de dados SQLite?",
+            "Sim, Apagar Tudo",
+            "Cancelar",
+            "Aviso: Limpar Base de Dados");
+
+        var resultado = await dialog.Result;
+        
+        if (!resultado.Cancelled)
+        {
+            await LogRepository.DeleteAllLogsAsync();
+            await CarregarLogsAsync(); 
+        }
+    }
+}
+<style>
+    .log-action-delete-button {
+        width: 42px;
+        height: 42px;
+        border-radius: 5%;
+        border: solid 0.08em #000;
+        background: coral !important;
+        color: white;
+        justify-content: end;
+        cursor: pointer;
+        transition: all .2s ease;
+    }
+
+        .log-action-delete-button:hover {
+            transform: scale(1.05);
+        }
+
+        .log-action-delete-button:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+</style>

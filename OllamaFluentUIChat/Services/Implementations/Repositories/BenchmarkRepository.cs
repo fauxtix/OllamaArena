@@ -9,10 +9,12 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
     public class BenchmarkRepository : IBenchmarkRepository
     {
         private readonly IDapperContext _context;
+        private readonly ILogger<BenchmarkRepository> _logger;
 
-        public BenchmarkRepository(IDapperContext context)
+        public BenchmarkRepository(IDapperContext context, ILogger<BenchmarkRepository> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         /// <summary>
@@ -113,7 +115,7 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
                 new { Id = promptId },
                 splitOn: "Id"
             );
-
+            _logger.LogInformation("Obtido benchmark para Prompt ID {PromptId} com {AnswerCount} respostas.", promptId, promptResult?.Answers.Count ?? 0);
             return promptResult;
         }
 
