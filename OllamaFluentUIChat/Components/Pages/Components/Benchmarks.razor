@@ -6,10 +6,10 @@
 @using OllamaFluentUIChat.Services.Interfaces.Repositories
 @inject IBenchmarkRepository BenchmarkRepo
 @inject IDialogService DialogService
+@inject ILogger<App> Logger
 
 <div class="analise-container-horizontal">
 
-    <!-- HEADER GLOBAL DA PÁGINA -->
     <div class="pagina-header">
         <h2>Análise de Qualidade e Métricas</h2>
         <FluentButton Appearance="Appearance.Accent" IconEnd="@(new Icons.Regular.Size16.ArrowClockwise())" OnClick="GetDataAsync">
@@ -32,7 +32,6 @@
     }
     else
     {
-        <!-- SPLITTER PARA PERMITIR REDIMENSIONAR LADO A LADO -->
         <FluentSplitter Orientation="Orientation.Horizontal"
                         BarSize="6"
                         Panel1Size="33.3%"
@@ -40,7 +39,6 @@
                         Panel2MinSize="400px"
                         Style="height: calc(100vh - 120px); width: 100%;">
 
-            <!-- PAINEL ESQUERDO: LISTA DE PROMPTS EM CARDS -->
             <Panel1>
                 <div class="painel-esquerdo-scroll">
                     <div class="lista-cards-prompts">
@@ -67,7 +65,6 @@
                                                   IconStart="@(new Icons.Regular.Size16.Delete())"
                                                   OnClick="@( async () => await ApagarPromptAsync(prompt))"
                                                   StopPropagation="true">
-                                        <!-- StopPropagation impede que o clique no botão selecione o card -->
                                     </FluentButton>
                                 </div>
                             </FluentCard>
@@ -76,11 +73,8 @@
                 </div>
             </Panel1>
 
-            <!-- PAINEL DIREITO: DETALHES DAS RESPOSTAS -->
-            <!-- PAINEL DIREITO: DETALHES DAS RESPOSTAS -->
             <Panel2>
                 <div class="painel-direito-container">
-                    <!-- CLASSE ALTERADA: Remove o scroll daqui -->
                     @if (_selectedPrompt == null)
                     {
                         <div class="placeholder-direito">
@@ -90,7 +84,6 @@
                     }
                     else
                     {
-                        <!-- ESTE BLOCO FICA FIXO NO TOPO -->
                         <div class="detalhe-header">
                             <h3>Respostas Geradas para o Prompt #@_selectedPrompt.Id</h3>
                             <blockquote class="prompt-citacao">"@_selectedPrompt.TextoPrompt"</blockquote>
@@ -104,13 +97,11 @@
                         }
                         else
                         {
-                            <!-- ESTE BLOCO PASSA A TER SCROLL INDEPENDENTE -->
                             <div class="conteudo-respostas-scroll">
                                 <div class="cartoes-respostas-container">
                                     @foreach (var resp in _selectedPrompt.Answers)
                                     {
                                         <div class="cartao-resposta">
-                                            <!-- CABEÇALHO DO CARTÃO (MANTÉM-SE) -->
                                             <div class="cartao-header">
                                                 <div class="modelo-info">
                                                     <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" Color="Color.Neutral" />
@@ -124,7 +115,6 @@
                                                 </div>
                                             </div>
 
-                                            <!-- CORPO DA RESPOSTA (MANTÉM-SE) -->
                                             <div class="cartao-corpo">
                                                 <div class="texto-resposta-raw">
                                                     @((MarkupString)ConverterQuebrasLinha(resp.TextoResposta))
@@ -132,21 +122,16 @@
                                             </div>
 
                                             <hr class="divisor-avaliacao" />
-
-                                            <!-- NOVA SECÇÃO: PAINEL DE AVALIAÇÃO EDITÁVEL -->
                                             <div class="zona-avaliacao-editavel">
                                                 <h5>Avaliação Externa (Juiz de IA)</h5>
 
                                                 <div class="grelha-avaliacao">
-                                                    <!-- COLUNA GEMINI -->
                                                     <div class="coluna-juiz">
                                                         <div class="juiz-titulo">
                                                             <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())" Color="Color.Accent" />
                                                             <span>Google Gemini</span>
                                                         </div>
                                                         <FluentNumberField Min="1" Max="5" @bind-Value="resp.GeminiRating" Label="Rating (1-5)" Style="width: 100%;" />
-
-                                                        <!-- ALTERADO: Mudança para FluentTextArea com 3 linhas de altura -->
                                                         <FluentTextArea @bind-Value="resp.GeminiFeedback"
                                                                         Label="Problemas Encontrados"
                                                                         Rows="3"
@@ -154,7 +139,6 @@
                                                                         Style="width: 100%; resize: vertical;" />
                                                     </div>
 
-                                                    <!-- COLUNA CHATGPT -->
                                                     <div class="coluna-juiz">
                                                         <div class="juiz-titulo">
                                                             <FluentIcon Value="@(new Icons.Regular.Size16.Lightbulb())" Color="Color.Warning" />
@@ -162,7 +146,6 @@
                                                         </div>
                                                         <FluentNumberField Min="1" Max="5" @bind-Value="resp.ChatGptRating" Label="Rating (1-5)" Style="width: 100%;" />
 
-                                                        <!-- ALTERADO: Mudança para FluentTextArea com 3 linhas de altura -->
                                                         <FluentTextArea @bind-Value="resp.ChatGptFeedback"
                                                                         Label="Problemas Encontrados"
                                                                         Rows="3"
@@ -171,7 +154,6 @@
                                                     </div>
                                                 </div>
 
-                                                <!-- BOTÃO PARA ATUALIZAR APENAS ESTA RESPOSTA -->
                                                 <div class="acoes-avaliacao">
                                                     <FluentButton Appearance="Appearance.Lightweight"
                                                                   IconStart="@(new Icons.Regular.Size16.Save())"
@@ -196,7 +178,6 @@
 <FluentDialogProvider />
 
 @code {
-    // O bloco @code permanece exatamente IGUAL ao seu original, não necessita de qualquer alteração na lógica C#
     private List<BenchmarkPrompt>? _promptsList;
     private BenchmarkPrompt? _selectedPrompt;
     private IQueryable<BenchmarkPrompt>? _promptsQueryable;
@@ -234,7 +215,7 @@
                 $"Isto irá remover permanentemente todas as {totalRespostas} respostas associadas (Cascading Delete).",
                 "Sim, Apagar",
                 "Cancelar",
-                "Aviso de Eliminação");
+                "Apagar Prompt");
 
             if (confirmacao == null) return;
             var resultado = await confirmacao.Result;
@@ -251,7 +232,7 @@
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[Erro DialogService]: {ex.Message} -> {ex.StackTrace}");
+            Logger.LogError(ex, $"Erro ao apagar o Prompt #{prompt.Id}");
         }
     }
 
@@ -263,7 +244,6 @@
 
         try
         {
-            // Validação básica local para garantir que os valores estão no intervalo correto
             if (resposta.GeminiRating is < 1 or > 5 || resposta.ChatGptRating is < 1 or > 5)
             {
                 if (DialogService != null)
@@ -273,25 +253,20 @@
                 return;
             }
 
-            // Chamar o método do repositório para fazer o Update na base de dados
-            // Nota: Certifique-se de que adiciona esta assinatura 'UpdateResponseEvaluationAsync' na interface IBenchmarkRepository
             bool guardado = await BenchmarkRepo.UpdateResponseEvaluationAsync(resposta);
 
             if (guardado && DialogService != null)
             {
-                // Notificação leve de sucesso (opcional, pode remover se preferir silencioso)
-                System.Diagnostics.Debug.WriteLine($"[BENCHMARK] Avaliação do modelo {resposta.ModeloNome} guardada com sucesso.");
+                Logger.LogInformation($"[BENCHMARK] Avaliação do modelo {resposta.ModeloNome} guardada com sucesso.");
 
-                // Exemplo de caixa de sucesso nativa do FluentUI
                 await DialogService.ShowInfoAsync($"Avaliação do modelo {resposta.ModeloNome} atualizada com sucesso no SQLite.", "Sucesso");
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[SQLITE ERROR] Falha ao atualizar avaliação: {ex.Message}");
+            Logger.LogError(ex, $"[SQLITE ERROR] Falha ao atualizar avaliação: {ex.Message}");
         }
     }
-
 }
 
 <style>
@@ -469,7 +444,7 @@
 
     .texto-resposta-raw {
         word-break: break-word;
-        max-width: 850px; 
+        max-width: 850px;
     }
 
     /* --- SECÇÃO DE AVALIAÇÃO EDITÁVEL --- */
