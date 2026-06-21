@@ -140,14 +140,14 @@ Ao iniciar a aplicação (`OnInitializedAsync`), o estado é automaticamente rei
 O objetivo desta etapa é avaliar a **qualidade factual** das respostas geradas pelos modelos pequenos, comparando-as com o discernimento de modelos de fronteira (*Frontier Models*).
 
 ### 1. Quais são os campos a preencher?
-No painel direito (2/3) da aplicação, após selecionar um prompt, terá acesso a 2 controlos de input por cada cartão de modelo:
-- **Google Gemini**: Rating (campo numérico de 1 a 5) e Problemas Encontrados (`FluentTextArea` adaptado para 3 linhas com redimensionamento).
-- **OpenAI ChatGPT**: Rating (campo numérico de 1 a 5) e Problemas Encontrados (`FluentTextArea` adaptado para 3 linhas com redimensionamento).
+No painel direito da aplicação, após selecionar um prompt, terá acesso a 2 controlos de input por cada cartão de modelo:
+- **Google Gemini**: Rating (campo numérico de 1 a 5) e Problemas Encontrados adaptado para 3 linhas com redimensionamento).
+- **OpenAI ChatGPT**: Rating (campo numérico de 1 a 5) e Problemas Encontrados adaptado para 3 linhas com redimensionamento).
 
 ### 2. O Processo de Trabalho
 1. Aceda ao ecrã de **Análise de Benchmarks**.
 2. Selecione um Prompt na barra lateral esquerda (1/3).
-3. No painel direito, copie o **Prompt** e a **Resposta** gerada pelo modelo local que deseja avaliar.
+3. No painel direito, copie o **Prompt** e a **Resposta** gerada pelo modelo local que deseja avaliar, usando a opção de "cópia" para cada um.
 4. Abra a interface web do Google Gemini ou do ChatGPT e submeta o prompt de avaliação (descrito abaixo).
 5. Copie a nota e o resumo dos problemas gerados pelos juízes de IA e cole-os nos respetivos campos do seu painel.
 6. Clique em **"Gravar Avaliação"** para persistir as notas no SQLite através do Dapper utilizando reflexão automática de propriedades (`WHERE Id = @Id`).
