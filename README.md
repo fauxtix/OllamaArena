@@ -75,7 +75,8 @@ Para correr os modelos de inteligência artificial localmente na sua máquina, s
 - **macOS**: Transfira o ficheiro `.zip` oficial no site do Ollama, descomprima-o e arraste a aplicação para a pasta *Applications*.
 
 ### 2. Como Carregar os Modelos para Testar
-Abra o seu terminal (CMD, PowerShell ou Bash) e execute os seguintes comandos para descarregar a suite exata de modelos utilizada nos nossos testes:
+Abra o seu terminal (CMD, PowerShell ou Bash) e execute os seguintes comandos para descarregar a suite de modelos utilizada nos testes:
+Claro que poderão ser usados outros, fica à escolha do utilizador
 
 ```bash
 ollama pull qwen2.5:0.5b
