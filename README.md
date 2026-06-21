@@ -171,7 +171,7 @@ Para obter respostas consistentes, envie exatamente o seguinte prompt estruturad
 A página de 'Settings' tem funcionalidades que permitem que o prompt:
 
 - possa ser alterado e guardado na localstorage;
-- copiado para o clipboard.
+- seja copiado para o clipboard.
 
 ---
 
