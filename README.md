@@ -168,6 +168,8 @@ Para obter respostas consistentes, envie exatamente o seguinte prompt estruturad
 > **Instruções de Resposta:**
 > Dá-me estritamente uma nota de 1 a 5 (onde 1 é péssimo/alucinação total e 5 é perfeito/factual) seguido de uma descrição muito breve, com um máximo de duas frases, apontando onde estão os principais problemas (alucinações, inversão de datas, omissões ou erros de tradução). Se não houver problemas, elogia de forma concisa."
 
+Este prompt pode ser alterado e guardado na localstorage) e copiado para o clipboard (aceda á página 'Settings').
+
 ---
 
 ## 📝 Boas Práticas Identificadas no Laboratório
