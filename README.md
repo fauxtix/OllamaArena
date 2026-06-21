@@ -1,6 +1,7 @@
 # Ollama FluentUI Chat & Benchmark Laboratory 🚀
 
-Uma aplicação web moderna desenvolvida em **.NET 10 / Blazor** que funciona como um laboratório de testes locais para Modelos de Linguagem Pequenos (SLMs). A aplicação combina uma interface de chat em tempo real com um painel de telemetria e avaliação de qualidade (*LLM-as-a-Judge*).
+Uma aplicação web desenvolvida em **.NET 10 / Blazor** que funciona como um laboratório de testes locais para Modelos de Linguagem Pequenos (SLMs); poderá evoluir para modelos maiores (nº de parâmetros), dependendo da capacidade da sua GPU (VRAM).
+A aplicação combina uma interface de chat em tempo real com um painel de telemetria e avaliação de qualidade (*LLM-as-a-Judge*).
 
 ---
 
@@ -30,7 +31,7 @@ Para obter respostas com maior maturidade intelectual e menor índice de alucina
   - **Tamanho (Count)**: Contagem total de tokens gerados.
 
 ### 3. Painel de Análise Master-Detail (Layout Proporcional 1/3 e 2/3)
-- **Painel Esquerdo**: Lista cronológica de prompts executados, dispostos em `FluentCard` com efeitos hover e truncagem inteligente.
+- **Painel Esquerdo**: Lista cronológica de prompts executados, com informação sobre o nº de modelos usados; opções para visualizar resultados em forma de gráfico e para apagar prompt.
 - **Painel Direito**: Cabeçalho fixo com o prompt selecionado e área de scroll independente para os cartões de resposta das IAs lado a lado.
 
 ### 4. Avaliação Cruzada (LLM-as-a-Judge)
@@ -74,7 +75,8 @@ Para correr os modelos de inteligência artificial localmente na sua máquina, s
 - **macOS**: Transfira o ficheiro `.zip` oficial no site do Ollama, descomprima-o e arraste a aplicação para a pasta *Applications*.
 
 ### 2. Como Carregar os Modelos para Testar
-Abra o seu terminal (CMD, PowerShell ou Bash) e execute os seguintes comandos para descarregar a suite exata de modelos utilizada nos nossos testes:
+Abra o seu terminal (CMD, PowerShell ou Bash) e execute os seguintes comandos para descarregar a suite de modelos utilizada nos testes:
+Claro que poderão ser usados outros, fica à escolha do utilizador
 
 ```bash
 ollama pull qwen2.5:0.5b
@@ -138,14 +140,14 @@ Ao iniciar a aplicação (`OnInitializedAsync`), o estado é automaticamente rei
 O objetivo desta etapa é avaliar a **qualidade factual** das respostas geradas pelos modelos pequenos, comparando-as com o discernimento de modelos de fronteira (*Frontier Models*).
 
 ### 1. Quais são os campos a preencher?
-No painel direito (2/3) da aplicação, após selecionar um prompt, terá acesso a 2 controlos de input por cada cartão de modelo:
-- **Google Gemini**: Rating (campo numérico de 1 a 5) e Problemas Encontrados (`FluentTextArea` adaptado para 3 linhas com redimensionamento).
-- **OpenAI ChatGPT**: Rating (campo numérico de 1 a 5) e Problemas Encontrados (`FluentTextArea` adaptado para 3 linhas com redimensionamento).
+No painel direito da aplicação, após selecionar um prompt, terá acesso a 2 controlos de input por cada cartão de modelo:
+- **Google Gemini**: Rating (campo numérico de 1 a 5) e Problemas Encontrados adaptado para 3 linhas com redimensionamento).
+- **OpenAI ChatGPT**: Rating (campo numérico de 1 a 5) e Problemas Encontrados adaptado para 3 linhas com redimensionamento).
 
 ### 2. O Processo de Trabalho
 1. Aceda ao ecrã de **Análise de Benchmarks**.
 2. Selecione um Prompt na barra lateral esquerda (1/3).
-3. No painel direito, copie o **Prompt** e a **Resposta** gerada pelo modelo local que deseja avaliar.
+3. No painel direito, copie o **Prompt** e a **Resposta** gerada pelo modelo local que deseja avaliar, usando a opção de "cópia" para cada um.
 4. Abra a interface web do Google Gemini ou do ChatGPT e submeta o prompt de avaliação (descrito abaixo).
 5. Copie a nota e o resumo dos problemas gerados pelos juízes de IA e cole-os nos respetivos campos do seu painel.
 6. Clique em **"Gravar Avaliação"** para persistir as notas no SQLite através do Dapper utilizando reflexão automática de propriedades (`WHERE Id = @Id`).
@@ -165,6 +167,11 @@ Para obter respostas consistentes, envie exatamente o seguinte prompt estruturad
 > 
 > **Instruções de Resposta:**
 > Dá-me estritamente uma nota de 1 a 5 (onde 1 é péssimo/alucinação total e 5 é perfeito/factual) seguido de uma descrição muito breve, com um máximo de duas frases, apontando onde estão os principais problemas (alucinações, inversão de datas, omissões ou erros de tradução). Se não houver problemas, elogia de forma concisa."
+
+A página de 'Settings' tem funcionalidades que permitem que o prompt:
+
+- possa ser alterado e guardado na localstorage;
+- seja copiado para o clipboard.
 
 ---
 
