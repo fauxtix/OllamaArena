@@ -22,28 +22,31 @@
         </FluentButton>
     </FluentStack>
 
-    <!-- 🔵 CHIPS DE FILTRO -->
-    <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="10">
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="10" Style="margin-top:16px;">
 
 
-        <FluentButton Appearance="Appearance.Lightweight"
+        <FluentButton Appearance="Appearance.Outline"
                       OnClick="@(() => FiltrarLogs("warnings"))"
-                      IconStart="@(new Icons.Regular.Size20.Warning())">
+                      IconStart="@(new Icons.Regular.Size20.Warning())"
+                      Style="--neutral-stroke-rest: #ff9800; --neutral-stroke-hover: #e68a00; color: #ff9800;">
             Alertas
         </FluentButton>
 
-        <FluentButton Appearance="Appearance.Lightweight"
+        <FluentButton Appearance="Appearance.Outline"
                       OnClick="@(() => FiltrarLogs("errors"))"
-                      IconStart="@(new Icons.Regular.Size20.ErrorCircle())">
+                      IconStart="@(new Icons.Regular.Size20.ErrorCircle())"
+                      Style="--neutral-stroke-rest: #d32f2f; --neutral-stroke-hover: #c62828; color: #d32f2f;">
             Erros
         </FluentButton>
-        <FluentButton Appearance="Appearance.Lightweight"
+
+        <FluentButton Appearance="Appearance.Outline"
                       OnClick="@(() => FiltrarLogs("all"))"
-                      IconStart="@(new Icons.Regular.Size20.Filter())">
+                      IconStart="@(new Icons.Regular.Size20.Filter())"
+                      Style="--neutral-stroke-rest: #0078d4; --neutral-stroke-hover: #106ebe; color: #ffffff;">
             Todos
         </FluentButton>
     </FluentStack>
-    <div class="separator-line"></div>
+    @* <div class="separator-line"></div> *@
     
     <!-- Grelha de Dados -->
     @if (_logsFiltrados == null)
@@ -63,7 +66,7 @@
     }
     else
     {
-        <div style="width: 100%; overflow-x: auto;">
+        <div style="width: 75%; overflow-x: auto;">
             <FluentDataGrid Items="@_logsFiltrados.AsQueryable()" Pagination="@_pagination"
                             TGridItem="LogEntity" ResizableColumns="true">
 
@@ -118,7 +121,7 @@
     private List<LogEntity>? _logs;
     private List<LogEntity>? _logsFiltrados;
 
-    private PaginationState _pagination = new() { ItemsPerPage = 10 };
+    private PaginationState _pagination = new() { ItemsPerPage = 12};
     private GridSort<LogEntity> _sortByLevel = GridSort<LogEntity>.ByAscending(p => p.Level ?? "");
 
     private LogEntity? _logSelecionado;

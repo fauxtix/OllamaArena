@@ -119,6 +119,21 @@ namespace OllamaFluentUIChat.Components.Pages.Components
         private string ConverterQuebrasLinha(string? texto) =>
             texto?.Replace("\n", "<br />") ?? "";
 
+        private async Task CopyToClipboardAsync(string? texto)
+        {
+            if (string.IsNullOrEmpty(texto)) return;
+
+            try
+            {
+                // Executa o comando nativo do navegador para escrita na área de transferência
+                await JS.InvokeVoidAsync("navigator.clipboard.writeText", texto);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Erro ao tentar copiar texto para o Clipboard.");
+            }
+        }
+
         private void AbrirDialogoGrafico(BenchmarkPrompt prompt)
         {
             _promptParaGrafico = prompt;

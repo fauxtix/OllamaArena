@@ -2,7 +2,6 @@
 @rendermode InteractiveServer
 
 @using Microsoft.FluentUI.AspNetCore.Components
-@using OllamaFluentUIChat.Models.Entities
 @using OllamaFluentUIChat.Services.Interfaces.Repositories
 @inject IBenchmarkRepository BenchmarkRepo
 @inject IDialogService DialogService
@@ -108,7 +107,18 @@
                     {
                         <div class="detalhe-header">
                             <h3>Respostas Geradas para o Prompt #@_selectedPrompt.Id</h3>
-                            <blockquote class="prompt-citacao">"@_selectedPrompt.TextoPrompt"</blockquote>
+
+                            @* Estrutura alinhada com botão para copiar o Texto do Prompt *@
+                            <div style="display: flex; align-items: flex-start; gap: 10px; margin-top: 10px;">
+                                <blockquote class="prompt-citacao" style="flex: 1; margin: 0;">
+                                    "@_selectedPrompt.TextoPrompt"
+                                </blockquote>
+                                <FluentButton Appearance="Appearance.Lightweight"
+                                              IconStart="@(new Icons.Regular.Size24.Copy())"
+                                              OnClick="@(() => CopyToClipboardAsync(_selectedPrompt.TextoPrompt))"
+                                              Title="Copiar Prompt">
+                                </FluentButton>
+                            </div>
                         </div>
 
                         @if (!_selectedPrompt.Answers.Any())
@@ -129,11 +139,18 @@
                                                     <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" Color="Color.Neutral" />
                                                     <h4>@resp.ModeloNome</h4>
                                                 </div>
-                                                <div class="metricas-tags">
+                                                <div class="metricas-tags" style="display: flex; align-items: center; gap: 4px;">
                                                     <FluentBadge Appearance="Appearance.Accent">@resp.TokensPorSegundo T/s</FluentBadge>
                                                     <FluentBadge Appearance="Appearance.Neutral">Eval: @(resp.TempoPuroMs)ms</FluentBadge>
                                                     <FluentBadge Appearance="Appearance.Neutral">Load: @(resp.TempoCargaMs)ms</FluentBadge>
                                                     <FluentBadge Appearance="Appearance.Neutral">Tokens: @resp.TamanhoTokens</FluentBadge>
+
+                                                    @* Botão discreto para copiar a resposta deste modelo específico *@
+                                                    <FluentButton Appearance="Appearance.Stealth"
+                                                                  IconStart="@(new Icons.Regular.Size24.Copy())"
+                                                                  OnClick="@(() => CopyToClipboardAsync(resp.TextoResposta))"
+                                                                  Title="Copiar Resposta"
+                                                                  Style="padding: 0; min-width: 32px;" />
                                                 </div>
                                             </div>
 
