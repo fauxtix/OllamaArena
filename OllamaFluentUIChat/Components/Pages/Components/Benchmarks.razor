@@ -7,6 +7,7 @@
 @inject IBenchmarkRepository BenchmarkRepo
 @inject IDialogService DialogService
 @inject ILogger<App> Logger
+@inject IJSRuntime JS
 
 <div class="analise-container-horizontal">
 
@@ -41,35 +42,56 @@
 
             <Panel1>
                 <div class="painel-esquerdo-scroll">
-                    <div class="lista-cards-prompts">
-                        @foreach (var prompt in _promptsList)
-                        {
-                            <FluentCard MinimalStyle="true"
-                                        Class="@($"card-prompt-item {(prompt == _selectedPrompt ? "card-selecionado" : "")}")"
-                                        @onclick="@(() => SeleccionarPrompt(prompt))">
 
-                                <div class="card-prompt-header">
-                                    <span class="prompt-id-badge">#@prompt.Id</span>
-                                    <span class="prompt-data">@prompt.DataCriacaoFormatada</span>
-                                </div>
+                    @if (_mostrarGrafico && _promptGrafico != null)
+                    {
+                        <div class="grafico-container">
+                            <h4>Gráfico do Prompt #@_promptGrafico.Id</h4>
+                            <canvas id="graficoModelos"></canvas>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="lista-cards-prompts">
+                            @foreach (var prompt in _promptsList)
+                            {
+                                <FluentCard MinimalStyle="true"
+                                            Class="@($"card-prompt-item {(prompt == _selectedPrompt ? "card-selecionado" : "")}")"
+                                            @onclick="@(() => SeleccionarPrompt(prompt))">
 
-                                <div class="card-prompt-body">
-                                    <p class="prompt-texto-curto">@prompt.TextoPrompt</p>
-                                </div>
+                                    <div class="card-prompt-header">
+                                        <span class="prompt-id-badge">#@prompt.Id</span>
+                                        <span class="prompt-data">@prompt.DataCriacaoFormatada</span>
+                                    </div>
 
-                                <div class="card-prompt-footer">
-                                    <FluentBadge Appearance="Appearance.Neutral">@(prompt.Answers?.Count ?? 0) modelos</FluentBadge>
+                                    <div class="card-prompt-body">
+                                        <p class="prompt-texto-curto">@prompt.TextoPrompt</p>
+                                    </div>
 
-                                    <FluentButton Appearance="Appearance.Stealth"
-                                                  Color="Color.Error"
-                                                  IconStart="@(new Icons.Regular.Size16.Delete())"
-                                                  OnClick="@( async () => await ApagarPromptAsync(prompt))"
-                                                  StopPropagation="true">
-                                    </FluentButton>
-                                </div>
-                            </FluentCard>
-                        }
-                    </div>
+                                    <div class="card-prompt-footer">
+
+                                        <FluentBadge Appearance="Appearance.Neutral">
+                                            @(prompt.Answers?.Count ?? 0) modelos
+                                        </FluentBadge>
+
+                                        <FluentButton Appearance="Appearance.Stealth"
+                                                      IconStart="@(new Icons.Regular.Size16.LayoutInfographic())"
+                                                      OnClick="@(() => AbrirDialogoGrafico(prompt))"
+                                                      StopPropagation="true">
+                                        </FluentButton>
+
+                                        <FluentButton Appearance="Appearance.Stealth"
+                                                      Color="Color.Error"
+                                                      IconStart="@(new Icons.Regular.Size16.Delete())"
+                                                      OnClick="@( async () => await ApagarPromptAsync(prompt))"
+                                                      StopPropagation="true">
+                                        </FluentButton>
+
+                                    </div>
+                                </FluentCard>
+                            }
+                        </div>
+                    }
                 </div>
             </Panel1>
 
@@ -176,98 +198,11 @@
 </div>
 
 <FluentDialogProvider />
+<BenchmarkChartDialog Prompt="@_promptParaGrafico"
+                      Visible="@_dialogGraficoVisible"
+                      VisibleChanged="@((v) => _dialogGraficoVisible = v)" />
 
-@code {
-    private List<BenchmarkPrompt>? _promptsList;
-    private BenchmarkPrompt? _selectedPrompt;
-    private IQueryable<BenchmarkPrompt>? _promptsQueryable;
-    private PaginationState _pagination = new() { ItemsPerPage = 5 };
 
-    protected override async Task OnInitializedAsync() => await GetDataAsync();
-
-    private async Task GetDataAsync()
-    {
-        _promptsList = null;
-        StateHasChanged();
-        _promptsList = await BenchmarkRepo.GetAllBenchmarksAsync();
-        _promptsQueryable = _promptsList?.AsQueryable();
-        if (_selectedPrompt != null && _promptsList != null)
-        {
-            _selectedPrompt = _promptsList.FirstOrDefault(p => p.Id == _selectedPrompt.Id);
-        }
-        StateHasChanged();
-    }
-
-    private void SeleccionarPrompt(BenchmarkPrompt prompt)
-    {
-        _selectedPrompt = prompt;
-        StateHasChanged();
-    }
-
-    private async Task ApagarPromptAsync(BenchmarkPrompt prompt)
-    {
-        if (prompt == null || DialogService == null) return;
-        try
-        {
-            int totalRespostas = prompt.Answers?.Count ?? 0;
-            var confirmacao = await DialogService.ShowConfirmationAsync(
-                $"Tem a certeza que deseja apagar o Prompt #{prompt.Id}? " +
-                $"Isto irá remover permanentemente todas as {totalRespostas} respostas associadas (Cascading Delete).",
-                "Sim, Apagar",
-                "Cancelar",
-                "Apagar Prompt");
-
-            if (confirmacao == null) return;
-            var resultado = await confirmacao.Result;
-
-            if (resultado != null && !resultado.Cancelled)
-            {
-                bool eliminado = await BenchmarkRepo.DeletePromptAndHistoryAsync(prompt.Id);
-                if (eliminado)
-                {
-                    if (_selectedPrompt?.Id == prompt.Id) _selectedPrompt = null;
-                    await GetDataAsync();
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, $"Erro ao apagar o Prompt #{prompt.Id}");
-        }
-    }
-
-    private string ConverterQuebrasLinha(string? texto) => texto?.Replace("\n", "<br />") ?? "";
-
-    private async Task GuardarAvaliacaoAsync(BenchmarkResponse resposta)
-    {
-        if (resposta == null || BenchmarkRepo == null) return;
-
-        try
-        {
-            if (resposta.GeminiRating is < 1 or > 5 || resposta.ChatGptRating is < 1 or > 5)
-            {
-                if (DialogService != null)
-                {
-                    await DialogService.ShowErrorAsync("O rating introduzido deve situar-se estritamente entre 1 e 5.", "Erro de Validação");
-                }
-                return;
-            }
-
-            bool guardado = await BenchmarkRepo.UpdateResponseEvaluationAsync(resposta);
-
-            if (guardado && DialogService != null)
-            {
-                Logger.LogInformation($"[BENCHMARK] Avaliação do modelo {resposta.ModeloNome} guardada com sucesso.");
-
-                await DialogService.ShowInfoAsync($"Avaliação do modelo {resposta.ModeloNome} atualizada com sucesso no SQLite.", "Sucesso");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, $"[SQLITE ERROR] Falha ao atualizar avaliação: {ex.Message}");
-        }
-    }
-}
 
 <style>
     .analise-container-horizontal {

@@ -1,0 +1,168 @@
+﻿@using OllamaFluentUIChat.Models.Entities
+
+@inject IJSRuntime JS
+
+@* Injeção de estilo específica para contornar o bloqueio de tamanho do Shadow DOM *@
+<style>
+    fluent-dialog.dialogo-benchmark-largo::part(control) {
+        width: 1100px !important;
+        max-width: 95vw !important;
+    }
+</style>
+
+@* Adicionada a propriedade Class para mapear o estilo acima *@
+<FluentDialog Hidden="@(!Visible)"
+              Modal="true"
+              Class="dialogo-benchmark-largo"
+              Height="auto"
+              TrapFocus="true"
+              AriaLabel="Gráfico de Benchmark">
+
+    <FluentDialogHeader Visible="true">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
+            <FluentIcon Value="@(new Icons.Regular.Size24.DataHistogram())" />
+            <FluentLabel Typo="Typography.PaneHeader">
+                Gráficos de Benchmark do Prompt #@Prompt?.Id
+            </FluentLabel>
+        </FluentStack>
+    </FluentDialogHeader>
+
+    <FluentDialogBody>
+        @if (Prompt != null)
+        {
+            <FluentStack Orientation="Orientation.Horizontal"
+                         HorizontalAlignment="HorizontalAlignment.Center"
+                         VerticalAlignment="VerticalAlignment.Top"
+                         Wrap="true"
+                         Style="width: 100%; gap: 4%;">
+
+                @* Gráfico 1: Tempos (Esquerda) *@
+                <div style="width: 48%; min-width: 350px;">
+                    <FluentStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" VerticalAlignment="VerticalAlignment.Center" Style="margin-bottom: 10px;">
+                        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
+                            Métricas de Tempo (ms)
+                        </FluentLabel>
+                        <FluentButton Appearance="Appearance.Stealth"
+                                      IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                      OnClick="@(() => DescarregarImagemAsync("graficoTempo", $"benchmark_tempo_prompt_{Prompt.Id}"))"
+                                      Title="Descarregar como PNG" />
+                    </FluentStack>
+                    <canvas id="graficoTempo"></canvas>
+                </div>
+
+                @* Gráfico 2: Tokens (Direita) *@
+                <div style="width: 48%; min-width: 350px;">
+                    <FluentStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" VerticalAlignment="VerticalAlignment.Center" Style="margin-bottom: 10px;">
+                        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
+                            Métricas de Tokens
+                        </FluentLabel>
+                        <FluentButton Appearance="Appearance.Stealth"
+                                      IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                      OnClick="@(() => DescarregarImagemAsync("graficoTokens", $"benchmark_tokens_prompt_{Prompt.Id}"))"
+                                      Title="Descarregar como PNG" />
+                    </FluentStack>
+                    <canvas id="graficoTokens"></canvas>
+                </div>
+
+            </FluentStack>
+        }
+        else
+        {
+            <p>Nenhum prompt selecionado.</p>
+        }
+    </FluentDialogBody>
+
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="Fechar">Fechar</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    [Parameter, EditorRequired] public BenchmarkPrompt? Prompt { get; set; }
+    [Parameter, EditorRequired] public bool Visible { get; set; }
+    [Parameter, EditorRequired] public EventCallback<bool> VisibleChanged { get; set; }
+
+    private Dictionary<string, string> _coresDosModelos = new();
+
+    // Flag de controlo para isolar as chamadas JS Interop e garantir que o tamanho do diálogo é fixado
+    private bool _graficoJaRenderizado = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Visible && Prompt != null && !_graficoJaRenderizado)
+        {
+            _graficoJaRenderizado = true;
+            await Task.Delay(100); // Dá estabilidade ao renderizador do FluentUI antes do desenho do canvas
+            await RenderizarGraficosAsync();
+        }
+        else if (!Visible)
+        {
+            _graficoJaRenderizado = false; // Permite uma nova renderização na próxima vez que o diálogo abrir
+        }
+    }
+
+    private async Task RenderizarGraficosAsync()
+    {
+        if (Prompt?.Answers == null || !Prompt.Answers.Any())
+            return;
+
+        _coresDosModelos.Clear();
+        foreach (var modeloNome in Prompt.Answers.Select(a => a.ModeloNome).Distinct())
+        {
+            _coresDosModelos[modeloNome] = GerarCorAleatoria();
+        }
+
+        var dadosTempo = new
+        {
+            labels = new List<string> { "Eval (ms)", "Load (ms)" },
+            datasets = Prompt.Answers.Select(a =>
+            {
+                var cor = _coresDosModelos[a.ModeloNome];
+                return new
+                {
+                    label = a.ModeloNome,
+                    backgroundColor = cor,
+                    borderColor = cor,
+                    borderWidth = 1,
+                    data = new List<double> { a.TempoPuroMs, a.TempoCargaMs }
+                };
+            }).ToList()
+        };
+
+        var dadosTokens = new
+        {
+            labels = new List<string> { "Tokens/s", "Total de Tokens" },
+            datasets = Prompt.Answers.Select(a =>
+            {
+                var cor = _coresDosModelos[a.ModeloNome];
+                return new
+                {
+                    label = a.ModeloNome,
+                    backgroundColor = cor,
+                    borderColor = cor,
+                    borderWidth = 1,
+                    data = new List<double> { a.TokensPorSegundo, a.TamanhoTokens }
+                };
+            }).ToList()
+        };
+
+        await JS.InvokeVoidAsync("benchmarkCharts.renderGrafico", "graficoTempo", dadosTempo, true, "ms");
+        await JS.InvokeVoidAsync("benchmarkCharts.renderGrafico", "graficoTokens", dadosTokens, false, "tokens");
+    }
+
+    private async Task DescarregarImagemAsync(string canvasId, string nomeFicheiro)
+    {
+        await JS.InvokeVoidAsync("benchmarkCharts.downloadGrafico", canvasId, nomeFicheiro);
+    }
+
+    private string GerarCorAleatoria()
+    {
+        var rnd = new Random();
+        return $"rgba({rnd.Next(255)}, {rnd.Next(255)}, {rnd.Next(255)}, 0.7)";
+    }
+
+    private async Task Fechar()
+    {
+        await VisibleChanged.InvokeAsync(false);
+    }
+}

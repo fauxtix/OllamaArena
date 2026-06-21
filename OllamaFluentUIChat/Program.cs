@@ -5,6 +5,7 @@ using OllamaFluentUIChat.Services.Implementations.Services;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
 using Serilog;
+using Syncfusion.Blazor;
 
 // 1. Logger inicial para capturar o terminal
 Log.Logger = new LoggerConfiguration()
@@ -32,6 +33,9 @@ try
     // Add services to the container.
     builder.Services.AddRazorComponents()
         .AddInteractiveServerComponents();
+
+    builder.Services.AddSyncfusionBlazor();
+    Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JHaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdlWXlccHVQQmFfVUR0WEZWYEo=");
 
     builder.Services.AddFluentUIComponents();
     builder.Services.AddScoped(sp => new HttpClient());
