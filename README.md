@@ -1,6 +1,7 @@
 # Ollama FluentUI Chat & Benchmark Laboratory 🚀
 
-Uma aplicação web moderna desenvolvida em **.NET 10 / Blazor** que funciona como um laboratório de testes locais para Modelos de Linguagem Pequenos (SLMs). A aplicação combina uma interface de chat em tempo real com um painel de telemetria e avaliação de qualidade (*LLM-as-a-Judge*).
+Uma aplicação web desenvolvida em **.NET 10 / Blazor** que funciona como um laboratório de testes locais para Modelos de Linguagem Pequenos (SLMs); poderá evoluir para modelos, dependendo da qualidade da sua GPU).
+A aplicação combina uma interface de chat em tempo real com um painel de telemetria e avaliação de qualidade (*LLM-as-a-Judge*).
 
 ---
 
