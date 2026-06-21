@@ -66,6 +66,7 @@
                                     <div class="card-prompt-body">
                                         <p class="prompt-texto-curto">@prompt.TextoPrompt</p>
                                     </div>
+                                    <div class="separator-line"></div>
 
                                     <div class="card-prompt-footer">
 
@@ -74,15 +75,17 @@
                                         </FluentBadge>
 
                                         <FluentButton Appearance="Appearance.Stealth"
-                                                      IconStart="@(new Icons.Regular.Size16.LayoutInfographic())"
+                                                      IconStart="@(new Icons.Regular.Size24.LayoutInfographic())"
                                                       OnClick="@(() => AbrirDialogoGrafico(prompt))"
+                                                      Title="Mostrar resultados em gráfico"
                                                       StopPropagation="true">
                                         </FluentButton>
 
                                         <FluentButton Appearance="Appearance.Stealth"
                                                       Color="Color.Error"
-                                                      IconStart="@(new Icons.Regular.Size16.Delete())"
+                                                      IconStart="@(new Icons.Regular.Size24.Delete())"
                                                       OnClick="@( async () => await ApagarPromptAsync(prompt))"
+                                                      Title="Apagar registo"
                                                       StopPropagation="true">
                                         </FluentButton>
 
@@ -440,4 +443,13 @@
         justify-content: flex-end;
         margin-top: 8px;
     }
+
+    .separator-line {
+        width: 100%;
+        height: 1px;
+        margin: 0;
+        background-color: #d1d1d1;
+        margin: 10px 0 5px 0;
+    }
+
 </style>

@@ -10,20 +10,20 @@
                    OnLuminanceChanged="@OnLuminanceChanged"
                    StorageName="theme" />
 
-<div style="padding: 20px; max-width: 700px;">
+<div style="padding: 10px; max-width: 700px;">
 
     <FluentGrid>
 
         <!-- Tema -->
-        <FluentGridItem>
+        @* <FluentGridItem>
             <FluentSelect Label="Theme"
                           Width="250px"
                           Items="@(Enum.GetValues<DesignThemeModes>())"
                           @bind-SelectedOption="@Mode" />
-        </FluentGridItem>
+        </FluentGridItem> *@
 
         <!-- Cor -->
-        <FluentGridItem>
+        @* <FluentGridItem>
             <FluentSelect Label="Color"
                           Items="@(Enum.GetValues<OfficeColor>().Select(i => (OfficeColor?)i))"
                           Height="200px"
@@ -42,6 +42,40 @@
             <FluentButton Appearance="Appearance.Accent" OnClick="PickRandomColor">
                 Feeling lucky?
             </FluentButton>
+        </FluentGridItem> *@
+
+        <!-- Configuração do Prompt do Juiz de IA -->
+        <FluentGridItem xs="12" Style="margin-top: 8px;">
+            <FluentLabel Style="font-size: 18px; font-weight: bold;">
+                Configuração do Juiz de IA (Prompt System)
+            </FluentLabel>
+            <p style="font-size: 13px; opacity: 0.8; margin-top: 4px; margin-bottom: 12px;">
+                Personalize as instruções que envia para o Gemini/ChatGPT quando vai avaliar as respostas dos modelos locais.
+            </p>
+
+            <FluentTextArea @bind-Value="JuizPrompt"
+                            Rows="10"
+                            Style="width: 100%; max-width: 600px; margin-top:8px; resize: vertical;" />
+
+            <FluentStack Orientation="Orientation.Horizontal" Gap="10" Style="margin-top: 12px;">
+                <FluentButton Appearance="Appearance.Accent"
+                              IconStart="@(new Icons.Regular.Size16.Save())"
+                              OnClick="SaveJuizPrompt">
+                    Gravar Instruções
+                </FluentButton>
+
+                @* NOVO BOTÃO: Copiar o texto atual da TextArea diretamente para a memória *@
+                <FluentButton Appearance="Appearance.Lightweight"
+                              IconStart="@(new Icons.Regular.Size16.Copy())"
+                              OnClick="CopiarPromptParaClipboard">
+                    Copiar para o Clipboard
+                </FluentButton>
+
+                <FluentButton Appearance="Appearance.Neutral"
+                              OnClick="ResetJuizPrompt">
+                    Restaurar Padrão
+                </FluentButton>
+            </FluentStack>
         </FluentGridItem>
 
         <!-- Gestão de Modelos -->
@@ -88,9 +122,17 @@
     public DesignThemeModes Mode { get; set; }
     public OfficeColor? OfficeColor { get; set; }
 
-    // Gestão dinâmica de modelos
     private List<string> Models = new();
     private string NewModel = "";
+
+    private string JuizPrompt = "";
+    private const string DefaultJuizPrompt = @"Age como um juiz rigoroso de Inteligência Artificial. Analisa a qualidade factual, lógica e gramatical da resposta gerada por um modelo local pequeno para o prompt fornecido.
+
+Prompt Original Submetido: [Colar aqui o 'Prompt Executado' da sua app]
+
+Resposta Gerada pelo Modelo Local: [Colar aqui o texto da resposta do cartão da sua app]
+
+Instruções de Resposta: Dá-me estritamente uma nota de 1 a 5 (onde 1 é péssimo/alucinação total e 5 é perfeito/factual) seguido de uma descrição muito breve, com um máximo de duas frases, apontando onde estão os principais problemas (alucinações, inversão de datas, omissões ou erros de tradução). Se não houver problemas, elogia de forma concisa.";
 
     protected override async Task OnInitializedAsync()
     {
@@ -105,6 +147,36 @@
         {
             Models = new();
         }
+
+        try
+        {
+            var storedPrompt = await JS.InvokeAsync<string>("localStorage.getItem", "juiz_ai_prompt");
+            JuizPrompt = string.IsNullOrEmpty(storedPrompt) ? DefaultJuizPrompt : storedPrompt;
+        }
+        catch
+        {
+            JuizPrompt = DefaultJuizPrompt;
+        }
+    }
+
+    private async Task SaveJuizPrompt()
+    {
+        await JS.InvokeVoidAsync("localStorage.setItem", "juiz_ai_prompt", JuizPrompt);
+    }
+
+    // NOVO MÉTODO: Envia o conteúdo do input para o Clipboard utilizando o utilitário nativo do browser
+    private async Task CopiarPromptParaClipboard()
+    {
+        if (!string.IsNullOrWhiteSpace(JuizPrompt))
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", JuizPrompt);
+        }
+    }
+
+    private async Task ResetJuizPrompt()
+    {
+        JuizPrompt = DefaultJuizPrompt;
+        await SaveJuizPrompt();
     }
 
     private async Task AddModel()
