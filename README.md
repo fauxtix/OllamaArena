@@ -31,7 +31,7 @@ Para obter respostas com maior maturidade intelectual e menor índice de alucina
   - **Tamanho (Count)**: Contagem total de tokens gerados.
 
 ### 3. Painel de Análise Master-Detail (Layout Proporcional 1/3 e 2/3)
-- **Painel Esquerdo**: Lista cronológica de prompts executados, com informação sobre o nº de modelos usados; tem opções para visualizar resultados em forma de gráfico e opção para apagar cada prompt.
+- **Painel Esquerdo**: Lista cronológica de prompts executados, com informação sobre o nº de modelos usados; opções para visualizar resultados em forma de gráfico e para apagar prompt.
 - **Painel Direito**: Cabeçalho fixo com o prompt selecionado e área de scroll independente para os cartões de resposta das IAs lado a lado.
 
 ### 4. Avaliação Cruzada (LLM-as-a-Judge)
