@@ -1,0 +1,72 @@
+﻿@using OllamaFluentUIChat.Models.Entities
+
+<div class="grelha-avaliacao">
+    <div class="coluna-juiz">
+        <div class="juiz-header">
+            <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())"
+                        Color="Color.Accent" />
+            <span>Google Gemini</span>
+        </div>
+
+        <FluentNumberField Min="1" Max="5"
+                           @bind-Value="Response.GeminiRating"
+                           Label="Rating" />
+
+        <FluentTextArea @bind-Value="Response.GeminiFeedback"
+                        Label="Feedback"
+                        Rows="6" />
+    </div>
+
+    <div class="coluna-juiz">
+        <div class="juiz-header">
+            <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())"
+                        Color="Color.Accent" />
+
+            <span>OpenAI ChatGPT</span>
+        </div>
+
+        <FluentNumberField Min="1" Max="5"
+                           @bind-Value="Response.ChatGptRating"
+                           Label="Rating" />
+
+        <FluentTextArea @bind-Value="Response.ChatGptFeedback"
+                        Label="Feedback"
+                        Rows="6" />
+    </div>
+
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public BenchmarkResponse Response { get; set; } = default!;
+}
+
+<style>
+    .grelha-avaliacao {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+
+    .coluna-juiz {
+        flex: 1;
+        background-color: var(--neutral-layer-2);
+        padding: 12px;
+        border-radius: 4px;
+        border: 1px solid var(--neutral-stroke-divider);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .juiz-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .juiz-header span {
+            font-weight: 600;
+            color: var(--neutral-foreground-rest);
+        }
+</style>

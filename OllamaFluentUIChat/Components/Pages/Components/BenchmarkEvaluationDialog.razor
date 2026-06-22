@@ -1,0 +1,126 @@
+﻿@using OllamaFluentUIChat.Models.Entities
+@using OllamaFluentUIChat.Services.Interfaces.Repositories
+
+<FluentDialog Hidden="@(!Visible)"
+              Modal="true"
+              Class="dialogo-avaliacao-benchmark"
+              Style="--dialog-width: 1000px; height:699px;"
+              TrapFocus="true"
+              AriaLabel="Avaliação Benchmark">
+
+    <FluentDialogHeader Visible="true">
+        <FluentStack Orientation="Orientation.Horizontal"
+                     VerticalAlignment="VerticalAlignment.Center">
+
+            <div style="display: flex; align-items: flex-start; gap: 10px; margin-top: 10px;">
+                <FluentIcon Value="@(new Icons.Regular.Size24.ClipboardCode())" />
+                <FluentLabel Typo="Typography.Body">
+                    Avaliação - @Response?.ModeloNome
+                </FluentLabel>
+
+                <blockquote class="prompt-citacao" style="flex: 1; margin: 0;">
+                    "@prompt"
+                </blockquote>
+            </div>
+        </FluentStack>
+    </FluentDialogHeader>
+
+    <FluentDialogBody Style="height:70%;">
+
+        @if (Response != null)
+        {
+            <BenchmarkEvaluation Response="Response" />
+        }
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <FluentSpacer />
+        <FluentButton Appearance="Appearance.Accent"
+                      Disabled="@IsDisabled()"
+                      OnClick="Guardar">
+            Guardar avaliação
+        </FluentButton>
+
+        <FluentButton Appearance="Appearance.Stealth"
+                      OnClick="Fechar">
+            Fechar
+        </FluentButton>
+
+    </FluentDialogFooter>
+
+</FluentDialog>
+
+@code {
+    [Inject] IBenchmarkRepository BenchmarkRepository { get; set; } = default!;
+
+    [Parameter, EditorRequired] public BenchmarkResponse? Response { get; set; }
+
+    [Parameter, EditorRequired] public bool Visible { get; set; }
+    [Parameter, EditorRequired] public EventCallback<bool> VisibleChanged { get; set; }
+
+    [Parameter] public EventCallback<BenchmarkResponse> OnSave { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private string? prompt;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Response is not null)
+        {
+            var promptId = Response.PromptId;
+            var resp = await BenchmarkRepository.GetBenchmarkByIdAsync(promptId);
+            prompt = resp?.TextoPrompt;
+        }
+    }
+    private async Task Guardar()
+    {
+        if (Response is not null)
+            await OnSave.InvokeAsync(Response);
+
+        await Fechar();
+    }
+
+    private async Task Fechar()
+    {
+        await OnClose.InvokeAsync();
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    private bool IsDisabled()
+    {
+        return
+            Response?.GeminiRating != null ||
+            Response?.ChatGptRating != null ||
+            !string.IsNullOrWhiteSpace(Response?.GeminiFeedback) ||
+            !string.IsNullOrWhiteSpace(Response?.ChatGptFeedback);
+    }
+}
+<style>
+    .dialogo-avaliacao-benchmark {
+        border-radius: 10px;
+    }
+
+        .dialogo-avaliacao-benchmark .fluent-dialog-body {
+            padding: 16px;
+        }
+
+    .prompt-citacao {
+        margin: 8px 0 16px 0;
+        padding-left: 12px;
+        border-left: 3px solid var(--neutral-stroke-rest);
+        font-style: italic;
+        color: var(--neutral-foreground-hint);
+    }
+
+    .detalhe-header {
+        flex: 0 0 auto;
+        background-color: var(--neutral-layer-1);
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--neutral-stroke-divider);
+        margin-bottom: 12px;
+    }
+
+        .detalhe-header h3 {
+            margin-top: 0;
+        }
+
+</style>

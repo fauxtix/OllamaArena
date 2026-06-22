@@ -115,11 +115,6 @@
                                 <blockquote class="prompt-citacao" style="flex: 1; margin: 0;">
                                     "@_selectedPrompt.TextoPrompt"
                                 </blockquote>
-                                @* <FluentButton Appearance="Appearance.Lightweight"
-                                              IconStart="@(new Icons.Regular.Size24.Copy())"
-                                              OnClick="@(() => CopyToClipboardAsync(_selectedPrompt.TextoPrompt))"
-                                              Title="Copiar Prompt">
-                                </FluentButton> *@
                             </div>
                         </div>
 
@@ -146,7 +141,7 @@
                                                     <FluentBadge Appearance="Appearance.Neutral">Eval: @(resp.TempoPuroMs)ms</FluentBadge>
                                                     <FluentBadge Appearance="Appearance.Neutral">Load: @(resp.TempoCargaMs)ms</FluentBadge>
                                                     <FluentBadge Appearance="Appearance.Neutral">Tokens: @resp.TamanhoTokens</FluentBadge>
-                                                    
+
                                                     <FluentButton Appearance="Appearance.Stealth"
                                                                   IconStart="@(new Icons.Regular.Size24.ClipboardCode())"
                                                                   Color="Color.Accent"
@@ -158,52 +153,55 @@
 
                                             <div class="cartao-corpo">
                                                 <div class="texto-resposta-raw">
-                                                    @((MarkupString)FormatMessage(resp.TextoResposta))
-
-                                                    @* @((MarkupString)ConverterQuebrasLinha(resp.TextoResposta)) *@
+                                                    @((MarkupString)ConverterQuebrasLinha(resp.TextoResposta))
                                                 </div>
                                             </div>
 
                                             <hr class="divisor-avaliacao" />
-                                            <div class="zona-avaliacao-editavel">
+                                            <div style="display:flex; justify-content:space-between; align-items:center;">
                                                 <h5>Avaliação Externa (Juiz de IA)</h5>
 
-                                                <div class="grelha-avaliacao">
-                                                    <div class="coluna-juiz">
-                                                        <div class="juiz-titulo">
-                                                            <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())" Color="Color.Accent" />
-                                                            <span>Google Gemini</span>
-                                                        </div>
-                                                        <FluentNumberField Min="1" Max="5" @bind-Value="resp.GeminiRating" Label="Rating (1-5)" Style="width: 100%;" />
-                                                        <FluentTextArea @bind-Value="resp.GeminiFeedback"
-                                                                        Label="Feedback recebido"
-                                                                        Rows="8"
-                                                                        Placeholder="Feedback..."
-                                                                        Style="width: 100%; resize: vertical;" />
+                                                <FluentButton Appearance="Appearance.Stealth"
+                                                              IconStart="@(new Icons.Regular.Size16.Edit())"
+                                                              OnClick="@(() => AbrirAvaliacao(resp))">
+                                                    Avaliar
+                                                </FluentButton>
+                                            </div >
+                                            <div class="grelha-avaliacao">
+                                                <div class="coluna-juiz">
+                                                    <div class="juiz-titulo">
+                                                        <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())" Color="Color.Accent" />
+                                                        <span>Google Gemini</span>
                                                     </div>
-
-                                                    <div class="coluna-juiz">
-                                                        <div class="juiz-titulo">
-                                                            <FluentIcon Value="@(new Icons.Regular.Size16.Lightbulb())" Color="Color.Warning" />
-                                                            <span>OpenAI ChatGPT</span>
-                                                        </div>
-                                                        <FluentNumberField Min="1" Max="5" @bind-Value="resp.ChatGptRating" Label="Rating (1-5)" Style="width: 100%;" />
-
-                                                        <FluentTextArea @bind-Value="resp.ChatGptFeedback"
-                                                                        Label="Feedback recebido"
-                                                                        Rows="8"
-                                                                        Placeholder="Feedback..."
-                                                                        Style="width: 100%; resize: vertical;" />
-                                                    </div>
+                                                    <FluentNumberField Min="1" Max="5" @bind-Value="resp.GeminiRating" Label="Rating (1-5)" Style="width: 100%;" />
+                                                    <FluentTextArea @bind-Value="resp.GeminiFeedback"
+                                                                    Label="Problemas Encontrados"
+                                                                    Rows="8"
+                                                                    Placeholder="Insira o feedback resumido..."
+                                                                    Style="width: 100%; resize: vertical;" />
                                                 </div>
 
-                                                <div class="acoes-avaliacao">
-                                                    <FluentButton Appearance="Appearance.Lightweight"
-                                                                  IconStart="@(new Icons.Regular.Size16.Save())"
-                                                                  OnClick="@(async () => await GuardarAvaliacaoAsync(resp))">
-                                                        Gravar Avaliação
-                                                    </FluentButton>
+                                                <div class="coluna-juiz">
+                                                    <div class="juiz-titulo">
+                                                        <FluentIcon Value="@(new Icons.Regular.Size16.Lightbulb())" Color="Color.Warning" />
+                                                        <span>OpenAI ChatGPT</span>
+                                                    </div>
+                                                    <FluentNumberField Min="1" Max="5" @bind-Value="resp.ChatGptRating" Label="Rating (1-5)" Style="width: 100%;" />
+
+                                                    <FluentTextArea @bind-Value="resp.ChatGptFeedback"
+                                                                    Label="Problemas Encontrados"
+                                                                    Rows="8"
+                                                                    Placeholder="Insira o feedback resumido..."
+                                                                    Style="width: 100%; resize: vertical;" />
                                                 </div>
+                                            </div>
+
+                                            <div class="acoes-avaliacao">
+                                                <FluentButton Appearance="Appearance.Lightweight"
+                                                              IconStart="@(new Icons.Regular.Size16.Save())"
+                                                              OnClick="@(async () => await GuardarAvaliacaoAsync(resp))">
+                                                    Gravar Avaliação
+                                                </FluentButton>
                                             </div>
                                         </div>
                                     }
@@ -222,6 +220,11 @@
 <BenchmarkChartDialog Prompt="@_promptParaGrafico"
                       Visible="@_dialogGraficoVisible"
                       VisibleChanged="@((v) => _dialogGraficoVisible = v)" />
+<BenchmarkEvaluationDialog Response="@_selectedEvaluation"
+                           Visible="@_evaluationDialogVisible"
+                           VisibleChanged="@((v) => _evaluationDialogVisible = v)"
+                           OnSave="GuardarAvaliacaoAsync"
+                           OnClose="FecharDialogoAsync" />
 
 
 
@@ -285,7 +288,7 @@
         transition: transform 0.1s ease, box-shadow 0.1s ease;
         padding: 12px;
         border: 1px solid var(--neutral-stroke-rest);
-        width: 100%; 
+        width: 100%;
         box-sizing: border-box;
     }
 
