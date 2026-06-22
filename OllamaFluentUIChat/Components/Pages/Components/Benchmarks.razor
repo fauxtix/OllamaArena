@@ -158,7 +158,9 @@
 
                                             <div class="cartao-corpo">
                                                 <div class="texto-resposta-raw">
-                                                    @((MarkupString)ConverterQuebrasLinha(resp.TextoResposta))
+                                                    @((MarkupString)FormatMessage(resp.TextoResposta))
+
+                                                    @* @((MarkupString)ConverterQuebrasLinha(resp.TextoResposta)) *@
                                                 </div>
                                             </div>
 
@@ -174,9 +176,9 @@
                                                         </div>
                                                         <FluentNumberField Min="1" Max="5" @bind-Value="resp.GeminiRating" Label="Rating (1-5)" Style="width: 100%;" />
                                                         <FluentTextArea @bind-Value="resp.GeminiFeedback"
-                                                                        Label="Problemas Encontrados"
+                                                                        Label="Feedback recebido"
                                                                         Rows="8"
-                                                                        Placeholder="Insira o feedback resumido..."
+                                                                        Placeholder="Feedback..."
                                                                         Style="width: 100%; resize: vertical;" />
                                                     </div>
 
@@ -188,9 +190,9 @@
                                                         <FluentNumberField Min="1" Max="5" @bind-Value="resp.ChatGptRating" Label="Rating (1-5)" Style="width: 100%;" />
 
                                                         <FluentTextArea @bind-Value="resp.ChatGptFeedback"
-                                                                        Label="Problemas Encontrados"
+                                                                        Label="Feedback recebido"
                                                                         Rows="8"
-                                                                        Placeholder="Insira o feedback resumido..."
+                                                                        Placeholder="Feedback..."
                                                                         Style="width: 100%; resize: vertical;" />
                                                     </div>
                                                 </div>

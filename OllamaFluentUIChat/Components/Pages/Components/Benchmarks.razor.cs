@@ -1,5 +1,6 @@
 using Microsoft.JSInterop;
 using OllamaFluentUIChat.Models.Entities;
+using OllamaFluentUIChat.Services;
 using System.Text;
 
 namespace OllamaFluentUIChat.Components.Pages.Components
@@ -192,6 +193,11 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             var textoFormatado = sb.ToString();
             // Invoca o teu método existente que lida com o JS de cópia
             await CopyToClipboardAsync(textoFormatado);
+        }
+
+        private string FormatMessage(string content)
+        {
+            return CommonService.FormatMessage(content);
         }
     }
 }

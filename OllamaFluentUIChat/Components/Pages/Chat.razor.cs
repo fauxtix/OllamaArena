@@ -11,6 +11,7 @@ using OllamaFluentUIChat.Services.Interfaces.Services;
 using System.Text;
 using System.Text.Json;
 using System.Web;
+using OllamaFluentUIChat.Services;
 using static OllamaFluentUIChat.Models.DTO.OllamaModels;
 
 namespace OllamaFluentUIChat.Components.Pages
@@ -561,53 +562,35 @@ namespace OllamaFluentUIChat.Components.Pages
         }
 
 
-        //private string FormatMessage(string content)
-        //{
-        //    if (string.IsNullOrEmpty(content)) return "";
-
-        //    if (content == "...")
-        //    {
-        //        return "<div class='typing-dots'><span></span><span></span><span></span></div>";
-        //    }
-
-        //    var pipeline = new MarkdownPipelineBuilder()
-        //        .UseAdvancedExtensions()
-        //        .UseSoftlineBreakAsHardlineBreak()
-        //        .Build();
-
-        //    var html = Markdown.ToHtml(content, pipeline);
-        //    html = html.TrimEnd('\n', '\r', ' ');
-
-        //    return html.Replace("<p>", "<div>").Replace("</p>", "</div>");
-        //}
-
-
-private string FormatMessage(string content)
-    {
-        if (string.IsNullOrEmpty(content)) return "";
-
-        // Mantém o teu indicador de escrita visual
-        if (content == "...")
+        private string FormatMessage(string content)
         {
-            return "<div class='typing-dots'><span></span><span></span><span></span></div>";
+            return CommonService.FormatMessage(content);
         }
 
-        // Configura o pipeline com extensões avançadas (tabelas, listas de tarefas, etc.)
-        // REMOVIDO: .UseSoftlineBreakAsHardlineBreak() para evitar quebras de linha falsas
-        var pipeline = new MarkdownPipelineBuilder()
-            .UseAdvancedExtensions()
-            .Build();
 
-        // Converte o Markdown em HTML puro e estruturado
-        var html = Markdown.ToHtml(content, pipeline);
+    //    private string FormatMessage2(string content)
+    //{
+    //    if (string.IsNullOrEmpty(content)) return "";
 
-        // Remove espaços em branco desnecessários no fim do bloco
-        // REMOVIDO: .Replace("<p>", "<div>") para preservar a semântica correta das listas
-        return html.TrimEnd('\n', '\r', ' ');
-    }
+    //    // Mantém o teu indicador de escrita visual
+    //    if (content == "...")
+    //    {
+    //        return "<div class='typing-dots'><span></span><span></span><span></span></div>";
+    //    }
 
+    //    // Configura o pipeline com extensões avançadas (tabelas, listas de tarefas, etc.)
+    //    // REMOVIDO: .UseSoftlineBreakAsHardlineBreak() para evitar quebras de linha falsas
+    //    var pipeline = new MarkdownPipelineBuilder()
+    //        .UseAdvancedExtensions()
+    //        .Build();
 
+    //    // Converte o Markdown em HTML puro e estruturado
+    //    var html = Markdown.ToHtml(content, pipeline);
 
+    //    // Remove espaços em branco desnecessários no fim do bloco
+    //    // REMOVIDO: .Replace("<p>", "<div>") para preservar a semântica correta das listas
+    //    return html.TrimEnd('\n', '\r', ' ');
+    //}
 
     private async Task<string> SearchWebContext_DuckDuckGo_Async(string query)
         {
