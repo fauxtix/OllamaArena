@@ -14,70 +14,41 @@
 
     <FluentGrid>
 
-        <!-- Tema -->
-        @* <FluentGridItem>
-            <FluentSelect Label="Theme"
-                          Width="250px"
-                          Items="@(Enum.GetValues<DesignThemeModes>())"
-                          @bind-SelectedOption="@Mode" />
-        </FluentGridItem> *@
-
-        <!-- Cor -->
-        @* <FluentGridItem>
-            <FluentSelect Label="Color"
-                          Items="@(Enum.GetValues<OfficeColor>().Select(i => (OfficeColor?)i))"
-                          Height="200px"
-                          Width="250px"
-                          @bind-SelectedOption="@OfficeColor">
-                <OptionTemplate>
-                    <FluentStack>
-                        <FluentIcon Value="@(new Icons.Filled.Size20.RectangleLandscape())"
-                                    Color="Color.Custom"
-                                    CustomColor="@(@context.ToAttributeValue() != "default" ? context.ToAttributeValue() : "#036ac4")" />
-                        <FluentLabel>@context</FluentLabel>
-                    </FluentStack>
-                </OptionTemplate>
-            </FluentSelect>
-
-            <FluentButton Appearance="Appearance.Accent" OnClick="PickRandomColor">
-                Feeling lucky?
-            </FluentButton>
-        </FluentGridItem> *@
-
         <!-- Configuração do Prompt do Juiz de IA -->
-        <FluentGridItem xs="12" Style="margin-top: 8px;">
-            <FluentLabel Style="font-size: 18px; font-weight: bold;">
-                Configuração do Juiz de IA (Prompt System)
-            </FluentLabel>
-            <p style="font-size: 13px; opacity: 0.8; margin-top: 4px; margin-bottom: 12px;">
-                Personalize as instruções que envia para o Gemini/ChatGPT quando vai avaliar as respostas dos modelos locais.
-            </p>
+        <div hidden="true">
+            <FluentGridItem xs="12" Style="margin-top: 8px;">
+                <FluentLabel Style="font-size: 18px; font-weight: bold;">
+                    Configuração do Juiz de IA (Prompt System)
+                </FluentLabel>
+                <p style="font-size: 13px; opacity: 0.8; margin-top: 4px; margin-bottom: 12px;">
+                    Personalize as instruções que envia para o Gemini/ChatGPT quando vai avaliar as respostas dos modelos locais.
+                </p>
 
-            <FluentTextArea @bind-Value="JuizPrompt"
-                            Rows="10"
-                            Style="width: 100%; max-width: 600px; margin-top:8px; resize: vertical;" />
+                <FluentTextArea @bind-Value="JuizPrompt"
+                                Rows="10"
+                                Style="width: 100%; max-width: 600px; margin-top:8px; resize: vertical;" />
 
-            <FluentStack Orientation="Orientation.Horizontal" Gap="10" Style="margin-top: 12px;">
-                <FluentButton Appearance="Appearance.Accent"
-                              IconStart="@(new Icons.Regular.Size16.Save())"
-                              OnClick="SaveJuizPrompt">
-                    Gravar Instruções
-                </FluentButton>
+                <FluentStack Orientation="Orientation.Horizontal" Gap="10" Style="margin-top: 12px;">
+                    <FluentButton Appearance="Appearance.Accent"
+                                  IconStart="@(new Icons.Regular.Size16.Save())"
+                                  OnClick="SaveJuizPrompt">
+                        Gravar Instruções
+                    </FluentButton>
 
-                @* NOVO BOTÃO: Copiar o texto atual da TextArea diretamente para a memória *@
-                <FluentButton Appearance="Appearance.Lightweight"
-                              IconStart="@(new Icons.Regular.Size16.Copy())"
-                              OnClick="CopiarPromptParaClipboard">
-                    Copiar para o Clipboard
-                </FluentButton>
+                    @* NOVO BOTÃO: Copiar o texto atual da TextArea diretamente para a memória *@
+                    <FluentButton Appearance="Appearance.Lightweight"
+                                  IconStart="@(new Icons.Regular.Size16.Copy())"
+                                  OnClick="CopiarPromptParaClipboard">
+                        Copiar para o Clipboard
+                    </FluentButton>
 
-                <FluentButton Appearance="Appearance.Neutral"
-                              OnClick="ResetJuizPrompt">
-                    Restaurar Padrão
-                </FluentButton>
-            </FluentStack>
-        </FluentGridItem>
-
+                    <FluentButton Appearance="Appearance.Neutral"
+                                  OnClick="ResetJuizPrompt">
+                        Restaurar Padrão
+                    </FluentButton>
+                </FluentStack>
+            </FluentGridItem>
+        </div>
         <!-- Gestão de Modelos -->
         <FluentGridItem xs="12" Style="margin-top: 30px;">
             <FluentLabel Style="font-size: 18px; font-weight: bold;">

@@ -111,16 +111,15 @@
                         <div class="detalhe-header">
                             <h3>Respostas Geradas para o Prompt #@_selectedPrompt.Id</h3>
 
-                            @* Estrutura alinhada com botão para copiar o Texto do Prompt *@
                             <div style="display: flex; align-items: flex-start; gap: 10px; margin-top: 10px;">
                                 <blockquote class="prompt-citacao" style="flex: 1; margin: 0;">
                                     "@_selectedPrompt.TextoPrompt"
                                 </blockquote>
-                                <FluentButton Appearance="Appearance.Lightweight"
+                                @* <FluentButton Appearance="Appearance.Lightweight"
                                               IconStart="@(new Icons.Regular.Size24.Copy())"
                                               OnClick="@(() => CopyToClipboardAsync(_selectedPrompt.TextoPrompt))"
                                               Title="Copiar Prompt">
-                                </FluentButton>
+                                </FluentButton> *@
                             </div>
                         </div>
 
@@ -147,12 +146,12 @@
                                                     <FluentBadge Appearance="Appearance.Neutral">Eval: @(resp.TempoPuroMs)ms</FluentBadge>
                                                     <FluentBadge Appearance="Appearance.Neutral">Load: @(resp.TempoCargaMs)ms</FluentBadge>
                                                     <FluentBadge Appearance="Appearance.Neutral">Tokens: @resp.TamanhoTokens</FluentBadge>
-
-                                                    @* Botão discreto para copiar a resposta deste modelo específico *@
+                                                    
                                                     <FluentButton Appearance="Appearance.Stealth"
-                                                                  IconStart="@(new Icons.Regular.Size24.Copy())"
-                                                                  OnClick="@(() => CopyToClipboardAsync(resp.TextoResposta))"
-                                                                  Title="Copiar Resposta"
+                                                                  IconStart="@(new Icons.Regular.Size24.ClipboardCode())"
+                                                                  Color="Color.Accent"
+                                                                  OnClick="@(() => CopiarPromptAvaliacaoAsync(_selectedPrompt.TextoPrompt, resp.TextoResposta))"
+                                                                  Title="Copiar Prompt Formatado para o Juiz IA"
                                                                   Style="padding: 0; min-width: 32px;" />
                                                 </div>
                                             </div>
@@ -176,7 +175,7 @@
                                                         <FluentNumberField Min="1" Max="5" @bind-Value="resp.GeminiRating" Label="Rating (1-5)" Style="width: 100%;" />
                                                         <FluentTextArea @bind-Value="resp.GeminiFeedback"
                                                                         Label="Problemas Encontrados"
-                                                                        Rows="3"
+                                                                        Rows="8"
                                                                         Placeholder="Insira o feedback resumido..."
                                                                         Style="width: 100%; resize: vertical;" />
                                                     </div>
@@ -190,7 +189,7 @@
 
                                                         <FluentTextArea @bind-Value="resp.ChatGptFeedback"
                                                                         Label="Problemas Encontrados"
-                                                                        Rows="3"
+                                                                        Rows="8"
                                                                         Placeholder="Insira o feedback resumido..."
                                                                         Style="width: 100%; resize: vertical;" />
                                                     </div>

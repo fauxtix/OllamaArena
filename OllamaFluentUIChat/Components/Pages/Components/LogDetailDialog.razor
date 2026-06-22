@@ -24,14 +24,14 @@
                     </p>
                 </div>
 
-                @if (!string.Equals(Log.Level, "Information", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(Log.Properties))
+@*                 @if (!string.Equals(Log.Level, "Information", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(Log.Properties))
                 {
                     <div>
                         <FluentLabel Weight="FontWeight.Bold">Metadados do Sistema:</FluentLabel>
                         <pre style="background: var(--neutral-layer-3); padding: 12px; border-radius: 4px; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px; margin: 6px 0 0 0; white-space: pre-wrap; word-break: break-all;">@FormatarJson(Log.Properties)</pre>
                     </div>
                 }
-
+ *@
                 @if (!string.IsNullOrEmpty(Log.Exception))
                 {
                     <div>
