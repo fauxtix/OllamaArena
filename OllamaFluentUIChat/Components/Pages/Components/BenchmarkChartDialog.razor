@@ -28,52 +28,58 @@
     </FluentDialogHeader>
 
     <FluentDialogBody>
-        @if (Prompt != null)
-        {
-            <FluentStack Orientation="Orientation.Horizontal"
-                         HorizontalAlignment="HorizontalAlignment.Center"
-                         VerticalAlignment="VerticalAlignment.Top"
-                         Wrap="true"
-                         Style="width: 100%; gap: 4%;">
+        <FluentCard Style="display: flex;border-radius: 12px; border-color: #ccc;">
 
-                @* Gráfico 1: Tempos (Esquerda) *@
-                <div style="width: 48%; min-width: 350px;">
-                    <FluentStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" VerticalAlignment="VerticalAlignment.Center" Style="margin-bottom: 10px;">
-                        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
-                            Métricas de Tempo (ms)
-                        </FluentLabel>
-                        <FluentButton Appearance="Appearance.Stealth"
-                                      IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
-                                      OnClick="@(() => DescarregarImagemAsync("graficoTempo", $"benchmark_tempo_prompt_{Prompt.Id}"))"
-                                      Title="Descarregar como PNG" />
-                    </FluentStack>
-                    <canvas id="graficoTempo"></canvas>
-                </div>
+            @if (Prompt != null)
+            {
+                <FluentStack Orientation="Orientation.Horizontal"
+                             HorizontalAlignment="HorizontalAlignment.Center"
+                             VerticalAlignment="VerticalAlignment.Top"
+                             Wrap="true"
+                             Style="width: 100%; gap: 4%;">
 
-                @* Gráfico 2: Tokens (Direita) *@
-                <div style="width: 48%; min-width: 350px;">
-                    <FluentStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" VerticalAlignment="VerticalAlignment.Center" Style="margin-bottom: 10px;">
-                        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
-                            Métricas de Tokens
-                        </FluentLabel>
-                        <FluentButton Appearance="Appearance.Stealth"
-                                      IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
-                                      OnClick="@(() => DescarregarImagemAsync("graficoTokens", $"benchmark_tokens_prompt_{Prompt.Id}"))"
-                                      Title="Descarregar como PNG" />
-                    </FluentStack>
-                    <canvas id="graficoTokens"></canvas>
-                </div>
+                    @* Gráfico 1: Tempos (Esquerda) *@
+                    <div style="width: 48%; min-width: 350px;">
+                        <FluentStack Orientation="Orientation.Horizontal" 
+                                     VerticalAlignment="VerticalAlignment.Center"
+                                     Style="margin-bottom: 10px; justify-content: flex-start;">
+                            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
+                                Métricas de Tempo (ms)
+                            </FluentLabel>
+                            <FluentButton Appearance="Appearance.Stealth"
+                                          IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                          OnClick="@(() => DescarregarImagemAsync("graficoTempo", $"benchmark_tempo_prompt_{Prompt.Id}"))"
+                                          Title="Descarregar como PNG" />
+                        </FluentStack>
+                        <canvas id="graficoTempo"></canvas>
+                    </div>
 
-            </FluentStack>
-        }
-        else
-        {
-            <p>Nenhum prompt selecionado.</p>
-        }
+                    @* Gráfico 2: Tokens (Direita) *@
+                    <div style="width: 48%; min-width: 350px; justify-content: space-between;">
+                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="margin-bottom: 10px;">
+                            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
+                                Métricas de Tokens
+                            </FluentLabel>
+                            <FluentButton Appearance="Appearance.Stealth"
+                                          IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                          OnClick="@(() => DescarregarImagemAsync("graficoTokens", $"benchmark_tokens_prompt_{Prompt.Id}"))"
+                                          Title="Descarregar como PNG" />
+                        </FluentStack>
+                        <canvas id="graficoTokens"></canvas>
+                    </div>
+
+                </FluentStack>
+            }
+            else
+            {
+                <p>Nenhum prompt selecionado.</p>
+            }
+        </FluentCard>
     </FluentDialogBody>
 
     <FluentDialogFooter>
-        <FluentButton Appearance="Appearance.Accent" OnClick="Fechar">Fechar</FluentButton>
+        <FluentSpacer />
+        <FluentButton Appearance="Appearance.Outline" OnClick="Fechar">Fechar</FluentButton>
     </FluentDialogFooter>
 </FluentDialog>
 
@@ -147,7 +153,7 @@
         };
 
         await JS.InvokeVoidAsync("benchmarkCharts.renderGrafico", "graficoTempo", dadosTempo, true, "ms");
-        await JS.InvokeVoidAsync("benchmarkCharts.renderGrafico", "graficoTokens", dadosTokens, false, "tokens");
+        await JS.InvokeVoidAsync("benchmarkCharts.renderGrafico", "graficoTokens", dadosTokens, true, "tokens");
     }
 
     private async Task DescarregarImagemAsync(string canvasId, string nomeFicheiro)

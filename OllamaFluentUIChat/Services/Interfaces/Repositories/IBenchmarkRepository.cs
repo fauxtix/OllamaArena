@@ -1,4 +1,5 @@
-﻿using OllamaFluentUIChat.Models.Entities;
+﻿using OllamaFluentUIChat.Models.DTO;
+using OllamaFluentUIChat.Models.Entities;
 
 namespace OllamaFluentUIChat.Services.Interfaces.Repositories
 {
@@ -13,5 +14,6 @@ namespace OllamaFluentUIChat.Services.Interfaces.Repositories
         Task<BenchmarkPrompt?> GetBenchmarkByIdAsync(int promptId);
         Task<List<BenchmarkPrompt>> GetAllBenchmarksAsync();
         Task<bool> UpdateResponseEvaluationAsync(BenchmarkResponse res);
+        Task<IEnumerable<BenchmarkEvaluation>> BenchmarkResponseEvaluationAsync();
     }
 }

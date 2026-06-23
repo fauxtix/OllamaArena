@@ -88,10 +88,10 @@
     private bool IsDisabled()
     {
         return
-            Response?.GeminiRating != null ||
-            Response?.ChatGptRating != null ||
-            !string.IsNullOrWhiteSpace(Response?.GeminiFeedback) ||
-            !string.IsNullOrWhiteSpace(Response?.ChatGptFeedback);
+            Response?.GeminiRating != null &&
+            Response?.ChatGptRating != null &&
+            Response?.GeminiFeedback != null &&
+            Response?.ChatGptFeedback != null;
     }
 }
 <style>

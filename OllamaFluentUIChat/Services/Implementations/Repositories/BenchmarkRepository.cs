@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using OllamaFluentUIChat.Models.DTO;
 using OllamaFluentUIChat.Models.Entities;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
@@ -173,6 +174,23 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
             using var connection = _context.CreateConnection();
             int AffectedLines = await connection.ExecuteAsync(sql, res);
             return AffectedLines > 0;
+        }
+
+        /// <summary>
+        /// Obtém uma lista de avaliações de benchmark, incluindo as classificações dos modelos Gemini e ChatGPT, para cada prompt.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IEnumerable<BenchmarkEvaluation>> BenchmarkResponseEvaluationAsync()
+        {
+            StringBuilder sb = new();
+            sb.Append("SELECT P.TextoPrompt, R.ModeloNome, R.GeminiRating, R.ChatGptRating,  ");
+            sb.Append("R.TokensPorSegundo, R.TempoPuroMs, R.TempoCargaMs, R.TamanhoTokens ");
+            sb.Append("FROM Prompts P ");
+            sb.Append("LEFT JOIN Respostas R ON R.PromptId = P.Id");
+            var sql = sb.ToString();
+            using var connection = _context.CreateConnection();
+            var result = await connection.QueryAsync<BenchmarkEvaluation>(sql);
+            return [.. result];
         }
 
     }

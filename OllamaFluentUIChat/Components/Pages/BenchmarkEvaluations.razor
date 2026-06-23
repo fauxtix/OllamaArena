@@ -1,0 +1,113 @@
+﻿@page "/benchmark-evaluations"
+@rendermode InteractiveServer
+
+@using Models.DTO
+@using OllamaFluentUIChat.Services.Interfaces.Repositories
+
+<div class="grid-wrapper">
+
+    <FluentPaginator State="@_pagination" />
+
+    <FluentDataGrid Items="@_benchmarks"
+                    TGridItem="BenchmarkEvaluation"
+                    Pagination="@_pagination">
+
+        <PropertyColumn Property="@(b => b.ModeloNome)"
+                        Title="Modelo"
+                        Width="150px"
+                        Tooltip="true" />
+
+        <TemplateColumn Title="Prompt" Width="450px">
+            <div class="prompt-cell">
+                @context.TextoPrompt
+            </div>
+        </TemplateColumn>
+
+        <PropertyColumn Property="@(b => b.GeminiRating)"
+                        Title="Gemini"
+                        Width="90px"
+                        Sortable="true" />
+
+        <PropertyColumn Property="@(b => b.ChatGptRating)"
+                        Title="ChatGPT"
+                        Width="90px"
+                        Sortable="true" />
+
+        <PropertyColumn Property="@(b => b.TokensPorSegundo)"
+                        Title="Tokens/s"
+                        Width="120px"
+                        Format="F2"
+                        Sortable="true" />
+
+        <PropertyColumn Property="@(b => b.TempoPuroFormatado)"
+                        Title="Tempo Puro"
+                        Width="120px"
+                        Sortable="true" />
+
+        <PropertyColumn Property="@(b => b.TamanhoTokens)"
+                        Title="Tokens"
+                        Width="90px"
+                        Sortable="true" />
+
+    </FluentDataGrid>
+
+</div>
+
+@code {
+
+    private IQueryable<BenchmarkEvaluation> _benchmarks =
+        Enumerable.Empty<BenchmarkEvaluation>().AsQueryable();
+
+    private PaginationState _pagination = new() { ItemsPerPage = 10 };
+
+    [Inject]
+    private IBenchmarkRepository _benchmarkRepository { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await _benchmarkRepository.BenchmarkResponseEvaluationAsync();
+        _benchmarks = result.AsQueryable();
+    }
+}
+
+<style>
+    .grid-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    fluent-paginator {
+        flex: 0 0 auto;
+        margin-bottom: 8px;
+    }
+
+    fluent-data-grid {
+        flex: 1 1 auto;
+        overflow: auto;
+        min-height: 0;
+    }
+
+        /* altura compacta das linhas */
+        fluent-data-grid::part(row) {
+            min-height: 24px;
+        }
+
+        /* células compactas */
+        fluent-data-grid::part(cell) {
+            padding: 2px 6px;
+            font-size: 13px;
+            line-height: 1.1;
+        }
+
+    /* PROMPT SEM WRAP (IMPORTANTE) */
+    .prompt-cell {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 450px;
+        display: block;
+    }
+</style>
+
