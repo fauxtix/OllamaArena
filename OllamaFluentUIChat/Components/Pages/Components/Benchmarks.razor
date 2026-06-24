@@ -1,427 +1,471 @@
-﻿    @page "/benchmarks"
-    @rendermode InteractiveServer
+﻿@page "/benchmarks"
+@rendermode InteractiveServer
 
-    @using Microsoft.FluentUI.AspNetCore.Components
-    @using OllamaFluentUIChat.Services.Interfaces.Repositories
-    @inject IBenchmarkRepository BenchmarkRepo
-    @inject IDialogService DialogService
-    @inject ILogger<App> Logger
-    @inject IJSRuntime JS
+@using Microsoft.FluentUI.AspNetCore.Components
+@using OllamaFluentUIChat.Services
+@using OllamaFluentUIChat.Services.Interfaces.Repositories
+@inject IBenchmarkRepository BenchmarkRepo
+@inject IDialogService DialogService
+@inject ILogger<App> Logger
+@inject IJSRuntime JS
 
-    <div class="analise-container-horizontal">
+<div class="analise-container-horizontal">
 
-        <div class="pagina-header">
-            <h2>Análise de Qualidade e Métricas</h2>
-            <FluentButton Appearance="Appearance.Outline" IconEnd="@(new Icons.Regular.Size16.ArrowClockwise())" OnClick="GetDataAsync">
-                Atualizar Dados
-            </FluentButton>
+    <div class="pagina-header">
+        <h2>Análise de Qualidade e Métricas</h2>
+        <FluentButton Appearance="Appearance.Outline" IconEnd="@(new Icons.Regular.Size16.ArrowClockwise())" OnClick="GetDataAsync">
+            Atualizar Dados
+        </FluentButton>
+    </div>
+
+    @if (_promptsList == null)
+    {
+        <div class="loading-state">
+            <FluentProgressRing></FluentProgressRing>
+            <p>A carregar o histórico do SQLite...</p>
         </div>
+    }
+    else if (!_promptsList.Any())
+    {
+        <div class="empty-state">
+            <p>Nenhum registo de benchmark encontrado na Base de Dados.</p>
+        </div>
+    }
+    else
+    {
+        <FluentSplitter Orientation="Orientation.Horizontal"
+                        BarSize="6"
+                        Panel1Size="33.3%"
+                        Panel1MinSize="250px"
+                        Panel2MinSize="400px"
+                        Style="height: calc(100vh - 120px); width: 100%;">
 
-        @if (_promptsList == null)
-        {
-            <div class="loading-state">
-                <FluentProgressRing></FluentProgressRing>
-                <p>A carregar o histórico do SQLite...</p>
-            </div>
-        }
-        else if (!_promptsList.Any())
-        {
-            <div class="empty-state">
-                <p>Nenhum registo de benchmark encontrado na Base de Dados.</p>
-            </div>
-        }
-        else
-        {
-            <FluentSplitter Orientation="Orientation.Horizontal"
-                            BarSize="6"
-                            Panel1Size="33.3%"
-                            Panel1MinSize="250px"
-                            Panel2MinSize="400px"
-                            Style="height: calc(100vh - 120px); width: 100%;">
+            <Panel1>
+                <div class="painel-esquerdo-scroll">
 
-                <Panel1>
-                    <div class="painel-esquerdo-scroll">
-
-                        @if (_mostrarGrafico && _promptGrafico != null)
-                        {
-                            <div class="grafico-container">
-                                <h4>Gráfico do Prompt #@_promptGrafico.Id</h4>
-                                <canvas id="graficoModelos"></canvas>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="lista-cards-prompts">
-                                @foreach (var prompt in _promptsList)
-                                {
-                                    <FluentCard MinimalStyle="true"
-                                                Class="@($"card-prompt-item {(prompt == _selectedPrompt ? "card-selecionado" : "")}")"
-                                                @onclick="@(() => SeleccionarPrompt(prompt))">
-
-                                        <div class="card-prompt-header">
-                                            <span class="prompt-id-badge">#@prompt.Id</span>
-                                            <span class="prompt-data">@prompt.DataCriacaoFormatada</span>
-                                        </div>
-
-                                        <div class="card-prompt-body">
-                                            <p class="prompt-texto-curto">@prompt.TextoPrompt</p>
-                                        </div>
-                                        <div class="separator-line"></div>
-
-                                        <div class="card-prompt-footer">
-
-                                            <FluentBadge Appearance="Appearance.Neutral">
-                                                @(prompt.Answers?.Count ?? 0) modelos
-                                            </FluentBadge>
-
-                                            <FluentButton Appearance="Appearance.Outline"
-                                                          IconStart="@(new Icons.Regular.Size24.LayoutInfographic())"
-                                                          OnClick="@(() => AbrirDialogoGrafico(prompt))"
-                                                          Title="Mostrar resultados em gráfico" 
-                                                          StopPropagation="true">
-                                                          Gráfico
-                                            </FluentButton>
-
-                                            <FluentButton Appearance="Appearance.Stealth"
-                                                          Color="Color.Error"
-                                                          IconStart="@(new Icons.Regular.Size24.Delete())"
-                                                          OnClick="@( async () => await ApagarPromptAsync(prompt))"
-                                                          Title="Apagar registo"
-                                                          StopPropagation="true">
-                                            </FluentButton>
-
-                                        </div>
-                                    </FluentCard>
-                                }
-                            </div>
-                        }
-                    </div>
-                </Panel1>
-
-                <Panel2>
-                    <div class="painel-direito-container">
-                        @if (_selectedPrompt == null)
-                        {
-                            <div class="placeholder-direito">
-                                <FluentIcon Value="@(new Icons.Regular.Size32.DocumentSearch())" Color="Color.Neutral" />
-                                <p>Selecione um prompt na lista da esquerda para analisar as respostas dos modelos.</p>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="detalhe-header">
-                                <h3>Respostas Geradas para o Prompt #@_selectedPrompt.Id</h3>
-
-                                <div style="display: flex; align-items: flex-start; gap: 10px; margin-top: 10px;">
-                                    <blockquote class="prompt-citacao" style="flex: 1; margin: 0;">
-                                        "@_selectedPrompt.TextoPrompt"
-                                    </blockquote>
-                                </div>
-                            </div>
-
-                            @if (!_selectedPrompt.Answers.Any())
+                    @if (_mostrarGrafico && _promptGrafico != null)
+                    {
+                        <div class="grafico-container">
+                            <h4>Gráfico do Prompt #@_promptGrafico.Id</h4>
+                            <canvas id="graficoModelos"></canvas>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="lista-cards-prompts">
+                            @foreach (var prompt in _promptsList)
                             {
-                                <FluentMessageBar Intent="MessageIntent.Warning" AllowClose="false">
-                                    Este prompt foi guardado, mas não existem respostas associadas na tabela.
-                                </FluentMessageBar>
+                                <FluentCard MinimalStyle="true"
+                                            Class="@($"card-prompt-item {(prompt == _selectedPrompt ? "card-selecionado" : "")}")"
+                                            @onclick="@(() => SeleccionarPrompt(prompt))">
+
+                                    <div class="card-prompt-header">
+                                        <span class="prompt-id-badge">#@prompt.Id</span>
+                                        <span class="prompt-data">@prompt.DataCriacaoFormatada</span>
+                                    </div>
+
+                                    <p class="prompt-texto-curto"
+                                       title="@prompt.TextoPrompt">
+                                        @prompt.TextoPrompt
+                                    </p>
+                                    <div class="separator-line"></div>
+
+                                    <div class="card-prompt-footer">
+
+                                        <FluentBadge Appearance="Appearance.Neutral">
+                                            @(prompt.Answers?.Count ?? 0) modelos
+                                        </FluentBadge>
+
+                                        <FluentButton Appearance="Appearance.Outline"
+                                                      IconStart="@(new Icons.Regular.Size24.LayoutInfographic())"
+                                                      OnClick="@(() => AbrirDialogoGrafico(prompt))"
+                                                      Title="Mostrar resultados em gráfico"
+                                                      StopPropagation="true">
+                                            Gráfico
+                                        </FluentButton>
+
+                                        <FluentButton Appearance="Appearance.Stealth"
+                                                      Color="Color.Error"
+                                                      IconStart="@(new Icons.Regular.Size24.Delete())"
+                                                      OnClick="@( async () => await ApagarPromptAsync(prompt))"
+                                                      Title="Apagar registo"
+                                                      StopPropagation="true">
+                                        </FluentButton>
+
+                                    </div>
+                                </FluentCard>
                             }
-                            else
-                            {
-                                <div class="conteudo-respostas-scroll">
-                                    <div class="cartoes-respostas-container">
-                                        @foreach (var resp in _selectedPrompt.Answers)
-                                        {
-                                            <div class="cartao-resposta">
-                                                <div class="cartao-header">
-                                                    <div class="modelo-info">
-                                                        <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" Color="Color.Neutral" />
-                                                        <h4>@resp.ModeloNome</h4>
-                                                    </div>
-                                                    <div class="metricas-tags" style="display: flex; align-items: center; gap: 4px;">
-                                                        <FluentBadge Appearance="Appearance.Accent">@resp.TokensPorSegundo T/s</FluentBadge>
-                                                        <FluentBadge Appearance="Appearance.Neutral">Eval: @(resp.TempoPuroMs)ms</FluentBadge>
-                                                        <FluentBadge Appearance="Appearance.Neutral">Load: @(resp.TempoCargaMs)ms</FluentBadge>
-                                                        <FluentBadge Appearance="Appearance.Neutral">Tokens: @resp.TamanhoTokens</FluentBadge>
+                        </div>
+                    }
+                </div>
+            </Panel1>
 
-                                                        <FluentButton Appearance="Appearance.Stealth"
-                                                                      IconStart="@(new Icons.Regular.Size24.ClipboardCode())"
-                                                                      Color="Color.Accent"
-                                                                      OnClick="@(() => CopiarPromptAvaliacaoAsync(_selectedPrompt.TextoPrompt, resp.TextoResposta))"
-                                                                      Title="Copiar Prompt Formatado para o Juiz IA"
-                                                                      Style="padding: 0; min-width: 32px;" />
-                                                    </div>
-                                                </div>
+            <Panel2>
+                <div class="painel-direito-container">
+                    @if (_selectedPrompt == null)
+                    {
+                        <div class="placeholder-direito">
+                            <FluentIcon Value="@(new Icons.Regular.Size32.DocumentSearch())" Color="Color.Neutral" />
+                            <p>Selecione um prompt na lista da esquerda para analisar as respostas dos modelos.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="detalhe-header">
+                            <h3>Respostas Geradas para o Prompt #@_selectedPrompt.Id</h3>
 
-                                                <div class="cartao-corpo">
-                                                    <div class="texto-resposta-raw">
-                                                        @((MarkupString)ConverterQuebrasLinha(resp.TextoResposta))
-                                                    </div>
+                            <div style="display: flex; align-items: flex-start; gap: 10px; margin-top: 10px;">
+                                <blockquote class="prompt-citacao" style="flex: 1; margin: 0;">
+                                    "@_selectedPrompt.TextoPrompt"
+                                </blockquote>
+                            </div>
+                        </div>
+
+                        @if (!_selectedPrompt.Answers.Any())
+                        {
+                            <FluentMessageBar Intent="MessageIntent.Warning" AllowClose="false">
+                                Este prompt foi guardado, mas não existem respostas associadas na tabela.
+                            </FluentMessageBar>
+                        }
+                        else
+                        {
+                            <div class="conteudo-respostas-scroll">
+                                <div class="cartoes-respostas-container">
+                                    @foreach (var resp in _selectedPrompt.Answers)
+                                    {
+                                        <div class="cartao-resposta">
+                                            <div class="cartao-header">
+                                                <div class="modelo-info">
+                                                    <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" Color="Color.Neutral" />
+                                                    <h4>@resp.ModeloNome</h4>
                                                 </div>
+                                                <div class="metricas-tags" style="display: flex; align-items: center; gap: 4px;">
+                                                    <FluentBadge Appearance="Appearance.Accent">@resp.TokensPorSegundo T/s</FluentBadge>
+                                                    <FluentBadge Appearance="Appearance.Neutral">Eval: @(resp.TempoPuroMs)ms</FluentBadge>
+                                                    <FluentBadge Appearance="Appearance.Neutral">Load: @(resp.TempoCargaMs)ms</FluentBadge>
+                                                    <FluentBadge Appearance="Appearance.Neutral">Tokens: @resp.TamanhoTokens</FluentBadge>
+
+                                                    <FluentButton Appearance="Appearance.Stealth"
+                                                                  IconStart="@(new Icons.Regular.Size24.ClipboardCode())"
+                                                                  Color="Color.Accent"
+                                                                  OnClick="@(() => CopiarPromptAvaliacaoAsync(_selectedPrompt.TextoPrompt, resp.TextoResposta))"
+                                                                  Title="Copiar Prompt Formatado para o Juiz IA"
+                                                                  Style="padding: 0; min-width: 32px;" />
+                                                </div>
+                                            </div>
+
+                                            <div class="cartao-corpo">
+                                                <div class="texto-resposta-raw">
+                                                    @((MarkupString)CommonService.FormatMessage(resp.TextoResposta))
+                                                </div>
+                                            </div>
 
                                             <div style="display: flex; flex-direction: column; align-items: stretch; gap: 8px;">
 
                                                 <div class="separator-line"></div>
 
-                                                <div style="display: flex; justify-content: flex-end;">
+                                                <div class="avaliacao-footer">
+
+                                                    <div class="rating-box">
+                                                        <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())" />
+                                                        <span>Gemini</span>
+                                                        <strong>@(resp.GeminiRating > 0 ? resp.GeminiRating : 0)</strong>
+                                                    </div>
+
                                                     <FluentButton Appearance="Appearance.Outline"
                                                                   IconStart="@(new Icons.Regular.Size16.Edit())"
                                                                   OnClick="@(() => AbrirAvaliacao(resp))">
                                                         Avaliação
                                                     </FluentButton>
+
+                                                    <div class="rating-box">
+                                                        <FluentIcon Value="@(new Icons.Regular.Size16.Chat())" />
+                                                        <span>ChatGPT</span>
+                                                        <strong>@(resp.ChatGptRating > 0 ? resp.ChatGptRating : 0)</strong>
+                                                    </div>
+
                                                 </div>
-                                            </div>  
-                                            
                                             </div>
-                                        }
-                                    </div>
+
+                                        </div>
+                                    }
                                 </div>
-                            }
+                            </div>
                         }
-                    </div>
-                </Panel2>
+                    }
+                </div>
+            </Panel2>
 
-            </FluentSplitter>
-        }
-    </div>
+        </FluentSplitter>
+    }
+</div>
 
-    <FluentDialogProvider />
-    <BenchmarkChartDialog Prompt="@_promptParaGrafico"
-                          Visible="@_dialogGraficoVisible"
-                          VisibleChanged="@((v) => _dialogGraficoVisible = v)" />
-    <BenchmarkEvaluationDialog Response="@_selectedEvaluation"
-                               Visible="@_evaluationDialogVisible"
-                               VisibleChanged="@((v) => _evaluationDialogVisible = v)"
-                               OnSave="GuardarAvaliacaoAsync"
-                               OnClose="FecharDialogoAsync" />
+<FluentDialogProvider />
+<BenchmarkChartDialog Prompt="@_promptParaGrafico"
+                      Visible="@_dialogGraficoVisible"
+                      VisibleChanged="@((v) => _dialogGraficoVisible = v)" />
+<BenchmarkEvaluationDialog Response="@_selectedEvaluation"
+                           Visible="@_evaluationDialogVisible"
+                           VisibleChanged="@((v) => _evaluationDialogVisible = v)"
+                           OnSave="GuardarAvaliacaoAsync"
+                           OnClose="FecharDialogoAsync" />
 
 
 
-    <style>
-        .analise-container-horizontal {
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 40px);
-            overflow: hidden;
-        }
+<style>
+    .analise-container-horizontal {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 40px);
+        overflow: hidden;
+    }
 
-        .pagina-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 16px;
-            background-color: var(--neutral-layer-1);
-            flex: 0 0 auto;
-        }
+    .pagina-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 16px;
+        background-color: var(--neutral-layer-1);
+        flex: 0 0 auto;
+    }
 
-        .painel-esquerdo-scroll {
-            height: 100%;
-            overflow-y: auto;
-            padding: 16px;
-            box-sizing: border-box;
-            background-color: var(--neutral-layer-2);
-            border-right: 1px solid var(--neutral-stroke-rest);
-        }
+    .painel-esquerdo-scroll {
+        height: 100%;
+        overflow-y: auto;
+        padding: 16px;
+        box-sizing: border-box;
+        background-color: var(--neutral-layer-2);
+        border-right: 1px solid var(--neutral-stroke-rest);
+    }
 
-        .painel-direito-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            padding: 16px;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
+    .painel-direito-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 16px;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
 
-        .detalhe-header {
-            flex: 0 0 auto;
-            background-color: var(--neutral-layer-1);
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--neutral-stroke-divider);
-            margin-bottom: 12px;
-        }
+    .detalhe-header {
+        flex: 0 0 auto;
+        background-color: var(--neutral-layer-1);
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--neutral-stroke-divider);
+        margin-bottom: 12px;
+    }
 
-        .conteudo-respostas-scroll {
-            flex: 1 1 auto;
-            overflow-y: auto;
-            padding-right: 4px;
-        }
+    .conteudo-respostas-scroll {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
 
-        .lista-cards-prompts {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+    .lista-cards-prompts {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
 
-        .card-prompt-item {
-            cursor: pointer;
-            transition: transform 0.1s ease, box-shadow 0.1s ease;
-            padding: 12px;
-            border: 1px solid var(--neutral-stroke-rest);
-            width: 100%;
-            box-sizing: border-box;
-        }
+    .card-prompt-item {
+        cursor: pointer;
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
+        padding: 12px;
+        border: 1px solid var(--neutral-stroke-rest);
+        width: 100%;
+        box-sizing: border-box;
+    }
 
-            .card-prompt-item:hover {
-                transform: translateY(-2px);
-                box-shadow: var(--elevation-shadow-card-hover);
-            }
-
-        .card-selecionado {
-            border-left: 4px solid var(--accent-fill-rest) !important;
-            background-color: var(--neutral-layer-3) !important;
+        .card-prompt-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--elevation-shadow-card-hover);
         }
 
-        .card-prompt-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
+    .card-selecionado {
+        border-left: 4px solid var(--accent-fill-rest) !important;
+        background-color: var(--neutral-layer-3) !important;
+    }
+
+    .card-prompt-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+    }
+
+    .prompt-id-badge {
+        font-weight: bold;
+        color: var(--accent-fill-rest);
+    }
+
+    .prompt-data {
+        font-size: 11px;
+        color: var(--neutral-foreground-hint);
+    }
+
+    .card-prompt-body {
+        margin-bottom: 10px;
+        min-height: 40px;
+    }
+
+    .prompt-texto-curto {
+        margin: 4px 0 10px 0;
+        font-size: 13px;
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .card-prompt-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .placeholder-direito {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 70%;
+        color: var(--neutral-foreground-hint);
+    }
+
+    .cartoes-respostas-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-top: 4px;
+    }
+
+    .cartao-resposta {
+        background: var(--neutral-layer-1);
+        border: 1px solid var(--neutral-stroke-rest);
+        border-radius: 4px;
+        padding: 16px;
+    }
+
+    .cartao-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--neutral-stroke-divider);
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+    }
+
+    .modelo-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .modelo-info h4 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
         }
 
-        .prompt-id-badge {
-            font-weight: bold;
+    .metricas-tags {
+        display: flex;
+        gap: 6px;
+    }
+
+    .detalhe-header h3 {
+        margin-top: 0;
+    }
+
+    .prompt-citacao {
+        margin: 8px 0 16px 0;
+        padding-left: 12px;
+        border-left: 3px solid var(--neutral-stroke-rest);
+        font-style: italic;
+        color: var(--neutral-foreground-hint);
+    }
+
+    .cartao-corpo {
+        font-size: 13.5px;
+        line-height: 1.5;
+    }
+
+    .texto-resposta-raw {
+        word-break: break-word;
+        max-width: 850px;
+    }
+
+    .divisor-avaliacao {
+        border: 0;
+        border-top: 1px dashed var(--neutral-stroke-divider);
+        margin: 16px 0 12px 0;
+    }
+
+    .zona-avaliacao-editavel h5 {
+        margin: 0 0 12px 0;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--neutral-foreground-hint);
+    }
+
+    .grelha-avaliacao {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 12px;
+    }
+
+    .coluna-juiz {
+        flex: 1;
+        background-color: var(--neutral-layer-2);
+        padding: 12px;
+        border-radius: 4px;
+        border: 1px solid var(--neutral-stroke-divider);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .juiz-titulo {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .acoes-avaliacao {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+
+    .separator-line {
+        width: 100%;
+        height: 1px;
+        margin: 0;
+        background-color: #d1d1d1;
+        margin: 10px 0 5px 0;
+    }
+
+    .avaliacao-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .rating-box {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 120px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--neutral-fill-secondary);
+        border: 1px solid var(--neutral-stroke-rest);
+    }
+
+        .rating-box strong {
+            margin-left: auto;
             color: var(--accent-fill-rest);
         }
 
-        .prompt-data {
-            font-size: 11px;
-            color: var(--neutral-foreground-hint);
-        }
-
-        .prompt-texto-curto {
-            margin: 4px 0 10px 0;
-            font-size: 13px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .card-prompt-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .placeholder-direito {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 70%;
-            color: var(--neutral-foreground-hint);
-        }
-
-        .cartoes-respostas-container {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            margin-top: 4px;
-        }
-
-        .cartao-resposta {
-            background: var(--neutral-layer-1);
-            border: 1px solid var(--neutral-stroke-rest);
-            border-radius: 4px;
-            padding: 16px;
-        }
-
-        .cartao-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--neutral-stroke-divider);
-            padding-bottom: 8px;
-            margin-bottom: 12px;
-        }
-
-        .modelo-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-            .modelo-info h4 {
-                margin: 0;
-                font-size: 14px;
-                font-weight: 600;
-            }
-
-        .metricas-tags {
-            display: flex;
-            gap: 6px;
-        }
-
-        .detalhe-header h3 {
-            margin-top: 0;
-        }
-
-        .prompt-citacao {
-            margin: 8px 0 16px 0;
-            padding-left: 12px;
-            border-left: 3px solid var(--neutral-stroke-rest);
-            font-style: italic;
-            color: var(--neutral-foreground-hint);
-        }
-
-        .cartao-corpo {
-            font-size: 13.5px;
-            line-height: 1.5;
-        }
-
-        .texto-resposta-raw {
-            word-break: break-word;
-            max-width: 850px;
-        }
-
-        .divisor-avaliacao {
-            border: 0;
-            border-top: 1px dashed var(--neutral-stroke-divider);
-            margin: 16px 0 12px 0;
-        }
-
-        .zona-avaliacao-editavel h5 {
-            margin: 0 0 12px 0;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--neutral-foreground-hint);
-        }
-
-        .grelha-avaliacao {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 12px;
-        }
-
-        .coluna-juiz {
-            flex: 1;
-            background-color: var(--neutral-layer-2);
-            padding: 12px;
-            border-radius: 4px;
-            border: 1px solid var(--neutral-stroke-divider);
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .juiz-titulo {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .acoes-avaliacao {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 8px;
-        }
-
-        .separator-line {
-            width: 100%;
-            height: 1px;
-            margin: 0;
-            background-color: #d1d1d1;
-            margin: 10px 0 5px 0;
-        }
-
-    </style>
+</style>

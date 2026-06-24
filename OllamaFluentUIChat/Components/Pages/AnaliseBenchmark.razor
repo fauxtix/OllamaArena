@@ -150,8 +150,11 @@
         {
             _selectedPrompt = _promptsList.FirstOrDefault(p => p.Id == _selectedPrompt.Id);
         }
-
-
+        BenchmarkPrompt benchmarkPrompt = _promptsList?.FirstOrDefault() ?? new();
+        var response = new BenchmarkResponse()
+        {
+             
+        };
         StateHasChanged();
     }
 

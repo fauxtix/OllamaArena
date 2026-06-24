@@ -183,7 +183,7 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
         public async Task<IEnumerable<BenchmarkEvaluation>> BenchmarkResponseEvaluationAsync()
         {
             StringBuilder sb = new();
-            sb.Append("SELECT P.TextoPrompt, R.ModeloNome, R.GeminiRating, R.ChatGptRating,  ");
+            sb.Append("SELECT R.PromptId, P.TextoPrompt, R.ModeloNome, R.GeminiRating, R.ChatGptRating,  P.DataCriacao, ");
             sb.Append("R.TokensPorSegundo, R.TempoPuroMs, R.TempoCargaMs, R.TamanhoTokens ");
             sb.Append("FROM Prompts P ");
             sb.Append("LEFT JOIN Respostas R ON R.PromptId = P.Id");

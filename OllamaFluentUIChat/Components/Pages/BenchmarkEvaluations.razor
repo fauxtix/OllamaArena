@@ -4,52 +4,105 @@
 @using Models.DTO
 @using OllamaFluentUIChat.Services.Interfaces.Repositories
 
-<div class="grid-wrapper">
+<div class="page">
 
-    <FluentPaginator State="@_pagination" />
+    <div class="toolbar">
 
-    <FluentDataGrid Items="@_benchmarks"
-                    TGridItem="BenchmarkEvaluation"
-                    Pagination="@_pagination">
+        <div class="toolbar-content">
 
-        <PropertyColumn Property="@(b => b.ModeloNome)"
-                        Title="Modelo"
-                        Width="150px"
-                        Tooltip="true" />
+            <FluentSearch @bind-Value="_search"
+                          Placeholder="Pesquisa benchmarks (modelo, prompt, tokens...)"
+                          class="search-box" />
 
-        <TemplateColumn Title="Prompt" Width="450px">
-            <div class="prompt-cell">
-                @context.TextoPrompt
+            <div class="filter-bar">
+
+                <FluentButton Appearance="@GetAppearance(BenchmarkFilter.PorAvaliar)"
+                              IconStart="@(new Icons.Regular.Size20.Warning())"
+                              @onclick="() => _filtroAtual = BenchmarkFilter.PorAvaliar">
+
+                    Por Avaliar
+
+                </FluentButton>
+                <FluentButton Appearance="@GetAppearance(BenchmarkFilter.Todos)"
+                              IconStart="@(new Icons.Regular.Size20.Grid())"
+                              @onclick="() => _filtroAtual = BenchmarkFilter.Todos">
+
+                    Todos
+
+                </FluentButton>
             </div>
-        </TemplateColumn>
 
-        <PropertyColumn Property="@(b => b.GeminiRating)"
-                        Title="Gemini"
-                        Width="90px"
-                        Sortable="true" />
+        </div>
 
-        <PropertyColumn Property="@(b => b.ChatGptRating)"
-                        Title="ChatGPT"
-                        Width="90px"
-                        Sortable="true" />
+    </div>
+    <div class="grid-container">
 
-        <PropertyColumn Property="@(b => b.TokensPorSegundo)"
-                        Title="Tokens/s"
-                        Width="120px"
-                        Format="F2"
-                        Sortable="true" />
+        <FluentDataGrid Items="@FilteredBenchmarks"
+                        TGridItem="BenchmarkEvaluation"
+                        Pagination="@_pagination" 
+                        DisplayMode="DataGridDisplayMode.Table"
+                        class="benchmark-grid">
 
-        <PropertyColumn Property="@(b => b.TempoPuroFormatado)"
-                        Title="Tempo Puro"
-                        Width="120px"
-                        Sortable="true" />
+            <PropertyColumn Property="@(b => b.PromptId)"
+                            Title="ID#"
+                            Width="60px"
+                            Align="Align.Center"
+                            Tooltip="true" />
+            <PropertyColumn Property="@(b => b.DataCriacaoFormatada)"
+                            Title="Data de Criação"
+                            Width="150px"
+                            Align="Align.Start"
+                            Tooltip="true" />
+            <PropertyColumn Property="@(b => b.ModeloNome)"
+                            Title="Modelo" Sortable="true"
+                            Align="Align.Start"
+                            Width="150px"
+                            Tooltip="true" />
 
-        <PropertyColumn Property="@(b => b.TamanhoTokens)"
-                        Title="Tokens"
-                        Width="90px"
-                        Sortable="true" />
+            <TemplateColumn Title="Prompt" Width="650px">
+                <div class="prompt-cell">
+                    @context.TextoPrompt
+                </div>
+            </TemplateColumn>
 
-    </FluentDataGrid>
+            <PropertyColumn Property="@(b => b.GeminiRating)"
+                            Title="Gemini"
+                            Align="Align.Center"
+                            Width="6px"
+                            Sortable="true" />
+
+            <PropertyColumn Property="@(b => b.ChatGptRating)"
+                            Title="ChatGPT"
+                            Align="Align.Center"
+                            Width="60px"
+                            Sortable="true" />
+
+            <PropertyColumn Property="@(b => b.TokensPorSegundo)"
+                            Title="Tokens/s"
+                            Align="Align.Center"
+                            Width="60px"
+                            Format="F2"
+                            Sortable="true" />
+
+            <PropertyColumn Property="@(b => b.TempoPuroFormatado)"
+                            Title="Tempo"
+                            Align="Align.Center"
+                            Width="60px"
+                            Sortable="true" />
+
+            <PropertyColumn Property="@(b => b.TamanhoTokens)"
+                            Title="Tokens"
+                            Align="Align.Center"
+                            Width="60px"
+                            Sortable="true" />
+
+        </FluentDataGrid>
+
+    </div>
+
+    <div class="pager">
+        <FluentPaginator State="@_pagination" />
+    </div>
 
 </div>
 
@@ -58,7 +111,9 @@
     private IQueryable<BenchmarkEvaluation> _benchmarks =
         Enumerable.Empty<BenchmarkEvaluation>().AsQueryable();
 
-    private PaginationState _pagination = new() { ItemsPerPage = 10 };
+    private PaginationState _pagination = new() { ItemsPerPage = 5 };
+
+    private string? _search;
 
     [Inject]
     private IBenchmarkRepository _benchmarkRepository { get; set; } = default!;
@@ -68,46 +123,198 @@
         var result = await _benchmarkRepository.BenchmarkResponseEvaluationAsync();
         _benchmarks = result.AsQueryable();
     }
+
+    private void AlterarItensPorPagina(int novosItens)
+    {
+        _pagination.ItemsPerPage = novosItens;
+
+        // Força o PaginationState a notificar o componente FluentPaginator
+        _pagination.TotalItemCountChanged += (s, e) => StateHasChanged();
+
+        // Ou simplesmente force a renderização do componente atual
+        StateHasChanged();
+    }
+
+
+    private IQueryable<BenchmarkEvaluation> FilteredBenchmarks
+    {
+        get
+        {
+            IQueryable<BenchmarkEvaluation> query = _benchmarks;
+
+            if (_filtroAtual == BenchmarkFilter.PorAvaliar)
+            {
+                query = query.Where(b =>
+                    b.GeminiRating == 0 ||
+                    b.ChatGptRating == 0);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_search))
+            {
+                query = query.Where(b =>
+                    (b.ModeloNome != null && b.ModeloNome.Contains(_search)) ||
+                    (b.TextoPrompt != null && b.TextoPrompt.Contains(_search)) ||
+                    b.TokensPorSegundo.ToString().Contains(_search) ||
+                    b.TamanhoTokens.ToString().Contains(_search));
+            }
+
+            return query;
+        }
+    }
+    private enum BenchmarkFilter
+    {
+        Todos,
+        PorAvaliar
+    }
+
+    private BenchmarkFilter _filtroAtual = BenchmarkFilter.PorAvaliar;
+
+    private Appearance GetAppearance(BenchmarkFilter filtro)
+    {
+        return _filtroAtual == filtro
+            ? Appearance.Accent
+            : Appearance.Stealth;
+    }
 }
 
 <style>
-    .grid-wrapper {
+    .page {
         display: flex;
         flex-direction: column;
         height: 100vh;
-        overflow: hidden;
+        background: var(--fill-color);
     }
 
-    fluent-paginator {
+    /* =========================
+                           TOOLBAR (tema-safe)
+                        ========================= */
+    .toolbar {
         flex: 0 0 auto;
-        margin-bottom: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--neutral-stroke-rest);
+        background: var(--fill-color);
+        position: sticky;
+        top: 0;
+        z-index: 20;
     }
 
+    .search-box {
+        width: 100%;
+        max-width: 520px;
+    }
+
+    /* =========================
+                           GRID CONTAINER
+                        ========================= */
+    .grid-container {
+        margin-top: 1rem;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+    }
+
+    /* Fluent DataGrid base */
     fluent-data-grid {
         flex: 1 1 auto;
-        overflow: auto;
         min-height: 0;
+        height: 100%;
     }
 
-        /* altura compacta das linhas */
-        fluent-data-grid::part(row) {
-            min-height: 24px;
+        /* =========================
+                           HEADER FIXO (tema-safe)
+                        ========================= */
+        fluent-data-grid::part(header) {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background: var(--fill-color);
+            border-bottom: 1px solid var(--neutral-stroke-rest);
         }
 
-        /* células compactas */
+        /* corpo */
+        fluent-data-grid::part(body) {
+            overflow: auto;
+        }
+
+        /* =========================
+                           CELLS
+                        ========================= */
         fluent-data-grid::part(cell) {
-            padding: 2px 6px;
+            align-items: flex-start;
+            padding: 6px 10px;
             font-size: 13px;
-            line-height: 1.1;
+            line-height: 1.25;
         }
 
-    /* PROMPT SEM WRAP (IMPORTANTE) */
+        /* zebra (usa neutros do tema) */
+        fluent-data-grid::part(row):nth-child(even) {
+            background: var(--neutral-fill-secondary);
+        }
+
+        /* hover (usa accent suave do tema) */
+        fluent-data-grid::part(row):hover {
+            background: var(--neutral-fill-hover);
+        }
+
+    /* =========================
+                           PROMPT (sem quebrar tema)
+                        ========================= */
     .prompt-cell {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 450px;
         display: block;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        color: var(--neutral-foreground-rest);
+    }
+
+    .pager {
+        flex: 0 0 auto;
+        position: sticky;
+        bottom: 0;
+        z-index: 30;
+        display: flex;
+        gap:6px;
+        justify-content: center;
+        padding: 8px 0;
+        background: var(--fill-color);
+        border-top: 1px solid var(--neutral-stroke-rest);
+        backdrop-filter: blur(6px);
+    }
+
+    .toolbar-content {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .filter-bar {
+        display: flex;
+        gap: 10px;
+        margin-top: 8px;
+    }
+
+        .filter-bar fluent-button {
+            border-radius: 999px;
+            min-width: 140px;
+            transition: all .15s ease;
+        }
+
+    .filter-icon {
+        margin-right: 6px;
+    }
+
+    @@media (max-width: 768px) {
+
+        .filter-bar {
+            flex-wrap: wrap;
+        }
+
+            .filter-bar fluent-button {
+                min-width: auto;
+            }
     }
 </style>
 
