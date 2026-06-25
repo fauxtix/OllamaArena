@@ -14,7 +14,6 @@
 
     <FluentGrid>
 
-        <!-- Configuração do Prompt do Juiz de IA -->
         <div hidden="true">
             <FluentGridItem xs="12" Style="margin-top: 8px;">
                 <FluentLabel Style="font-size: 18px; font-weight: bold;">
@@ -35,7 +34,6 @@
                         Gravar Instruções
                     </FluentButton>
 
-                    @* NOVO BOTÃO: Copiar o texto atual da TextArea diretamente para a memória *@
                     <FluentButton Appearance="Appearance.Lightweight"
                                   IconStart="@(new Icons.Regular.Size16.Copy())"
                                   OnClick="CopiarPromptParaClipboard">
@@ -135,7 +133,6 @@ Instruções de Resposta: Dá-me estritamente uma nota de 1 a 5 (onde 1 é péss
         await JS.InvokeVoidAsync("localStorage.setItem", "juiz_ai_prompt", JuizPrompt);
     }
 
-    // NOVO MÉTODO: Envia o conteúdo do input para o Clipboard utilizando o utilitário nativo do browser
     private async Task CopiarPromptParaClipboard()
     {
         if (!string.IsNullOrWhiteSpace(JuizPrompt))

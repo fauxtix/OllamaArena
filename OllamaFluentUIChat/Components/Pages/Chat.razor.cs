@@ -40,7 +40,6 @@ namespace OllamaFluentUIChat.Components.Pages
 
         private GpuInfoDialog? gpuDialog;
 
-        // Token para conseguir cancelar o HttpClient a meio do streaming
         private CancellationTokenSource? _cts;
 
         private string _modelName = "phi4-mini:latest";
@@ -57,7 +56,7 @@ namespace OllamaFluentUIChat.Components.Pages
             {
                 if (_modelName == value) return;
                 _modelName = value;
-                _ = OnModelChangedAsync(); // dispara atualização GPU + gravação
+                _ = OnModelChangedAsync();
             }
         }
         private const string OllamaEndpoint = "http://localhost:11434/api/chat";
@@ -77,7 +76,6 @@ namespace OllamaFluentUIChat.Components.Pages
 
                 try
                 {
-                    // 1) Carregas a lista de modelos da cache
                     _logger?.LogInformation("Carregando lista de modelos da cache...");
                     var storedList = await JS.InvokeAsync<string>("localStorage.getItem", "ollama_models");
                     if (!string.IsNullOrEmpty(storedList))
@@ -167,11 +165,9 @@ namespace OllamaFluentUIChat.Components.Pages
         {
             if (string.IsNullOrWhiteSpace(_currentMessage) || _isThinking) return;
 
-            // Inicia o cronómetro da App para telemetria (.NET)
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var userPrompt = _currentMessage;
 
-            // 1. Adiciona o Prompt do utilizador à UI
             _messages.Add(new Models.DTO.ChatMessage { User = "Tu", Text = userPrompt, IsCurrentUser = true });
 
             _currentMessage = string.Empty;
@@ -181,7 +177,6 @@ namespace OllamaFluentUIChat.Components.Pages
             StateHasChanged();
             await ForceScrollToBottomAsync();
 
-            // 2. Cria o marcador de posição para a resposta da IA
             var aiMessage = new Models.DTO.ChatMessage { User = "Ollama", Text = "...", IsCurrentUser = false };
             _messages.Add(aiMessage);
 
@@ -190,7 +185,6 @@ namespace OllamaFluentUIChat.Components.Pages
 
             _cts = new CancellationTokenSource();
 
-            // Variáveis para armazenar as métricas oficiais do Ollama
             long loadDurationNs = 0;
             long evalDurationNs = 0;
             int evalCount = 0;
@@ -199,7 +193,6 @@ namespace OllamaFluentUIChat.Components.Pages
             {
                 var historyPayload = new List<OllamaChatMessage>();
 
-                // === CONSTRUÇÃO DO SYSTEM PROMPT DIRETO PARA MODO OFFLINE ===
                 StringBuilder systemInstruction = new StringBuilder();
                 systemInstruction.Append("Do NOT use chain-of-thought. Do NOT reveal internal reasoning. ");
                 systemInstruction.Append("Provide ONLY the final answer, concise and direct. ");
@@ -210,16 +203,14 @@ namespace OllamaFluentUIChat.Components.Pages
                     Role = "system",
                     Content = systemInstruction.ToString()
                 });
-                // 4. Mapeia o histórico da UI filtrando de forma robusta para o formato do Ollama
+
                 foreach (var msg in _messages)
                 {
-                    // Ignora placeholders de processamento e mensagens do sistema locais
                     if (string.IsNullOrWhiteSpace(msg.Text) || msg.Text == "...") continue;
                     if (msg.Text.StartsWith("Olá!", StringComparison.OrdinalIgnoreCase)) continue;
 
                     string roleAtual = msg.IsCurrentUser ? "user" : "assistant";
 
-                    // Evita duplicar papéis seguidos no payload (o Ollama exige estritamente user -> assistant -> user)
                     if (historyPayload.Count == 0 || historyPayload[^1].Role != roleAtual)
                     {
                         historyPayload.Add(new OllamaChatMessage
@@ -230,7 +221,6 @@ namespace OllamaFluentUIChat.Components.Pages
                     }
                     else
                     {
-                        // Se o mesmo papel se repetir consecutivamente, junta o texto na última mensagem
                         historyPayload[^1].Content += "\n" + msg.Text;
                     }
                 }
@@ -245,7 +235,7 @@ namespace OllamaFluentUIChat.Components.Pages
                 if (historyPayload.Count == 0 || historyPayload[^1].Role != "user")
                 {
                     _isThinking = false;
-                    _messages.Remove(aiMessage); // Remove o placeholder "..."
+                    _messages.Remove(aiMessage);
                     StateHasChanged();
                     return;
                 }
@@ -310,7 +300,6 @@ namespace OllamaFluentUIChat.Components.Pages
                             using var doc = JsonDocument.Parse(singleLine);
                             var root = doc.RootElement;
 
-                            // Extração do conteúdo de texto da resposta
                             string? chunkText = null;
                             if (root.TryGetProperty("message", out var msgProp) && msgProp.TryGetProperty("content", out var contentProp))
                             {
@@ -568,30 +557,6 @@ namespace OllamaFluentUIChat.Components.Pages
         }
 
 
-    //    private string FormatMessage2(string content)
-    //{
-    //    if (string.IsNullOrEmpty(content)) return "";
-
-    //    // Mantém o teu indicador de escrita visual
-    //    if (content == "...")
-    //    {
-    //        return "<div class='typing-dots'><span></span><span></span><span></span></div>";
-    //    }
-
-    //    // Configura o pipeline com extensões avançadas (tabelas, listas de tarefas, etc.)
-    //    // REMOVIDO: .UseSoftlineBreakAsHardlineBreak() para evitar quebras de linha falsas
-    //    var pipeline = new MarkdownPipelineBuilder()
-    //        .UseAdvancedExtensions()
-    //        .Build();
-
-    //    // Converte o Markdown em HTML puro e estruturado
-    //    var html = Markdown.ToHtml(content, pipeline);
-
-    //    // Remove espaços em branco desnecessários no fim do bloco
-    //    // REMOVIDO: .Replace("<p>", "<div>") para preservar a semântica correta das listas
-    //    return html.TrimEnd('\n', '\r', ' ');
-    //}
-
     private async Task<string> SearchWebContext_DuckDuckGo_Async(string query)
         {
             try
@@ -601,13 +566,11 @@ namespace OllamaFluentUIChat.Components.Pages
                     throw new InvalidOperationException("HttpClient is not initialized.");
                 }
 
-                // 1. Limpar rigorosamente a query de espaços ou quebras de linha nas pontas
                 string cleanQuery = query?.Trim() ?? string.Empty;
 
                 if (string.IsNullOrEmpty(cleanQuery))
                     return "Pesquisa vazia.";
 
-                // 2. Limpar e reconfigurar cabeçalhos idênticos a um browser real
                 _httpClient.DefaultRequestHeaders.Clear();
                 _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
                 _httpClient.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8");
@@ -616,12 +579,10 @@ namespace OllamaFluentUIChat.Components.Pages
                 _httpClient.DefaultRequestHeaders.Add("Sec-Fetch-Mode", "navigate");
                 _httpClient.DefaultRequestHeaders.Add("Sec-Fetch-Site", "none");
 
-                // 3. Montar o URL absoluto usando o construtor Uri para evitar falhas de Hostname no Blazor
                 string baseUrl = "https://duckduckgo.com";
                 string queryString = $"?q={Uri.EscapeDataString(cleanQuery)}&v=l&kl=pt-pt";
                 Uri requestUri = new Uri(baseUrl + queryString, UriKind.Absolute);
 
-                // 4. Fazer o pedido GET usando o objeto Uri
                 var response = await _httpClient.GetAsync(requestUri);
                 response.EnsureSuccessStatusCode();
 
@@ -630,12 +591,10 @@ namespace OllamaFluentUIChat.Components.Pages
                 var doc = new HtmlAgilityPack.HtmlDocument();
                 doc.LoadHtml(html);
 
-                // 5. Selecionar os links dos resultados na estrutura do DDG Lite
                 var titleNodes = doc.DocumentNode.SelectNodes("//a[@class='result-link']");
 
                 if (titleNodes == null || !titleNodes.Any())
                 {
-                    // Fallback caso o DDG use tags normais sem classes na região especificada
                     titleNodes = doc.DocumentNode.SelectNodes("//td[@class='result-snippet']/preceding::tr//a");
                 }
 
@@ -647,16 +606,14 @@ namespace OllamaFluentUIChat.Components.Pages
 
                 foreach (var titleNode in titleNodes)
                 {
-                    if (count >= 3) break; // Mantém o limite dos 3 primeiros resultados
+                    if (count >= 3) break; 
 
                     string title = HtmlAgilityPack.HtmlEntity.DeEntitize(titleNode.InnerText.Trim());
                     string rawUrl = titleNode.GetAttributeValue("href", "");
 
-                    // Ignorar publicidade interna ou links vazios
                     if (string.IsNullOrEmpty(rawUrl) || rawUrl.Contains("://duckduckgo.com"))
                         continue;
 
-                    // Converter links relativos em absolutos
                     string link = rawUrl;
                     if (link.StartsWith("//"))
                     {
@@ -686,11 +643,9 @@ namespace OllamaFluentUIChat.Components.Pages
                         }
                     }
 
-                    // Validação final da integridade do URL do link extraído
                     if (!Uri.IsWellFormedUriString(link, UriKind.Absolute))
                         continue;
 
-                    // Procurar o snippet na linha (tr) seguinte da tabela HTML
                     var parentTr = titleNode.SelectSingleNode("./ancestor::tr");
                     var nextTr = parentTr?.NextSibling;
 
@@ -704,7 +659,6 @@ namespace OllamaFluentUIChat.Components.Pages
                         ? HtmlAgilityPack.HtmlEntity.DeEntitize(snippetNode.InnerText.Trim())
                         : "Sem descrição disponível.";
 
-                    // Montar o bloco formatado para o contexto do Ollama
                     sb.AppendLine($"[Fonte {count + 1}]");
                     sb.AppendLine($"Título: {title}");
                     sb.AppendLine($"Link: {link}");
@@ -736,9 +690,6 @@ namespace OllamaFluentUIChat.Components.Pages
                 _httpClient.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8");
                 _httpClient.DefaultRequestHeaders.Add("Accept-Language", "pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7");
 
-                //_httpClient.DefaultRequestHeaders.Add("User-Agent", "BlazorBenchmarkApp/1.0 (fauxtix.luix@hotmail.com)");
-
-                // Procura diretamente na Wikipedia em português
                 string url = $"https://pt.wikipedia.org/w/api.php?action=query&list=search&srsearch={Uri.EscapeDataString(query)}&format=json&origin=*";
 
                 var response = await _httpClient.GetStringAsync(url);
@@ -747,10 +698,9 @@ namespace OllamaFluentUIChat.Components.Pages
                 var searchResults = jsonDoc.RootElement.GetProperty("query").GetProperty("search");
 
                 var sb = new StringBuilder();
-                foreach (var item in searchResults.EnumerateArray().Take(4)) // Paga os 4 melhores artigos
+                foreach (var item in searchResults.EnumerateArray().Take(4)) 
                 {
                     string snippet = item.GetProperty("snippet").GetString() ?? "";
-                    // Limpa as tags HTML <span> que a Wikipedia envia
                     snippet = snippet.Replace("<span class=\"searchmatch\">", "").Replace("</span>", "");
                     sb.AppendLine(snippet);
                 }

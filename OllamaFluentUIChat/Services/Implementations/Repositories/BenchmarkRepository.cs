@@ -26,13 +26,13 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
             var sql = @"
                 INSERT INTO Prompts (TextoPrompt, DataCriacao) 
                 VALUES (@TextoPrompt, @DataCriacao);
-                SELECT last_insert_rowid();"; // Comando nativo do SQLite para pegar o ID gerado
+                SELECT last_insert_rowid();"; 
             using var connection = _context.CreateConnection();
 
             return await connection.ExecuteScalarAsync<int>(sql, new
             {
                 TextoPrompt = textoPrompt,
-                DataCriacao = DateTime.UtcNow.ToString("o") // Guarda em formato ISO 8601 legível
+                DataCriacao = DateTime.UtcNow.ToString("o")
             });
         }
 
@@ -121,7 +121,7 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
         }
 
         /// <summary>
-        /// Permite editar o texto de um prompt, caso queiras corrigir alguma nota na UI.
+        /// Permite editar o texto de um prompt
         /// </summary>
         public async Task<bool> UpdatePromptAsync(int id, string novoTexto)
         {
@@ -132,7 +132,7 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
         }
 
         /// <summary>
-        /// Permite atualizar o texto de uma resposta (ex: se quiseres adicionar anotações manuais de qualidade).
+        /// Permite atualizar o texto de uma resposta 
         /// </summary>
         public async Task<bool> UpdateResponseTextAsync(int responseId, string newText)
         {

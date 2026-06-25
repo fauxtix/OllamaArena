@@ -129,7 +129,6 @@ namespace OllamaFluentUIChat.Components.Pages.Components
 
             try
             {
-                // Executa o comando nativo do navegador para escrita na área de transferência
                 await JS.InvokeVoidAsync("navigator.clipboard.writeText", texto);
             }
             catch (Exception ex)
@@ -193,7 +192,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             sb.AppendLine();
             sb.Append("Please ensure that your evaluation is concise, objective, and based solely on the content of the response provided by the local model.");
             var textoFormatado = sb.ToString();
-            // Invoca o teu método existente que lida com o JS de cópia
+
             await CopyToClipboardAsync(textoFormatado);
         }
 

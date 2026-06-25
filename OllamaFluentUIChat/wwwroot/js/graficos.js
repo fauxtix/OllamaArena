@@ -1,14 +1,11 @@
 ﻿window.benchmarkCharts = {
 
-    renderGrafico: function (canvasId, dados, exibirLegenda, unidade) {
+    renderGrafico: function (canvasId, dados, unidade) {
 
         const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
 
-        if (!canvas) {
-            return;
-        }
-
-        // Obtém as cores atuais do tema Fluent UI
+        // 1. Obtém as cores dinâmicas do tema (Fluent UI)
         const styles = getComputedStyle(document.documentElement);
 
         const textColor =
@@ -21,109 +18,63 @@
             styles.getPropertyValue('--neutral-stroke-rest').trim() ||
             'rgba(255,255,255,0.12)';
 
-        // Defaults globais do Chart.js
+        // Aplica os padrões globais do Chart.js
         Chart.defaults.color = textColor;
         Chart.defaults.borderColor = gridColor;
 
+        // 2. Limpa o cache do gráfico anterior para evitar sobreposição de memória
         const cacheKey = "_" + canvasId;
-
         if (window[cacheKey]) {
             window[cacheKey].destroy();
         }
 
+        // 3. Criação do novo gráfico com suporte a múltiplas linhas no eixo X
         window[cacheKey] = new Chart(canvas, {
             type: "bar",
-
-            data: {
-                labels: dados.labels,
-                datasets: dados.datasets
-            },
-
+            data: dados,
             options: {
-
                 responsive: true,
-
+                maintainAspectRatio: false, // Respeita rigorosamente a altura do container CSS
                 plugins: {
-
                     legend: {
-                        display: exibirLegenda !== false,
-                        position: "bottom",
-
-                        labels: {
-                            color: textColor,
-                            usePointStyle: true,
-                            pointStyle: "rectRounded",
-                            padding: 16
-                        }
+                        display: false // Oculta a legenda já que o nome do modelo está no eixo X
                     },
-
                     tooltip: {
                         callbacks: {
                             label: function (context) {
-
-                                let label = context.dataset.label || '';
-
-                                if (label) {
-                                    label += ': ';
-                                }
-
-                                if (context.parsed.y !== null) {
-
-                                    let sufixo = unidade;
-
-                                    if (
-                                        unidade === "tokens" &&
-                                        context.label === "Tokens/s"
-                                    ) {
-                                        sufixo = "tokens/s";
-                                    }
-
-                                    label += context.parsed.y + " " + sufixo;
-                                }
-
-                                return label;
+                                let valor = context.parsed.y !== null ? context.parsed.y : 0;
+                                return `Valor: ${valor} ${unidade}`;
                             }
                         }
                     }
                 },
-
                 scales: {
-
                     x: {
-
-                        ticks: {
-                            color: textColor
-                        },
-
-                        grid: {
-                            color: gridColor
-                        },
-
-                        border: {
-                            color: gridColor
-                        }
-                    },
-
-                    y: {
-
+                        maxBarThickness: 45, // Impede que as barras fiquem disformes na janela maior
                         ticks: {
                             color: textColor,
-
+                            maxRotation: 0,   // Mantém as duas linhas na horizontal
+                            minRotation: 0,
+                            autoSkip: false,  // Força a exibição de todos os modelos salvos
+                            font: {
+                                size: 11
+                            },
+                            padding: 10       // Margem confortável para a segunda linha de texto
+                        },
+                        grid: { display: false }, // Remove grelhas verticais para um visual limpo
+                        border: { color: gridColor }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: textColor,
+                            padding: 8,
                             callback: function (value) {
-                                return value + " " +
-                                    (unidade === "tokens"
-                                        ? "t"
-                                        : unidade);
+                                return value + " " + (unidade === "tokens" ? "t" : unidade);
                             }
                         },
-
-                        grid: {
-                            color: gridColor
-                        },
-
-                        border: {
-                            color: gridColor
-                        }
+                        grid: { color: gridColor },
+                        border: { color: gridColor }
                     }
                 }
             }
@@ -131,15 +82,10 @@
     },
 
     downloadGrafico: function (canvasId, nomeFicheiro) {
-
         const canvas = document.getElementById(canvasId);
-
-        if (!canvas) {
-            return;
-        }
+        if (!canvas) return;
 
         const imageURI = canvas.toDataURL("image/png");
-
         const link = document.createElement("a");
         link.download = nomeFicheiro + ".png";
         link.href = imageURI;

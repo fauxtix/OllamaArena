@@ -1,25 +1,16 @@
 ﻿@using OllamaFluentUIChat.Models.Entities
-
+@using System.Linq
 @inject IJSRuntime JS
 
-@* Injeção de estilo específica para contornar o bloqueio de tamanho do Shadow DOM *@
-<style>
-    fluent-dialog.dialogo-benchmark-largo::part(control) {
-        width: 1100px !important;
-        max-width: 95vw !important;
-    }
-</style>
-
-@* Adicionada a propriedade Class para mapear o estilo acima *@
 <FluentDialog Hidden="@(!Visible)"
               Modal="true"
-              Class="dialogo-benchmark-largo"
-              Height="auto"
+              Width="780px"
               TrapFocus="true"
-              AriaLabel="Gráfico de Benchmark">
+              AriaLabel="Gráficos de Benchmark">
 
     <FluentDialogHeader Visible="true">
-        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
+        <FluentStack Orientation="Orientation.Horizontal"
+                     VerticalAlignment="VerticalAlignment.Center">
             <FluentIcon Value="@(new Icons.Regular.Size24.DataHistogram())" />
             <FluentLabel Typo="Typography.PaneHeader">
                 Gráficos de Benchmark do Prompt #@Prompt?.Id
@@ -27,59 +18,74 @@
         </FluentStack>
     </FluentDialogHeader>
 
-    <FluentDialogBody>
-        <FluentCard Style="display: flex;border-radius: 12px; border-color: #ccc;">
+    <FluentDialogBody Style="max-height: 70vh; overflow-y: auto; padding-right: 12px;">
 
-            @if (Prompt != null)
-            {
-                <FluentStack Orientation="Orientation.Horizontal"
-                             HorizontalAlignment="HorizontalAlignment.Center"
-                             VerticalAlignment="VerticalAlignment.Top"
-                             Wrap="true"
-                             Style="width: 100%; gap: 4%;">
+        @if (Prompt != null)
+        {
+            <div class="benchmark-lista-cards">
 
-                    @* Gráfico 1: Tempos (Esquerda) *@
-                    <div style="width: 48%; min-width: 350px;">
-                        <FluentStack Orientation="Orientation.Horizontal" 
-                                     VerticalAlignment="VerticalAlignment.Center"
-                                     Style="margin-bottom: 10px; justify-content: flex-start;">
-                            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
-                                Métricas de Tempo (ms)
-                            </FluentLabel>
-                            <FluentButton Appearance="Appearance.Stealth"
-                                          IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
-                                          OnClick="@(() => DescarregarImagemAsync("graficoTempo", $"benchmark_tempo_prompt_{Prompt.Id}"))"
-                                          Title="Descarregar como PNG" />
-                        </FluentStack>
-                        <canvas id="graficoTempo"></canvas>
+                <div class="grafico-card">
+                    <div class="grafico-header">
+                        <span class="grafico-titulo">Tempo de Execução / Eval (ms)</span>
+                        <FluentButton Appearance="Appearance.Stealth"
+                                      IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                      OnClick="@(() => DescarregarImagemAsync("graficoEval", $"benchmark_eval_prompt_{Prompt.Id}"))" />
                     </div>
-
-                    @* Gráfico 2: Tokens (Direita) *@
-                    <div style="width: 48%; min-width: 350px; justify-content: space-between;">
-                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="margin-bottom: 10px;">
-                            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
-                                Métricas de Tokens
-                            </FluentLabel>
-                            <FluentButton Appearance="Appearance.Stealth"
-                                          IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
-                                          OnClick="@(() => DescarregarImagemAsync("graficoTokens", $"benchmark_tokens_prompt_{Prompt.Id}"))"
-                                          Title="Descarregar como PNG" />
-                        </FluentStack>
-                        <canvas id="graficoTokens"></canvas>
+                    <div class="canvas-container">
+                        <canvas id="graficoEval"></canvas>
                     </div>
+                </div>
 
-                </FluentStack>
-            }
-            else
-            {
-                <p>Nenhum prompt selecionado.</p>
-            }
-        </FluentCard>
+                <div class="grafico-card">
+                    <div class="grafico-header">
+                        <span class="grafico-titulo">Tempo de Carga do Modelo / Load (ms)</span>
+                        <FluentButton Appearance="Appearance.Stealth"
+                                      IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                      OnClick="@(() => DescarregarImagemAsync("graficoLoad", $"benchmark_load_prompt_{Prompt.Id}"))" />
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="graficoLoad"></canvas>
+                    </div>
+                </div>
+
+                <div class="grafico-card">
+                    <div class="grafico-header">
+                        <span class="grafico-titulo">Velocidade de Geração (Tokens/s)</span>
+                        <FluentButton Appearance="Appearance.Stealth"
+                                      IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                      OnClick="@(() => DescarregarImagemAsync("graficoVelocidade", $"benchmark_tokens_seg_prompt_{Prompt.Id}"))" />
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="graficoVelocidade"></canvas>
+                    </div>
+                </div>
+
+                <div class="grafico-card">
+                    <div class="grafico-header">
+                        <span class="grafico-titulo">Total de Tokens Gerados</span>
+                        <FluentButton Appearance="Appearance.Stealth"
+                                      IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                      OnClick="@(() => DescarregarImagemAsync("graficoTotalTokens", $"benchmark_total_tokens_prompt_{Prompt.Id}"))" />
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="graficoTotalTokens"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        }
+        else
+        {
+            <p>Nenhum prompt selecionado.</p>
+        }
+
     </FluentDialogBody>
 
     <FluentDialogFooter>
         <FluentSpacer />
-        <FluentButton Appearance="Appearance.Outline" OnClick="Fechar">Fechar</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="Fechar">
+            Fechar
+        </FluentButton>
     </FluentDialogFooter>
 </FluentDialog>
 
@@ -89,8 +95,6 @@
     [Parameter, EditorRequired] public EventCallback<bool> VisibleChanged { get; set; }
 
     private Dictionary<string, string> _coresDosModelos = new();
-
-    // Flag de controlo para isolar as chamadas JS Interop e garantir que o tamanho do diálogo é fixado
     private bool _graficoJaRenderizado = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -98,12 +102,12 @@
         if (Visible && Prompt != null && !_graficoJaRenderizado)
         {
             _graficoJaRenderizado = true;
-            await Task.Delay(100); // Dá estabilidade ao renderizador do FluentUI antes do desenho do canvas
+            await Task.Delay(200); // Aguarda a animação de abertura do diálogo para evitar falhas de tamanho no Canvas
             await RenderizarGraficosAsync();
         }
         else if (!Visible)
         {
-            _graficoJaRenderizado = false; // Permite uma nova renderização na próxima vez que o diálogo abrir
+            _graficoJaRenderizado = false;
         }
     }
 
@@ -113,47 +117,58 @@
             return;
 
         _coresDosModelos.Clear();
+
         foreach (var modeloNome in Prompt.Answers.Select(a => a.ModeloNome).Distinct())
         {
             _coresDosModelos[modeloNome] = GerarCorAleatoria();
         }
 
-        var dadosTempo = new
-        {
-            labels = new List<string> { "Eval (ms)", "Load (ms)" },
-            datasets = Prompt.Answers.Select(a =>
-            {
-                var cor = _coresDosModelos[a.ModeloNome];
-                return new
-                {
-                    label = a.ModeloNome,
-                    backgroundColor = cor,
-                    borderColor = cor,
-                    borderWidth = 1,
-                    data = new List<double> { a.TempoPuroMs, a.TempoCargaMs }
-                };
-            }).ToList()
-        };
+        var labelsModelos = Prompt.Answers.Select(a => a.ModeloNome).ToList();
 
-        var dadosTokens = new
-        {
-            labels = new List<string> { "Tokens/s", "Total de Tokens" },
-            datasets = Prompt.Answers.Select(a =>
-            {
-                var cor = _coresDosModelos[a.ModeloNome];
-                return new
-                {
-                    label = a.ModeloNome,
-                    backgroundColor = cor,
-                    borderColor = cor,
-                    borderWidth = 1,
-                    data = new List<double> { a.TokensPorSegundo, a.TamanhoTokens }
-                };
-            }).ToList()
-        };
+        var dadosEval = GerarDatasetUnico(labelsModelos, a => a.TempoPuroMs);
+        var dadosLoad = GerarDatasetUnico(labelsModelos, a => a.TempoCargaMs);
+        var dadosVelocidade = GerarDatasetUnico(labelsModelos, a => a.TokensPorSegundo);
+        var dadosTotalTokens = GerarDatasetUnico(labelsModelos, a => a.TamanhoTokens);
 
-        await JS.InvokeVoidAsync("benchmarkCharts.renderGrafico", "graficoTempo", dadosTempo, true, "ms");
-        await JS.InvokeVoidAsync("benchmarkCharts.renderGrafico", "graficoTokens", dadosTokens, true, "tokens");
+        await JS.InvokeVoidAsync("benchmarkCharts.renderGrafico", "graficoEval", dadosEval, "ms");
+        await JS.InvokeVoidAsync("benchmarkCharts.renderGrafico", "graficoLoad", dadosLoad, "ms");
+        await JS.InvokeVoidAsync("benchmarkCharts.renderGrafico", "graficoVelocidade", dadosVelocidade, "tokens/s");
+        await JS.InvokeVoidAsync("benchmarkCharts.renderGrafico", "graficoTotalTokens", dadosTotalTokens, "tokens");
+    }
+
+    private object GerarDatasetUnico(List<string> labelsModelos, Func<BenchmarkResponse, double> seletorValor)
+    {
+        var cores = labelsModelos.Select(nome => _coresDosModelos[nome]).ToList();
+        var valores = Prompt!.Answers.Select(seletorValor).ToList();
+
+        var labelsPartidas = labelsModelos.Select(nome =>
+        {
+            if (nome.Contains(':'))
+            {
+                var partes = nome.Split(':');
+                return new[] { partes[0], ":" + partes[1] };
+            }
+            if (nome.Contains('-') && nome.Length > 10)
+            {
+                var partes = nome.Split('-');
+                return new[] { partes[0], "-" + string.Join("-", partes.Skip(1)) };
+            }
+            return new[] { nome };
+        }).ToList();
+
+        return new
+        {
+            labels = labelsPartidas,
+            datasets = new[]
+            {
+                new {
+                    backgroundColor = cores,
+                    borderColor = cores,
+                    borderWidth = 1,
+                    data = valores
+                }
+            }
+        };
     }
 
     private async Task DescarregarImagemAsync(string canvasId, string nomeFicheiro)
@@ -164,7 +179,7 @@
     private string GerarCorAleatoria()
     {
         var rnd = new Random();
-        return $"rgba({rnd.Next(255)}, {rnd.Next(255)}, {rnd.Next(255)}, 0.7)";
+        return $"rgba({rnd.Next(50, 210)}, {rnd.Next(50, 210)}, {rnd.Next(50, 210)}, 0.85)";
     }
 
     private async Task Fechar()
@@ -172,3 +187,38 @@
         await VisibleChanged.InvokeAsync(false);
     }
 }
+
+<style>
+    .benchmark-lista-cards {
+        display: block;
+        width: 100%;
+    }
+
+    .grafico-card {
+        background: var(--neutral-layer-1);
+        border: 1px solid var(--neutral-stroke-rest);
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .grafico-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+
+    .grafico-titulo {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--neutral-foreground-rest);
+    }
+
+    .canvas-container {
+        position: relative;
+        width: 100%;
+        height: 250px;
+    }
+</style>

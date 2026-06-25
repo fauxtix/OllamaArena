@@ -141,11 +141,9 @@
         _promptsList = null;
         StateHasChanged();
 
-        // Usa a lógica Multi-Mapping já construída no teu repositório
         _promptsList = await BenchmarkRepo.GetAllBenchmarksAsync();
         _promptsQueryable = _promptsList?.AsQueryable();
 
-        // Mantém a seleção atualizada se a lista for recarregada
         if (_selectedPrompt != null && _promptsList != null)
         {
             _selectedPrompt = _promptsList.FirstOrDefault(p => p.Id == _selectedPrompt.Id);
@@ -170,10 +168,8 @@
 
         try
         {
-            // 1. Garante uma contagem segura contra Nulls
             int totalRespostas = prompt.Answers?.Count ?? 0;
 
-            // 2. Dispara o diálogo assíncrono
             var confirmacao = await DialogService.ShowConfirmationAsync(
                 $"Tem a certeza que deseja apagar o Prompt #{prompt.Id}? " +
                 $"Isto irá remover permanentemente todas as {totalRespostas} respostas associadas (Cascading Delete).",
@@ -181,7 +177,6 @@
                 "Cancelar",
                 "Aviso de Eliminação");
 
-            // 3. Validação crucial: o FluentUI pode devolver nulo se o circuito SignalR falhar o frame
             if (confirmacao == null) return;
 
             var resultado = await confirmacao.Result;
@@ -203,12 +198,10 @@
         }
         catch (Exception ex)
         {
-            // Escreve o erro real exato na consola de depuração do VS (Output window)
             System.Diagnostics.Debug.WriteLine($"[Erro DialogService]: {ex.Message} -> {ex.StackTrace}");
         }
     }
 
-    // Auxiliar simples para formatar quebras de linha da resposta da IA sem precisar do pipeline Markdig complexo
     private string ConverterQuebrasLinha(string? texto)
     {
         if (string.IsNullOrEmpty(texto)) return string.Empty;
@@ -220,15 +213,15 @@
     .analise-container {
         display: flex;
         flex-direction: column;
-        height: calc(100vh - 60px); /* Ajusta à altura do layout da tua app */
+        height: calc(100vh - 60px); 
         padding: 16px;
         box-sizing: border-box;
         gap: 8px;
     }
 
     .painel-superior {
-        flex: 1; /* Ocupa exatamente metade do ecrã */
-        min-height: 0; /* Crítico para o scroll interno do DataGrid funcionar */
+        flex: 1; 
+        min-height: 0;
         display: flex;
         flex-direction: column;
     }
@@ -253,7 +246,7 @@
     }
 
     .painel-inferior {
-        flex: 1; /* Ocupa a outra metade do ecrã */
+        flex: 1; 
         min-height: 0;
         overflow-y: auto;
         background: var(--neutral-layer-2);
@@ -262,7 +255,6 @@
         border: 1px solid var(--neutral-stroke-rest);
     }
 
-    /* Linha ativa selecionada no FluentDataGrid */
     .deep .linha-selecionada {
         background-color: var(--accent-fill-rest) !important;
         color: var(--foreground-on-accent) !important;
@@ -329,7 +321,7 @@
     .texto-resposta-raw {
         font-family: var(--body-font);
         line-height: 1.6;
-        white-space: pre-wrap; /* Garante que a tabulação e quebras são interpretadas se o br falhar */
+        white-space: pre-wrap; 
     }
 
     .loading-state, .empty-state {

@@ -1,4 +1,7 @@
-﻿@using OllamaFluentUIChat.Models.Entities
+﻿@using System.Text
+@using OllamaFluentUIChat.Models.Entities
+@inject IJSRuntime JS
+
 
 <div class="grelha-avaliacao">
     <div class="coluna-juiz">
@@ -69,4 +72,10 @@
             font-weight: 600;
             color: var(--neutral-foreground-rest);
         }
+
+    .export-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 12px;
+    }
 </style>
