@@ -3,96 +3,99 @@ using System.Management;
 using System.Text.Json;
 using static OllamaFluentUIChat.Models.DTO.OllamaModels;
 
-namespace OllamaFluentUIChat.Services.Implementations.Services
+namespace OllamaFluentUIChat.Services.Implementations.Services;
+
+public class OllamaGpuService : IOllamaGpuService
 {
-    public class OllamaGpuService : IOllamaGpuService
+    private readonly HttpClient _httpClient;
+    private readonly ILogger<OllamaGpuService> _logger;
+    private const string OllamaUrl = "http://localhost:11434/api/tags";
+
+    public OllamaGpuService(HttpClient httpClient, ILogger<OllamaGpuService> logger)
     {
-        private readonly HttpClient _httpClient;
-        private const string OllamaUrl = "http://localhost:11434/api/tags";
+        _httpClient = httpClient;
+        _logger = logger;
+    }
 
-        public OllamaGpuService()
+    /// <summary>
+    /// Faz o pedido ao Ollama local e preenche a classe 'OllamaResponse' 
+    /// que contém a lista de 'ModelDetails'.
+    /// </summary>
+    public async Task<OllamaResponse> GetLocalModelsAsync()
+    {
+        try
         {
-            _httpClient = new HttpClient();
+            var response = await _httpClient.GetStreamAsync(OllamaUrl);
+            var output = await JsonSerializer.DeserializeAsync<OllamaResponse>(response);
+            return output ?? new OllamaResponse();
         }
-
-        /// <summary>
-        /// Faz o pedido ao Ollama local e preenche a classe 'OllamaResponse' 
-        /// que contém a lista de 'ModelDetails'.
-        /// </summary>
-        public async Task<OllamaResponse> GetLocalModelsAsync()
+        catch (Exception ex)
         {
-            try
-            {
-                var response = await _httpClient.GetStreamAsync(OllamaUrl);
-                var output = await JsonSerializer.DeserializeAsync<OllamaResponse>(response);
-                return output ?? new OllamaResponse();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Não foi possível ligar ao Ollama. Verifique se o serviço está ativo.", ex);
-            }
+            string message = $"Não foi possível ligar ao Ollama. Verifique se o serviço está ativo: {ex.Message}";
+            _logger.LogError(message);
+            return new();
         }
+    }
 
-        /// <summary>
-        /// Método auxiliar interno para ler a VRAM do Windows via WMI.
-        /// </summary>
-        private long GetAvailableVramInBytes()
+    /// <summary>
+    /// Método auxiliar interno para ler a VRAM do Windows via WMI.
+    /// </summary>
+    private long GetAvailableVramInBytes()
+    {
+        try
         {
-            try
+            using (var searcher = new ManagementObjectSearcher("SELECT AdapterRAM FROM Win32_VideoController"))
             {
-                using (var searcher = new ManagementObjectSearcher("SELECT AdapterRAM FROM Win32_VideoController"))
+                foreach (ManagementObject obj in searcher.Get())
                 {
-                    foreach (ManagementObject obj in searcher.Get())
+                    var ram = obj["AdapterRAM"];
+                    if (ram != null)
                     {
-                        var ram = obj["AdapterRAM"];
-                        if (ram != null)
-                        {
-                            return Convert.ToInt64(ram);
-                        }
+                        return Convert.ToInt64(ram);
                     }
                 }
             }
-            catch
-            {
-                // Se falhar (ex: permissões ou ambiente não-Windows), retorna 0
-            }
-            return 0;
         }
-
-        /// <summary>
-        /// Pega no tamanho do modelo (SizeInBytes) e faz o cálculo matemático,
-        /// retornando o resultado preenchido na classe 'GpuStatus'.
-        /// </summary>
-        public GpuStatus CheckGpuCompatibility(long modelSizeInBytes)
+        catch
         {
-            long vramBytes = GetAvailableVramInBytes();
-
-            if (vramBytes == 0)
-            {
-                return new GpuStatus { FitsInGpu = false, AvailableVramGB = 0, EstimatedRequiredMemoryGB = 0 };
-            }
-
-            // 1. Margem de segurança para o Contexto (KV Cache)
-            double estimatedRequiredBytes = modelSizeInBytes * 1.2;
-
-            // 2. CRÍTICO PARA O TEU PC: Subtrair o lixo que o Windows/Browser já estão a gastar
-            // Vamos assumir que o SO consome cerca de 350 MB fixos da tua gráfica
-            long windowsOverheadBytes = 350L * 1024 * 1024;
-            long realUsableVramBytes = vramBytes - windowsOverheadBytes;
-
-            if (realUsableVramBytes < 0) realUsableVramBytes = 0;
-
-            // 3. Conversão para Gigabytes para a Interface Gráfica
-            double usableVramGB = (double)realUsableVramBytes / (1024 * 1024 * 1024);
-            double requiredGB = estimatedRequiredBytes / (1024 * 1024 * 1024);
-
-            // 4. A decisão agora é baseada na VRAM útil que resta!
-            return new GpuStatus
-            {
-                FitsInGpu = realUsableVramBytes > estimatedRequiredBytes,
-                AvailableVramGB = Math.Round(usableVramGB, 2),
-                EstimatedRequiredMemoryGB = Math.Round(requiredGB, 2)
-            };
+            // Se falhar (ex: permissões ou ambiente não-Windows), retorna 0
         }
+        return 0;
+    }
+
+    /// <summary>
+    /// Pega no tamanho do modelo (SizeInBytes) e faz o cálculo matemático,
+    /// retornando o resultado preenchido na classe 'GpuStatus'.
+    /// </summary>
+    public GpuStatus CheckGpuCompatibility(long modelSizeInBytes)
+    {
+        long vramBytes = GetAvailableVramInBytes();
+
+        if (vramBytes == 0)
+        {
+            return new GpuStatus { FitsInGpu = false, AvailableVramGB = 0, EstimatedRequiredMemoryGB = 0 };
+        }
+
+        // 1. Margem de segurança para o Contexto (KV Cache)
+        double estimatedRequiredBytes = modelSizeInBytes * 1.2;
+
+        // 2. CRÍTICO: Subtrair o lixo que o Windows/Browser já estão a gastar
+        // Vamos assumir que o SO consome cerca de 350 MB fixos da gráfica
+        long windowsOverheadBytes = 350L * 1024 * 1024;
+        long realUsableVramBytes = vramBytes - windowsOverheadBytes;
+
+        if (realUsableVramBytes < 0) realUsableVramBytes = 0;
+
+        // 3. Conversão para Gigabytes para a Interface Gráfica
+        double usableVramGB = (double)realUsableVramBytes / (1024 * 1024 * 1024);
+        double requiredGB = estimatedRequiredBytes / (1024 * 1024 * 1024);
+
+        // 4. A decisão agora é baseada na VRAM útil que resta!
+        return new GpuStatus
+        {
+            FitsInGpu = realUsableVramBytes > estimatedRequiredBytes,
+            AvailableVramGB = Math.Round(usableVramGB, 2),
+            EstimatedRequiredMemoryGB = Math.Round(requiredGB, 2)
+        };
     }
 }

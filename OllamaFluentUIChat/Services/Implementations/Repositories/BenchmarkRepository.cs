@@ -26,7 +26,7 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
             var sql = @"
                 INSERT INTO Prompts (TextoPrompt, DataCriacao) 
                 VALUES (@TextoPrompt, @DataCriacao);
-                SELECT last_insert_rowid();"; 
+                SELECT last_insert_rowid();";
             using var connection = _context.CreateConnection();
 
             return await connection.ExecuteScalarAsync<int>(sql, new
@@ -99,7 +99,7 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
             BenchmarkPrompt? promptResult = null;
 
             using var connection = _context.CreateConnection();
-            await connection.QueryAsync<BenchmarkPrompt, BenchmarkResponse, BenchmarkPrompt         >(
+            await connection.QueryAsync<BenchmarkPrompt, BenchmarkResponse, BenchmarkPrompt>(
                 sql,
                 (prompt, response) =>
                 {
@@ -192,6 +192,26 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
             var result = await connection.QueryAsync<BenchmarkEvaluation>(sql);
             return [.. result];
         }
+
+        public async Task<string?> GetBestModelAsync()
+        {
+            var sql = @"
+        SELECT ModeloNome
+        FROM (
+            SELECT 
+                ModeloNome,
+                AVG((GeminiRating + ChatGptRating) * 10.0) AS ScoreFinal
+            FROM Respostas
+            GROUP BY ModeloNome
+        )
+        ORDER BY ScoreFinal DESC
+        LIMIT 1;
+    ";
+
+            using var connection = _context.CreateConnection();
+            return await connection.ExecuteScalarAsync<string?>(sql);
+        }
+
 
     }
 }

@@ -1,10 +1,11 @@
 ﻿@using OllamaFluentUIChat.Models.Entities
 @using OllamaFluentUIChat.Services.Interfaces.Repositories
+@using OllamaFluentUIChat.Services.Interfaces.Services
 
 <FluentDialog Hidden="@(!Visible)"
               Modal="true"
-              Class="dialogo-avaliacao-benchmark"
-              Style="--dialog-width: 1000px; height:699px;"
+              Class="evaluation-dialogue-benchmark"
+              Style="--dialog-width: 1200px; --dialog-height: auto;"
               TrapFocus="true"
               AriaLabel="Avaliação Benchmark">
 
@@ -25,15 +26,45 @@
         </FluentStack>
     </FluentDialogHeader>
 
-    <FluentDialogBody Style="height:70%;">
+    <FluentDialogBody>
 
         @if (Response != null)
         {
             <BenchmarkEvaluation Response="Response" />
+
+            <div class="grelha-botoes-traducao">
+
+                <div>
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  Disabled="@isTranslating"
+                                  OnClick="TraduzirGemini">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Translate())" />
+                        Traduzir Gemini Feedback
+                    </FluentButton>
+                </div>
+
+                <div>
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  Disabled="@isTranslating"
+                                  OnClick="TraduzirChatGpt">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Translate())" />
+                        Traduzir ChatGPT Feedback
+                    </FluentButton>
+                </div>
+
+            </div>
         }
     </FluentDialogBody>
+
     <FluentDialogFooter>
+
+        @if (isTranslating)
+        {
+            <FluentProgressRing Style="margin-right:12px;" />
+        }
+
         <FluentSpacer />
+
         <FluentButton Appearance="Appearance.Accent"
                       Disabled="@IsDisabled()"
                       OnClick="Guardar">
@@ -49,8 +80,19 @@
 
 </FluentDialog>
 
+<FluentMenuProvider />
+
+<TranslationPreviewDialog Visible="@showTranslationDialog"
+                          VisibleChanged="@(v => showTranslationDialog = v)"
+                          TranslatedText="@translatedText"
+                          ModelUsed="@modelUsed"
+                          TimeSpent="@timeSpent"
+                          OnAccept="AplicarTraducao" />
+
 @code {
     [Inject] IBenchmarkRepository BenchmarkRepository { get; set; } = default!;
+    [Inject] public ITranslationService TranslationService { get; set; } = default!;
+    [Inject] public ILogger<App> Logger { get; set; } = default!;
 
     [Parameter, EditorRequired] public BenchmarkResponse? Response { get; set; }
 
@@ -62,15 +104,29 @@
 
     private string? prompt;
 
-    protected override async Task OnParametersSetAsync()
+    private bool showTranslationDialog;
+    private string? translatedText;
+    private string? targetField;
+    private bool isTranslating = false;
+
+    private string? modelUsed;
+    private string? timeSpent;
+
+    protected override void OnParametersSet()
     {
         if (Response is not null)
         {
-            var promptId = Response.PromptId;
-            var resp = await BenchmarkRepository.GetBenchmarkByIdAsync(promptId);
-            prompt = resp?.TextoPrompt;
+            _ = CarregarPromptAsync(Response.PromptId);
         }
     }
+
+    private async Task CarregarPromptAsync(int promptId)
+    {
+        var resp = await BenchmarkRepository.GetBenchmarkByIdAsync(promptId);
+        prompt = resp?.TextoPrompt;
+        StateHasChanged();
+    }
+
     private async Task Guardar()
     {
         if (Response is not null)
@@ -93,14 +149,96 @@
             Response?.GeminiFeedback != null &&
             Response?.ChatGptFeedback != null;
     }
-}
-<style>
-    .dialogo-avaliacao-benchmark {
-        border-radius: 10px;
+
+    // private bool IsDisabled()
+    // {
+    //     bool geminiOk =
+    //         !string.IsNullOrWhiteSpace(Response?.GeminiFeedback) ||
+    //         (targetField == "gemini" && !string.IsNullOrWhiteSpace(translatedText));
+
+    //     bool chatgptOk =
+    //         !string.IsNullOrWhiteSpace(Response?.ChatGptFeedback) ||
+    //         (targetField == "chatgpt" && !string.IsNullOrWhiteSpace(translatedText));
+
+    //     return !(geminiOk && chatgptOk);
+    // }
+
+    private async Task TraduzirChatGpt()
+    {
+        if (Response?.ChatGptFeedback is null)
+            return;
+
+        targetField = "chatgpt";
+        isTranslating = true;
+        StateHasChanged();
+
+        var result = await TranslationService.TranslateAsync(
+            Response.ChatGptFeedback,
+            Response.ModeloNome
+        );
+
+        translatedText = result.TranslatedText;
+        modelUsed = result.ModelUsed;
+        timeSpent = result.TimeSpentFormatted;
+
+        isTranslating = false;
+
+        StateHasChanged();
+
+        showTranslationDialog = true;
     }
 
-        .dialogo-avaliacao-benchmark .fluent-dialog-body {
+    private async Task TraduzirGemini()
+    {
+        if (Response?.GeminiFeedback is null)
+            return;
+
+        targetField = "gemini";
+        isTranslating = true;
+        StateHasChanged();
+
+        var result = await TranslationService.TranslateAsync(
+            Response.GeminiFeedback,
+            Response.ModeloNome
+        );
+
+        translatedText = result.TranslatedText;
+        modelUsed = result.ModelUsed;
+        timeSpent = result.TimeSpentFormatted;
+
+        isTranslating = false;
+
+        StateHasChanged(); 
+
+        showTranslationDialog = true;
+    }
+
+    private async Task AplicarTraducao(string texto)
+    {
+        if (Response is null)
+            return;
+
+        if (targetField == "chatgpt")
+            Response.ChatGptFeedback = texto;
+
+        if (targetField == "gemini")
+            Response.GeminiFeedback = texto;
+
+        StateHasChanged();
+    }
+}
+
+<style>
+    .evaluation-dialogue-benchmark {
+        border-radius: 10px;
+        max-width: 95vw;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .evaluation-dialogue-benchmark .fluent-dialog-body {
             padding: 16px;
+            overflow-y: auto;
         }
 
     .prompt-citacao {
@@ -123,4 +261,10 @@
             margin-top: 0;
         }
 
+    .grelha-botoes-traducao {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
 </style>

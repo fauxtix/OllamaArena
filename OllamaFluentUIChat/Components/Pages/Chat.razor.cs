@@ -6,12 +6,13 @@ using Microsoft.JSInterop;
 using OllamaFluentUIChat.Components.Pages.Components;
 using OllamaFluentUIChat.Models.DTO;
 using OllamaFluentUIChat.Models.Entities;
+using OllamaFluentUIChat.PromptTemplates;
+using OllamaFluentUIChat.Services;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
 using System.Text;
 using System.Text.Json;
 using System.Web;
-using OllamaFluentUIChat.Services;
 using static OllamaFluentUIChat.Models.DTO.OllamaModels;
 
 namespace OllamaFluentUIChat.Components.Pages
@@ -192,16 +193,13 @@ namespace OllamaFluentUIChat.Components.Pages
             try
             {
                 var historyPayload = new List<OllamaChatMessage>();
+                var systemInstructions = ChatInstructionsPrompt.GetSystemInstructionPrompt();
 
-                StringBuilder systemInstruction = new StringBuilder();
-                systemInstruction.Append("Do NOT use chain-of-thought. Do NOT reveal internal reasoning. ");
-                systemInstruction.Append("Provide ONLY the final answer, concise and direct. ");
-                systemInstruction.Append("Be factual and precise. If you are not certain about a specific detail, omit it and state only the confirmed information.");
 
                 historyPayload.Add(new OllamaChatMessage
                 {
                     Role = "system",
-                    Content = systemInstruction.ToString()
+                    Content = systemInstructions
                 });
 
                 foreach (var msg in _messages)

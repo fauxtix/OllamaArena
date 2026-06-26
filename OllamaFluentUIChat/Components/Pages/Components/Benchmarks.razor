@@ -57,7 +57,7 @@
                             {
                                 <FluentCard MinimalStyle="true"
                                             Class="@($"card-prompt-item {(prompt == _selectedPrompt ? "card-selecionado" : "")}")"
-                                            @onclick="@(() => SeleccionarPrompt(prompt))">
+                                            @onclick="@(() => SelectPrompt(prompt))">
 
                                     <div class="card-prompt-header">
                                         <span class="prompt-id-badge">#@prompt.Id</span>
@@ -78,7 +78,7 @@
 
                                         <FluentButton Appearance="Appearance.Outline"
                                                       IconStart="@(new Icons.Regular.Size24.LayoutInfographic())"
-                                                      OnClick="@(() => AbrirDialogoGrafico(prompt))"
+                                                      OnClick="@(() => OpenChartDialog(prompt))"
                                                       Title="Mostrar resultados em gráfico"
                                                       StopPropagation="true">
                                             Gráfico
@@ -87,7 +87,7 @@
                                         <FluentButton Appearance="Appearance.Stealth"
                                                       Color="Color.Error"
                                                       IconStart="@(new Icons.Regular.Size24.Delete())"
-                                                      OnClick="@( async () => await ApagarPromptAsync(prompt))"
+                                                      OnClick="@( async () => await DeletePromptAsync(prompt))"
                                                       Title="Apagar registo"
                                                       StopPropagation="true">
                                         </FluentButton>
@@ -148,7 +148,7 @@
                                                     <FluentButton Appearance="Appearance.Stealth"
                                                                   IconStart="@(new Icons.Regular.Size24.ClipboardCode())"
                                                                   Color="Color.Accent"
-                                                                  OnClick="@(() => CopiarPromptAvaliacaoAsync(_selectedPrompt.TextoPrompt, resp.TextoResposta))"
+                                                                  OnClick="@(() => CopyPromptForEvaluationAsync(_selectedPrompt.TextoPrompt, resp.TextoResposta))"
                                                                   Title="Copiar Prompt Formatado para o Juiz IA"
                                                                   Style="padding: 0; min-width: 32px;" />
                                                 </div>
@@ -174,7 +174,7 @@
 
                                                     <FluentButton Appearance="Appearance.Outline"
                                                                   IconStart="@(new Icons.Regular.Size16.Edit())"
-                                                                  OnClick="@(() => AbrirAvaliacao(resp))">
+                                                                  OnClick="@(() => OpenEvaluation(resp))">
                                                         Avaliação
                                                     </FluentButton>
 
@@ -201,14 +201,15 @@
 </div>
 
 <FluentDialogProvider />
-<BenchmarkChartDialog Prompt="@_promptParaGrafico"
-                      Visible="@_dialogGraficoVisible"
-                      VisibleChanged="@((v) => _dialogGraficoVisible = v)" />
+<BenchmarkChartDialog Prompt="@_chartPrompt"
+                      Visible="@_chartDialogVisible"
+                      VisibleChanged="@((v) => _chartDialogVisible = v)" />
+
 <BenchmarkEvaluationDialog Response="@_selectedEvaluation"
                            Visible="@_evaluationDialogVisible"
                            VisibleChanged="@((v) => _evaluationDialogVisible = v)"
-                           OnSave="GuardarAvaliacaoAsync"
-                           OnClose="FecharDialogoAsync" />
+                           OnSave="SaveEvaluationAsync"
+                           OnClose="CloseDialogAsync" />
 
 
 

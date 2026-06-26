@@ -1,4 +1,5 @@
-﻿using Microsoft.FluentUI.AspNetCore.Components;
+﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using Microsoft.FluentUI.AspNetCore.Components;
 using OllamaFluentUIChat.Components;
 using OllamaFluentUIChat.Services.Implementations.Repositories;
 using OllamaFluentUIChat.Services.Implementations.Services;
@@ -43,6 +44,8 @@ try
     builder.Services.AddTransient<IOllamaGpuService, OllamaGpuService>();
     builder.Services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
     builder.Services.AddScoped<ILogRepository, LogRepository>();
+
+    builder.Services.AddScoped<ITranslationService, TranslationService>();
 
     var app = builder.Build();
 

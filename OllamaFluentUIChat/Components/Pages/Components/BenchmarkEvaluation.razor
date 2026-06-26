@@ -1,77 +1,109 @@
-﻿@using System.Text
-@using OllamaFluentUIChat.Models.Entities
+﻿@using OllamaFluentUIChat.Models.Entities
 @inject IJSRuntime JS
 
+@if (Response is not null)
+{
+    <div class="assessment-grid">
+        <div class="judge-column judge-column-style">
+            <div class="judge-header">
+                <div class="judge-label-wrapper">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Sparkle())"
+                                Color="Color.Accent" />
+                    <div class="judge-label">Google Gemini</div>
+                </div>
+            </div>
+            <FluentNumberField Min="1" Max="5"
+                               @bind-Value="Response.GeminiRating"
+                               Label="Rating" />
 
-<div class="grelha-avaliacao">
-    <div class="coluna-juiz">
-        <div class="juiz-header">
-            <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())"
-                        Color="Color.Accent" />
-            <span>Google Gemini</span>
+            <FluentTextArea @bind-Value="Response.GeminiFeedback"
+                            Label="Feedback"
+                            Style="font-size:14px;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;"
+                            Rows="10" />
         </div>
 
-        <FluentNumberField Min="1" Max="5"
-                           @bind-Value="Response.GeminiRating"
-                           Label="Rating" />
+        <div class="judge-column judge-column-style">
+            <div class="judge-header">
+                <div class="judge-label-wrapper">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Sparkle())"
+                                Color="Color.Accent" />
+                    <div class="judge-label">Open AI ChatGpt</div>
+                </div>
+            </div>
 
-        <FluentTextArea @bind-Value="Response.GeminiFeedback"
-                        Label="Feedback"
-                        Rows="6" />
-    </div>
+            <FluentNumberField Min="1" Max="5"
+                               @bind-Value="Response.ChatGptRating"
+                               Label="Rating" />
 
-    <div class="coluna-juiz">
-        <div class="juiz-header">
-            <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())"
-                        Color="Color.Accent" />
-
-            <span>OpenAI ChatGPT</span>
+            <FluentTextArea @bind-Value="Response.ChatGptFeedback"
+                            Label="Feedback"
+                            Style="font-size:14px;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;"
+                            Rows="10" />
         </div>
 
-        <FluentNumberField Min="1" Max="5"
-                           @bind-Value="Response.ChatGptRating"
-                           Label="Rating" />
-
-        <FluentTextArea @bind-Value="Response.ChatGptFeedback"
-                        Label="Feedback"
-                        Rows="6" />
     </div>
-
-</div>
+}
 
 @code {
-    [Parameter, EditorRequired]
+    [Parameter]
     public BenchmarkResponse Response { get; set; } = default!;
 }
 
 <style>
-    .grelha-avaliacao {
+    .assessment-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 24px;
+        min-height: 40vh;
     }
 
-    .coluna-juiz {
+    .judge-column {
         flex: 1;
-        background-color: var(--neutral-layer-2);
-        padding: 12px;
-        border-radius: 4px;
-        border: 1px solid var(--neutral-stroke-divider);
         display: flex;
         flex-direction: column;
         gap: 8px;
     }
 
-    .juiz-header {
+        .judge-column textarea {
+            flex-grow: 1;
+        }
+
+    .judge-column-style {
+        background-color: var(--neutral-layer-2);
+        padding: 12px;
+        border-radius: 4px;
+        border: 1px solid var(--neutral-stroke-divider);
+    }
+
+    .judge-label-wrapper {
         display: flex;
         align-items: center;
         gap: 6px;
     }
 
-        .juiz-header span {
+    .judge-label {
+        display: inline-block;
+        padding: 2px 6px;
+        border: 1px solid var(--neutral-stroke-strong, #666);
+        border-radius: 4px;
+        font-weight: 600;
+        color: var(--neutral-foreground-rest);
+    }
+
+    .judge-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .judge-header  span {
             font-weight: 600;
             color: var(--neutral-foreground-rest);
+            padding: 2px 6px;
+            border: 1px solid var(--neutral-stroke-strong);
+            border-radius: 4px;
         }
+
 
     .export-container {
         display: flex;

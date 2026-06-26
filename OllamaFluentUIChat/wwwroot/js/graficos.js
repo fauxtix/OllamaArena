@@ -50,18 +50,18 @@
                 },
                 scales: {
                     x: {
-                        maxBarThickness: 45, // Impede que as barras fiquem disformes na janela maior
+                        maxBarThickness: 70,
                         ticks: {
                             color: textColor,
-                            maxRotation: 0,   // Mantém as duas linhas na horizontal
+                            maxRotation: 0,
                             minRotation: 0,
-                            autoSkip: false,  // Força a exibição de todos os modelos salvos
+                            autoSkip: false,
                             font: {
                                 size: 11
                             },
-                            padding: 10       // Margem confortável para a segunda linha de texto
+                            padding: 10
                         },
-                        grid: { display: false }, // Remove grelhas verticais para um visual limpo
+                        grid: { display: false },
                         border: { color: gridColor }
                     },
                     y: {

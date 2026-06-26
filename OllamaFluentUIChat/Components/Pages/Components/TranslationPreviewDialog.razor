@@ -1,0 +1,64 @@
+﻿<FluentDialog Hidden="@(!Visible)"
+              Modal="true"
+              Style="width: 700px;"
+              TrapFocus="true">
+
+    <FluentDialogHeader Visible="true">
+        <FluentLabel Typo="Typography.Body">
+            Tradução do Feedback
+        </FluentLabel>
+    </FluentDialogHeader>
+
+    <FluentDialogBody>
+
+        <FluentLabel Typo="Typography.Body">
+            Modelo usado: @ModelUsed
+        </FluentLabel>
+
+        <FluentLabel Typo="Typography.Body">
+            Tempo gasto: @TimeSpent
+        </FluentLabel>
+
+        <FluentTextArea Value="@TranslatedText"
+                        ReadOnly="true"
+                        Rows="10"
+                        Style="width:100%;" />
+    </FluentDialogBody>
+
+    <FluentDialogFooter>
+        <FluentSpacer />
+
+        <FluentButton Appearance="Appearance.Accent"
+                      OnClick="Aceitar">
+            Aceitar e continuar
+        </FluentButton>
+
+        <FluentButton Appearance="Appearance.Stealth"
+                      OnClick="Cancelar">
+            Sair
+        </FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+
+    [Parameter] public string? TranslatedText { get; set; }
+    [Parameter] public string? ModelUsed { get; set; }
+    [Parameter] public string? TimeSpent { get; set; }
+    [Parameter] public EventCallback<string> OnAccept { get; set; }
+
+    private async Task Aceitar()
+    {
+        if (TranslatedText is not null)
+            await OnAccept.InvokeAsync(TranslatedText);
+
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    private async Task Cancelar()
+    {
+        await VisibleChanged.InvokeAsync(false);
+    }
+}
