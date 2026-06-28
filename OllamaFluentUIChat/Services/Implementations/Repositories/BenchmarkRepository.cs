@@ -41,12 +41,20 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
         /// </summary>
         public async Task CreateResponseAsync(BenchmarkResponse response)
         {
-            var sql = @"
-                INSERT INTO Respostas (PromptId, ModeloNome, TextoResposta, TokensPorSegundo, TempoPuroMs, TempoCargaMs, TamanhoTokens)
-                VALUES (@PromptId, @ModeloNome, @TextoResposta, @TokensPorSegundo, @TempoPuroMs, @TempoCargaMs, @TamanhoTokens);";
+            StringBuilder sb = new();
+            sb.Append("INSERT INTO Respostas ");
+            sb.Append("(PromptId, ModeloNome, TextoResposta, TokensPorSegundo, ");
+            sb.Append("TempoPuroMs, TempoCargaMs, TamanhoTokens, ");
+            sb.Append("GeminiFactualRating, GeminiFormattingRating, GeminiRating, GeminiFeedback, ");
+            sb.Append("ChatGptFactualRating, ChatGptFormattingRating, ChatGptRating, ChatGptFeedback) ");
+            sb.Append("VALUES ");
+            sb.Append("(@PromptId, @ModeloNome, @TextoResposta, @TokensPorSegundo, @TempoPuroMs, @TempoCargaMs, @TamanhoTokens, ");
+            sb.Append("@GeminiFactualRating, @GeminiFormattingRating, @GeminiRating, @GeminiFeedback, ");
+            sb.Append("@ChatGptFactualRating, @ChatGptFormattingRating, @ChatGptRating, @ChatGptFeedback);");
+
 
             using var connection = _context.CreateConnection();
-            await connection.ExecuteAsync(sql, response);
+            await connection.ExecuteAsync(sb.ToString(), response);
         }
 
         /// <summary>
@@ -168,8 +176,13 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
         public async Task<bool> UpdateResponseEvaluationAsync(BenchmarkResponse res)
         {
             StringBuilder sb = new();
-            sb.Append("UPDATE Respostas SET GeminiRating = @GeminiRating, GeminiFeedback = @GeminiFeedback, ");
-            sb.Append("ChatGptRating = @ChatGptRating, ChatGptFeedback = @ChatGptFeedback WHERE Id = @Id");
+            sb.Append("UPDATE Respostas ");
+            sb.Append("SET ");
+            sb.Append("GeminiRating = @GeminiRating, GeminiFeedback = @GeminiFeedback, ");
+            sb.Append("ChatGptRating = @ChatGptRating, ChatGptFeedback = @ChatGptFeedback, ");
+            sb.Append("GeminiFactualRating = @GeminiFactualRating, GeminiFormattingRating = @GeminiFormattingRating, ");
+            sb.Append("ChatGptFactualRating = @ChatGptFactualRating, ChatGptFormattingRating = @ChatGptFormattingRating ");
+            sb.Append("WHERE Id = @Id");
             var sql = sb.ToString();
             using var connection = _context.CreateConnection();
             int AffectedLines = await connection.ExecuteAsync(sql, res);
@@ -183,35 +196,34 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
         public async Task<IEnumerable<BenchmarkEvaluation>> BenchmarkResponseEvaluationAsync()
         {
             StringBuilder sb = new();
-            sb.Append("SELECT R.PromptId, P.TextoPrompt, R.ModeloNome, R.GeminiRating, R.ChatGptRating,  P.DataCriacao, ");
-            sb.Append("R.TokensPorSegundo, R.TempoPuroMs, R.TempoCargaMs, R.TamanhoTokens ");
+            sb.Append("SELECT R.PromptId, P.TextoPrompt, R.ModeloNome, ");
+            sb.Append("R.GeminiRating, R.GeminiFactualRating, R.GeminiFormattingRating, "); // Novos campos incluídos
+            sb.Append("R.ChatGptRating, R.ChatGptFactualRating, R.ChatGptFormattingRating, "); // Novos campos incluídos
+            sb.Append("P.DataCriacao, R.TokensPorSegundo, R.TempoPuroMs, R.TempoCargaMs, R.TamanhoTokens ");
             sb.Append("FROM Prompts P ");
             sb.Append("LEFT JOIN Respostas R ON R.PromptId = P.Id");
+
             var sql = sb.ToString();
             using var connection = _context.CreateConnection();
             var result = await connection.QueryAsync<BenchmarkEvaluation>(sql);
             return [.. result];
         }
-
         public async Task<string?> GetBestModelAsync()
         {
             var sql = @"
         SELECT ModeloNome
         FROM (
-            SELECT 
+            SELECT  
                 ModeloNome,
-                AVG((GeminiRating + ChatGptRating) * 10.0) AS ScoreFinal
+                AVG((COALESCE(GeminiFactualRating, GeminiRating) + COALESCE(ChatGptFactualRating, ChatGptRating)) * 10.0) AS ScoreFinal
             FROM Respostas
             GROUP BY ModeloNome
         )
         ORDER BY ScoreFinal DESC
-        LIMIT 1;
-    ";
+        LIMIT 1;";
 
             using var connection = _context.CreateConnection();
             return await connection.ExecuteScalarAsync<string?>(sql);
         }
-
-
     }
 }

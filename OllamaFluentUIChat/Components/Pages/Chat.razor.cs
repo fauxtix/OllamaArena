@@ -243,20 +243,18 @@ namespace OllamaFluentUIChat.Components.Pages
                     ModelName = "phi4-mini:latest";
                 }
 
-                // === 5. CONSTRUÇÃO DO PAYLOAD FINAL COM PARÂMETROS ANTILOOP ===
+                int maxTokens = _gpuReport?.FitsInGpu == true ? 1500 : 800;
                 var payload = new OllamaChatPayload
                 {
                     Model = ModelName,
                     Messages = historyPayload,
                     Stream = true,
                     Options = new Dictionary<string, object>
-            {
-                { "temperature", 0.3 },        // Baixado para 0.3 para garantir respostas mais factuais e menos criativas
-                { "repeat_penalty", 1.2 },    // Força o Ollama a penalizar e quebrar loops de repetição de texto
-                { "num_predict", 400 }         // Limita o tamanho máximo da resposta para evitar loops infinitos
-            }
+                    {
+                        { "temperature", 0.2 },
+                        { "num_predict", maxTokens }
+                    }
                 };
-
                 var json = JsonSerializer.Serialize(payload);
 
 
@@ -279,7 +277,8 @@ namespace OllamaFluentUIChat.Components.Pages
 
                 if (_cts is null)
                 {
-                    _cts = new CancellationTokenSource();
+                    //_cts = new CancellationTokenSource();
+                    return;
                 }
 
                 while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, _cts.Token)) > 0)

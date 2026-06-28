@@ -12,6 +12,13 @@
         public float TempoPuroMs { get; set; }
         public float TempoCargaMs { get; set; }
         public int TamanhoTokens { get; set; }
+
+        public int? GeminiFactualRating { get; set; }    // Nota de Conteúdo (1-5)
+        public int? GeminiFormattingRating { get; set; } // Nota de Formatação (1-5)
+        public int? ChatGptFactualRating { get; set; }    // Nota de Conteúdo (1-5)
+        public int? ChatGptFormattingRating { get; set; } // Nota de Formatação (1-5)
+
+
         public string TempoPuroFormatado =>
             TimeSpan.FromMilliseconds(TempoPuroMs).ToString(@"m\:ss");
         public string DataCriacaoFormatada =>

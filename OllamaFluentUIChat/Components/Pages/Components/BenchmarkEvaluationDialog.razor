@@ -30,8 +30,7 @@
 
         @if (Response != null)
         {
-            <BenchmarkEvaluation Response="Response" />
-
+            <BenchmarkEvaluation Response="Response" OnEvaluationChanged="StateHasChanged" />
             <div class="grelha-botoes-traducao">
 
                 <div>
@@ -150,18 +149,6 @@
             Response?.ChatGptFeedback != null;
     }
 
-    // private bool IsDisabled()
-    // {
-    //     bool geminiOk =
-    //         !string.IsNullOrWhiteSpace(Response?.GeminiFeedback) ||
-    //         (targetField == "gemini" && !string.IsNullOrWhiteSpace(translatedText));
-
-    //     bool chatgptOk =
-    //         !string.IsNullOrWhiteSpace(Response?.ChatGptFeedback) ||
-    //         (targetField == "chatgpt" && !string.IsNullOrWhiteSpace(translatedText));
-
-    //     return !(geminiOk && chatgptOk);
-    // }
 
     private async Task TraduzirChatGpt()
     {

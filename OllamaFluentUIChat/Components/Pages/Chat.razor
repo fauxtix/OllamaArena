@@ -158,6 +158,26 @@
         color: #007bff;
     }
 
+    /* --- CORREÇÃO DE CABEÇALHOS ACIDENTAIS (Neutraliza texto gigante) --- */
+    .chat-content h1,
+    .chat-content h2,
+    .chat-content h3,
+    .chat-content h4 {
+        font-size: 0.95rem !important;
+        font-weight: bold !important;
+        margin-top: 6px !important;
+        margin-bottom: 6px !important;
+        display: block !important;
+        color: inherit !important;
+    }
+
+    /* Garante consistência no tamanho do texto geral e divs convertidas */
+    .chat-content div,
+    .chat-content p {
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
     .chat-content ul, .chat-content ol {
         padding-left: 20px;
         margin: 4px 0;
@@ -245,4 +265,45 @@
             cursor: not-allowed;
         }
 
+    /* Garante que as tabelas geradas pelo Markdig ocupam o espaço correto e têm linhas visíveis */
+    .chat-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 0.85rem;
+        background-color: var(--neutral-layer-1);
+        color: var(--neutral-foreground-rest);
+    }
+
+    .chat-content th, .chat-content td {
+        border: 1px solid var(--neutral-stroke-layer-rest);
+        padding: 6px 10px;
+        text-align: left;
+    }
+
+    .chat-content th {
+        background-color: var(--neutral-layer-3);
+        font-weight: bold;
+    }
+
+    /* Proteção extra para o balão azul do utilizador não herdar bordas escuras ou quebrar contraste */
+    .chat-content[style*="var(--accent-fill-rest)"] th,
+    .chat-content[style*="var(--accent-fill-rest)"] td {
+        border-color: rgba(255, 255, 255, 0.25);
+        color: var(--foreground-on-accent-rest) !important;
+    }
+
+    .chat-content[style*="var(--accent-fill-rest)"] th {
+        background-color: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Evita que blocos de código vazem para fora do balão de chat */
+    .chat-content pre {
+        background-color: rgba(0, 0, 0, 0.2);
+        padding: 8px;
+        border-radius: 6px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
 </style>

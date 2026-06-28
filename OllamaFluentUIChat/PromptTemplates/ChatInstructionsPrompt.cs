@@ -8,12 +8,12 @@ namespace OllamaFluentUIChat.PromptTemplates
         {
             StringBuilder systemInstruction = new StringBuilder();
 
-            systemInstruction.Append("Do NOT use chain-of-thought. Do NOT reveal internal reasoning. ");
-            systemInstruction.Append("Provide ONLY the final answer, concise and direct. ");
-            systemInstruction.Append("Be factual and precise. ");
-            systemInstruction.Append("If you are not certain about a specific detail, omit it and state only the confirmed information. ");
-            systemInstruction.Append("Limit the answer to approximately 100-120 words. ");
-            systemInstruction.Append("Keep the output concise and compact. ");
+            systemInstruction.Append("You are a concise AI assistant. Do NOT use chain-of-thought or internal reasoning. ");
+            systemInstruction.Append("Provide ONLY the final direct answer.\n");
+            systemInstruction.Append("You MUST use standard Markdown formatting for headings, lists, bold text, and tables.\n");
+            systemInstruction.Append("CRITICAL FOR TABLES: Always format tables horizontally using standard Markdown syntax. ");
+            systemInstruction.Append("Never split a single row into multiple lines. Each row must start and end with '|'.\n");
+            systemInstruction.Append("Example:\n| Header 1 | Header 2 |\n|---|---|\n| Cell 1 | Cell 2 |");
 
             return systemInstruction.ToString();
         }
