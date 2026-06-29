@@ -24,10 +24,15 @@ namespace OllamaFluentUIChat.Services
                 content += "\n```";
             }
 
+            // --- CORREÇÃO DO CABEÇALHO (O Teu Pedido Original) ---
+            // Força uma quebra de linha dupla ANTES do cardinal (#) para que o título nunca se cole ao texto anterior,
+            // corrigindo o erro "OverviewThe Ming Dynasty..." que viste no anexo.
+            content = Regex.Replace(content, @"([^\n])\s*(#{1,6}\s)", "$1\n\n$2");
+
             // --- VALIDAÇÃO 2: Corrigir falta de espaço em Cabeçalhos/Títulos Markdown ---
             content = Regex.Replace(content, @"^(#{1,6})([^\s#])", "$1 $2", RegexOptions.Multiline);
 
-            // --- VALIDAÇÃO 3: Correção de Tabelas Markdown (Inclui reconstrução de tabelas partidas na vertical) ---
+            // --- VALIDAÇÃO 3: Correção de Tabelas Markdown ---
             if (content.Contains("|"))
             {
                 var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
@@ -39,7 +44,6 @@ namespace OllamaFluentUIChat.Services
                 {
                     string trimmed = line.Trim();
 
-                    // Deteta se a linha faz parte de uma tabela partida: começa por '|' e NÃO tem múltiplos '|' no meio
                     if (trimmed.StartsWith("|") && trimmed.Count(c => c == '|') == 1)
                     {
                         insideBrokenTable = true;
@@ -48,7 +52,6 @@ namespace OllamaFluentUIChat.Services
                     }
                     else
                     {
-                        // Se saímos do padrão da tabela partida, descarrega o acumulado convertendo para horizontal
                         if (insideBrokenTable && currentTableRow.Count > 0)
                         {
                             int separatorIndex = currentTableRow.FindIndex(c => c.StartsWith("-"));
@@ -57,13 +60,10 @@ namespace OllamaFluentUIChat.Services
                             for (int i = 0; i < currentTableRow.Count; i += columnsCount)
                             {
                                 var rowCells = currentTableRow.Skip(i).Take(columnsCount).ToList();
-
-                                // Ignora se o bloco estiver vazio ou corrompido apenas com traços
                                 if (rowCells.Count == 0 || rowCells.All(c => c.StartsWith("-"))) continue;
 
                                 reconstructedContent.Add("| " + string.Join(" | ", rowCells) + " |");
 
-                                // Injeta a linha separadora regulamentar do Markdown logo após o cabeçalho
                                 if (i == 0)
                                 {
                                     var separators = Enumerable.Range(0, rowCells.Count).Select(_ => "---");
@@ -75,7 +75,6 @@ namespace OllamaFluentUIChat.Services
                             insideBrokenTable = false;
                         }
 
-                        // Protege contra linhas de traços espúrias perdidas no loop
                         if (insideBrokenTable && trimmed.StartsWith("|") && trimmed.Contains("-"))
                         {
                             continue;
@@ -85,7 +84,6 @@ namespace OllamaFluentUIChat.Services
                     }
                 }
 
-                // Salvaguarda caso o output acabe a meio da tabela
                 if (currentTableRow.Count > 0)
                 {
                     int separatorIndex = currentTableRow.FindIndex(c => c.StartsWith("-"));
@@ -101,7 +99,6 @@ namespace OllamaFluentUIChat.Services
 
                 content = string.Join("\n", reconstructedContent);
 
-                // Correções padrão adicionais para tabelas horizontais normais
                 if (!content.Contains("\n|"))
                 {
                     content = Regex.Replace(content, @"([^\n])(\|)", "$1\n$2");
@@ -115,19 +112,16 @@ namespace OllamaFluentUIChat.Services
             // --- VALIDAÇÃO 4: Injetar quebra de linha antes de marcadores de lista por asterisco ---
             content = Regex.Replace(content, @"([\.!?])\s*(\*+)", "$1\n\n$2");
 
-            // --- VALIDAÇÃO 5: Corrigir falta de espaço após os dois pontos (Evitando emojis acidentais com asteriscos) ---
-            // Mudamos para apenas dar espaço se NÃO for seguido de formatação markdown colada
+            // --- VALIDAÇÃO 5: Corrigir falta de espaço após os dois pontos ---
             content = Regex.Replace(content, @":([^\s\*_])", ": $1");
 
             // --- VALIDAÇÃO 6: Corrigir falta de espaço pós-pontuação genérica ---
             content = Regex.Replace(content, @"([a-zA-Z])([\.!?])([A-Z])", "$1$2 $3");
 
             // --- VALIDAÇÃO 7: CRÍTICA PARA LISTAS NUMÉRICAS COLADAS ---
-            // Deteta padrões como "text.1." ou "text:1." ou "text2." e força uma quebra de linha dupla
-            // Só quebra a linha se o número da lista estiver colado a dois pontos ou colado ao fim da frase anterior
-            content = Regex.Replace(content, @"([a-zA-Z:]+)(\d+\.\s+[A-Z])", "$1\n\n$2");
+            content = Regex.Replace(content, @"([a-zA-Z:\*]+)(\d+\.\s+[A-Z])", "$1\n\n$2");
 
-            // --- PROCESSAMENTO MARKDIG (Configuração Ideal Reposta) ---
+            // --- PROCESSAMENTO MARKDIG ---
             var pipeline = new MarkdownPipelineBuilder()
                 .UseAdvancedExtensions()
                 .UseSoftlineBreakAsHardlineBreak()
@@ -138,7 +132,7 @@ namespace OllamaFluentUIChat.Services
             var html = Markdown.ToHtml(content, pipeline);
             html = html.TrimEnd('\n', '\r', ' ');
 
-            // Substituição segura de <p> por <div> sem quebrar tabelas HTML
+            // Mantida a conversão original que estabilizava o teu layout antigo
             html = Regex.Replace(html, @"<p>(.*?)</p>", "<div>$1</div>", RegexOptions.Singleline);
 
             return html.Replace("<p>", "<div>").Replace("</p>", "</div>");
