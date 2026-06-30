@@ -1,6 +1,7 @@
 ﻿@page "/settings2"
-@using Microsoft.FluentUI.AspNetCore.Components.Extensions
 @using System.Text.Json
+@using OllamaFluentUIChat.Services.Interfaces.Services
+@using OllamaFluentUIChat.Models.DTO
 @inject IJSRuntime JS
 @rendermode InteractiveServer
 
@@ -10,89 +11,157 @@
                    OnLuminanceChanged="@OnLuminanceChanged"
                    StorageName="theme" />
 
-<div style="padding: 10px; max-width: 700px;">
+<div style="display:flex; flex-direction: row; align-items: flex-start; gap: 20px;">
+    <div style="flex:1;">
+        <!-- PRIMEIRA GRID -->
+        <FluentGrid>
+            <div hidden="true">
+                <FluentGridItem xs="12" Style="margin-top: 8px;">
+                    <FluentLabel Style="font-size: 18px; font-weight: bold;">
+                        Configuração do Juiz de IA (Prompt System)
+                    </FluentLabel>
+                    <p style="font-size: 13px; opacity: 0.8; margin-top: 4px; margin-bottom: 12px;">
+                        Personalize as instruções que envia para o Gemini/ChatGPT quando vai avaliar as respostas dos modelos locais.
+                    </p>
 
-    <FluentGrid>
+                    <FluentTextArea @bind-Value="JuizPrompt"
+                                    Rows="10"
+                                    Style="width: 100%; max-width: 600px; margin-top:8px; resize: vertical;" />
 
-        <div hidden="true">
-            <FluentGridItem xs="12" Style="margin-top: 8px;">
+                    <FluentStack Orientation="Orientation.Horizontal" Gap="10" Style="margin-top: 12px;">
+                        <FluentButton Appearance="Appearance.Accent"
+                                      IconStart="@(new Icons.Regular.Size16.Save())"
+                                      OnClick="SaveJuizPrompt">
+                            Gravar Instruções
+                        </FluentButton>
+
+                        <FluentButton Appearance="Appearance.Lightweight"
+                                      IconStart="@(new Icons.Regular.Size16.Copy())"
+                                      OnClick="CopiarPromptParaClipboard">
+                            Copiar para o Clipboard
+                        </FluentButton>
+
+                        <FluentButton Appearance="Appearance.Neutral"
+                                      OnClick="ResetJuizPrompt">
+                            Restaurar Padrão
+                        </FluentButton>
+                    </FluentStack>
+                </FluentGridItem>
+            </div>
+            <!-- Gestão de Modelos -->
+            <FluentGridItem xs="12" Style="margin-top: 30px;">
                 <FluentLabel Style="font-size: 18px; font-weight: bold;">
-                    Configuração do Juiz de IA (Prompt System)
+                    Gestão de Modelos Ollama
                 </FluentLabel>
-                <p style="font-size: 13px; opacity: 0.8; margin-top: 4px; margin-bottom: 12px;">
-                    Personalize as instruções que envia para o Gemini/ChatGPT quando vai avaliar as respostas dos modelos locais.
-                </p>
-
-                <FluentTextArea @bind-Value="JuizPrompt"
-                                Rows="10"
-                                Style="width: 100%; max-width: 600px; margin-top:8px; resize: vertical;" />
 
                 <FluentStack Orientation="Orientation.Horizontal" Gap="10" Style="margin-top: 12px;">
-                    <FluentButton Appearance="Appearance.Accent"
-                                  IconStart="@(new Icons.Regular.Size16.Save())"
-                                  OnClick="SaveJuizPrompt">
-                        Gravar Instruções
-                    </FluentButton>
+                    <FluentTextField Placeholder="Nome do modelo (ex: phi4:latest)" Style="width: 300px;"
+                                     @bind-Value="NewModel" />
 
-                    <FluentButton Appearance="Appearance.Lightweight"
-                                  IconStart="@(new Icons.Regular.Size16.Copy())"
-                                  OnClick="CopiarPromptParaClipboard">
-                        Copiar para o Clipboard
-                    </FluentButton>
-
-                    <FluentButton Appearance="Appearance.Neutral"
-                                  OnClick="ResetJuizPrompt">
-                        Restaurar Padrão
+                    <FluentButton Appearance="Appearance.Accent" OnClick="AddModel">
+                        Adicionar
                     </FluentButton>
                 </FluentStack>
-            </FluentGridItem>
-        </div>
-        <!-- Gestão de Modelos -->
-        <FluentGridItem xs="12" Style="margin-top: 30px;">
-            <FluentLabel Style="font-size: 18px; font-weight: bold;">
-                Gestão de Modelos Ollama
-            </FluentLabel>
 
-            <FluentStack Orientation="Orientation.Horizontal" Gap="10" Style="margin-top: 12px;">
-                <FluentTextField Placeholder="Nome do modelo (ex: phi4:latest)" Style="width: 300px;"
-                                 @bind-Value="NewModel" />
-
-                <FluentButton Appearance="Appearance.Accent" OnClick="AddModel">
-                    Adicionar
-                </FluentButton>
-            </FluentStack>
-
-            <FluentStack Orientation="Orientation.Vertical" Gap="8" Style="margin-top: 20px;">
-                @if (Models.Count == 0)
-                {
-                    <FluentLabel Style="opacity: 0.6;">Nenhum modelo adicionado.</FluentLabel>
-                }
-                else
-                {
-                    @foreach (var model in Models)
+                <FluentStack Orientation="Orientation.Vertical" Gap="8" Style="margin-top: 20px;">
+                    @if (Models.Count == 0)
                     {
-                        <FluentCard Style="width:400px;padding: 10px; display: flex; justify-content: space-between; align-items: center;">
-                            <FluentLabel>@model</FluentLabel>
-
-                            <FluentButton Appearance="Appearance.Neutral"
-                                          OnClick="@(() => RemoveModel(model))">
-                                Remover
-                            </FluentButton>
-                        </FluentCard>
+                        <FluentLabel Style="opacity: 0.6;">Nenhum modelo adicionado.</FluentLabel>
                     }
-                }
-            </FluentStack>
-        </FluentGridItem>
+                    else
+                    {
+                        @foreach (var model in Models)
+                        {
+                            <FluentCard Style="width:400px;padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                <FluentLabel>@model</FluentLabel>
 
-    </FluentGrid>
+                                <FluentButton Appearance="Appearance.Neutral"
+                                              OnClick="@(() => RemoveModel(model))">
+                                    Remover
+                                </FluentButton>
+                            </FluentCard>
+                        }
+                    }
+                </FluentStack>
+            </FluentGridItem>
+
+        </FluentGrid>
+    </div>
+
+    <div style="flex:1;">
+        <!-- SEGUNDA GRID -->
+        <FluentGrid>
+            <div hidden="true">
+                <FluentGridItem xs="12" Style="margin-top: 8px;">
+                    <FluentLabel Style="font-size: 18px; font-weight: bold;">
+                        Configuração do Juiz de IA (Prompt System)
+                    </FluentLabel>
+                    <p style="font-size: 13px; opacity: 0.8; margin-top: 4px; margin-bottom: 12px;">
+                        Personalize as instruções que envia para o Gemini/ChatGPT quando vai avaliar as respostas dos modelos locais.
+                    </p>
+
+                    <FluentTextArea @bind-Value="JuizPrompt"
+                                    Rows="10"
+                                    Style="width: 100%; max-width: 600px; margin-top:8px; resize: vertical;" />
+
+                    <FluentStack Orientation="Orientation.Horizontal" Gap="10" Style="margin-top: 12px;">
+                        <FluentButton Appearance="Appearance.Accent"
+                                      IconStart="@(new Icons.Regular.Size16.Save())"
+                                      OnClick="SaveJuizPrompt">
+                            Gravar Instruções
+                        </FluentButton>
+
+                        <FluentButton Appearance="Appearance.Lightweight"
+                                      IconStart="@(new Icons.Regular.Size16.Copy())"
+                                      OnClick="CopiarPromptParaClipboard">
+                            Copiar para o Clipboard
+                        </FluentButton>
+
+                        <FluentButton Appearance="Appearance.Neutral"
+                                      OnClick="ResetJuizPrompt">
+                            Restaurar Padrão
+                        </FluentButton>
+                    </FluentStack>
+                </FluentGridItem>
+            </div>
+            <!-- Gestão de Modelos -->
+            <FluentGridItem xs="12" Style="margin-top: 30px;">
+                <FluentLabel Style="font-size: 18px; font-weight: bold;">
+                    Gestão de Modelos Ollama
+                </FluentLabel>
+                <FluentStack Orientation="Orientation.Vertical" Gap="8" Style="margin-top: 20px;">
+                    @if (Models.Count == 0)
+                    {
+                        <FluentLabel Style="opacity: 0.6;">Nenhum modelo adicionado.</FluentLabel>
+                    }
+                    else
+                    {
+                        @foreach (var model in OllamaModels)
+                        {
+                            <FluentCard Style="width:400px;padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                <FluentLabel>@model</FluentLabel>
+                            </FluentCard>
+                        }
+                    }
+                </FluentStack>
+            </FluentGridItem>
+
+        </FluentGrid>
+
+    </div>
+
 </div>
 
 @code {
+    [Inject]
+    public required IOllamaGpuService OllamaService { get; set; }
     public DesignThemeModes Mode { get; set; }
     public OfficeColor? OfficeColor { get; set; }
 
     private List<string> Models = new();
     private string NewModel = "";
+    private OllamaModels.OllamaResponse? OllamaModelResponse;
+    private List<string?> OllamaModels = new();
 
     private string JuizPrompt = "";
     private const string DefaultJuizPrompt = @"Age como um juiz rigoroso de Inteligência Artificial. Analisa a qualidade factual, lógica e gramatical da resposta gerada por um modelo local pequeno para o prompt fornecido.
@@ -107,6 +176,12 @@ Instruções de Resposta: Dá-me estritamente uma nota de 1 a 5 (onde 1 é péss
     {
         try
         {
+            OllamaModelResponse = await OllamaService.GetLocalModelsAsync();
+            OllamaModels = new();
+            foreach(var modelo in OllamaModelResponse.Models.ToList())
+            {
+                OllamaModels.Add(modelo?.Name);
+            }
             var stored = await JS.InvokeAsync<string>("localStorage.getItem", "ollama_models");
 
             if (!string.IsNullOrEmpty(stored))
