@@ -24,7 +24,6 @@ namespace OllamaFluentUIChat.Services
                 content += "\n```";
             }
 
-            // --- CORREÇÃO DO CABEÇALHO (O Teu Pedido Original) ---
             // Força uma quebra de linha dupla ANTES do cardinal (#) para que o título nunca se cole ao texto anterior,
             // corrigindo o erro "OverviewThe Ming Dynasty..." que viste no anexo.
             content = Regex.Replace(content, @"([^\n])\s*(#{1,6}\s)", "$1\n\n$2");
@@ -132,7 +131,6 @@ namespace OllamaFluentUIChat.Services
             var html = Markdown.ToHtml(content, pipeline);
             html = html.TrimEnd('\n', '\r', ' ');
 
-            // Mantida a conversão original que estabilizava o teu layout antigo
             html = Regex.Replace(html, @"<p>(.*?)</p>", "<div>$1</div>", RegexOptions.Singleline);
 
             return html.Replace("<p>", "<div>").Replace("</p>", "</div>");

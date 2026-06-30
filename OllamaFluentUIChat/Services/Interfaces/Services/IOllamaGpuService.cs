@@ -1,10 +1,12 @@
-﻿using OllamaFluentUIChat.Models.DTO;
+﻿using static OllamaFluentUIChat.Models.DTO.OllamaModels;
 
-namespace OllamaFluentUIChat.Services.Interfaces.Services
+namespace OllamaFluentUIChat.Services.Interfaces.Services;
+
+public interface IOllamaGpuService
 {
-    public interface IOllamaGpuService
-    {
-        OllamaModels.GpuStatus CheckGpuCompatibility(long modelSizeInBytes);
-        Task<OllamaModels.OllamaResponse> GetLocalModelsAsync();
-    }
+    Task<OllamaResponse> GetLocalModelsAsync();
+    Task<OllamaResponse> GetRunningModelsAsync();
+    Task<bool> UnloadModelFromMemoryAsync(string modelName);
+    GpuStatus CheckGpuCompatibility(long modelSizeInBytes);
+    Task<int> GetModelContextLengthAsync(string modelName);
 }

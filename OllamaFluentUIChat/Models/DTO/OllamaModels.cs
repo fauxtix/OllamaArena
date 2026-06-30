@@ -21,7 +21,62 @@ namespace OllamaFluentUIChat.Models.DTO
             [JsonPropertyName("size")]
             public long SizeInBytes { get; set; }
 
+            [JsonPropertyName("digest")]
+            public string Digest { get; set; } = string.Empty;
+
+            [JsonPropertyName("details")]
+            public ModelDetailsInfo? Details { get; set; }
+
+            // Propriedades exclusivas do endpoint /api/ps (modelos ativos)
+            [JsonPropertyName("expires_at")]
+            public DateTime? ExpiresAt { get; set; }
+
+            [JsonPropertyName("size_vram")]
+            public long SizeInVramBytes { get; set; }
+
+            // Métodos utilitários de conversão
             public double SizeInGB => Math.Round((double)SizeInBytes / (1024 * 1024 * 1024), 2);
+            public double SizeInVramGB => Math.Round((double)SizeInVramBytes / (1024 * 1024 * 1024), 2);
+
+            // Percentagem do modelo que está a rodar na GPU vs CPU
+            public double GpuOffloadPercentage => SizeInBytes > 0
+                ? Math.Round(((double)SizeInVramBytes / SizeInBytes) * 100, 1)
+                : 0;
+
+            // --- ATRIBUTO INTEGRADO ---
+            // Armazena a janela de contexto descoberta após a consulta ao endpoint /api/show
+            public int ContextLength { get; set; } = 2048;
+        }
+
+        public class ModelDetailsInfo
+        {
+            [JsonPropertyName("parent_model")]
+            public string ParentModel { get; set; } = string.Empty;
+            [JsonPropertyName("format")]
+            public string Format { get; set; } = string.Empty;
+            [JsonPropertyName("family")]
+            public string Family { get; set; } = string.Empty;
+            [JsonPropertyName("parameter_size")]
+            public string ParameterSize { get; set; } = string.Empty;
+            [JsonPropertyName("quantization_level")]
+            public string QuantizationLevel { get; set; } = string.Empty;
+        }
+
+        // --- CLASSE DE RESPOSTA ADAPTADA PARA O ENDPOINT /API/SHOW ---
+        public class OllamaShowResponse
+        {
+            [JsonPropertyName("parameters")]
+            public string Parameters { get; set; } = string.Empty;
+
+            [JsonPropertyName("modelfile")]
+            public string Modelfile { get; set; } = string.Empty;
+
+            [JsonPropertyName("template")]
+            public string Template { get; set; } = string.Empty;
+
+            // --- ADICIONADO: Captura as chaves dinâmicas nativas do ficheiro (ex: context_length) ---
+            [JsonPropertyName("model_info")]
+            public Dictionary<string, object>? ModelInfo { get; set; }
         }
 
         public class GpuStatus

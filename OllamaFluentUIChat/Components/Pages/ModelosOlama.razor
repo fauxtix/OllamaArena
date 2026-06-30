@@ -1,0 +1,91 @@
+﻿@page "/modelos-ollama"
+@using Microsoft.FluentUI.AspNetCore.Components
+@using OllamaFluentUIChat.Services.Interfaces.Services
+@using static OllamaFluentUIChat.Models.DTO.OllamaModels
+@inject IOllamaGpuService OllamaGpuService
+
+<PageTitle>Modelos Disponíveis - Ollama</PageTitle>
+
+<h2 class="fluent-h2" style="margin-bottom: 4px;">Modelos Locais Instalados</h2>
+<p class="fluent-body" style="margin-bottom: 25px; color: var(--neutral-foreground-hint);">
+    Consulte os modelos guardados no seu disco, a capacidade nativa de contexto do ficheiro e a compatibilidade estimada com a sua placa gráfica.
+</p>
+
+<div style="margin-top: 15px;">
+    @if (_localModels == null)
+    {
+        <FluentProgressRing />
+    }
+    else if (!_localModels.Any())
+    {
+        <FluentBadge Appearance="Appearance.Accent">Nenhum modelo local detetado ou Ollama inacessível.</FluentBadge>
+    }
+    else
+    {
+        <FluentDataGrid Items="@_localModels.AsQueryable()" TGridItem="ModelDetails" ResizableColumns="true">
+            <PropertyColumn Property="@(m => m.Name)" Title="Nome" Sortable="true" />
+
+            <TemplateColumn Title="Família">
+                @context.Details?.Family
+            </TemplateColumn>
+            <TemplateColumn Title="Parâmetros">
+                @context.Details?.ParameterSize
+            </TemplateColumn>
+            <TemplateColumn Title="Quantização">
+                @context.Details?.QuantizationLevel
+            </TemplateColumn>
+
+            <!-- COLUNA DO CONTEXTO REAL DO FICHEIRO -->
+            <TemplateColumn Title="Contexto Máximo Nativo" Sortable="true">
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 6px;">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.BroadActivityFeed())" Color="Color.Neutral" />
+                    <span>@context.ContextLength.ToString("N0") tokens</span>
+                </FluentStack>
+            </TemplateColumn>
+
+            <TemplateColumn Title="Tamanho no Disco">
+                @context.SizeInGB GB
+            </TemplateColumn>
+
+            <TemplateColumn Title="Compatibilidade GPU">
+                @{
+                    var gpuCheck = OllamaGpuService.CheckGpuCompatibility(context.SizeInBytes);
+                    if (gpuCheck.AvailableVramGB == 0)
+                    {
+                        <FluentBadge Appearance="Appearance.Neutral">Leitura VRAM Indisponível</FluentBadge>
+                    }
+                    else if (gpuCheck.FitsInGpu)
+                    {
+                        <FluentBadge Appearance="Appearance.Accent" Color="Color.Success">Compatível (~@gpuCheck.EstimatedRequiredMemoryGB GB)</FluentBadge>
+                    }
+                    else
+                    {
+                        <FluentBadge Appearance="Appearance.Accent" Color="Color.Warning">Excede VRAM (~@gpuCheck.EstimatedRequiredMemoryGB GB)</FluentBadge>
+                    }
+                }
+            </TemplateColumn>
+        </FluentDataGrid>
+    }
+</div>
+
+@code {
+    private List<ModelDetails>? _localModels;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Carrega a lista do disco instantaneamente
+        var tagsResponse = await OllamaGpuService.GetLocalModelsAsync();
+        _localModels = tagsResponse.Models;
+
+        // 2. Preenche os limites reais em background sem bloquear o ecrã
+        if (_localModels != null && _localModels.Any())
+        {
+            foreach (var model in _localModels)
+            {
+                model.ContextLength = await OllamaGpuService.GetModelContextLengthAsync(model.Model);
+            }
+            // Atualiza a tabela com os números reais encontrados (ex: 8,192, 32,768, etc.)
+            StateHasChanged();
+        }
+    }
+}
