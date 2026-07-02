@@ -19,8 +19,7 @@ Para obter respostas com maior maturidade intelectual e menor índice de alucina
 
 ### 1. Chat Local em Tempo Real (Modo Offline)
 - Interface de chat interativa desenvolvida com **Microsoft FluentUI Blazor Components v4.14.2**.
-- Processamento de texto por fluxo de rede (*HTTP streaming / chunked*) de alto desempenho com processamento por blocos (
-`buffer`).
+- Processamento de texto por fluxo de rede (*HTTP streaming / chunked*) de alto desempenho com processamento por blocos (`buffer`).
 - Configuração determinista controlada (`temperature: 0.3` / `repeat_penalty: 1.2`), mitigando alucinações ou loops infinitos de texto em modelos de pequena escala.
 
 ### 2. Laboratório de Benchmarks & Telemetria
@@ -141,12 +140,14 @@ O que o NavMenu expõe (rotas principais):
 
 **Nota importante:** em algumas versões do código a entrada `/settings2` está comentada no NavMenu; a página de referência para gestão/inspeção de modelos é `/modelos-ollama` (ModelosOlama.razor). Se vês que `settings2` não aparece no teu menu, usa `/modelos-ollama`.
 
+**Nota:** A página `Benchmark Evaluations` (rota `/benchmark-evaluations`) inclui um botão "Exportar Excel" na toolbar que gera um ficheiro .xlsx com prompts agrupados e métricas (Gemini/ChatGPT, Tokens/s, Tempo, Tokens).
+
 Onde os modelos vêm e como circulam na app:
 1. A app lê a lista de modelos directamente do Ollama invocando `OllamaGpuService.GetLocalModelsAsync()` (GET `/api/tags`).
    - Código: `OllamaFluentUIChat/Services/Implementations/Services/OllamaGpuService.cs`.
 2. Páginas que consomem essa lista:
    - `Settings2.razor` — quando presente/activada, preenche a lista de `Models` e permite ao utilizador adicionar/remover entradas na UI (persistência local).
-   - `ModelosOlama.razor` — mostra os modelos detectados no disco, apresenta `ContextLength` (obtido via POST `/api/show`) e calcula compatibilidade GPU. Esta é a página canónica para inspeccionar metadados extraídos do ficheiro do modelo.
+   - `ModelosOlama.razor` — mostra os modelos detectados no disco, apresenta `ContextLength` (obtido via POST `/api/show`) e calcula compatibilidade GPU. Esta é a página canónica para inspecionar metadados extraídos do ficheiro do modelo.
    - `Chat.razor` — ao carregar, chama `GpuService.GetLocalModelsAsync()` para recuperar detalhes e aferir compatibilidade; o `ModelName` seleccionado é usado para chamadas a `/api/chat`.
 3. Persistência local na UI (localStorage):
    - `ollama_models` — lista JSON de modelos adicionados/personalizados pela UI (Settings2).
@@ -187,6 +188,8 @@ Recomendações para documentação:
 ---
 
 ## Avaliação automática / Prompt do Juiz (Gemini / ChatGPT)
+
+A aplicação é pensada para funcionar offline/localmente; por essa razão a integração automática com serviços externos (OpenAI / Google) NÃO está incluida por defeito. O processo actual assume avaliação manual pelo utilizador usando interfaces externas (p.ex. Gemini ou ChatGPT no browser) e posterior colagem das notas na aplicação.
 
 O projecto inclui um template de prompt (EvaluatePromptTemplate) usado para pedir a um modelo de fronteira que acts como "juiz" e avalie as respostas geradas pelos modelos locais. O prompt força um formato estrito de saída com 3 rankings e uma breve descrição.
 
