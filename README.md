@@ -134,11 +134,8 @@ O que o NavMenu expõe (rotas principais):
 - Chat → `/chat` (componente de chat que usa `OllamaChatPayload` e stream)
 - Qualidade e Métricas → `/benchmarks` (vista master/detail para prompts e respostas)
 - Benchmarks → `/benchmark-evaluations` (tabela de avaliações)
-- Modelos → `/settings2` (Settings2: gestão e preferências locais de modelos e prompt juiz)
 - Modelos carregados → `/modelos-ollama` (lista dos modelos locais obtidos via Ollama)
 - Logs → `/system-logs` (visualizador de logs do Serilog)
-
-**Nota importante:** em algumas versões do código a entrada `/settings2` está comentada no NavMenu; a página de referência para gestão/inspeção de modelos é `/modelos-ollama` (ModelosOlama.razor). Se vês que `settings2` não aparece no teu menu, usa `/modelos-ollama`.
 
 **Nota:** A página `Benchmark Evaluations` (rota `/benchmark-evaluations`) inclui um botão "Exportar Excel" na toolbar que gera um ficheiro .xlsx com prompts agrupados e métricas (Gemini/ChatGPT, Tokens/s, Tempo, Tokens). Este ficheiro Excel pode ser usado como backup externo dos resultados e para análises posteriores em ferramentas como Excel ou Power BI.
 
