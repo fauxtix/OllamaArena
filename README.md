@@ -140,7 +140,7 @@ O que o NavMenu expõe (rotas principais):
 
 **Nota importante:** em algumas versões do código a entrada `/settings2` está comentada no NavMenu; a página de referência para gestão/inspeção de modelos é `/modelos-ollama` (ModelosOlama.razor). Se vês que `settings2` não aparece no teu menu, usa `/modelos-ollama`.
 
-**Nota:** A página `Benchmark Evaluations` (rota `/benchmark-evaluations`) inclui um botão "Exportar Excel" na toolbar que gera um ficheiro .xlsx com prompts agrupados e métricas (Gemini/ChatGPT, Tokens/s, Tempo, Tokens).
+**Nota:** A página `Benchmark Evaluations` (rota `/benchmark-evaluations`) inclui um botão "Exportar Excel" na toolbar que gera um ficheiro .xlsx com prompts agrupados e métricas (Gemini/ChatGPT, Tokens/s, Tempo, Tokens). Este ficheiro Excel pode ser usado como backup externo dos resultados e para análises posteriores em ferramentas como Excel ou Power BI.
 
 Onde os modelos vêm e como circulam na app:
 1. A app lê a lista de modelos directamente do Ollama invocando `OllamaGpuService.GetLocalModelsAsync()` (GET `/api/tags`).
@@ -207,6 +207,35 @@ Significado das métricas pedidas ao juiz:
 Como este prompt é usado na aplicação:
 - O utilizador pode copiar o prompt padrão a partir da UI (Settings2) e submetê‑lo em interfaces externas (p.ex. Gemini web UI ou ChatGPT) para obter a avaliação. Depois cola as notas (FACTUAL_SCORE/FORMATTING_SCORE/FINAL_SCORE e DESCRIPTION) nos campos de avaliação da app.
 - As colunas `GeminiRating` e `ChatGptRating` (ou campos equivalentes) nas tabelas de avaliação persistem essas notas no SQLite.
+
+---
+
+## Inspecionar `ollama_benchmark.db` (DB Browser for SQLite)
+
+Se precisares apenas de consultar ou exportar resultados para análise, prefira usar a funcionalidade de exportação para Excel integrada na aplicação em vez de apagar a base de dados. A exportação gera um ficheiro .xlsx agrupado por Prompt (nome do ficheiro: Benchmarks_Agrupados_yyyyMMdd_HHmmss.xlsx) que serve como backup portátil e pode ser carregado no Excel / Power BI para análise avançada.
+
+1. Exportar via UI (recomendado — backup)
+- Navega para **Benchmarks → Benchmark Evaluations** (`/benchmark-evaluations`) e clica em **Exportar Excel** na toolbar. O ficheiro descarregado contém prompts agrupados e métricas (Gemini/ChatGPT, Tokens/s, Tempo, Tokens).
+- Nome do ficheiro: `Benchmarks_Agrupados_{timestamp}.xlsx`.
+
+2. Localização do ficheiro de BD (para leitura/inspeção somente)
+- A base de dados SQLite usada pela aplicação encontra‑se em: `OllamaFluentUIChat/ollama_benchmark.db` (ou na pasta de execução da app, conforme `appsettings`).
+- Incluímos também um ficheiro de projecto para DB Browser for SQLite: `OllamaFluentUIChat/ollama_benchmark.sqbpro` (abre‑o no DB Browser para ter as vistas/configurações).
+
+3. Abrir o ficheiro com DB Browser for SQLite (opcional)
+- Descarrega e instala DB Browser for SQLite: https://sqlitebrowser.org/
+- Abra a aplicação e escolha `Open Database` → seleccione `ollama_benchmark.db` no repositório/na pasta do projecto.
+
+4. Consultas úteis (SQL tab)
+- Ver prompts:
+  SELECT * FROM Prompts ORDER BY Id DESC;
+- Ver respostas:
+  SELECT * FROM Respostas ORDER BY PromptId DESC, TokensPorSegundo DESC;
+- Exportar uma tabela para CSV: clique em `Browse Data`, seleccione a tabela (Prompts ou Respostas) e escolha `Export` → `Table(s) as CSV file`.
+
+5. Aviso sobre remoção de dados
+- Recomendamos NÃO apagar diretamente o ficheiro `ollama_benchmark.db` nem executar comandos destrutivos sem efectuar primeiro um backup. A exportação para Excel funciona como o mecanismo de backup preferido — gera um ficheiro legível que pode ser arquivado e analisado fora da aplicação.
+- Se, ainda assim, precisares de reiniciar os dados por razões específicas, faz primeiro uma cópia do ficheiro `.db` (ex.: `ollama_benchmark.db.bak`). Apagar a DB ou executar `DELETE FROM Prompts;` é uma operação irreversível e deve ser evitada em fluxos normais de utilização.
 
 ---
 
@@ -282,9 +311,9 @@ dotnet watch run --project OllamaFluentUIChat/OllamaFluentUIChat.csproj
 ## Notas finais e próximos passos
 
 - Documentei as informações adicionais extraídas do Ollama e adicionei nota sobre o template do juiz.
-- Posso agora:
-  - Adicionar instruções rápidas para inspecionar `ollama_benchmark.db` com SQLite Browser;
+- A exportação para Excel foi destacada como o método preferido de backup/arquivamento dos resultados.
+- Posso ainda:
   - Inserir um pequeno aviso no UI de `ModelosOlama.razor` (ex.: "Se o modelo não aparece: execute `ollama pull <model>`") e abrir PR;
-  - Mover a chave Syncfusion fora do código e documentar a configuração segura.
+  - Implementar um utilitário UI para colar a resposta do juiz e parsear automaticamente os 3 scores antes de gravar (opção offline-only).
 
 Se quiseres que eu aplique alguma dessas alterações adicionais, diz qual e eu procedo.
