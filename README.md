@@ -37,7 +37,7 @@ Para obter respostas com maior maturidade intelectual e menor índice de alucina
 
 ### 4. Avaliação Cruzada (LLM-as-a-Judge)
 - Painel integrado para introdução de métricas de qualidade baseadas em modelos de fronteira (**Google Gemini** e **OpenAI ChatGPT**).
-- Permite atribuir classificações de 1 a 5 e justificações de erros/alucinações com redimensionamento vertical).
+- Permite atribuir classificações e justificações de erros/alucinações; os campos de avaliação persistem no SQLite e aparecem nas tabelas de avaliação.
 - Persistência via **Dapper** para fechar o ciclo de análise.
 
 ---
@@ -139,12 +139,14 @@ O que o NavMenu expõe (rotas principais):
 - Modelos carregados → `/modelos-ollama` (lista dos modelos locais obtidos via Ollama)
 - Logs → `/system-logs` (visualizador de logs do Serilog)
 
+**Nota importante:** em algumas versões do código a entrada `/settings2` está comentada no NavMenu; a página de referência para gestão/inspeção de modelos é `/modelos-ollama` (ModelosOlama.razor). Se vês que `settings2` não aparece no teu menu, usa `/modelos-ollama`.
+
 Onde os modelos vêm e como circulam na app:
 1. A app lê a lista de modelos directamente do Ollama invocando `OllamaGpuService.GetLocalModelsAsync()` (GET `/api/tags`).
    - Código: `OllamaFluentUIChat/Services/Implementations/Services/OllamaGpuService.cs`.
 2. Páginas que consomem essa lista:
-   - `Settings2.razor` — preenche a lista de `Models` e permite ao utilizador adicionar/remover entradas na UI (persistência local).
-   - `ModelosOlama.razor` — mostra os modelos detectados no disco, apresenta `ContextLength` (obtido via POST `/api/show`) e calcula compatibilidade GPU.
+   - `Settings2.razor` — quando presente/activada, preenche a lista de `Models` e permite ao utilizador adicionar/remover entradas na UI (persistência local).
+   - `ModelosOlama.razor` — mostra os modelos detectados no disco, apresenta `ContextLength` (obtido via POST `/api/show`) e calcula compatibilidade GPU. Esta é a página canónica para inspeccionar metadados extraídos do ficheiro do modelo.
    - `Chat.razor` — ao carregar, chama `GpuService.GetLocalModelsAsync()` para recuperar detalhes e aferir compatibilidade; o `ModelName` seleccionado é usado para chamadas a `/api/chat`.
 3. Persistência local na UI (localStorage):
    - `ollama_models` — lista JSON de modelos adicionados/personalizados pela UI (Settings2).
@@ -157,6 +159,15 @@ Onde os modelos vêm e como circulam na app:
    - Se um modelo não existir localmente, as chamadas a `/api/chat` irão falhar no Ollama; o README deve instruir o utilizador a usar `ollama list` / `ollama pull`.
    - Para forçar libertação de VRAM, a app envia payloads com `keep_alive = 0` para `/api/generate` (ou usa `/api/chat` com payloads específicos) — isso faz com que o Ollama descarregue o modelo da memória.
 
+Extras: campos adicionais extraídos do Ollama e apresentados na UI (ModelosOlama)
+- Para além do nome e do tamanho, o componente `ModelosOlama.razor` exibe metadados adicionais obtidos do endpoint `/api/tags` e `/api/show`:
+  - details.family (família do modelo)
+  - details.parameter_size (número/descrição de parâmetros)
+  - details.quantization_level (nível de quantização)
+  - SizeInGB (conversão legível do campo `size` do Ollama)
+  - ContextLength (extraído via `/api/show` a partir de model_info, quando disponível)
+  - SizeInVram / GpuOffloadPercentage (quando `/api/ps` fornece size_vram; usado para estimar percentagem em VRAM e compatibilidade GPU)
+
 Arquivos relevantes (links):
 - NavMenu.razor: `Components/Layout/NavMenu.razor` — lista as rotas do menu.
   https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Components/Layout/NavMenu.razor
@@ -164,7 +175,7 @@ Arquivos relevantes (links):
   https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Services/Implementations/Services/OllamaGpuService.cs
 - Modelos página: `Components/Pages/ModelosOlama.razor` — mostra modelos locais, contexto e compatibilidade GPU.
   https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Components/Pages/ModelosOlama.razor
-- Settings2: `Components/Pages/Settings2.razor` — gestão de modelos e prompt juiz.
+- Settings2: `Components/Pages/Settings2.razor` — gestão de modelos e prompt juiz (quando utilizado).
   https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Components/Pages/Settings2.razor
 - Chat: `Components/Pages/Chat.razor.cs` — construções de payload, streaming e persistência de métricas.
   https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Components/Pages/Chat.razor.cs
@@ -172,6 +183,27 @@ Arquivos relevantes (links):
 Recomendações para documentação:
 - Acrescentar no README uma breve nota explicando que os modelos visíveis na UI provêm do Ollama local (GET `/api/tags`) e que o utilizador deve correr `ollama pull <model>` caso o modelo não exista.
 - Documentar as chaves `localStorage` para facilitar debugging e recuperação de preferências.
+
+---
+
+## Avaliação automática / Prompt do Juiz (Gemini / ChatGPT)
+
+O projecto inclui um template de prompt (EvaluatePromptTemplate) usado para pedir a um modelo de fronteira que acts como "juiz" e avalie as respostas geradas pelos modelos locais. O prompt força um formato estrito de saída com 3 rankings e uma breve descrição.
+
+Formato exigido pelo prompt do juiz (must):
+- FACTUAL_SCORE: [1-5]
+- FORMATTING_SCORE: [1-5]
+- FINAL_SCORE: [1-5]
+- DESCRIPTION: [Breve descrição da avaliação — máximo 3 frases]
+
+Significado das métricas pedidas ao juiz:
+- Factual Score: precisão factual, lógica e correção das informações (1 a 5).
+- Formatting Score: correção de Markdown, sintaxe de tabelas e estrutura/legibilidade (1 a 5).
+- Final Score: avaliação global combinando factualidade e formatação (1 a 5).
+
+Como este prompt é usado na aplicação:
+- O utilizador pode copiar o prompt padrão a partir da UI (Settings2) e submetê‑lo em interfaces externas (p.ex. Gemini web UI ou ChatGPT) para obter a avaliação. Depois cola as notas (FACTUAL_SCORE/FORMATTING_SCORE/FINAL_SCORE e DESCRIPTION) nos campos de avaliação da app.
+- As colunas `GeminiRating` e `ChatGptRating` (ou campos equivalentes) nas tabelas de avaliação persistem essas notas no SQLite.
 
 ---
 
@@ -246,10 +278,10 @@ dotnet watch run --project OllamaFluentUIChat/OllamaFluentUIChat.csproj
 
 ## Notas finais e próximos passos
 
-- Corrigi e documentei os endpoints com base no código encontrado nos serviços e componentes do projeto. Recomendo validar em execução local para confirmar portas e comportamento exacto do streaming do seu ambiente Ollama (algumas versões do Ollama podem ter variações subtis no esquema de streaming).
+- Documentei as informações adicionais extraídas do Ollama e adicionei nota sobre o template do juiz.
 - Posso agora:
-  - Atualizar o README com exemplos adicionais de payloads (por ex. `options` detalhadas) se quiseres;
-  - Adicionar uma secção breve explicando como instrumentar/visualizar os logs SQL com um cliente SQLite;
-  - Mover a chave Syncfusion fora do código e documentar a forma correcta de configuração.
+  - Adicionar instruções rápidas para inspecionar `ollama_benchmark.db` com SQLite Browser;
+  - Inserir um pequeno aviso no UI de `ModelosOlama.razor` (ex.: "Se o modelo não aparece: execute `ollama pull <model>`") e abrir PR;
+  - Mover a chave Syncfusion fora do código e documentar a configuração segura.
 
-Se quiseres que eu aplique mais correções (ex.: remover links mal formados, adicionar TOC, ou extrair a secção "Endpoints" para um ficheiro API.md), diz e eu procedo.
+Se quiseres que eu aplique alguma dessas alterações adicionais, diz qual e eu procedo.
