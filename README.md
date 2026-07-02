@@ -99,7 +99,7 @@ Acedendo à opção 'Settings', o utilizador pode parametrizar o ecossistema da 
 - **Color**: Altera a cor de destaque principal (*Accent Color*) utilizando tokens do ecossistema Fluent UI (Word, Excel, Access, etc.), incluindo suporte a um algoritmo de cores aleatórias através do botão *"Feeling lucky?"*.
 - **Persistência**: Os estados visuais são serializados de forma automática sob a chave de armazenamento `"theme"`.
 
-### 2. Como Incluir/Excluir Modelos na Aplicação
+### 2. Como Incluir/Excluir Modelos NA Aplicação
 A lista de modelos disponíveis para seleção na interface é gerida de forma dinâmica de modo a que a aplicação consiga crescer à medida que descarrega novos modelos do ecossistema Ollama.
 
 #### **Como Incluir um Novo Modelo:**
