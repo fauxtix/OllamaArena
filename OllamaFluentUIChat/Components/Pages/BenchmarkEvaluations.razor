@@ -98,9 +98,10 @@
     </div>
 </div>
 
-<BenchmarkEvaluationDetail Response=" _selectedBenchmarkResponse"
-                           Visible ="_isDialogVisible"
-                           OnClose="@(()=>_isDialogVisible = false)" />
+<BenchmarkEvaluationDetail Response="@_selectedBenchmarkResponse"
+                           Visible="@_isDialogVisible"
+                           VisibleChanged="@((v) => _isDialogVisible = v)"
+                           OnClose="@(() => _isDialogVisible = false)" />
 
 
 <FluentDialogProvider />

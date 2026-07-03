@@ -172,6 +172,13 @@
                                                         <strong>@(resp.GeminiRating > 0 ? resp.GeminiRating : 0)</strong>
                                                     </div>
 
+                                                    <FluentButton Appearance="Appearance.Outline"
+                                                                  IconStart="@(new Icons.Regular.Size16.Edit())"
+                                                                  OnClick="@(() => OpenEvaluation(resp))">
+                                                        Avaliação
+                                                    </FluentButton>
+
+
                                                     <div class="rating-box">
                                                         <FluentIcon Value="@(new Icons.Regular.Size16.Chat())" />
                                                         <span>ChatGPT</span>

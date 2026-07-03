@@ -1,0 +1,338 @@
+@using OllamaFluentUIChat.Models.DTO
+
+<FluentDialog Hidden="@(!Visible)"
+              Modal="true"
+              Class="evaluation-detail-benchmark"
+              Style="--dialog-width: 800px; --dialog-height: auto;"
+              TrapFocus="true"
+              AriaLabel="Detalhes da Avaliação Benchmark">
+
+    <FluentDialogHeader Visible="true">
+        <FluentStack Orientation="Orientation.Horizontal"
+                     VerticalAlignment="VerticalAlignment.Center">
+
+            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <FluentIcon Value="@(new Icons.Regular.Size24.Eye())" />
+                <FluentLabel Typo="Typography.Body">
+                    Detalhes - @Response?.ModeloNome
+                </FluentLabel>
+
+                <blockquote class="prompt-citacao" style="flex: 1; margin: 0;">
+                    "@Response?.TextoPrompt"
+                </blockquote>
+            </div>
+        </FluentStack>
+    </FluentDialogHeader>
+
+    <FluentDialogBody>
+
+        @if (Response != null)
+        {
+            <div class="detail-container">
+                <div class="ratings-grid-container">
+                    <div class="ratings-header">
+                        <div class="metric-cell header-metric">Métrica</div>
+                        <div class="rating-cell header-cell">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())" Color="Color.Accent" />
+                            <span>Google Gemini</span>
+                        </div>
+                        <div class="rating-cell header-cell">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Chat())" Color="Color.Accent" />
+                            <span>Open AI ChatGPT</span>
+                        </div>
+                    </div>
+
+                    <div class="ratings-row">
+                        <div class="metric-cell">Factual</div>
+                        <div class="rating-cell">
+                            @if (Response.GeminiFactualRating.HasValue && Response.GeminiFactualRating > 0)
+                            {
+                                <span class="rating-value">@Response.GeminiFactualRating</span>
+                            }
+                            else
+                            {
+                                <span class="rating-empty">—</span>
+                            }
+                        </div>
+                        <div class="rating-cell">
+                            @if (Response.ChatGptFactualRating.HasValue && Response.ChatGptFactualRating > 0)
+                            {
+                                <span class="rating-value">@Response.ChatGptFactualRating</span>
+                            }
+                            else
+                            {
+                                <span class="rating-empty">—</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="ratings-row">
+                        <div class="metric-cell">Formatação</div>
+                        <div class="rating-cell">
+                            @if (Response.GeminiFormattingRating.HasValue && Response.GeminiFormattingRating > 0)
+                            {
+                                <span class="rating-value">@Response.GeminiFormattingRating</span>
+                            }
+                            else
+                            {
+                                <span class="rating-empty">—</span>
+                            }
+                        </div>
+                        <div class="rating-cell">
+                            @if (Response.ChatGptFormattingRating.HasValue && Response.ChatGptFormattingRating > 0)
+                            {
+                                <span class="rating-value">@Response.ChatGptFormattingRating</span>
+                            }
+                            else
+                            {
+                                <span class="rating-empty">—</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="ratings-row global-row">
+                        <div class="metric-cell global-metric">Global</div>
+                        <div class="rating-cell">
+                            @if (Response.GeminiRating > 0)
+                            {
+                                <span class="rating-value global-value">@Response.GeminiRating</span>
+                            }
+                            else
+                            {
+                                <span class="rating-empty">—</span>
+                            }
+                        </div>
+                        <div class="rating-cell">
+                            @if (Response.ChatGptRating > 0)
+                            {
+                                <span class="rating-value global-value">@Response.ChatGptRating</span>
+                            }
+                            else
+                            {
+                                <span class="rating-empty">—</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-grid-container">
+                    <div class="info-row">
+                        <FluentLabel class="info-label" Typo="Typography.Body">Modelo:</FluentLabel>
+                        <FluentLabel class="info-value" Typo="Typography.Body">@Response.ModeloNome</FluentLabel>
+                    </div>
+
+                    <div class="info-row">
+                        <FluentLabel class="info-label" Typo="Typography.Body">Data de Criação:</FluentLabel>
+                        <FluentLabel class="info-value" Typo="Typography.Body">@Response.DataCriacaoFormatada</FluentLabel>
+                    </div>
+
+                    <div class="info-row">
+                        <FluentLabel class="info-label" Typo="Typography.Body">Tokens/s:</FluentLabel>
+                        <FluentLabel class="info-value" Typo="Typography.Body">@Response.TokensPorSegundo.ToString("F2")</FluentLabel>
+                    </div>
+
+                    <div class="info-row">
+                        <FluentLabel class="info-label" Typo="Typography.Body">Tempo:</FluentLabel>
+                        <FluentLabel class="info-value" Typo="Typography.Body">@Response.TempoPuroFormatado</FluentLabel>
+                    </div>
+
+                    <div class="info-row">
+                        <FluentLabel class="info-label" Typo="Typography.Body">Total de Tokens:</FluentLabel>
+                        <FluentLabel class="info-value" Typo="Typography.Body">@Response.TamanhoTokens</FluentLabel>
+                    </div>
+                </div>
+            </div>
+        }
+    </FluentDialogBody>
+
+    <FluentDialogFooter>
+        <FluentSpacer />
+
+        <FluentButton Appearance="Appearance.Outline" Color="Color.Neutral"
+                      OnClick="Fechar">
+            Fechar
+        </FluentButton>
+
+    </FluentDialogFooter>
+
+</FluentDialog>
+
+@code {
+    [Parameter, EditorRequired] public BenchmarkEvaluationModel? Response { get; set; }
+
+    [Parameter, EditorRequired] public bool Visible { get; set; }
+    [Parameter, EditorRequired] public EventCallback<bool> VisibleChanged { get; set; }
+
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private async Task Fechar()
+    {
+        await OnClose.InvokeAsync();
+        await VisibleChanged.InvokeAsync(false);
+    }
+}
+
+<style>
+    .evaluation-detail-benchmark {
+        /* Dialog styling inherited from Fluent UI */
+    }
+
+    .detail-container {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    /* RATINGS GRID - CSS Grid layout (no tables) */
+    .ratings-grid-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        background-color: var(--neutral-layer-1);
+        border: 1px solid var(--neutral-stroke-rest);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .ratings-header {
+        display: grid;
+        grid-template-columns: 100px 1fr 1fr;
+        gap: 0;
+        background-color: var(--neutral-layer-2);
+        border-bottom: 2px solid var(--neutral-stroke-divider);
+        padding: 0;
+    }
+
+    .ratings-row {
+        display: grid;
+        grid-template-columns: 100px 1fr 1fr;
+        gap: 0;
+        border-bottom: 1px solid var(--neutral-stroke-rest);
+    }
+
+    .ratings-row:last-child {
+        border-bottom: none;
+    }
+
+    .ratings-row:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .metric-cell {
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        color: var(--neutral-foreground-secondary);
+        display: flex;
+        align-items: center;
+    }
+
+    .metric-cell.header-metric {
+        color: var(--neutral-foreground-rest);
+    }
+
+    .metric-cell.global-metric {
+        font-weight: 700;
+        color: var(--neutral-foreground-rest);
+    }
+
+    .rating-cell {
+        padding: 12px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--neutral-foreground-rest);
+    }
+
+    .rating-cell.header-cell {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-weight: 600;
+        color: var(--neutral-foreground-rest);
+        font-size: 13px;
+    }
+
+    .rating-value {
+        display: inline-block;
+        font-weight: 700;
+        color: var(--accent-fill-rest);
+        font-size: 16px;
+        min-width: 30px;
+    }
+
+    .rating-value.global-value {
+        color: var(--accent-fill-rest);
+    }
+
+    .rating-empty {
+        color: var(--neutral-foreground-hint);
+        font-size: 14px;
+    }
+
+    .global-row {
+        background-color: rgba(0, 120, 212, 0.05);
+        border-top: 2px solid var(--accent-fill-rest);
+        border-bottom: 2px solid var(--accent-fill-rest);
+    }
+
+    .global-row:hover {
+        background-color: rgba(0, 120, 212, 0.08);
+    }
+
+    .info-grid-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        padding: 0;
+        background-color: var(--neutral-layer-1);
+        border: 1px solid var(--neutral-stroke-rest);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .info-row {
+        display: grid;
+        grid-template-columns: fr 1fr;
+        gap: 0;
+        border-bottom: 1px solid var(--neutral-stroke-rest);
+        padding: 0;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-row:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .info-label {
+        padding: 12px;
+        font-weight: 600;
+        color: var(--neutral-foreground-rest);
+        text-align: left;
+        display: flex;
+        align-items: center;
+    }
+
+    .info-value {
+        padding: 12px;
+        color: var(--neutral-foreground-secondary);
+        text-align: right;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .prompt-citacao {
+        max-height: 7.5em; 
+        overflow-y: auto; 
+        overflow-x: hidden; 
+        white-space: normal; 
+        padding-right: 6px; 
+        font-size: 14px; 
+        line-height: 1.5;
+    }</style>
