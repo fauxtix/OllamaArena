@@ -1,6 +1,7 @@
 using Markdig;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.JSInterop;
 using OllamaFluentUIChat.Components.Pages.Components;
@@ -43,7 +44,7 @@ namespace OllamaFluentUIChat.Components.Pages
 
         private CancellationTokenSource? _cts;
 
-        private string _modelName = "phi4-mini:latest";
+        private string _modelName = "";
 
         private DotNetObjectReference<Chat>? _dotNetRef;
         private ElementReference chatInputRef;
@@ -188,6 +189,7 @@ namespace OllamaFluentUIChat.Components.Pages
 
             long loadDurationNs = 0;
             long evalDurationNs = 0;
+            long promptEvalCount = 0;
             int evalCount = 0;
 
             try
@@ -223,7 +225,6 @@ namespace OllamaFluentUIChat.Components.Pages
                     }
                 }
 
-                // GARANTIA CRÍTICA: O histórico para o /api/chat TEM de terminar sempre com uma mensagem do 'user'
                 if (historyPayload.Count > 0 && historyPayload[^1].Role == "assistant")
                 {
                     historyPayload.RemoveAt(historyPayload.Count - 1);
@@ -263,7 +264,8 @@ namespace OllamaFluentUIChat.Components.Pages
 
                 if (_httpClient == null)
                 {
-                    throw new InvalidOperationException("HttpClient is not initialized.");
+                    _logger?.LogError("HttpClient is null. Cannot send request to Ollama API.");
+                    return;
                 }
 
                 using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, _cts.Token);
@@ -329,25 +331,41 @@ namespace OllamaFluentUIChat.Components.Pages
                                 var metrics = JsonSerializer.Deserialize<OllamaMetrics>(singleLine);
                                 if (metrics != null)
                                 {
+                                    int totalTokens = metrics.PromptEvalCount + metrics.EvalCount;
                                     loadDurationNs = metrics.LoadDuration;
                                     evalDurationNs = metrics.EvalDuration;
-                                    evalCount = metrics.EvalCount;
+                                    evalCount = totalTokens; // metrics.EvalCount;
                                 }
                             }
                         }
-                        catch (JsonException)
+                        catch (JsonException jex)
                         {
+                            aiMessage.Text += $"\n[Erro ao processar resposta do Ollama: {jex.Message}]";
+                            _logger?.LogWarning("Failed to parse JSON chunk from Ollama API: {Chunk}... continuing the process", singleLine);
                             continue;
+                        }
+                        catch (OperationCanceledException ocEx)
+                        {
+                            _logger?.LogError(ocEx, "O streaming da resposta foi cancelado.");
+                            aiMessage.Text = aiMessage.Text == "..." ? "⏱️ O tempo de resposta expirou." : aiMessage.Text + " *(Cancelado)*";
+                        }
+
+                        catch (Exception ex)
+                        {
+                            aiMessage.Text += $"\n[Erro inesperado: {ex.Message}]";
+                            _logger?.LogError(ex, "Unexpected error while processing chunk from Ollama API.");
                         }
                     }
                 }
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException ocEx)
             {
+                _logger?.LogError(ocEx, "O streaming da resposta foi cancelado.");
                 aiMessage.Text = aiMessage.Text == "..." ? "⏱️ O tempo de resposta expirou." : aiMessage.Text + " *(Cancelado)*";
             }
             catch (Exception ex)
             {
+                _logger?.LogError(ex, "Erro inesperado durante o streaming da resposta.");
                 aiMessage.Text = $"❌ Erro inesperado: {ex.Message}";
             }
             finally
@@ -386,13 +404,13 @@ namespace OllamaFluentUIChat.Components.Pages
                     }
                     catch (Exception dbEx)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[SQLITE ERROR] Falha ao gravar dados: {dbEx.Message}");
+                        _logger?.LogError(dbEx, "[SQLITE ERROR] Falha ao gravar dados: {Message}", dbEx.Message);
                     }
                 }
                 else
                 {
                     _currentPromptId = 0;
-                    System.Diagnostics.Debug.WriteLine($"[BENCHMARK] Teste descartado para o modelo {ModelName}. Prompt incompleto.");
+                    _logger?.LogInformation("[BENCHMARK] Teste descartado para o modelo {ModelName}. Prompt incompleto.", ModelName);
                 }
 
                 _isThinking = false;
@@ -479,13 +497,18 @@ namespace OllamaFluentUIChat.Components.Pages
             await JS.InvokeVoidAsync("chatInput.handleKey", e, _dotNetRef);
         }
 
+        private async Task SaveModel()
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", "ollama_model", ModelName);
+
+        }
+
         private async Task OnModelChangedAsync()
         {
             try
             {
                 // Guardar modelo selecionado
-                await JS.InvokeVoidAsync("localStorage.setItem", "ollama_model", ModelName);
-
+                await SaveModel();
                 // Recalcular GPU compatibility
                 var allModels = await GpuService!.GetLocalModelsAsync();
 

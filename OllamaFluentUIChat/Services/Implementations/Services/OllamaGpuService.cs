@@ -14,6 +14,7 @@ public class OllamaGpuService : IOllamaGpuService
     private const string OllamaChatUrl = "http://localhost:11434/api/chat";
     private const string OllamaShowUrl = "http://localhost:11434/api/show";
 
+
     public OllamaGpuService(HttpClient httpClient, ILogger<OllamaGpuService> logger)
     {
         _httpClient = httpClient;
@@ -184,4 +185,78 @@ public class OllamaGpuService : IOllamaGpuService
             return false;
         }
     }
+
+
+    /// <summary>
+    /// Procura metadados estendidos (Contexto e Ano de Treino) para um modelo específico via /api/show.
+    /// </summary>
+    /// <summary>
+    /// Extrai o contexto e varre dinamicamente as licenças e ficheiros do modelo 
+    /// para isolar o ano real de publicação, sem depender de formatos de nomes.
+    /// </summary>
+    public async Task<(int ContextLength, string TrainingYear)> GetExtendedModelMetadataAsync(string modelName)
+    {
+        int contextLength = 2048; // Valor padrão seguro
+        string trainingYear = "Desconhecido";
+
+        try
+        {
+            var payload = new { name = modelName };
+            var response = await _httpClient.PostAsJsonAsync(OllamaShowUrl, payload);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var showData = await response.Content.ReadFromJsonAsync<OllamaShowResponse>();
+
+                if (showData != null)
+                {
+                    // 1. Extração estruturada da janela de contexto (model_info)
+                    if (showData.ModelInfo != null)
+                    {
+                        var contextKey = showData.ModelInfo.Keys
+                            .FirstOrDefault(k => k.EndsWith(".context_length", StringComparison.OrdinalIgnoreCase));
+
+                        if (contextKey != null && showData.ModelInfo.TryGetValue(contextKey, out var contextValue) && int.TryParse(contextValue.ToString(), out int parsedLength))
+                        {
+                            contextLength = parsedLength;
+                        }
+
+                        // 2. Primeira tentativa: Capturar qualquer metadado de data explícito no dicionário
+                        var dateKey = showData.ModelInfo.Keys
+                            .FirstOrDefault(k => k.Contains("date", StringComparison.OrdinalIgnoreCase) ||
+                                                 k.Contains("modified", StringComparison.OrdinalIgnoreCase));
+
+                        if (dateKey != null && showData.ModelInfo.TryGetValue(dateKey, out var dateValue))
+                        {
+                            var matchDate = System.Text.RegularExpressions.Regex.Match(dateValue.ToString() ?? "", @"\b(202[0-9])\b");
+                            if (matchDate.Success) return (contextLength, matchDate.Value);
+                        }
+                    }
+
+                    // 3. Estratégia Universal Absoluta (Varrimento de Licença e Parâmetros)
+                    // Agrupa todo o bloco de metadados de texto gerados na criação do GGUF pelo Ollama
+                    string blocosDeTexto = string.Join(" ",
+                        showData.Modelfile ?? "",
+                        showData.Parameters ?? "",
+                        showData.Template ?? ""
+                    );
+
+                    // Procura por anos na década atual (2020 a 2029) dentro das licenças e manifestos brutos
+                    var matches = System.Text.RegularExpressions.Regex.Matches(blocosDeTexto, @"\b(202[0-9])\b");
+                    if (matches.Count > 0)
+                    {
+                        // Obtém o ano mais frequente ou o primeiro ano válido encontrado na estrutura
+                        trainingYear = matches[0].Value;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Erro ao processar metadados universais para {modelName}: {ex.Message}");
+        }
+
+        return (contextLength, trainingYear);
+    }
+
 }

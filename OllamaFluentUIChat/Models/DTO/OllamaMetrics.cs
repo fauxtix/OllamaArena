@@ -1,17 +1,22 @@
-﻿namespace OllamaFluentUIChat.Models.DTO
+﻿using System.Text.Json.Serialization;
+
+namespace OllamaFluentUIChat.Models.DTO
 {
     public class OllamaMetrics
     {
-        [System.Text.Json.Serialization.JsonPropertyName("done")]
+        [JsonPropertyName("done")]
         public bool Done { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("load_duration")]
+        [JsonPropertyName("load_duration")]
         public long LoadDuration { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("eval_duration")]
+        [JsonPropertyName("eval_duration")]
         public long EvalDuration { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("eval_count")]
+        [JsonPropertyName("eval_count")]
         public int EvalCount { get; set; }
+
+        [JsonPropertyName("prompt_eval_count")]
+        public int PromptEvalCount { get; set; }
     }
 }

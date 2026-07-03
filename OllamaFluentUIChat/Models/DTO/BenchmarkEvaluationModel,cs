@@ -1,6 +1,6 @@
 ﻿namespace OllamaFluentUIChat.Models.DTO
 {
-    public class BenchmarkEvaluation
+    public class BenchmarkEvaluationModel
     {
         public int PromptId { get; set; }
         public DateTime DataCriacao { get; set; }

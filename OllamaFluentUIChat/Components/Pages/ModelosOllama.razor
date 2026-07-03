@@ -3,8 +3,11 @@
 @using OllamaFluentUIChat.Services.Interfaces.Services
 @using static OllamaFluentUIChat.Models.DTO.OllamaModels
 @inject IOllamaGpuService OllamaGpuService
+@rendermode InteractiveServer
 
 <PageTitle>Modelos Disponíveis - Ollama</PageTitle>
+
+<FluentDesignTheme StorageName="theme" />
 
 <h2 class="fluent-h2" style="margin-bottom: 4px;">Modelos Locais Instalados</h2>
 <p class="fluent-body" style="margin-bottom: 25px; color: var(--neutral-foreground-hint);">
@@ -12,38 +15,44 @@
 </p>
 
 <div style="margin-top: 15px;">
-    @if (_localModels == null)
+    @if (_isLoading)
     {
         <FluentProgressRing />
     }
-    else if (!_localModels.Any())
+    else if (_localModels is null || !_localModels.Any())
     {
-        <FluentBadge Appearance="Appearance.Accent">Nenhum modelo local detetado ou Ollama inacessível.</FluentBadge>
+        <FluentBadge Appearance="Appearance.Accent">
+            Nenhum modelo local detetado ou Ollama inacessível.
+        </FluentBadge>
     }
     else
     {
         <FluentDataGrid Items="@_localModels.AsQueryable()" TGridItem="ModelDetails" ResizableColumns="true">
-            <PropertyColumn Property="@(m => m.Name)" Title="Nome" Sortable="true" />
+            <PropertyColumn Property="@(m => m.Name)" Title="Nome" Sortable="true"  Style="color:steelblue; font-weight:700; font-size: 1rem;" />
 
             <TemplateColumn Title="Família">
                 @context.Details?.Family
             </TemplateColumn>
-            <TemplateColumn Title="Parâmetros">
+            <TemplateColumn Title="Parâmetros" Align="Align.Center">
                 @context.Details?.ParameterSize
             </TemplateColumn>
             <TemplateColumn Title="Quantização">
                 @context.Details?.QuantizationLevel
             </TemplateColumn>
+            <TemplateColumn Title="Ano de Treino">
+                @context.TrainingYear
+            </TemplateColumn>
 
             <!-- COLUNA DO CONTEXTO REAL DO FICHEIRO -->
-            <TemplateColumn Title="Contexto Máximo Nativo" Sortable="true">
-                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 6px;">
+            <TemplateColumn Title="Contexto Máximo" Sortable="true" Width="150px" >
+                <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Right"
+                VerticalAlignment="VerticalAlignment.Center" Style="gap: 6px;">
                     <FluentIcon Value="@(new Icons.Regular.Size16.BroadActivityFeed())" Color="Color.Neutral" />
                     <span>@context.ContextLength.ToString("N0") tokens</span>
                 </FluentStack>
             </TemplateColumn>
 
-            <TemplateColumn Title="Tamanho no Disco">
+            <TemplateColumn Title="Tamanho no Disco" Align="Align.Center">
                 @context.SizeInGB GB
             </TemplateColumn>
 
@@ -66,14 +75,19 @@
             </TemplateColumn>
         </FluentDataGrid>
     }
+
 </div>
 
 @code {
-    private List<ModelDetails>? _localModels;
+    private List<ModelDetails>? _localModels = null;
+    private bool _isLoading { get; set; } 
+    public string TrainingYear { get; set; } = "Desconhecido";
 
     protected override async Task OnInitializedAsync()
     {
         // 1. Carrega a lista do disco instantaneamente
+        _isLoading = true;
+
         var tagsResponse = await OllamaGpuService.GetLocalModelsAsync();
         _localModels = tagsResponse.Models;
 
@@ -82,10 +96,25 @@
         {
             foreach (var model in _localModels)
             {
-                model.ContextLength = await OllamaGpuService.GetModelContextLengthAsync(model.Model);
+                var metadata = await OllamaGpuService.GetExtendedModelMetadataAsync(model.Model);
+
+                model.ContextLength = metadata.ContextLength;
+                model.TrainingYear = metadata.TrainingYear;
             }
-            // Atualiza a tabela com os números reais encontrados (ex: 8,192, 32,768, etc.)
-            StateHasChanged();
         }
+        _isLoading = false;
+
     }
 }
+<style>
+    .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        text-align: center;
+        min-height: 120px;
+    }
+
+</style>

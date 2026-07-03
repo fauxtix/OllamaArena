@@ -34,6 +34,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             StateHasChanged();
         }
 
+
         private void SelectPrompt(BenchmarkPrompt prompt)
         {
             _mostrarGrafico = false;

@@ -161,6 +161,17 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
             int AffectedLines = await connection.ExecuteAsync(sql, new { Id = promptId });
             return AffectedLines > 0;
         }
+        /// <summary>
+        /// Apaga todos os Prompts. Como configurámos ON DELETE CASCADE no DB Browser,
+        /// todas as respostas associadas serão apagadas automaticamente pelo SQLite!
+        /// </summary>
+        public async Task<bool> DeleteAllPromptsAndHistoryAsync()
+        {
+            var sql = "DELETE FROM Prompts;";
+            using var connection = _context.CreateConnection();
+            int AffectedLines = await connection.ExecuteAsync(sql);
+            return AffectedLines > 0;
+        }
 
         /// <summary>
         /// Apaga apenas a resposta de um modelo específico, sem apagar a pergunta original.
@@ -193,19 +204,19 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
         /// Obtém uma lista de avaliações de benchmark, incluindo as classificações dos modelos Gemini e ChatGPT, para cada prompt.
         /// </summary>
         /// <returns></returns>
-        public async Task<IEnumerable<BenchmarkEvaluation>> BenchmarkResponseEvaluationAsync()
+        public async Task<IEnumerable<BenchmarkEvaluationModel>> BenchmarkResponseEvaluationAsync()
         {
             StringBuilder sb = new();
             sb.Append("SELECT R.PromptId, P.TextoPrompt, R.ModeloNome, ");
-            sb.Append("R.GeminiRating, R.GeminiFactualRating, R.GeminiFormattingRating, "); // Novos campos incluídos
-            sb.Append("R.ChatGptRating, R.ChatGptFactualRating, R.ChatGptFormattingRating, "); // Novos campos incluídos
+            sb.Append("R.GeminiRating, R.GeminiFactualRating, R.GeminiFormattingRating, "); 
+            sb.Append("R.ChatGptRating, R.ChatGptFactualRating, R.ChatGptFormattingRating, "); 
             sb.Append("P.DataCriacao, R.TokensPorSegundo, R.TempoPuroMs, R.TempoCargaMs, R.TamanhoTokens ");
             sb.Append("FROM Prompts P ");
             sb.Append("LEFT JOIN Respostas R ON R.PromptId = P.Id");
 
             var sql = sb.ToString();
             using var connection = _context.CreateConnection();
-            var result = await connection.QueryAsync<BenchmarkEvaluation>(sql);
+            var result = await connection.QueryAsync<BenchmarkEvaluationModel>(sql);
             return [.. result];
         }
         public async Task<string?> GetBestModelAsync()

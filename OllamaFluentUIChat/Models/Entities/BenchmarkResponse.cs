@@ -11,19 +11,15 @@ public class BenchmarkResponse
     public double TempoCargaMs { get; set; }
     public int TamanhoTokens { get; set; }
     
-    // --- NOVOS CAMPOS ADICIONADOS ---
-    public int? GeminiFactualRating { get; set; }    // Nota de Conteúdo (1-5)
-    public int? GeminiFormattingRating { get; set; } // Nota de Formatação (1-5)
+    public int? GeminiFactualRating { get; set; }   
+    public int? GeminiFormattingRating { get; set; }
     
-    // Mantém-se igual (será a nota Global/Final)
     public int? GeminiRating { get; set; }
     public string GeminiFeedback { get; set; } = string.Empty;
     
-    // --- NOVOS CAMPOS ADICIONADOS ---
-    public int? ChatGptFactualRating { get; set; }    // Nota de Conteúdo (1-5)
-    public int? ChatGptFormattingRating { get; set; } // Nota de Formatação (1-5)
+    public int? ChatGptFactualRating { get; set; }    
+    public int? ChatGptFormattingRating { get; set; } 
     
-    // Mantém-se igual (será a nota Global/Final)
     public int? ChatGptRating { get; set; }
     public string ChatGptFeedback { get; set; } = string.Empty;
 }}

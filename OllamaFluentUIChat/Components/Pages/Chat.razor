@@ -22,9 +22,9 @@
                      HorizontalAlignment="HorizontalAlignment.Stretch"
                      VerticalAlignment="VerticalAlignment.Center"
                      Style="border-bottom: 1px solid var(--neutral-stroke-layer-rest);
-            padding-bottom: 12px;
-            margin-bottom: 12px;
-            justify-content: space-between;">
+                            padding-bottom: 12px;
+                            margin-bottom: 12px;
+                            justify-content: space-between;">
 
             <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
                 <FluentPersona Name="Ollama Streaming AI"
@@ -32,12 +32,21 @@
                                Initials="AI" />
             </FluentStack>
 
-            <FluentStack Orientation="Orientation.Horizontal"
-                         HorizontalAlignment="HorizontalAlignment.Center">
-                <FluentSelect Style="width: 220px;"
-                              Items="@_models"
-                              @bind-SelectedOption="@ModelName" />
-            </FluentStack>
+            @if (!_models.Any() || _models.Count == 0)
+            {
+                <div class="loading-state">
+                    <FluentProgressRing/>
+                </div>
+            }
+            else
+            {
+                <FluentStack Orientation="Orientation.Horizontal"
+                             HorizontalAlignment="HorizontalAlignment.Center">
+                    <FluentSelect Style="width: 220px;"
+                                  Items="@_models"
+                                  @bind-SelectedOption="@ModelName" />
+                </FluentStack>
+            }
 
             <FluentStack Orientation="Orientation.Horizontal" Style="gap: 4px;">
                 @if (_gpuReport != null)
@@ -86,8 +95,7 @@
             </FluentButton>
         </FluentStack>
 
-        <div @ref="messagesDiv" @onscroll="OnScroll"
-             class="messages"
+        <div @ref="messagesDiv" @onscroll="OnScroll"             
              style="flex-grow: 1; min-height: 0; overflow-y: auto; padding-right: 8px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px;">
 
             @foreach (var msg in _messages)
@@ -103,7 +111,7 @@
                         color: @(msg.IsCurrentUser ? "var(--foreground-on-accent-rest)" : "var(--neutral-foreground-rest)");">
 
                         @((MarkupString)FormatMessage(msg.Text))
-
+                        
                     </div>
                 </div>
             }
@@ -301,4 +309,14 @@
         white-space: pre-wrap;
         word-break: break-all;
     }
+
+    .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        text-align: center;
+    }
+
 </style>

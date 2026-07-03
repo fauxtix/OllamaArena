@@ -2,9 +2,15 @@
 @rendermode InteractiveServer
 
 @using Models.DTO
+@using OllamaFluentUIChat.Components.Pages.Components
 @using OllamaFluentUIChat.Services.Interfaces.Repositories
 @using ClosedXML.Excel
 @using System.IO
+@using OllamaFluentUIChat.Models.Entities
+@inject IBenchmarkRepository BenchmarkRepo
+@inject IDialogService DialogService
+@inject ILogger<App> Logger
+
 
 @inject IJSRuntime JS
 
@@ -20,10 +26,18 @@
                               class="search-box" />
 
                 <FluentSpacer />
+                <FluentButton Appearance="Appearance.Lightweight"
+                              Disabled="@(_benchmarks.Any() == false)"
+                              Color="" BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
+                              IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="DeleteAllDataAsync">
+                    Apagar Benchmarks
+                </FluentButton>
+
                 <FluentButton Appearance="Appearance.Outline"
+                              Disabled="@(_benchmarks.Any() == false)"
                               IconStart="@(new Icons.Regular.Size24.ArrowDownload())"
                               @onclick="ExportarParaExcel">
-                    Exportar Excel
+                    Exportar para Excel
                 </FluentButton>
             </div>
 
@@ -46,26 +60,34 @@
     <div class="grid-container">
 
         <FluentDataGrid Items="@FilteredBenchmarks"
-                        TGridItem="BenchmarkEvaluation"
+                        TGridItem="BenchmarkEvaluationModel"
                         Pagination="@_pagination"
-                        DisplayMode="DataGridDisplayMode.Table"
+                        DisplayMode="DataGridDisplayMode.Grid"
                         class="benchmark-grid">
 
-            <PropertyColumn Property="@(b => b.PromptId)" Title="ID#" Width="60px" Align="Align.Center" Tooltip="true" />
-            <PropertyColumn Property="@(b => b.DataCriacaoFormatada)" Title="Data de Criação" Width="150px" Align="Align.Start" Tooltip="true" />
-            <PropertyColumn Property="@(b => b.ModeloNome)" Title="Modelo" Sortable="true" Align="Align.Start" Width="150px" Tooltip="true" />
+            <PropertyColumn Property="@(b => b.PromptId)" Title="ID#" Width="60px" Align="Align.Center" Sortable="true" />
+            <PropertyColumn Property="@(b => b.DataCriacaoFormatada)" Title="Data de Criação" Width="150px" Align="Align.Center" Tooltip="true" />
+            <PropertyColumn Property="@(b => b.ModeloNome)" Title="Modelo" Sortable="true" Align="Align.Center" Width="150px" Tooltip="true" />
 
-            <TemplateColumn Title="Prompt" Width="650px">
+            <TemplateColumn Title="Prompt" Width="350px" Style="justify-content:flex-start;">
                 <div class="prompt-cell">
                     @context.TextoPrompt
                 </div>
             </TemplateColumn>
 
-            <PropertyColumn Property="@(b => b.GeminiRating)" Title="Gemini" Align="Align.Center" Width="6px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.ChatGptRating)" Title="ChatGPT" Align="Align.Center" Width="60px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.TokensPorSegundo)" Title="Tokens/s" Align="Align.Center" Width="60px" Format="F2" Sortable="true" />
-            <PropertyColumn Property="@(b => b.TempoPuroFormatado)" Title="Tempo" Align="Align.Center" Width="60px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.TamanhoTokens)" Title="Tokens" Align="Align.Center" Width="60px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.GeminiRating)" Title="Gemini" Align="Align.Center" Width="100px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.ChatGptRating)" Title="ChatGPT" Align="Align.Center" Width="100px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.TokensPorSegundo)" Title="Tokens/s" Align="Align.Center" Width="100px" Format="F2" Sortable="true" />
+            <PropertyColumn Property="@(b => b.TempoPuroFormatado)" Title="Tempo" Align="Align.Center" Width="100px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.TamanhoTokens)" Title="Tokens" Align="Align.Center" Width="100px" Sortable="true" />
+
+            <TemplateColumn Title="Ações" Align="Align.Center" Width="100px">
+                <FluentButton Appearance="Appearance.Stealth"
+                              IconStart="@(new Icons.Regular.Size24.Eye())"
+                              OnClick="@(() => OpenDetailDialog(context))"
+                              Title="Ver Detalhes" />
+            </TemplateColumn>
+
 
         </FluentDataGrid>
 
@@ -76,10 +98,21 @@
     </div>
 </div>
 
+<BenchmarkEvaluationDetail Response=" _selectedBenchmarkResponse"
+                           Visible ="_isDialogVisible"
+                           OnClose="@(()=>_isDialogVisible = false)" />
+
+
+<FluentDialogProvider />
+<FluentMenuProvider />
+
+
 @code {
-    private IQueryable<BenchmarkEvaluation> _benchmarks = Enumerable.Empty<BenchmarkEvaluation>().AsQueryable();
+    private IQueryable<BenchmarkEvaluationModel> _benchmarks = Enumerable.Empty<BenchmarkEvaluationModel>().AsQueryable();
     private PaginationState _pagination = new() { ItemsPerPage = 5 };
     private string? _search;
+    private BenchmarkEvaluationModel? _selectedBenchmarkResponse;
+    private bool _isDialogVisible = false;
 
     [Inject]
     private IBenchmarkRepository _benchmarkRepository { get; set; } = default!;
@@ -96,11 +129,47 @@
         StateHasChanged();
     }
 
-    private IQueryable<BenchmarkEvaluation> FilteredBenchmarks
+    private async Task DeleteAllDataAsync()
+    {
+        if (DialogService == null) return;
+
+        try
+        {
+            var confirmacao = await DialogService.ShowConfirmationAsync(
+                $"Tem a certeza que deseja apagar todos os Prompts?" +
+                $"Isto irá remover permanentemente todas as respostas associadas (Cascading Delete).",
+                "Sim, Apagar",
+                "Cancelar",
+                "Apagar");
+
+            if (confirmacao == null) return;
+            var resultado = await confirmacao.Result;
+
+            if (resultado != null && !resultado.Cancelled)
+            {
+                bool eliminados = await BenchmarkRepo.DeleteAllPromptsAndHistoryAsync();
+                await InvokeAsync(() =>
+                {
+                    if (eliminados)
+                    {
+                        _benchmarks = Enumerable.Empty<BenchmarkEvaluationModel>().AsQueryable();
+                        StateHasChanged();
+                    }
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, $"Erro ao apagar os Prompts");
+        }
+
+    }
+
+    private IQueryable<BenchmarkEvaluationModel> FilteredBenchmarks
     {
         get
         {
-            IQueryable<BenchmarkEvaluation> query = _benchmarks;
+            IQueryable<BenchmarkEvaluationModel> query = _benchmarks;
 
             if (_filtroAtual == BenchmarkFilter.PorAvaliar)
             {
@@ -171,7 +240,7 @@
             }
             else
             {
-                linhaPrompt.Height = 25; 
+                linhaPrompt.Height = 25;
             }
 
             currentRow++;
@@ -228,6 +297,13 @@
     {
         return _filtroAtual == filtro ? Appearance.Accent : Appearance.Stealth;
     }
+
+    private void OpenDetailDialog(BenchmarkEvaluationModel response)
+    {
+        _selectedBenchmarkResponse = response;
+        _isDialogVisible = true;
+    }
+
 }
 <style>
     .page {
@@ -266,42 +342,28 @@
         height: 100%;
     }
 
-        fluent-data-grid::part(header) {
-            position: sticky;
-            top: 0;
-            z-index: 5;
-            background: var(--fill-color);
-            border-bottom: 1px solid var(--neutral-stroke-rest);
-        }
-
-        fluent-data-grid::part(body) {
-            overflow: auto;
-        }
-
-        fluent-data-grid::part(cell) {
-            align-items: flex-start;
-            padding: 6px 10px;
-            font-size: 13px;
-            line-height: 1.25;
-        }
-
-        fluent-data-grid::part(row):nth-child(even) {
-            background: var(--neutral-fill-secondary);
-        }
-
-        fluent-data-grid::part(row):hover {
-            background: var(--neutral-fill-hover);
-        }
-
     .prompt-cell {
         display: block;
-        white-space: pre-wrap;
-        word-break: break-word;
-        overflow-wrap: break-word;
+        white-space: pre-wrap !important; 
+        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+        min-width: 0;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         font-size: 12px;
         color: var(--neutral-foreground-rest);
     }
+
+    fluent-data-grid-cell {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+    }
+
+        fluent-data-grid-cell[grid-column="Prompt"] {
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: unset !important;
+        }
 
     .pager {
         flex: 0 0 auto;
@@ -340,7 +402,6 @@
     }
 
     @@media (max-width: 768px) {
-
         .filter-bar {
             flex-wrap: wrap;
         }
