@@ -30,9 +30,17 @@ Para obter respostas com maior maturidade intelectual e menor índice de alucina
   - **Tempo de Carga (Load Ms)**: O tempo que o Ollama demora a carregar/paginar o modelo para a memória.
   - **Tamanho (Count)**: Contagem total de tokens gerados.
 
-### 3. Painel de Análise Master-Detail (Layout Proporcional 1/3 e 2/3)
+### 3. Painel de Análise Master-Detail
 - **Painel Esquerdo**: Lista cronológica de prompts executados, com informação sobre o nº de modelos usados; opções para visualizar resultados em forma de gráfico e para apagar prompt.
-- **Painel Direito**: Cabeçalho fixo com o prompt selecionado e área de scroll independente para os cartões de resposta das IAs lado a lado.
+- **Painel Direito**:
+  
+**Métricas**:
+- Tokens/s
+- Eval ms
+- Load ms
+- Total tokens
+- Botão Copiar Prompt Formatado para avaliação externa
+
 
 ### 4. Avaliação Cruzada (LLM-as-a-Judge)
 - Painel integrado para introdução de métricas de qualidade baseadas em modelos de fronteira (**Google Gemini** e **OpenAI ChatGPT**).
