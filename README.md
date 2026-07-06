@@ -7,8 +7,8 @@ A aplicação combina uma interface de chat em tempo real com um painel de telem
 
 ## 💻 Notas Importantes sobre o Hardware e Desempenho
 
-### Ambiente de Teste Inicial (Máquina Antiga)
-Este laboratório foi projetado e testado inicialmente numa **máquina antiga limitada a apenas 1GB de VRAM**. Sob estas restrições estritas, o sistema funciona de forma híbrida: o **Ollama** faz a gestão inteligente da memória, enviando o que não cabe na placa gráfica para processamento direto na memória RAM e processador (CPU) do computador.
+### Ambiente de Teste Inicial 
+Este laboratório foi projetado e testado inicialmente numa **máquina limitada a apenas 1GB de VRAM**. Sob estas restrições estritas, o sistema funciona de forma híbrida: o **Ollama** faz a gestão inteligente da memória, enviando o que não cabe na placa gráfica para processamento direto na memória RAM e processador (CPU) do computador.
 
 ### Upgrade Recomendado para Modelos Maiores
 Para obter respostas com maior maturidade intelectual e menor índice de alucinações, **devem ser utilizadas placas gráficas (GPUs) modernas e dedicadas**. Um upgrade de hardware permitirá carregar localmente modelos muito mais potentes, que exigem maior capacidade de processamento gráfico para entregar resultados de qualidade superior em tempo útil.
