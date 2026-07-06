@@ -292,7 +292,7 @@ curl -X POST http://localhost:11434/api/generate \
 
 ## 📊 Modelos Utilizados nos Testes
 
-Os seguintes modelos de pequena escala (SLMs) foram escolhidos especificamente para avaliar o comportamento do ecossistema sob cenários de baixa memória e paginação por CPU:
+Alguns dos modelos de pequena escala (SLMs) escolhidos para avaliar o comportamento do ecossistema sob cenários de baixa memória e paginação por CPU:
 - **`qwen2.5:0.5b`**
 - **`llama3.2:1b`**
 - **`qwen2.5:1.5b`**
