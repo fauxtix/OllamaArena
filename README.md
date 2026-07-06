@@ -39,7 +39,16 @@ Para obter respostas com maior maturidade intelectual e menor índice de alucina
     - Eval ms
     - Load ms
     - Total tokens
+      
     - Botão Copiar Prompt Formatado para avaliação externa
+ 
+    - Texto da resposta
+ 
+      ** Footer **
+
+      - Rating Gemini
+      - Botão Avaliação → abre diálogo de edição
+      - Rating ChatGPT
 
 
 ### 4. Avaliação Cruzada (LLM-as-a-Judge)
