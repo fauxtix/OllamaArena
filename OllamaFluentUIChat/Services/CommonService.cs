@@ -135,5 +135,79 @@ namespace OllamaFluentUIChat.Services
 
             return html.Replace("<p>", "<div>").Replace("</p>", "</div>");
         }
+        public static string FormatMessageV2(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+                return "";
+
+            if (content == "...")
+                return "<div class='typing-dots'><span></span><span></span><span></span></div>";
+
+            // 1. Garantir que blocos de código ``` são fechados
+            int backtickCount = Regex.Matches(content, @"```").Count;
+            if (backtickCount % 2 != 0)
+                content += "\n```";
+
+            // 2. Inserir quebra de linha antes de headings colados
+            content = Regex.Replace(
+                content,
+                @"([^\n])\s*(#{1,6}\s)",
+                "$1\n\n$2"
+            );
+
+            // 3. Corrigir headings sem espaço
+            content = Regex.Replace(
+                content,
+                @"^(#{1,6})([^\s#])",
+                "$1 $2",
+                RegexOptions.Multiline
+            );
+
+            // 4. Quebra de linha antes de listas por asterisco
+            content = Regex.Replace(
+                content,
+                @"([\.!?])\s*(\*+\s)",
+                "$1\n\n$2"
+            );
+
+            // 5. Quebra de linha antes de listas numéricas coladas
+            content = Regex.Replace(
+                content,
+                @"([a-zA-Z:\*])(\d+\.\s+[A-Z0-9])",
+                "$1\n\n$2"
+            );
+
+            // 6. Espaço após pontuação colada
+            content = Regex.Replace(
+                content,
+                @"([a-zA-Z])([\.!?])([A-Z])",
+                "$1$2 $3"
+            );
+
+            // 7. Espaço após dois pontos colados
+            content = Regex.Replace(
+                content,
+                @":([^\s\*_])",
+                ": $1"
+            );
+
+            // 8. NÃO reconstruir tabelas — preserva erros para avaliação
+            // (modelos pequenos geram ruído, reconstruir mascara erros)
+
+            // 9. Converter Markdown → HTML
+            var pipeline = new MarkdownPipelineBuilder()
+                .UseAdvancedExtensions()
+                .UseSoftlineBreakAsHardlineBreak()
+                .Build();
+
+            var html = Markdown.ToHtml(content, pipeline).TrimEnd('\n', '\r', ' ');
+
+            // 10. Substituir <p> por <div> para Fluent UI
+            html = Regex.Replace(html, @"<p>(.*?)</p>", "<div>$1</div>", RegexOptions.Singleline);
+            html = html.Replace("<p>", "<div>").Replace("</p>", "</div>");
+
+            return html;
+        }
+
     }
 }

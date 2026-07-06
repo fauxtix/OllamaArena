@@ -115,32 +115,31 @@
                     </div>
                 </div>
 
-                <div class="info-grid-container">
-                    <div class="info-row">
-                        <FluentLabel class="info-label" Typo="Typography.Body">Modelo:</FluentLabel>
-                        <FluentLabel class="info-value" Typo="Typography.Body">@Response.ModeloNome</FluentLabel>
+                @* <div class="model-grid-container">
+                    <div class="model-grid-header">
+                        <div class="model-cell header-cell">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Table())" Color="Color.Accent" />
+                            <span>Tempo</span>
+                        </div>
+
+                        <div class="model-cell header-cell">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Calendar())" Color="Color.Accent" />
+                            <span>Carga</span>
+                        </div>
+
+                        <div class="model-cell header-cell">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.TopSpeed())" Color="Color.Accent" />
+                            <span>Total de Tokens</span>
+                        </div>
+
                     </div>
 
-                    <div class="info-row">
-                        <FluentLabel class="info-label" Typo="Typography.Body">Data de Criação:</FluentLabel>
-                        <FluentLabel class="info-value" Typo="Typography.Body">@Response.DataCriacaoFormatada</FluentLabel>
+                    <div class="model-grid-row">
+                        <div class="model-cell">@Response.TempoPuroFormatado</div>
+                        <div class="model-cell">@Response.TempoCargaFormatado</div>
+                        <div class="model-cell">@Response.TamanhoTokens</div>
                     </div>
-
-                    <div class="info-row">
-                        <FluentLabel class="info-label" Typo="Typography.Body">Tokens/s:</FluentLabel>
-                        <FluentLabel class="info-value" Typo="Typography.Body">@Response.TokensPorSegundo.ToString("F2")</FluentLabel>
-                    </div>
-
-                    <div class="info-row">
-                        <FluentLabel class="info-label" Typo="Typography.Body">Tempo:</FluentLabel>
-                        <FluentLabel class="info-value" Typo="Typography.Body">@Response.TempoPuroFormatado</FluentLabel>
-                    </div>
-
-                    <div class="info-row">
-                        <FluentLabel class="info-label" Typo="Typography.Body">Total de Tokens:</FluentLabel>
-                        <FluentLabel class="info-value" Typo="Typography.Body">@Response.TamanhoTokens</FluentLabel>
-                    </div>
-                </div>
+                </div> *@
             </div>
         }
     </FluentDialogBody>
@@ -210,13 +209,13 @@
         border-bottom: 1px solid var(--neutral-stroke-rest);
     }
 
-    .ratings-row:last-child {
-        border-bottom: none;
-    }
+        .ratings-row:last-child {
+            border-bottom: none;
+        }
 
-    .ratings-row:hover {
-        background-color: rgba(0, 0, 0, 0.02);
-    }
+        .ratings-row:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
 
     .metric-cell {
         padding: 12px;
@@ -227,14 +226,14 @@
         align-items: center;
     }
 
-    .metric-cell.header-metric {
-        color: var(--neutral-foreground-rest);
-    }
+        .metric-cell.header-metric {
+            color: var(--neutral-foreground-rest);
+        }
 
-    .metric-cell.global-metric {
-        font-weight: 700;
-        color: var(--neutral-foreground-rest);
-    }
+        .metric-cell.global-metric {
+            font-weight: 700;
+            color: var(--neutral-foreground-rest);
+        }
 
     .rating-cell {
         padding: 12px;
@@ -245,15 +244,15 @@
         color: var(--neutral-foreground-rest);
     }
 
-    .rating-cell.header-cell {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        font-weight: 600;
-        color: var(--neutral-foreground-rest);
-        font-size: 13px;
-    }
+        .rating-cell.header-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-weight: 600;
+            color: var(--neutral-foreground-rest);
+            font-size: 13px;
+        }
 
     .rating-value {
         display: inline-block;
@@ -263,9 +262,9 @@
         min-width: 30px;
     }
 
-    .rating-value.global-value {
-        color: var(--accent-fill-rest);
-    }
+        .rating-value.global-value {
+            color: var(--accent-fill-rest);
+        }
 
     .rating-empty {
         color: var(--neutral-foreground-hint);
@@ -278,9 +277,9 @@
         border-bottom: 2px solid var(--accent-fill-rest);
     }
 
-    .global-row:hover {
-        background-color: rgba(0, 120, 212, 0.08);
-    }
+        .global-row:hover {
+            background-color: rgba(0, 120, 212, 0.08);
+        }
 
     .info-grid-container {
         display: flex;
@@ -301,13 +300,13 @@
         padding: 0;
     }
 
-    .info-row:last-child {
-        border-bottom: none;
-    }
+        .info-row:last-child {
+            border-bottom: none;
+        }
 
-    .info-row:hover {
-        background-color: rgba(0, 0, 0, 0.02);
-    }
+        .info-row:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
 
     .info-label {
         padding: 12px;
@@ -328,11 +327,60 @@
     }
 
     .prompt-citacao {
-        max-height: 7.5em; 
-        overflow-y: auto; 
-        overflow-x: hidden; 
-        white-space: normal; 
-        padding-right: 6px; 
-        font-size: 14px; 
+        max-height: 18.0em;
+        overflow-y: auto;
+        overflow-x: hidden;
+        white-space: normal;
+        padding-right: 6px;
+        font-size: 14px;
         line-height: 1.5;
-    }</style>
+    }
+
+    .model-grid-container {
+        display: flex;
+        flex-direction: column;
+        background-color: var(--neutral-layer-1);
+        border: 1px solid var(--neutral-stroke-rest);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .model-grid-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        background-color: var(--neutral-layer-2);
+        border-bottom: 2px solid var(--neutral-stroke-divider);
+    }
+
+    .model-grid-row {
+        display: grid;        
+        grid-template-columns: 1fr 1fr 1fr;
+        border-bottom: 1px solid var(--neutral-stroke-rest);
+    }
+
+        .model-grid-row:last-child {
+            border-bottom: none;
+        }
+
+        .model-grid-row:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+    .model-cell {
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--neutral-foreground-rest);
+        font-size: 14px;
+    }
+
+    .header-cell {
+        gap: 6px;
+        font-weight: 600;
+        color: var(--neutral-foreground-rest);
+        font-size: 13px;
+        justify-content: center;
+    }
+
+</style>

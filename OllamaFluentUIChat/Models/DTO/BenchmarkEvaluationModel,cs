@@ -21,6 +21,8 @@
 
         public string TempoPuroFormatado =>
             TimeSpan.FromMilliseconds(TempoPuroMs).ToString(@"m\:ss");
+        public string TempoCargaFormatado =>
+            TimeSpan.FromMilliseconds(TempoCargaMs).ToString(@"m\:ss");
         public string DataCriacaoFormatada =>
             DataCriacao.ToString("dd/MM/yyyy HH:mm");
     }

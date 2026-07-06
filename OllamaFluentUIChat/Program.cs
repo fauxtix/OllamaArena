@@ -6,7 +6,7 @@ using OllamaFluentUIChat.Services.Implementations.Services;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
 using Serilog;
-using Syncfusion.Blazor;
+
 
 // 1. Logger inicial para capturar o terminal
 Log.Logger = new LoggerConfiguration()
@@ -17,26 +17,20 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    // DETERMINAR O CAMINHO ABSOLUTO PARA A BASE DE DADOS
-    // Isto força o Serilog a gravar na raiz do projeto, que é onde o teu Dapper costuma ler em Development
     string dbPath = Path.Combine(builder.Environment.ContentRootPath, "ollama_benchmark.db");
 
     // 2. Configuração do Serilog
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
-        .WriteTo.Console() // Mantém o Console para veres os erros no terminal se a BD falhar
+        .WriteTo.Console() 
         .WriteTo.SQLite(
-            sqliteDbPath: dbPath, // Usa o caminho absoluto aqui
+            sqliteDbPath: dbPath, 
             tableName: "Logs",
             batchSize: 1
         ));
 
-    // Add services to the container.
     builder.Services.AddRazorComponents()
         .AddInteractiveServerComponents();
-
-    builder.Services.AddSyncfusionBlazor();
-    Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JHaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdlWXlccHVQQmFfVUR0WEZWYEo=");
 
     builder.Services.AddFluentUIComponents();
     builder.Services.AddScoped(sp => new HttpClient());
@@ -49,10 +43,6 @@ try
 
     var app = builder.Build();
 
-    // ESTE LOG TEM DE APARECER
-    Log.Information("Ollama FluentUI Chat iniciado com sucesso no .NET 10.");
-
-    // Configure the HTTP request pipeline.
     if (!app.Environment.IsDevelopment())
     {
         app.UseExceptionHandler("/Error", createScopeForErrors: true);

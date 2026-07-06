@@ -9,6 +9,7 @@ using OllamaFluentUIChat.Models.DTO;
 using OllamaFluentUIChat.Models.Entities;
 using OllamaFluentUIChat.PromptTemplates;
 using OllamaFluentUIChat.Services;
+using OllamaFluentUIChat.Services.Helpers;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
 using System.Text;
@@ -573,7 +574,8 @@ namespace OllamaFluentUIChat.Components.Pages
 
         private string FormatMessage(string content)
         {
-            return CommonService.FormatMessage(content);
+            return MessageFormatter.FormatMessagePROPlus(content);
+            //return CommonService.FormatMessage(content);
         }
 
 

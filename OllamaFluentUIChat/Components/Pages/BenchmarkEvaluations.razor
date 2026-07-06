@@ -52,6 +52,11 @@
                               @onclick="() => _filtroAtual = BenchmarkFilter.PorAvaliar">
                     Por Avaliar
                 </FluentButton>
+                <FluentButton Appearance="@GetAppearance(BenchmarkFilter.Avaliados)"
+                              IconStart="@(new Icons.Regular.Size20.Checkmark())"
+                              @onclick="() => _filtroAtual = BenchmarkFilter.Avaliados">
+                    Avaliados
+                </FluentButton>
             </div>
 
         </div>
@@ -67,9 +72,9 @@
 
             <PropertyColumn Property="@(b => b.PromptId)" Title="ID#" Width="60px" Align="Align.Center" Sortable="true" />
             <PropertyColumn Property="@(b => b.DataCriacaoFormatada)" Title="Data de Criação" Width="150px" Align="Align.Center" Tooltip="true" />
-            <PropertyColumn Property="@(b => b.ModeloNome)" Title="Modelo" Sortable="true" Align="Align.Center" Width="150px" Tooltip="true" />
+            <PropertyColumn Property="@(b => b.ModeloNome)" Title="Modelo" Sortable="true" Width="150px" Tooltip="true" />
 
-            <TemplateColumn Title="Prompt" Width="350px" Style="justify-content:flex-start;">
+            <TemplateColumn Title="Prompt"  Width="350px" Style="justify-content:flex-start;">
                 <div class="prompt-cell">
                     @context.TextoPrompt
                 </div>
@@ -79,6 +84,7 @@
             <PropertyColumn Property="@(b => b.ChatGptRating)" Title="ChatGPT" Align="Align.Center" Width="100px" Sortable="true" />
             <PropertyColumn Property="@(b => b.TokensPorSegundo)" Title="Tokens/s" Align="Align.Center" Width="100px" Format="F2" Sortable="true" />
             <PropertyColumn Property="@(b => b.TempoPuroFormatado)" Title="Tempo" Align="Align.Center" Width="100px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.TempoCargaFormatado)" Title="Carga" Align="Align.Center" Width="100px" Sortable="true" />
             <PropertyColumn Property="@(b => b.TamanhoTokens)" Title="Tokens" Align="Align.Center" Width="100px" Sortable="true" />
 
             <TemplateColumn Title="Ações" Align="Align.Center" Width="100px">
@@ -110,7 +116,7 @@
 
 @code {
     private IQueryable<BenchmarkEvaluationModel> _benchmarks = Enumerable.Empty<BenchmarkEvaluationModel>().AsQueryable();
-    private PaginationState _pagination = new() { ItemsPerPage = 5 };
+    private PaginationState _pagination = new() { ItemsPerPage = 10};
     private string? _search;
     private BenchmarkEvaluationModel? _selectedBenchmarkResponse;
     private bool _isDialogVisible = false;
@@ -137,7 +143,7 @@
         try
         {
             var confirmacao = await DialogService.ShowConfirmationAsync(
-                $"Tem a certeza que deseja apagar todos os Prompts?" +
+                $"Tem a certeza que deseja apagar todos os Prompts? " + 
                 $"Isto irá remover permanentemente todas as respostas associadas (Cascading Delete).",
                 "Sim, Apagar",
                 "Cancelar",
@@ -175,6 +181,10 @@
             if (_filtroAtual == BenchmarkFilter.PorAvaliar)
             {
                 query = query.Where(b => b.GeminiRating == 0 || b.ChatGptRating == 0);
+            }
+            else if (_filtroAtual == BenchmarkFilter.Avaliados)
+            {
+                query = query.Where(b => b.GeminiRating > 0 || b.ChatGptRating > 0);
             }
 
             if (!string.IsNullOrWhiteSpace(_search))
@@ -291,7 +301,7 @@
         await JS.InvokeVoidAsync("downloadFileFromBase64", fileName, base64);
     }
 
-    private enum BenchmarkFilter { Todos, PorAvaliar }
+    private enum BenchmarkFilter { Todos, PorAvaliar, Avaliados }
     private BenchmarkFilter _filtroAtual = BenchmarkFilter.Todos;
 
     private Appearance GetAppearance(BenchmarkFilter filtro)
