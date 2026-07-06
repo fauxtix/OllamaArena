@@ -34,12 +34,12 @@ Para obter respostas com maior maturidade intelectual e menor índice de alucina
 - **Painel Esquerdo**: Lista cronológica de prompts executados, com informação sobre o nº de modelos usados; opções para visualizar resultados em forma de gráfico e para apagar prompt.
 - **Painel Direito**:
   
-**Métricas**:
-- Tokens/s
-- Eval ms
-- Load ms
-- Total tokens
-- Botão Copiar Prompt Formatado para avaliação externa
+  **Métricas**:
+    - Tokens/s
+    - Eval ms
+    - Load ms
+    - Total tokens
+    - Botão Copiar Prompt Formatado para avaliação externa
 
 
 ### 4. Avaliação Cruzada (LLM-as-a-Judge)
