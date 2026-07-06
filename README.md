@@ -320,15 +320,3 @@ dotnet watch run --project OllamaFluentUIChat/OllamaFluentUIChat.csproj
 ```
 
 3. Abra a URL apresentada no terminal (ex.: https://localhost:5001).
-
----
-
-## Notas finais e próximos passos
-
-- Documentei as informações adicionais extraídas do Ollama e adicionei nota sobre o template do juiz.
-- A exportação para Excel foi destacada como o método preferido de backup/arquivamento dos resultados.
-- Posso ainda:
-  - Inserir um pequeno aviso no UI de `ModelosOlama.razor` (ex.: "Se o modelo não aparece: execute `ollama pull <model>`") e abrir PR;
-  - Implementar um utilitário UI para colar a resposta do juiz e parsear automaticamente os 3 scores antes de gravar (opção offline-only).
-
-Se quiseres que eu aplique alguma dessas alterações adicionais, diz qual e eu procedo.
