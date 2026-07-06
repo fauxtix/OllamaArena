@@ -7,8 +7,8 @@ A aplicação combina uma interface de chat em tempo real com um painel de telem
 
 ## 💻 Notas Importantes sobre o Hardware e Desempenho
 
-### Ambiente de Teste Inicial (Máquina Antiga)
-Este laboratório foi projetado e testado inicialmente numa **máquina antiga limitada a apenas 1GB de VRAM**. Sob estas restrições estritas, o sistema funciona de forma híbrida: o **Ollama** faz a gestão inteligente da memória, enviando o que não cabe na placa gráfica para processamento direto na memória RAM e processador (CPU) do computador.
+### Ambiente de Teste Inicial 
+Este laboratório foi projetado e testado inicialmente numa **máquina limitada a apenas 1GB de VRAM**. Sob estas restrições estritas, o sistema funciona de forma híbrida: o **Ollama** faz a gestão inteligente da memória, enviando o que não cabe na placa gráfica para processamento direto na memória RAM e processador (CPU) do computador.
 
 ### Upgrade Recomendado para Modelos Maiores
 Para obter respostas com maior maturidade intelectual e menor índice de alucinações, **devem ser utilizadas placas gráficas (GPUs) modernas e dedicadas**. Um upgrade de hardware permitirá carregar localmente modelos muito mais potentes, que exigem maior capacidade de processamento gráfico para entregar resultados de qualidade superior em tempo útil.
@@ -30,9 +30,26 @@ Para obter respostas com maior maturidade intelectual e menor índice de alucina
   - **Tempo de Carga (Load Ms)**: O tempo que o Ollama demora a carregar/paginar o modelo para a memória.
   - **Tamanho (Count)**: Contagem total de tokens gerados.
 
-### 3. Painel de Análise Master-Detail (Layout Proporcional 1/3 e 2/3)
+### 3. Painel de Análise Master-Detail
 - **Painel Esquerdo**: Lista cronológica de prompts executados, com informação sobre o nº de modelos usados; opções para visualizar resultados em forma de gráfico e para apagar prompt.
-- **Painel Direito**: Cabeçalho fixo com o prompt selecionado e área de scroll independente para os cartões de resposta das IAs lado a lado.
+- **Painel Direito**:
+  
+  **Métricas**:
+    - Tokens/s
+    - Eval ms
+    - Load ms
+    - Total tokens
+      
+    - Botão Copiar Prompt Formatado para avaliação externa
+ 
+    - Texto da resposta
+ 
+    **Footer**
+
+    - Rating Gemini
+    - Botão Avaliação → abre diálogo de edição
+    - Rating ChatGPT
+
 
 ### 4. Avaliação Cruzada (LLM-as-a-Judge)
 - Painel integrado para introdução de métricas de qualidade baseadas em modelos de fronteira (**Google Gemini** e **OpenAI ChatGPT**).
@@ -125,7 +142,7 @@ Resumo dos endpoints usados e contratos observados no código:
 
 ---
 
-## NavMenu & fluxo de modelos
+## Menu & fluxo de modelos
 
 Esta secção descreve exatamente o que o menu de navegação (NavMenu) mostra e como os modelos do Ollama são carregados e persistidos na aplicação.
 
@@ -138,6 +155,7 @@ O que o NavMenu expõe (rotas principais):
 - Logs → `/system-logs` (visualizador de logs do Serilog)
 
 **Nota:** A página `Benchmark Evaluations` (rota `/benchmark-evaluations`) inclui um botão "Exportar Excel" na toolbar que gera um ficheiro .xlsx com prompts agrupados e métricas (Gemini/ChatGPT, Tokens/s, Tempo, Tokens). Este ficheiro Excel pode ser usado como backup externo dos resultados e para análises posteriores em ferramentas como Excel ou Power BI.
+Opção para **apagar todos os registos** da base de dados
 
 Onde os modelos vêm e como circulam na app:
 1. A app lê a lista de modelos directamente do Ollama invocando `OllamaGpuService.GetLocalModelsAsync()` (GET `/api/tags`).
@@ -274,7 +292,7 @@ curl -X POST http://localhost:11434/api/generate \
 
 ## 📊 Modelos Utilizados nos Testes
 
-Os seguintes modelos de pequena escala (SLMs) foram escolhidos especificamente para avaliar o comportamento do ecossistema sob cenários de baixa memória e paginação por CPU:
+Alguns dos modelos de pequena escala (SLMs) escolhidos para avaliar o comportamento do ecossistema sob cenários de baixa memória e paginação por CPU:
 - **`qwen2.5:0.5b`**
 - **`llama3.2:1b`**
 - **`qwen2.5:1.5b`**
@@ -302,15 +320,3 @@ dotnet watch run --project OllamaFluentUIChat/OllamaFluentUIChat.csproj
 ```
 
 3. Abra a URL apresentada no terminal (ex.: https://localhost:5001).
-
----
-
-## Notas finais e próximos passos
-
-- Documentei as informações adicionais extraídas do Ollama e adicionei nota sobre o template do juiz.
-- A exportação para Excel foi destacada como o método preferido de backup/arquivamento dos resultados.
-- Posso ainda:
-  - Inserir um pequeno aviso no UI de `ModelosOlama.razor` (ex.: "Se o modelo não aparece: execute `ollama pull <model>`") e abrir PR;
-  - Implementar um utilitário UI para colar a resposta do juiz e parsear automaticamente os 3 scores antes de gravar (opção offline-only).
-
-Se quiseres que eu aplique alguma dessas alterações adicionais, diz qual e eu procedo.
