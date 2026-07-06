@@ -44,7 +44,7 @@ Para obter respostas com maior maturidade intelectual e menor índice de alucina
  
     - Texto da resposta
  
-    ** Footer **
+    **Footer**
 
     - Rating Gemini
     - Botão Avaliação → abre diálogo de edição
