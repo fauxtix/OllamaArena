@@ -142,7 +142,7 @@ Resumo dos endpoints usados e contratos observados no código:
 
 ---
 
-## NavMenu & fluxo de modelos
+## Menu & fluxo de modelos
 
 Esta secção descreve exatamente o que o menu de navegação (NavMenu) mostra e como os modelos do Ollama são carregados e persistidos na aplicação.
 
@@ -155,6 +155,7 @@ O que o NavMenu expõe (rotas principais):
 - Logs → `/system-logs` (visualizador de logs do Serilog)
 
 **Nota:** A página `Benchmark Evaluations` (rota `/benchmark-evaluations`) inclui um botão "Exportar Excel" na toolbar que gera um ficheiro .xlsx com prompts agrupados e métricas (Gemini/ChatGPT, Tokens/s, Tempo, Tokens). Este ficheiro Excel pode ser usado como backup externo dos resultados e para análises posteriores em ferramentas como Excel ou Power BI.
+Opção para **apagar todos os registos** da base de dados
 
 Onde os modelos vêm e como circulam na app:
 1. A app lê a lista de modelos directamente do Ollama invocando `OllamaGpuService.GetLocalModelsAsync()` (GET `/api/tags`).
