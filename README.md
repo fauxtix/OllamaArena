@@ -44,11 +44,11 @@ Para obter respostas com maior maturidade intelectual e menor índice de alucina
  
     - Texto da resposta
  
-      ** Footer **
+    ** Footer **
 
-      - Rating Gemini
-      - Botão Avaliação → abre diálogo de edição
-      - Rating ChatGPT
+    - Rating Gemini
+    - Botão Avaliação → abre diálogo de edição
+    - Rating ChatGPT
 
 
 ### 4. Avaliação Cruzada (LLM-as-a-Judge)
