@@ -574,8 +574,7 @@ namespace OllamaFluentUIChat.Components.Pages
 
         private string FormatMessage(string content)
         {
-            return MessageFormatter.FormatMessagePROPlus(content);
-            //return CommonService.FormatMessage(content);
+            return MessageFormatter.FormatMessagePlus(content);
         }
 
 

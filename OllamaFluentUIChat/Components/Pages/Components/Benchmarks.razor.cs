@@ -1,19 +1,24 @@
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using OllamaFluentUIChat.Models.Entities;
 using OllamaFluentUIChat.PromptTemplates;
+using OllamaFluentUIChat.Services.Implementations.Services;
+using OllamaFluentUIChat.Services.Interfaces.Services;
 using System.Text;
 
 namespace OllamaFluentUIChat.Components.Pages.Components
 {
     public partial class Benchmarks
     {
-
+        [Inject]
+        public IOllamaGpuService GpuService { get; set; }
         private List<BenchmarkPrompt>? _promptsList;
         private BenchmarkPrompt? _selectedPrompt;
         private BenchmarkPrompt? _promptGrafico;
         private bool _mostrarGrafico = false;
         private bool _chartDialogVisible = false;
         private BenchmarkPrompt? _chartPrompt;
+        private bool isLoading = false;
 
         private BenchmarkResponse? _selectedEvaluation;
         private bool _evaluationDialogVisible;
@@ -22,8 +27,9 @@ namespace OllamaFluentUIChat.Components.Pages.Components
 
         private async Task GetDataAsync()
         {
-            _promptsList = null;
+            isLoading = true;
             StateHasChanged();
+            _promptsList = null;
             _promptsList = await BenchmarkRepo.GetAllBenchmarksAsync();
 
             if (_selectedPrompt != null && _promptsList != null)
@@ -31,6 +37,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
                 _selectedPrompt = _promptsList.FirstOrDefault(p => p.Id == _selectedPrompt.Id);
             }
 
+            isLoading = false; 
             StateHasChanged();
         }
 
@@ -177,7 +184,10 @@ namespace OllamaFluentUIChat.Components.Pages.Components
 
         private async Task CopyPromptForEvaluationAsync(string originalPrompt, string modelResponse)
         {
-            var formattedPrompt = await EvaluatePromptTemplate.EvaluationCopyPrompt(originalPrompt, modelResponse);
+            var modelName = _selectedEvaluation?.ModeloNome ?? "Modelo Desconhecido";
+            var metadata = await GpuService.GetExtendedModelMetadataAsync(modelName);
+            var trainingYear = metadata.TrainingYear;
+            var formattedPrompt = await EvaluatePromptTemplate.EvaluationCopyPrompt(originalPrompt, modelResponse, trainingYear);
             await CopyToClipboardAsync(formattedPrompt);
         }
 

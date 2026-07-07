@@ -2,7 +2,7 @@
 @rendermode InteractiveServer
 
 @using Microsoft.FluentUI.AspNetCore.Components
-@using OllamaFluentUIChat.Services
+@using OllamaFluentUIChat.Services.Helpers
 @using OllamaFluentUIChat.Services.Interfaces.Repositories
 @inject IBenchmarkRepository BenchmarkRepo
 @inject IDialogService DialogService
@@ -18,7 +18,7 @@
         </FluentButton>
     </div>
 
-    @if (_promptsList == null)
+    @if (isLoading)
     {
         <div class="loading-state">
             <FluentProgressRing></FluentProgressRing>
@@ -156,7 +156,7 @@
 
                                             <div class="cartao-corpo">
                                                 <div class="texto-resposta-raw">
-                                                    @((MarkupString)CommonService.FormatMessage(resp.TextoResposta))
+                                                    @((MarkupString)MessageFormatter.FormatMessagePlus(resp.TextoResposta))
                                                 </div>
                                             </div>
 
