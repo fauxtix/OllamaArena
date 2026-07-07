@@ -4,7 +4,7 @@
     {
         public int PromptId { get; set; }
         public DateTime DataCriacao { get; set; }
-        public string ModeloNome { get; set; } = string.Empty;
+        public string NomeModelo { get; set; } = string.Empty;
         public string TextoPrompt { get; set; } = string.Empty;
         public int GeminiRating { get; set; }
         public int ChatGptRating { get; set; }

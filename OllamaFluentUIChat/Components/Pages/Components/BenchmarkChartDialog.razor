@@ -118,12 +118,12 @@
 
         _coresDosModelos.Clear();
 
-        foreach (var modeloNome in Prompt.Answers.Select(a => a.ModeloNome).Distinct())
+        foreach (var NomeModelo in Prompt.Answers.Select(a => a.NomeModelo).Distinct())
         {
-            _coresDosModelos[modeloNome] = GerarCorAleatoria();
+            _coresDosModelos[NomeModelo] = GerarCorAleatoria();
         }
 
-        var labelsModelos = Prompt.Answers.Select(a => a.ModeloNome).ToList();
+        var labelsModelos = Prompt.Answers.Select(a => a.NomeModelo).ToList();
 
         var dadosEval = GerarDatasetUnico(labelsModelos, a => a.TempoPuroMs);
         var dadosLoad = GerarDatasetUnico(labelsModelos, a => a.TempoCargaMs);

@@ -43,12 +43,12 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
         {
             StringBuilder sb = new();
             sb.Append("INSERT INTO Respostas ");
-            sb.Append("(PromptId, ModeloNome, TextoResposta, TokensPorSegundo, ");
+            sb.Append("(PromptId, NomeModelo, TextoResposta, TokensPorSegundo, ");
             sb.Append("TempoPuroMs, TempoCargaMs, TamanhoTokens, ");
             sb.Append("GeminiFactualRating, GeminiFormattingRating, GeminiRating, GeminiFeedback, ");
             sb.Append("ChatGptFactualRating, ChatGptFormattingRating, ChatGptRating, ChatGptFeedback) ");
             sb.Append("VALUES ");
-            sb.Append("(@PromptId, @ModeloNome, @TextoResposta, @TokensPorSegundo, @TempoPuroMs, @TempoCargaMs, @TamanhoTokens, ");
+            sb.Append("(@PromptId, @NomeModelo, @TextoResposta, @TokensPorSegundo, @TempoPuroMs, @TempoCargaMs, @TamanhoTokens, ");
             sb.Append("@GeminiFactualRating, @GeminiFormattingRating, @GeminiRating, @GeminiFeedback, ");
             sb.Append("@ChatGptFactualRating, @ChatGptFormattingRating, @ChatGptRating, @ChatGptFeedback);");
 
@@ -207,7 +207,7 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
         public async Task<IEnumerable<BenchmarkEvaluationModel>> BenchmarkResponseEvaluationAsync()
         {
             StringBuilder sb = new();
-            sb.Append("SELECT R.PromptId, P.TextoPrompt, R.ModeloNome, ");
+            sb.Append("SELECT R.PromptId, P.TextoPrompt, R.NomeModelo, ");
             sb.Append("R.GeminiRating, R.GeminiFactualRating, R.GeminiFormattingRating, "); 
             sb.Append("R.ChatGptRating, R.ChatGptFactualRating, R.ChatGptFormattingRating, "); 
             sb.Append("P.DataCriacao, R.TokensPorSegundo, R.TempoPuroMs, R.TempoCargaMs, R.TamanhoTokens ");
@@ -222,13 +222,13 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
         public async Task<string?> GetBestModelAsync()
         {
             var sql = @"
-        SELECT ModeloNome
+        SELECT NomeModelo
         FROM (
             SELECT  
-                ModeloNome,
+                NomeModelo,
                 AVG((COALESCE(GeminiFactualRating, GeminiRating) + COALESCE(ChatGptFactualRating, ChatGptRating)) * 10.0) AS ScoreFinal
             FROM Respostas
-            GROUP BY ModeloNome
+            GROUP BY NomeModelo
         )
         ORDER BY ScoreFinal DESC
         LIMIT 1;";

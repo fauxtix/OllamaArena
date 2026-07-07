@@ -74,7 +74,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             {
                 dados.datasets.Add(new
                 {
-                    label = resp.ModeloNome,
+                    label = resp.NomeModelo,
                     borderColor = GenerateRandomColor(),
                     fill = false,
                     data = new List<double>
@@ -171,9 +171,9 @@ namespace OllamaFluentUIChat.Components.Pages.Components
 
                 if (guardado && DialogService != null)
                 {
-                    Logger.LogInformation($"[BENCHMARK] Avaliação do modelo {resposta.ModeloNome} guardada com sucesso.");
+                    Logger.LogInformation($"[BENCHMARK] Avaliação do modelo {resposta.NomeModelo} guardada com sucesso.");
 
-                    await DialogService.ShowInfoAsync($"Avaliação do modelo {resposta.ModeloNome} atualizada com sucesso no SQLite.", "Sucesso");
+                    await DialogService.ShowInfoAsync($"Avaliação do modelo {resposta.NomeModelo} atualizada com sucesso no SQLite.", "Sucesso");
                 }
             }
             catch (Exception ex)
@@ -184,7 +184,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
 
         private async Task CopyPromptForEvaluationAsync(string originalPrompt, string modelResponse)
         {
-            var modelName = _selectedEvaluation?.ModeloNome ?? "Modelo Desconhecido";
+            var modelName = _selectedEvaluation?.NomeModelo ?? "Modelo Desconhecido";
             var metadata = await GpuService.GetExtendedModelMetadataAsync(modelName);
             var trainingYear = metadata.TrainingYear;
             var formattedPrompt = await EvaluatePromptTemplate.EvaluationCopyPrompt(originalPrompt, modelResponse, trainingYear);

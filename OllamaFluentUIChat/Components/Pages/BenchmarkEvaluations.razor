@@ -72,7 +72,7 @@
 
             <PropertyColumn Property="@(b => b.PromptId)" Title="ID#" Width="60px" Align="Align.Center" Sortable="true" />
             <PropertyColumn Property="@(b => b.DataCriacaoFormatada)" Title="Data de Criação" Width="150px" Align="Align.Center" Tooltip="true" />
-            <PropertyColumn Property="@(b => b.ModeloNome)" Title="Modelo" Sortable="true" Width="150px" Tooltip="true" />
+            <PropertyColumn Property="@(b => b.NomeModelo)" Title="Modelo" Sortable="true" Width="150px" Tooltip="true" />
 
             <TemplateColumn Title="Prompt"  Width="350px" Style="justify-content:flex-start;">
                 <div class="prompt-cell">
@@ -190,7 +190,7 @@
             if (!string.IsNullOrWhiteSpace(_search))
             {
                 query = query.Where(b =>
-                    (b.ModeloNome != null && b.ModeloNome.Contains(_search)) ||
+                    (b.NomeModelo != null && b.NomeModelo.Contains(_search)) ||
                     (b.TextoPrompt != null && b.TextoPrompt.Contains(_search)) ||
                     b.TokensPorSegundo.ToString().Contains(_search) ||
                     b.TamanhoTokens.ToString().Contains(_search));
@@ -263,7 +263,7 @@
                 worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
                 worksheet.Cell(currentRow, 1).Style.Font.FontColor = XLColor.Gray;
 
-                worksheet.Cell(currentRow, 2).Value = item.ModeloNome;
+                worksheet.Cell(currentRow, 2).Value = item.NomeModelo;
                 worksheet.Cell(currentRow, 3).Value = item.GeminiRating;
                 worksheet.Cell(currentRow, 4).Value = item.ChatGptRating;
 

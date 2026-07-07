@@ -16,7 +16,7 @@
             <div style="display: flex; align-items: flex-start; gap: 10px; margin-top: 10px;">
                 <FluentIcon Value="@(new Icons.Regular.Size24.ClipboardCode())" />
                 <FluentLabel Typo="Typography.Body">
-                    Avaliação - @Response?.ModeloNome
+                    Avaliação - @Response?.NomeModelo
                 </FluentLabel>
 
                 <blockquote class="prompt-citacao" style="flex: 1; margin: 0;">
@@ -160,7 +160,7 @@
 
         var result = await TranslationService.TranslateAsync(
             Response.ChatGptFeedback,
-            Response.ModeloNome
+            Response.NomeModelo
         );
 
         translatedText = result.TranslatedText;
@@ -185,7 +185,7 @@
 
         var result = await TranslationService.TranslateAsync(
             Response.GeminiFeedback,
-            Response.ModeloNome
+            Response.NomeModelo
         );
 
         translatedText = result.TranslatedText;

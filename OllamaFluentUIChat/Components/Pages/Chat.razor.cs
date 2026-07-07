@@ -392,7 +392,7 @@ namespace OllamaFluentUIChat.Components.Pages
                             var newResponse = new BenchmarkResponse
                             {
                                 PromptId = _currentPromptId,
-                                ModeloNome = ModelName,
+                                NomeModelo = ModelName,
                                 TextoResposta = aiMessage.Text,
                                 TokensPorSegundo = Math.Round(tokensPerSecond, 1),
                                 TempoPuroMs = Math.Round(evalMs, 0),
