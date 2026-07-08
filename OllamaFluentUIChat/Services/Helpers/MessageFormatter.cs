@@ -1,14 +1,11 @@
 ﻿using Markdig;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace OllamaFluentUIChat.Services.Helpers
 {
     /// <summary>
-    /// Formatador avançado de respostas do Ollama otimizado para Fluent UI
-    /// Usa Markdig com pipeline completa + heurísticas inteligentes
+    /// Formatador de respostas do Ollama otimizado para Fluent UI
+    /// Usa Markdig com pipeline completa + heurísticas
     /// </summary>
     public static class MessageFormatter
     {
@@ -109,88 +106,109 @@ namespace OllamaFluentUIChat.Services.Helpers
         {
             var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             var result = new List<string>();
-            var currentTableRow = new List<string>();
-            bool insideBrokenTable = false;
+            var buffer = new List<string>();
 
             foreach (var line in lines)
             {
                 string trimmed = line.Trim();
 
-                // Tabelas extremamente quebradas (uma | por linha)
-                if (trimmed.StartsWith("|") && trimmed.Count(c => c == '|') <= 1 && trimmed.Length > 2)
+                // Se contém pipes → é potencial célula
+                if (trimmed.Contains("|"))
                 {
-                    insideBrokenTable = true;
-                    string cell = trimmed.TrimStart('|').Trim();
-                    if (!string.IsNullOrEmpty(cell))
-                        currentTableRow.Add(cell);
+                    buffer.Add(trimmed);
                     continue;
                 }
 
-                if (insideBrokenTable && currentTableRow.Count > 0 &&
-                    (!trimmed.StartsWith("|") || trimmed.Count(c => c == '|') > 1))
+                // Se não contém pipes → fechar tabela se existir
+                if (buffer.Count > 0)
                 {
-                    result.AddRange(BuildTableRows(currentTableRow));
-                    currentTableRow.Clear();
-                    insideBrokenTable = false;
-                }
-
-                // Tabelas normais
-                if (trimmed.Contains("|") && trimmed.Count(c => c == '|') >= 3)
-                {
-                    var parts = trimmed.Split('|')
-                                       .Select(p => p.Trim())
-                                       .Where(p => !string.IsNullOrWhiteSpace(p))
-                                       .ToList();
-
-                    if (parts.Count >= 2)
-                    {
-                        result.Add("| " + string.Join(" | ", parts) + " |");
-
-                        if (!trimmed.Contains("---") && !result.Any(r => r.Contains("---")))
-                        {
-                            var separators = string.Join(" | ", Enumerable.Repeat("---", parts.Count));
-                            result.Add("| " + separators + " |");
-                        }
-                        continue;
-                    }
+                    result.AddRange(RebuildTableFromLines(buffer));
+                    buffer.Clear();
                 }
 
                 result.Add(line);
             }
 
-            if (currentTableRow.Count > 0)
-                result.AddRange(BuildTableRows(currentTableRow));
+            // Fechar tabela no fim
+            if (buffer.Count > 0)
+                result.AddRange(RebuildTableFromLines(buffer));
 
             return string.Join("\n", result);
         }
-
         private static List<string> BuildTableRows(List<string> rows)
         {
-            if (rows.Count == 0) return new List<string>();
-
-            int columnsCount = EstimateColumnCount(rows);
             var output = new List<string>();
+            if (rows.Count == 0) return output;
 
-            for (int i = 0; i < rows.Count; i += columnsCount)
+            int columns = EstimateColumnCount(rows);
+
+            // Reconstrução tolerante
+            for (int i = 0; i < rows.Count; i += columns)
             {
-                var cells = rows.Skip(i).Take(columnsCount).ToList();
-                if (cells.Count == 0 || cells.All(c => c.StartsWith("-"))) continue;
+                var cells = rows.Skip(i).Take(columns).ToList();
+
+                // Se a linha vier incompleta, preencher com vazio
+                while (cells.Count < columns)
+                    cells.Add("");
 
                 output.Add("| " + string.Join(" | ", cells) + " |");
 
-                if (i == 0 && !output.Any(x => x.Contains("---")))
+                // Criar separador apenas na primeira linha
+                if (i == 0)
                 {
-                    var separators = Enumerable.Repeat("---", cells.Count);
-                    output.Add("| " + string.Join(" | ", separators) + " |");
+                    var sep = Enumerable.Repeat("---", columns);
+                    output.Add("| " + string.Join(" | ", sep) + " |");
                 }
             }
+
             return output;
         }
 
         private static int EstimateColumnCount(List<string> rows)
         {
-            var separatorIndex = rows.FindIndex(r => r.StartsWith("-"));
-            return separatorIndex > 0 ? separatorIndex : Math.Max(3, (int)Math.Ceiling(rows.Count / 3.0));
+            // 1. Se houver linhas com múltiplos pipes, usar o maior número encontrado
+            int maxPipes = 0;
+
+            foreach (var r in rows)
+            {
+                int pipes = r.Count(c => c == '|');
+                if (pipes > maxPipes)
+                    maxPipes = pipes;
+            }
+
+            // maxPipes - 1 = número de colunas
+            if (maxPipes >= 2)
+                return maxPipes - 1;
+
+            // 2. Se não houver pipes, tentar inferir pelo tamanho médio das células
+            if (rows.Count > 0)
+            {
+                double avg = rows.Average(r => r.Length);
+
+                if (avg < 12) return 5;   // células curtas → mais colunas
+                if (avg < 20) return 4;
+                if (avg < 35) return 3;
+                return 2;
+            }
+
+            return 2;
+        }
+
+        private static List<string> RebuildTableFromLines(List<string> rawLines)
+        {
+            var cells = new List<string>();
+
+            foreach (var line in rawLines)
+            {
+                var parts = line.Split('|')
+                                .Select(p => p.Trim())
+                                .Where(p => !string.IsNullOrWhiteSpace(p))
+                                .ToList();
+
+                cells.AddRange(parts);
+            }
+
+            return BuildTableRows(cells);
         }
 
         private static MarkdownPipeline BuildMarkdownPipeline()

@@ -1,0 +1,87 @@
+﻿@using OllamaFluentUIChat.Services.Helpers
+@inject ReadMeService readmeService
+@rendermode InteractiveServer
+
+<FluentDialog Hidden="!IsOpen"
+              Modal="true"
+              TrapFocus="true"
+              Class="dialog-large"
+              AriaLabel="README">
+    <FluentDialogHeader Visible="true">
+        <FluentStack Orientation="Orientation.Horizontal"
+                     VerticalAlignment="VerticalAlignment.Center">
+            <FluentIcon Value="@(new Icons.Regular.Size24.DataHistogram())" />
+            <FluentLabel Typo="Typography.PaneHeader">
+                Preview README.md
+            </FluentLabel>
+        </FluentStack>
+    </FluentDialogHeader>
+
+    <FluentDialogBody>
+        <div class="markdown-body" style="padding:16px; max-width:50vw; max-height:65vh; overflow-y:auto;">
+            @if (HtmlContent is null)
+            {
+                <p>Loading...</p>
+            }
+            else
+            {
+                @((MarkupString)HtmlContent)
+            }
+        </div>
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <div class="float-right">
+            <FluentButton Appearance="Appearance.Neutral" OnClick="@Close">Fechar</FluentButton>
+        </div>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    public bool IsOpen { get; set; }
+    public string? HtmlContent { get; set; }
+
+    public async Task OpenAsync()
+    {
+        IsOpen = true;
+        StateHasChanged(); // Força o Blazor a desenhar o diálogo (com o "Loading...") na tela
+
+        var md = await readmeService.LoadReadmeAsync();
+        HtmlContent = readmeService.MarkdownRenderer.ToHtml(md);
+
+        StateHasChanged(); // Força a renderização novamente após o HTML carregar
+    }
+
+    private void Close()
+    {
+        IsOpen = false;
+        StateHasChanged(); // Força o fechamento visual
+    }
+}
+
+<style>
+    .markdown-body {
+        font-family: Segoe UI, sans-serif;
+        line-height: 1.6;
+    }
+
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+            margin-top: 1rem;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: .3rem;
+        }
+
+        .markdown-body pre {
+            background: #f6f8fa;
+            color: black;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+
+    fluent-dialog.dialog-large::part(control) {
+        --dialog-width: 50vw !important;
+        --dialog-height: 85vh !important;
+        max-width: 100% !important;
+    }
+
+</style>

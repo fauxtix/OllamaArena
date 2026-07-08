@@ -1,6 +1,7 @@
 ﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Microsoft.FluentUI.AspNetCore.Components;
 using OllamaFluentUIChat.Components;
+using OllamaFluentUIChat.Services.Helpers;
 using OllamaFluentUIChat.Services.Implementations.Repositories;
 using OllamaFluentUIChat.Services.Implementations.Services;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
@@ -36,6 +37,11 @@ try
     builder.Services.AddScoped(sp => new HttpClient());
     builder.Services.AddTransient<IDapperContext, DapperContext>();
     builder.Services.AddTransient<IOllamaGpuService, OllamaGpuService>();
+
+    builder.Services.AddSingleton<MarkdownRenderer>();
+
+    builder.Services.AddHttpClient<ReadMeService>();
+
     builder.Services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
     builder.Services.AddScoped<ILogRepository, LogRepository>();
 

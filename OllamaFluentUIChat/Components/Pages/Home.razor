@@ -1,13 +1,35 @@
 ﻿@page "/"
+@using OllamaFluentUIChat.Components.Pages.Components
+@rendermode InteractiveServer
 
 <PageTitle>Home</PageTitle>
 
-    <FluentCard Style="padding: 12px; width: max-content; height: max-content; margin: auto;">
+@* Container principal para alinhar os elementos verticalmente *@
+<FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" Gap="20">
 
+    <FluentCard Style="padding: 12px; width: max-content; height: max-content;">
         <img src="images/OllamaWithFluentUI.jpg"
              alt="Descrição da imagem"
-         style="box-shadow: var(--elevation-shadow-card-hover);max-height: 75vh; max-width: 75vw; width: auto; height: auto;  display: block; border-radius: calc(var(--layer-corner-radius) * 1px);" />
-
+             style="box-shadow: var(--elevation-shadow-card-hover); max-height: 65vh; max-width: 75vw; width: auto; height: auto; display: block; border-radius: calc(var(--layer-corner-radius) * 1px);" />
     </FluentCard>
 
+    <div>
+        <FluentButton Appearance="Appearance.Outline" OnClick="ShowReadme">Ver README</FluentButton>
+    </div>
 
+</FluentStack>
+
+@* O Diálogo fica totalmente isolado fora do fluxo visual dos cartões e botões *@
+<ReadmePreview @ref="preview" />
+
+@code {
+    private ReadmePreview? preview;
+
+    private async Task ShowReadme()
+    {
+        if (preview is not null)
+        {
+            await preview.OpenAsync();
+        }
+    }
+}
