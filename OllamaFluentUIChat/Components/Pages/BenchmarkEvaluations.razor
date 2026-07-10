@@ -6,7 +6,6 @@
 @using OllamaFluentUIChat.Services.Interfaces.Repositories
 @using ClosedXML.Excel
 @using System.IO
-@using OllamaFluentUIChat.Models.Entities
 @inject IBenchmarkRepository BenchmarkRepo
 @inject IDialogService DialogService
 @inject ILogger<App> Logger
@@ -28,7 +27,7 @@
                 <FluentSpacer />
                 <FluentButton Appearance="Appearance.Lightweight"
                               Disabled="@(_benchmarks.Any() == false)"
-                              Color="" BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
+                              BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
                               IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="DeleteAllDataAsync">
                     Apagar Benchmarks
                 </FluentButton>
@@ -71,10 +70,10 @@
                         class="benchmark-grid">
 
             <PropertyColumn Property="@(b => b.PromptId)" Title="ID#" Width="60px" Align="Align.Center" Sortable="true" />
-            <PropertyColumn Property="@(b => b.DataCriacaoFormatada)" Title="Data de Criação" Width="150px" Align="Align.Center" Tooltip="true" />
-            <PropertyColumn Property="@(b => b.NomeModelo)" Title="Modelo" Sortable="true" Width="150px" Tooltip="true" />
+            <PropertyColumn Property="@(b => b.DataCriacaoFormatada)" Title="Data de Criação" Width="160px" Align="Align.Center" Sortable="true" />
+            <PropertyColumn Property="@(b => b.NomeModelo)" Title="Modelo" Sortable="true" Width="160px" />
 
-            <TemplateColumn Title="Prompt"  Width="350px" Style="justify-content:flex-start;">
+            <TemplateColumn Title="Prompt" Tooltip="true" Width="350px">
                 <div class="prompt-cell">
                     @context.TextoPrompt
                 </div>
@@ -116,7 +115,7 @@
 
 @code {
     private IQueryable<BenchmarkEvaluationModel> _benchmarks = Enumerable.Empty<BenchmarkEvaluationModel>().AsQueryable();
-    private PaginationState _pagination = new() { ItemsPerPage = 10};
+    private PaginationState _pagination = new() { ItemsPerPage = 12 };
     private string? _search;
     private BenchmarkEvaluationModel? _selectedBenchmarkResponse;
     private bool _isDialogVisible = false;

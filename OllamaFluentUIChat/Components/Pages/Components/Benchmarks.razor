@@ -13,9 +13,6 @@
 
     <div class="pagina-header">
         <h2>Análise de Qualidade e Métricas</h2>
-        <FluentButton Appearance="Appearance.Outline" IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="GetDataAsync">
-            Atualizar Dados
-        </FluentButton>
     </div>
 
     @if (isLoading)
@@ -139,19 +136,19 @@
                                                     <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" Color="Color.Neutral" />
                                                     <h4>@resp.NomeModelo</h4>
                                                 </div>
-                                                <div class="metricas-tags" style="display: flex; align-items: center; gap: 4px;">
+                                                <div class="metricas-tags" style="display: flex; justify-content: space-around; align-items: center;">
                                                     <FluentBadge Appearance="Appearance.Accent">@resp.TokensPorSegundo T/s</FluentBadge>
                                                     <FluentBadge Appearance="Appearance.Neutral">Eval: @(resp.TempoPuroMs)ms</FluentBadge>
                                                     <FluentBadge Appearance="Appearance.Neutral">Load: @(resp.TempoCargaMs)ms</FluentBadge>
                                                     <FluentBadge Appearance="Appearance.Neutral">Tokens: @resp.TamanhoTokens</FluentBadge>
-
-                                                    <FluentButton Appearance="Appearance.Stealth"
-                                                                  IconStart="@(new Icons.Regular.Size24.ClipboardCode())"
-                                                                  Color="Color.Accent"
-                                                                  OnClick="@(() => CopyPromptForEvaluationAsync(_selectedPrompt.TextoPrompt, resp.TextoResposta))"
-                                                                  Title="Copiar Prompt Formatado para o Juiz IA"
-                                                                  Style="padding: 0; min-width: 32px;" />
                                                 </div>
+                                                <FluentButton Appearance="Appearance.Accent"
+                                                              IconStart="@(new Icons.Regular.Size24.ClipboardCode())"
+                                                              OnClick="@(() => CopyPromptForEvaluationAsync(_selectedPrompt.TextoPrompt, resp.TextoResposta))"
+                                                              Title="Copiar Prompt Formatado para o Juiz IA"
+                                                              Color="rgba(255,255,255, 0.9)" BackgroundColor="rgba(25, 116, 210, 1.0)">
+                                                    Copiar para avaliação
+                                                </FluentButton>
                                             </div>
 
                                             <div class="cartao-corpo">
@@ -171,19 +168,22 @@
                                                         <span>Gemini</span>
                                                         <strong>@(resp.GeminiRating > 0 ? resp.GeminiRating : 0)</strong>
                                                     </div>
-
-                                                    <FluentButton Appearance="Appearance.Outline"
-                                                                  IconStart="@(new Icons.Regular.Size16.Edit())"
-                                                                  OnClick="@(() => OpenEvaluation(resp))">
-                                                        Avaliação
-                                                    </FluentButton>
-
-
                                                     <div class="rating-box">
                                                         <FluentIcon Value="@(new Icons.Regular.Size16.Chat())" />
                                                         <span>ChatGPT</span>
                                                         <strong>@(resp.ChatGptRating > 0 ? resp.ChatGptRating : 0)</strong>
                                                     </div>
+                                                    <FluentSpacer />
+                                                    <div>
+                                                        <FluentButton Appearance="Appearance.Accent" Color="Color.Success"
+                                                                      IconStart="@(new Icons.Regular.Size16.Edit())"
+                                                                      OnClick="@(() => OpenEvaluation(resp))">
+                                                            Avaliação
+                                                        </FluentButton>
+
+                                                    </div>
+
+
 
                                                 </div>
                                             </div>
@@ -366,10 +366,15 @@
             margin: 0;
             font-size: 14px;
             font-weight: 600;
+            border-radius: 9px;
+            padding: 4px 10px;
+            background: var(--neutral-fill-secondary);
+            border: 1px solid var(--neutral-stroke-rest);
         }
 
     .metricas-tags {
         display: flex;
+        font-size: 14px;
         gap: 6px;
     }
 
@@ -460,7 +465,7 @@
         gap: 6px;
         min-width: 120px;
         padding: 4px 10px;
-        border-radius: 999px;
+        border-radius: 9px;
         background: var(--neutral-fill-secondary);
         border: 1px solid var(--neutral-stroke-rest);
     }

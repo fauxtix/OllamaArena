@@ -3,7 +3,7 @@
 
 <FluentDialog Hidden="@(!Visible)"
               Modal="true"
-              TrapFocus="true" Style="width: 650px;"
+              TrapFocus="true" Class="dialog-size"
               AriaLabel="Detalhes do Log">
 
     <FluentDialogHeader Visible="true">
@@ -36,6 +36,7 @@
     </FluentDialogBody>
 
     <FluentDialogFooter>
+        <FluentSpacer />
         <FluentButton Appearance="Appearance.Accent" OnClick="Fechar">Fechar</FluentButton>
     </FluentDialogFooter>
 </FluentDialog>
@@ -69,3 +70,10 @@
         }
     }
 }
+<style>
+    fluent-dialog.dialog-size::part(control) {
+        --dialog-width: 40vw !important;
+        --dialog-height: 65vh !important;
+        max-width: 100% !important;
+    }
+</style>

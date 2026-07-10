@@ -115,7 +115,6 @@ namespace OllamaFluentUIChat.Components.Pages
                 }
 
                 await JS.InvokeVoidAsync("chatInput.attachHandlers", chatInputRef, _dotNetRef);
-                _logger?.LogInformation("Chat component initialized.");
             }
         }
         private async Task ShowGpuInfoDialogAsync()
@@ -143,7 +142,7 @@ namespace OllamaFluentUIChat.Components.Pages
             await DialogService.ShowDialogAsync<MessageBox>(textoInformativo, parameters);
         }
 
-        private void OpenHistory()
+        protected void OpenHistory()
         {
             historyPanel?.Open();
         }
@@ -245,7 +244,7 @@ namespace OllamaFluentUIChat.Components.Pages
                     ModelName = "phi4-mini:latest";
                 }
 
-                int maxTokens = _gpuReport?.FitsInGpu == true ? 1500 : 800;
+                int maxTokens = _gpuReport?.FitsInGpu == true ? 1500 : 1000;
                 var payload = new OllamaChatPayload
                 {
                     Model = ModelName,
@@ -371,6 +370,7 @@ namespace OllamaFluentUIChat.Components.Pages
             }
             finally
             {
+                StateHasChanged();
                 stopwatch.Stop();
 
                 // 4. Gravação na Base de Dados SQLite

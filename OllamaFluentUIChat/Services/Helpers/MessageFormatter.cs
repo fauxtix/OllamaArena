@@ -112,8 +112,15 @@ namespace OllamaFluentUIChat.Services.Helpers
             {
                 string trimmed = line.Trim();
 
+                // Linha composta apenas por hífens -> ignorar
+                if (trimmed.Length >= 3 && trimmed.All(c => c == '-'))
+                {
+                    continue;
+                }
+
                 // Se contém pipes → é potencial célula
-                if (trimmed.Contains("|"))
+                //if (trimmed.Contains("|"))
+                if (trimmed.StartsWith("|") || trimmed.EndsWith("|"))
                 {
                     buffer.Add(trimmed);
                     continue;
@@ -214,14 +221,14 @@ namespace OllamaFluentUIChat.Services.Helpers
         private static MarkdownPipeline BuildMarkdownPipeline()
         {
             return new MarkdownPipelineBuilder()
-                .UseAdvancedExtensions() 
+                .UseAdvancedExtensions()
                 .UseSoftlineBreakAsHardlineBreak()
-                .UseBootstrap()
-                .UseEmojiAndSmiley()
+                //.UseBootstrap()
+                //.UseEmojiAndSmiley()
                 .UsePipeTables()
-                .UseTaskLists() 
+                .UseTaskLists()
                 .UseAutoLinks()
-                .UseFootnotes()
+                //.UseFootnotes()
                 .UseDefinitionLists()
                 .UseEmphasisExtras()
                 .Build();
@@ -232,6 +239,27 @@ namespace OllamaFluentUIChat.Services.Helpers
             html = Regex.Replace(html, @"<p>(.*?)</p>", "<div>$1</div>", RegexOptions.Singleline);
             html = html.Replace("<p>", "<div>").Replace("</p>", "</div>");
             return html.Trim();
+        }
+
+        #endregion
+
+        #region Table Model
+
+        private sealed class TableModel
+        {
+            public List<TableRow> Rows { get; } = new();
+
+            public int ColumnCount =>
+                Rows.Count == 0
+                    ? 0
+                    : Rows.Max(r => r.Cells.Count);
+        }
+
+        private sealed class TableRow
+        {
+            public List<string> Cells { get; } = new();
+
+            public bool IsEmpty => Cells.Count == 0;
         }
 
         #endregion

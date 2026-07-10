@@ -1,0 +1,16 @@
+﻿/* Linhas horizontais e verticais nas células do corpo da tabela */
+::deep table.fluent-data-grid tbody td {
+    border-bottom: 1px solid var(--neutral-stroke-layer-rest, #e0e0e0);
+    border-inline-end: 1px solid var(--neutral-stroke-layer-rest, #e0e0e0);
+}
+
+/* Linhas verticais nos cabeçalhos da tabela */
+::deep table.fluent-data-grid thead th {
+    border-inline-end: 1px solid var(--neutral-stroke-layer-rest, #e0e0e0);
+}
+
+/* Opcional: Adicionar uma borda no lado esquerdo (início) da tabela para fechar o quadrado */
+::deep table.fluent-data-grid {
+    border-inline-start: 1px solid var(--neutral-stroke-layer-rest, #e0e0e0);
+    border-collapse: collapse;
+}

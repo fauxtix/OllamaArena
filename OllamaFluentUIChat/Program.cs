@@ -38,14 +38,15 @@ try
     builder.Services.AddTransient<IDapperContext, DapperContext>();
     builder.Services.AddTransient<IOllamaGpuService, OllamaGpuService>();
 
-    builder.Services.AddSingleton<MarkdownRenderer>();
+    builder.Services.AddHttpClient<InternetConnectivityService>();
 
+    builder.Services.AddSingleton<MarkdownRenderer>();
     builder.Services.AddHttpClient<ReadMeService>();
 
     builder.Services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
     builder.Services.AddScoped<ILogRepository, LogRepository>();
 
-    builder.Services.AddScoped<ITranslationService, TranslationService>();
+    builder.Services.AddTransient<ITranslationService, TranslationService>();
 
     var app = builder.Build();
 

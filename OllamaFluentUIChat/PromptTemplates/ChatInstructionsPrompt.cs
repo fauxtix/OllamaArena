@@ -14,12 +14,13 @@ namespace OllamaFluentUIChat.PromptTemplates
             systemInstruction.AppendLine("Provide ONLY the final answer.");
             systemInstruction.AppendLine();
             systemInstruction.AppendLine("Use standard Markdown formatting for:");
+            systemInstruction.AppendLine("- paragraphs");
             systemInstruction.AppendLine("- headings");
             systemInstruction.AppendLine("- lists");
             systemInstruction.AppendLine("- bold text");
             systemInstruction.AppendLine("- tabular  format");
             systemInstruction.AppendLine();
-            systemInstruction.AppendLine("At the end of your answer, add a final line stating your dataset update year.");
+            systemInstruction.AppendLine("At the end of your answer, on a dedicated row, add a final line stating your dataset update year.");
 
             return systemInstruction.ToString();
         }

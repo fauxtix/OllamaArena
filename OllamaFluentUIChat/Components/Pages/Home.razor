@@ -1,15 +1,18 @@
 ﻿@page "/"
 @using OllamaFluentUIChat.Components.Pages.Components
+@using OllamaFluentUIChat.Services.Helpers
+@inject IDialogService DialogService
+
 @rendermode InteractiveServer
+
 
 <PageTitle>Home</PageTitle>
 
-@* Container principal para alinhar os elementos verticalmente *@
 <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" Gap="20">
 
     <FluentCard Style="padding: 12px; width: max-content; height: max-content;">
         <img src="images/OllamaWithFluentUI.jpg"
-             alt="Descrição da imagem"
+             alt="Imagem gerada por IA"
              style="box-shadow: var(--elevation-shadow-card-hover); max-height: 65vh; max-width: 75vw; width: auto; height: auto; display: block; border-radius: calc(var(--layer-corner-radius) * 1px);" />
     </FluentCard>
 
@@ -19,14 +22,22 @@
 
 </FluentStack>
 
-@* O Diálogo fica totalmente isolado fora do fluxo visual dos cartões e botões *@
 <ReadmePreview @ref="preview" />
 
 @code {
+
+    [Inject] public InternetConnectivityService Internet { get; set; }
+
     private ReadmePreview? preview;
 
     private async Task ShowReadme()
     {
+        var hasInternet = await Internet.HasInternetAsync();
+        if (!hasInternet)
+        {
+            await DialogService.ShowErrorAsync($"Internet indisponível. Verifique, por favor.", "Acesso ao ficheiro" );
+
+        }
         if (preview is not null)
         {
             await preview.OpenAsync();

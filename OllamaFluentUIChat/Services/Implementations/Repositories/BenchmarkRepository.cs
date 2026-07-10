@@ -124,7 +124,6 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
                 new { Id = promptId },
                 splitOn: "Id"
             );
-            _logger.LogInformation("Obtido benchmark para Prompt ID {PromptId} com {AnswerCount} respostas.", promptId, promptResult?.Answers.Count ?? 0);
             return promptResult;
         }
 
@@ -218,6 +217,23 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
             using var connection = _context.CreateConnection();
             var result = await connection.QueryAsync<BenchmarkEvaluationModel>(sql);
             return [.. result];
+        }
+
+        public async Task<IEnumerable<HistoryResponse>> HistoryResponseAsync()
+        {
+            StringBuilder sb = new();
+            sb.Append("SELECT P.id, P.TextoPrompt Prompt, P.DataCriacao, ");
+            sb.Append("R.TempoPuroMs TempoPuro, R.TempoCargaMs TempoCarga, R.NomeModelo Modelo ");
+            sb.Append("FROM prompts P ");
+            sb.Append("INNER JOIN Respostas R ");
+            sb.Append("ON P.id = R.PromptId ");
+            sb.Append("ORDER BY P.id DESC");
+
+            var sql = sb.ToString();
+            using var connection = _context.CreateConnection();
+            var result = await connection.QueryAsync<HistoryResponse>(sql);
+            return [.. result];
+
         }
         public async Task<string?> GetBestModelAsync()
         {

@@ -14,8 +14,9 @@
     <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Right">
         <FluentLabel Typo="Typography.PageTitle">Logs do Sistema</FluentLabel>
         <FluentSpacer />
-        <FluentButton Appearance="Appearance.Accent"
-                      IconStart="@(new Icons.Regular.Size16.Delete())"
+        <FluentButton Appearance="Appearance.Lightweight"
+                      Color="" BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
+                      IconStart="@(new Icons.Regular.Size20.Delete())"
                       OnClick="ConfirmarLimpezaLogs">
             Limpar Todos os Logs
         </FluentButton>
@@ -180,10 +181,10 @@
     private async Task ConfirmarLimpezaLogs()
     {
         var dialog = await DialogService.ShowConfirmationAsync(
-            "Tem a certeza de que deseja eliminar permanentemente todos os logs d base de dados?",
+            "Tem a certeza de que deseja eliminar permanentemente todos os logs da base de dados?",
             "Sim, Apagar Tudo",
             "Cancelar",
-            "Limpar Base de Dados");
+            "Limpar Logs");
 
         var resultado = await dialog.Result;
 

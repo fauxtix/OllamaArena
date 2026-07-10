@@ -171,8 +171,6 @@ namespace OllamaFluentUIChat.Components.Pages.Components
 
                 if (guardado && DialogService != null)
                 {
-                    Logger.LogInformation($"[BENCHMARK] Avaliação do modelo {resposta.NomeModelo} guardada com sucesso.");
-
                     await DialogService.ShowInfoAsync($"Avaliação do modelo {resposta.NomeModelo} atualizada com sucesso no SQLite.", "Sucesso");
                 }
             }

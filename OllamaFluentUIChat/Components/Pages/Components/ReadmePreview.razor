@@ -1,5 +1,6 @@
 ﻿@using OllamaFluentUIChat.Services.Helpers
 @inject ReadMeService readmeService
+@inject ILogger<App> logger
 @rendermode InteractiveServer
 
 <FluentDialog Hidden="!IsOpen"
@@ -15,7 +16,6 @@
                 Preview README.md
             </FluentLabel>
         </FluentStack>
-        <div class="header-separator"></div>
     </FluentDialogHeader>
 
     <FluentDialogBody>
@@ -37,6 +37,8 @@
     </FluentDialogFooter>
 </FluentDialog>
 
+<FluentDialogProvider />
+
 @code {
     public bool IsOpen { get; set; }
     public string? HtmlContent { get; set; }
@@ -46,10 +48,18 @@
         IsOpen = true;
         StateHasChanged(); // Força o Blazor a desenhar o diálogo (com o "Loading...") na tela
 
-        var md = await readmeService.LoadReadmeAsync();
-        HtmlContent = readmeService.MarkdownRenderer.ToHtml(md);
+        try
+        {
+            var md = await readmeService.LoadReadmeAsync();
+            HtmlContent = readmeService.MarkdownRenderer.ToHtml(md);
 
-        StateHasChanged(); // Força a renderização novamente após o HTML carregar
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while loading README");
+        }
+
+        StateHasChanged();
     }
 
     private void Close()

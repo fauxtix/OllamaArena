@@ -17,5 +17,6 @@ namespace OllamaFluentUIChat.Services.Interfaces.Repositories
         Task<IEnumerable<BenchmarkEvaluationModel>> BenchmarkResponseEvaluationAsync();
         Task<string?> GetBestModelAsync();
         Task<bool> DeleteAllPromptsAndHistoryAsync();
+        Task<IEnumerable<HistoryResponse>> HistoryResponseAsync();
     }
 }
