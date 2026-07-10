@@ -163,13 +163,7 @@ Onde os modelos vêm e como circulam na app:
 2. Páginas que consomem essa lista:
    - `ModelosOlama.razor` — mostra os modelos detectados no disco, apresenta `ContextLength` (obtido via POST `/api/show`) e calcula compatibilidade GPU. Esta é a página canónica para inspecionar metadados extraídos do ficheiro do modelo.
    - `Chat.razor` — ao carregar, chama `GpuService.GetLocalModelsAsync()` para recuperar detalhes e aferir compatibilidade; o `ModelName` seleccionado é usado para chamadas a `/api/chat`.
-3. Persistência local na UI (localStorage):
-   - `ollama_models` — lista JSON de modelos adicionados/personalizados pela UI (Settings2).
-   - `ollama_model` — modelo actualmente seleccionado (Settings / Chat).
-   - `juiz_ai_prompt` — prompt do juiz salvo pelo utilizador (Settings2).
-   - `ollama_history` — historial de interacções mantido pelo JS helper (`wwwroot/js/chat.js`).
-   Exemplos de leitura/gravação no código: `JS.InvokeAsync<string>("localStorage.getItem", "ollama_models")` e `JS.InvokeVoidAsync("localStorage.setItem", "ollama_model", ModelName)`.
-4. Notas operacionais:
+3. Notas operacionais:
    - A app NÃO faz `ollama pull` automaticamente — o utilizador deve executar `ollama pull <model>` localmente para adicionar os ficheiros do modelo ao Ollama.
    - Se um modelo não existir localmente, as chamadas a `/api/chat` irão falhar no Ollama; o README deve instruir o utilizador a usar `ollama list` / `ollama pull`.
    - Para forçar libertação de VRAM, a app envia payloads com `keep_alive = 0` para `/api/generate` (ou usa `/api/chat` com payloads específicos) — isso faz com que o Ollama descarregue o modelo da memória.
@@ -191,7 +185,6 @@ Arquivos relevantes (links):
   https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Services/Implementations/Services/OllamaGpuService.cs
 - Modelos página: `Components/Pages/ModelosOlama.razor` — mostra modelos locais, contexto e compatibilidade GPU.
   https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Components/Pages/ModelosOlama.razor
-  https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Components/Pages/Settings2.razor
 - Chat: `Components/Pages/Chat.razor.cs` — construções de payload, streaming e persistência de métricas.
   https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Components/Pages/Chat.razor.cs
 
@@ -219,7 +212,7 @@ Significado das métricas pedidas ao juiz:
 - Final Score: avaliação global combinando factualidade e formatação (1 a 5).
 
 Como este prompt é usado na aplicação:
-- O utilizador pode copiar o prompt padrão a partir da UI (Settings2) e submetê‑lo em interfaces externas (p.ex. Gemini web UI ou ChatGPT) para obter a avaliação. Depois cola as notas (FACTUAL_SCORE/FORMATTING_SCORE/FINAL_SCORE e DESCRIPTION) nos campos de avaliação da app.
+- O utilizador pode copiar o prompt padrão a partir da UI e submetê‑lo em interfaces externas (p.ex. Gemini web UI ou ChatGPT) para obter a avaliação. Depois cola as notas (FACTUAL_SCORE/FORMATTING_SCORE/FINAL_SCORE e DESCRIPTION) nos campos de avaliação da app.
 - As colunas `GeminiRating` e `ChatGptRating` (ou campos equivalentes) nas tabelas de avaliação persistem essas notas no SQLite.
 
 ---
