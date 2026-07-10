@@ -65,7 +65,7 @@ Para obter respostas com maior maturidade intelectual e menor índice de alucina
 - **Motor Local de IA**: Ollama API (`http://localhost:11434`)
 - **Base de Dados**: SQLite
 - **Micro-ORM**: Dapper (Mapeamento por reflexão de objetos)
-- **Outras libs importantes**: Serilog (sink SQLite), Markdig, Syncfusion.Blazor
+- **Outras libs importantes**: Serilog (sink SQLite), Markdig
 
 ---
 
@@ -161,16 +161,9 @@ Onde os modelos vêm e como circulam na app:
 1. A app lê a lista de modelos directamente do Ollama invocando `OllamaGpuService.GetLocalModelsAsync()` (GET `/api/tags`).
    - Código: `OllamaFluentUIChat/Services/Implementations/Services/OllamaGpuService.cs`.
 2. Páginas que consomem essa lista:
-   - `Settings2.razor` — quando presente/activada, preenche a lista de `Models` e permite ao utilizador adicionar/remover entradas na UI (persistência local).
    - `ModelosOlama.razor` — mostra os modelos detectados no disco, apresenta `ContextLength` (obtido via POST `/api/show`) e calcula compatibilidade GPU. Esta é a página canónica para inspecionar metadados extraídos do ficheiro do modelo.
    - `Chat.razor` — ao carregar, chama `GpuService.GetLocalModelsAsync()` para recuperar detalhes e aferir compatibilidade; o `ModelName` seleccionado é usado para chamadas a `/api/chat`.
-3. Persistência local na UI (localStorage):
-   - `ollama_models` — lista JSON de modelos adicionados/personalizados pela UI (Settings2).
-   - `ollama_model` — modelo actualmente seleccionado (Settings / Chat).
-   - `juiz_ai_prompt` — prompt do juiz salvo pelo utilizador (Settings2).
-   - `ollama_history` — historial de interacções mantido pelo JS helper (`wwwroot/js/chat.js`).
-   Exemplos de leitura/gravação no código: `JS.InvokeAsync<string>("localStorage.getItem", "ollama_models")` e `JS.InvokeVoidAsync("localStorage.setItem", "ollama_model", ModelName)`.
-4. Notas operacionais:
+3. Notas operacionais:
    - A app NÃO faz `ollama pull` automaticamente — o utilizador deve executar `ollama pull <model>` localmente para adicionar os ficheiros do modelo ao Ollama.
    - Se um modelo não existir localmente, as chamadas a `/api/chat` irão falhar no Ollama; o README deve instruir o utilizador a usar `ollama list` / `ollama pull`.
    - Para forçar libertação de VRAM, a app envia payloads com `keep_alive = 0` para `/api/generate` (ou usa `/api/chat` com payloads específicos) — isso faz com que o Ollama descarregue o modelo da memória.
@@ -181,6 +174,7 @@ Extras: campos adicionais extraídos do Ollama e apresentados na UI (ModelosOlam
   - details.parameter_size (número/descrição de parâmetros)
   - details.quantization_level (nível de quantização)
   - SizeInGB (conversão legível do campo `size` do Ollama)
+  - TraimingYear (ano em que o modelo foi treinado)
   - ContextLength (extraído via `/api/show` a partir de model_info, quando disponível)
   - SizeInVram / GpuOffloadPercentage (quando `/api/ps` fornece size_vram; usado para estimar percentagem em VRAM e compatibilidade GPU)
 
@@ -191,8 +185,6 @@ Arquivos relevantes (links):
   https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Services/Implementations/Services/OllamaGpuService.cs
 - Modelos página: `Components/Pages/ModelosOlama.razor` — mostra modelos locais, contexto e compatibilidade GPU.
   https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Components/Pages/ModelosOlama.razor
-- Settings2: `Components/Pages/Settings2.razor` — gestão de modelos e prompt juiz (quando utilizado).
-  https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Components/Pages/Settings2.razor
 - Chat: `Components/Pages/Chat.razor.cs` — construções de payload, streaming e persistência de métricas.
   https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Components/Pages/Chat.razor.cs
 
@@ -206,7 +198,7 @@ Recomendações para documentação:
 
 A aplicação é pensada para funcionar offline/localmente; por essa razão a integração automática com serviços externos (OpenAI / Google) NÃO está incluida por defeito. O processo actual assume avaliação manual pelo utilizador usando interfaces externas (p.ex. Gemini ou ChatGPT no browser) e posterior colagem das notas na aplicação.
 
-O projecto inclui um template de prompt (EvaluatePromptTemplate) usado para pedir a um modelo de fronteira que acts como "juiz" e avalie as respostas geradas pelos modelos locais. O prompt força um formato estrito de saída com 3 rankings e uma breve descrição.
+O projecto inclui um template de prompt (EvaluatePromptTemplate) usado para pedir a um modelo de fronteira que atue como "juiz" e avalie as respostas geradas pelos modelos locais. O prompt força um formato estrito de saída com 3 rankings e uma breve descrição.
 
 Formato exigido pelo prompt do juiz (must):
 - FACTUAL_SCORE: [1-5]
@@ -220,7 +212,7 @@ Significado das métricas pedidas ao juiz:
 - Final Score: avaliação global combinando factualidade e formatação (1 a 5).
 
 Como este prompt é usado na aplicação:
-- O utilizador pode copiar o prompt padrão a partir da UI (Settings2) e submetê‑lo em interfaces externas (p.ex. Gemini web UI ou ChatGPT) para obter a avaliação. Depois cola as notas (FACTUAL_SCORE/FORMATTING_SCORE/FINAL_SCORE e DESCRIPTION) nos campos de avaliação da app.
+- O utilizador pode copiar o prompt padrão a partir da UI e submetê‑lo em interfaces externas (p.ex. Gemini web UI ou ChatGPT) para obter a avaliação. Depois cola as notas (FACTUAL_SCORE/FORMATTING_SCORE/FINAL_SCORE e DESCRIPTION) nos campos de avaliação da app.
 - As colunas `GeminiRating` e `ChatGptRating` (ou campos equivalentes) nas tabelas de avaliação persistem essas notas no SQLite.
 
 ---
