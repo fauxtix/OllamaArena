@@ -65,7 +65,7 @@ Para obter respostas com maior maturidade intelectual e menor índice de alucina
 - **Motor Local de IA**: Ollama API (`http://localhost:11434`)
 - **Base de Dados**: SQLite
 - **Micro-ORM**: Dapper (Mapeamento por reflexão de objetos)
-- **Outras libs importantes**: Serilog (sink SQLite), Markdig, Syncfusion.Blazor
+- **Outras libs importantes**: Serilog (sink SQLite), Markdig
 
 ---
 
