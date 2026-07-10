@@ -160,8 +160,7 @@ Opção para **apagar todos os registos** da base de dados
 Onde os modelos vêm e como circulam na app:
 1. A app lê a lista de modelos directamente do Ollama invocando `OllamaGpuService.GetLocalModelsAsync()` (GET `/api/tags`).
    - Código: `OllamaFluentUIChat/Services/Implementations/Services/OllamaGpuService.cs`.
-2. Páginas que consomem essa lista:
-   - `Settings2.razor` — quando presente/activada, preenche a lista de `Models` e permite ao utilizador adicionar/remover entradas na UI (persistência local).
+2. Página que consome essa lista:
    - `ModelosOlama.razor` — mostra os modelos detectados no disco, apresenta `ContextLength` (obtido via POST `/api/show`) e calcula compatibilidade GPU. Esta é a página canónica para inspecionar metadados extraídos do ficheiro do modelo.
    - `Chat.razor` — ao carregar, chama `GpuService.GetLocalModelsAsync()` para recuperar detalhes e aferir compatibilidade; o `ModelName` seleccionado é usado para chamadas a `/api/chat`.
 3. Persistência local na UI (localStorage):
