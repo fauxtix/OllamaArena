@@ -27,8 +27,9 @@
                 <FluentSpacer />
                 <FluentButton Appearance="Appearance.Lightweight"
                               Disabled="@(_benchmarks.Any() == false)"
+                              Color="rgba(255, 255,255, 1)"
                               BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
-                              IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="DeleteAllDataAsync">
+                              IconStart="@(new Icons.Regular.Size16.Delete())" OnClick="DeleteAllDataAsync">
                     Apagar Benchmarks
                 </FluentButton>
 
@@ -69,19 +70,19 @@
                         DisplayMode="DataGridDisplayMode.Grid"
                         class="benchmark-grid">
 
-            <PropertyColumn Property="@(b => b.PromptId)" Title="ID#" Width="60px" Align="Align.Center" Sortable="true" />
+            <PropertyColumn Property="@(b => b.PromptId)" Title="ID#" Width="60px" Sortable="true" />
             <PropertyColumn Property="@(b => b.DataCriacaoFormatada)" Title="Data de Criação" Width="160px" Align="Align.Center" Sortable="true" />
             <PropertyColumn Property="@(b => b.NomeModelo)" Title="Modelo" Sortable="true" Width="160px" />
 
-            <TemplateColumn Title="Prompt" Tooltip="true" Width="350px">
+            <TemplateColumn Title="Prompt" Tooltip="true" Width="300px">
                 <div class="prompt-cell">
                     @context.TextoPrompt
                 </div>
             </TemplateColumn>
 
-            <PropertyColumn Property="@(b => b.GeminiRating)" Title="Gemini" Align="Align.Center" Width="100px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.ChatGptRating)" Title="ChatGPT" Align="Align.Center" Width="100px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.TokensPorSegundo)" Title="Tokens/s" Align="Align.Center" Width="100px" Format="F2" Sortable="true" />
+            <PropertyColumn Property="@(b => b.GeminiRating)" Title="Gemini" Align="Align.Center" Width="120px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.ChatGptRating)" Title="ChatGPT" Align="Align.Center" Width="120px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.TokensPorSegundo)" Title="Tokens/s" Align="Align.Center" Width="120px" Format="F2" Sortable="true" />
             <PropertyColumn Property="@(b => b.TempoPuroFormatado)" Title="Tempo" Align="Align.Center" Width="100px" Sortable="true" />
             <PropertyColumn Property="@(b => b.TempoCargaFormatado)" Title="Carga" Align="Align.Center" Width="100px" Sortable="true" />
             <PropertyColumn Property="@(b => b.TamanhoTokens)" Title="Tokens" Align="Align.Center" Width="100px" Sortable="true" />
