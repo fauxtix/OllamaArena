@@ -180,6 +180,7 @@ Extras: campos adicionais extraídos do Ollama e apresentados na UI (ModelosOlam
   - details.parameter_size (número/descrição de parâmetros)
   - details.quantization_level (nível de quantização)
   - SizeInGB (conversão legível do campo `size` do Ollama)
+  - TraimingYear (ano em que o modelo foi treinado)
   - ContextLength (extraído via `/api/show` a partir de model_info, quando disponível)
   - SizeInVram / GpuOffloadPercentage (quando `/api/ps` fornece size_vram; usado para estimar percentagem em VRAM e compatibilidade GPU)
 
@@ -190,7 +191,6 @@ Arquivos relevantes (links):
   https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Services/Implementations/Services/OllamaGpuService.cs
 - Modelos página: `Components/Pages/ModelosOlama.razor` — mostra modelos locais, contexto e compatibilidade GPU.
   https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Components/Pages/ModelosOlama.razor
-- Settings2: `Components/Pages/Settings2.razor` — gestão de modelos e prompt juiz (quando utilizado).
   https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Components/Pages/Settings2.razor
 - Chat: `Components/Pages/Chat.razor.cs` — construções de payload, streaming e persistência de métricas.
   https://github.com/fauxtix/OllamaFluentUIChat/blob/master/OllamaFluentUIChat/Components/Pages/Chat.razor.cs
