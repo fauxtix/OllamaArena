@@ -198,7 +198,7 @@ Recomendações para documentação:
 
 A aplicação é pensada para funcionar offline/localmente; por essa razão a integração automática com serviços externos (OpenAI / Google) NÃO está incluida por defeito. O processo actual assume avaliação manual pelo utilizador usando interfaces externas (p.ex. Gemini ou ChatGPT no browser) e posterior colagem das notas na aplicação.
 
-O projecto inclui um template de prompt (EvaluatePromptTemplate) usado para pedir a um modelo de fronteira que acts como "juiz" e avalie as respostas geradas pelos modelos locais. O prompt força um formato estrito de saída com 3 rankings e uma breve descrição.
+O projecto inclui um template de prompt (EvaluatePromptTemplate) usado para pedir a um modelo de fronteira que atue como "juiz" e avalie as respostas geradas pelos modelos locais. O prompt força um formato estrito de saída com 3 rankings e uma breve descrição.
 
 Formato exigido pelo prompt do juiz (must):
 - FACTUAL_SCORE: [1-5]
