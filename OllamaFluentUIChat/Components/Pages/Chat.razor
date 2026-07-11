@@ -32,7 +32,7 @@
                                Initials="AI" />
             </FluentStack>
 
-            @if (!_models.Any() || _models.Count == 0)
+            @if (isLoadingModels)
             {
                 <div class="loading-state">
                     <FluentProgressRing/>

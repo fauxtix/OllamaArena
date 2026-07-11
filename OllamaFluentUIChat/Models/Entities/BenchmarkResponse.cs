@@ -14,12 +14,12 @@ public class BenchmarkResponse
     public int? GeminiFactualRating { get; set; }   
     public int? GeminiFormattingRating { get; set; }
     
-    public int? GeminiRating { get; set; }
+    public float? GeminiRating { get; set; }
     public string GeminiFeedback { get; set; } = string.Empty;
     
     public int? ChatGptFactualRating { get; set; }    
     public int? ChatGptFormattingRating { get; set; } 
     
-    public int? ChatGptRating { get; set; }
+    public float? ChatGptRating { get; set; }
     public string ChatGptFeedback { get; set; } = string.Empty;
 }}

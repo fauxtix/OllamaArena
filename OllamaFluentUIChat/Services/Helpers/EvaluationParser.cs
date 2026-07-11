@@ -2,7 +2,7 @@
 {
     public static class EvaluationParser
     {
-        public static void ParseEvaluation(string rawAiResponse, out int? factual, out int? formatting, out int? final, out string description)
+        public static void ParseEvaluation(string rawAiResponse, out int? factual, out int? formatting, out float? final, out string description)
         {
             factual = null;
             formatting = null;
@@ -30,7 +30,7 @@
                 }
                 else if (line.StartsWith("FINAL_SCORE:", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (int.TryParse(line.Replace("FINAL_SCORE:", "", StringComparison.OrdinalIgnoreCase).Trim(), out int val))
+                    if (float.TryParse(line.Replace("FINAL_SCORE:", "", StringComparison.OrdinalIgnoreCase).Trim(), out float val))
                         final = val;
                 }
                 else if (line.StartsWith("DESCRIPTION:", StringComparison.OrdinalIgnoreCase))

@@ -84,13 +84,36 @@ namespace OllamaFluentUIChat.Services.Helpers
             // Corrige #Título → # Título
             content = Regex.Replace(content, @"^(#{1,6})([^\s#])", "$1 $2", RegexOptions.Multiline);
 
-            // Quebras antes de listas
+            // ==================== IMPROVED LIST BREAKING ====================
+
+            // 1. Numbered lists (your main issue)
+            content = Regex.Replace(content,
+                @"([^\n])(\s*[:;.!?])\s*(\d+\.\s)",
+                "$1$2\n\n$3", RegexOptions.Multiline);
+
+            content = Regex.Replace(content,
+                @"([a-zA-Z0-9\)])\s*(\d+\.\s)",
+                "$1\n\n$2", RegexOptions.Multiline);
+
+            // 2. Bullet lists (* - +) — This was missing
+            content = Regex.Replace(content,
+                @"([^\n])(\s*[:;.!?])\s*([*\-+](\s|\s\*\*|\s\*\*\*))",
+                "$1$2\n\n$3", RegexOptions.Multiline);
+
+            content = Regex.Replace(content,
+                @"([a-zA-Z0-9\)])\s*([*\-+](\s|\s\*\*|\s\*\*\*))",
+                "$1\n\n$2", RegexOptions.Multiline);
+
+            // 3. Clean spacing before bold/italic after any list marker
+            content = Regex.Replace(content,
+                @"([*\-+]|\d+\.)\s*(\*\*|\*|\*\*\*)",
+                "$1 $2", RegexOptions.Multiline);
+
+            // 4. Original fallback (kept)
             content = Regex.Replace(content, @"([\.!?])\s*(\*+\s)", "$1\n\n$2");
-            content = Regex.Replace(content, @"([a-zA-Z:\*])(\d+\.\s+[A-Z0-9])", "$1\n\n$2");
 
             return content;
         }
-
         private static string ApplyUniversalSeparations(string content)
         {
             content = Regex.Replace(content, @"([a-z])([A-Z])", "$1\n$2");

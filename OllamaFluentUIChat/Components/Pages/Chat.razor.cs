@@ -1,14 +1,11 @@
-using Markdig;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.JSInterop;
 using OllamaFluentUIChat.Components.Pages.Components;
 using OllamaFluentUIChat.Models.DTO;
 using OllamaFluentUIChat.Models.Entities;
 using OllamaFluentUIChat.PromptTemplates;
-using OllamaFluentUIChat.Services;
 using OllamaFluentUIChat.Services.Helpers;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
@@ -50,6 +47,8 @@ namespace OllamaFluentUIChat.Components.Pages
         private DotNetObjectReference<Chat>? _dotNetRef;
         private ElementReference chatInputRef;
 
+        private bool isLoadingModels = false;
+
         private int _currentPromptId;
 
         private string ModelName
@@ -66,9 +65,10 @@ namespace OllamaFluentUIChat.Components.Pages
 
         private List<string> _models = new();
 
-        protected override void OnInitialized()
+        protected override async Task OnInitializedAsync()
         {
             _messages.Add(new Models.DTO.ChatMessage { User = "Ollama", Text = "Olá! Como posso ajudar?" });
+            await GetModelsInfoAsync();
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -76,46 +76,47 @@ namespace OllamaFluentUIChat.Components.Pages
             if (firstRender)
             {
                 _dotNetRef = DotNetObjectReference.Create(this);
-
-                try
-                {
-                    _logger?.LogInformation("Carregando lista de modelos da cache...");
-                    var storedList = await JS.InvokeAsync<string>("localStorage.getItem", "ollama_models");
-                    if (!string.IsNullOrEmpty(storedList))
-                    {
-                        _models = JsonSerializer.Deserialize<List<string>>(storedList) ?? new();
-                    }
-
-                    if (string.IsNullOrEmpty(ModelName))
-                    {
-                        if (_models.Contains(_modelName))
-                        {
-                            ModelName = _modelName;
-                        }
-                        else if (_models.Any())
-                        {
-                            ModelName = _models.First();
-                        }
-                    }
-
-                    var allModels = await GpuService!.GetLocalModelsAsync();
-                    var currentModelDetails = allModels?.Models?
-                        .FirstOrDefault(m =>
-                            m.Name.Equals(ModelName, StringComparison.OrdinalIgnoreCase) ||
-                            m.Model.Equals(ModelName, StringComparison.OrdinalIgnoreCase));
-
-                    if (currentModelDetails != null)
-                        _gpuReport = GpuService.CheckGpuCompatibility(currentModelDetails.SizeInBytes);
-
-                    StateHasChanged();
-                }
-                catch (Exception ex)
-                {
-                    _logger?.LogError(ex, "Erro detetado no OnAfterRenderAsync do Chat");
-                }
-
                 await JS.InvokeVoidAsync("chatInput.attachHandlers", chatInputRef, _dotNetRef);
             }
+        }
+
+        private async Task GetModelsInfoAsync()
+        {
+            try
+            {
+                isLoadingModels = true;
+                var allModels = await GpuService!.GetLocalModelsAsync();
+                _models.Clear();
+                _models.AddRange(allModels.Models.Select(m => m.Model));
+
+                if (string.IsNullOrEmpty(ModelName))
+                {
+                    if (_models.Contains(_modelName))
+                    {
+                        ModelName = _modelName;
+                    }
+                    else if (_models.Count > 0)
+                    {
+                        ModelName = _models.First();
+                    }
+                }
+
+                var currentModelDetails = allModels?.Models?
+                    .FirstOrDefault(m =>
+                        m.Name.Equals(ModelName, StringComparison.OrdinalIgnoreCase) ||
+                        m.Model.Equals(ModelName, StringComparison.OrdinalIgnoreCase));
+
+                if (currentModelDetails != null)
+                    _gpuReport = GpuService.CheckGpuCompatibility(currentModelDetails.SizeInBytes);
+
+                isLoadingModels = false;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Erro detetado no OnAfterRenderAsync do Chat");
+            }
+
         }
         private async Task ShowGpuInfoDialogAsync()
         {

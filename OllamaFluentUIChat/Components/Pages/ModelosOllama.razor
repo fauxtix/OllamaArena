@@ -28,7 +28,7 @@
     else
     {
         <FluentDataGrid Items="@_localModels.AsQueryable()" TGridItem="ModelDetails" ResizableColumns="true">
-            <PropertyColumn Property="@(m => m.Name)" Title="Nome" Sortable="true"  Style="color:steelblue; font-weight:700; font-size: 1rem;" />
+            <PropertyColumn Property="@(m => m.Name)" Title="Nome" Sortable="true" Style="color:steelblue; font-weight:700; font-size: 1rem;" />
 
             <TemplateColumn Title="Família">
                 @context.Details?.Family
@@ -39,15 +39,16 @@
             <TemplateColumn Title="Quantização">
                 @context.Details?.QuantizationLevel
             </TemplateColumn>
-            <TemplateColumn Title="Ano de Treino">
+            <TemplateColumn Title="Ano de Treino"
+                            Style="color:cadetblue; font-weight:500; font-size: 0.9rem;">
                 @context.TrainingYear
             </TemplateColumn>
 
-            <!-- COLUNA DO CONTEXTO REAL DO FICHEIRO -->
-            <TemplateColumn Title="Contexto Máximo" Sortable="true" Width="150px" >
+            <TemplateColumn Title="Contexto Máximo" Sortable="true" Width="150px">
                 <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Right"
-                VerticalAlignment="VerticalAlignment.Center" Style="gap: 6px;">
-                    <FluentIcon Value="@(new Icons.Regular.Size16.BroadActivityFeed())" Color="Color.Neutral" />
+                             VerticalAlignment="VerticalAlignment.Center" Style="gap: 6px;">
+                   @*  <FluentIcon Value="@(new Icons.Regular.Size16.BroadActivityFeed())"
+                                Color="Color.Neutral" /> *@
                     <span>@context.ContextLength.ToString("N0") tokens</span>
                 </FluentStack>
             </TemplateColumn>
@@ -80,18 +81,16 @@
 
 @code {
     private List<ModelDetails>? _localModels = null;
-    private bool _isLoading { get; set; } 
+    private bool _isLoading { get; set; }
     public string TrainingYear { get; set; } = "Desconhecido";
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. Carrega a lista do disco instantaneamente
         _isLoading = true;
-
+        await Task.Delay(100);
         var tagsResponse = await OllamaGpuService.GetLocalModelsAsync();
         _localModels = tagsResponse.Models;
 
-        // 2. Preenche os limites reais em background sem bloquear o ecrã
         if (_localModels != null && _localModels.Any())
         {
             foreach (var model in _localModels)
@@ -103,6 +102,7 @@
             }
         }
         _isLoading = false;
+        StateHasChanged();
 
     }
 }

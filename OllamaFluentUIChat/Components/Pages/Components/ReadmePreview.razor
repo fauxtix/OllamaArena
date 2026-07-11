@@ -46,7 +46,7 @@
     public async Task OpenAsync()
     {
         IsOpen = true;
-        StateHasChanged(); // Força o Blazor a desenhar o diálogo (com o "Loading...") na tela
+        StateHasChanged(); 
 
         try
         {
@@ -65,7 +65,7 @@
     private void Close()
     {
         IsOpen = false;
-        StateHasChanged(); // Força o fechamento visual
+        StateHasChanged(); 
     }
 }
 

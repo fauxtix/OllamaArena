@@ -20,7 +20,8 @@ namespace OllamaFluentUIChat.Services.Helpers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Erro ao carregar o README do GitHub.");
-                throw;
+                return "Erro ao carregar o ficheiro." + Environment.NewLine + 
+                    "Por favor, tente novamente mais tarde (o ficheiro poderá estar num repositório privado).";
             }
         }
     }

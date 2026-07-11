@@ -109,7 +109,7 @@
 
         if (value.Contains("FACTUAL_SCORE:", StringComparison.OrdinalIgnoreCase))
         {
-            EvaluationParser.ParseEvaluation(value, out int? factual, out int? formatting, out int? final, out string desc);
+            EvaluationParser.ParseEvaluation(value, out int? factual, out int? formatting, out float? final, out string desc);
             Response.GeminiFactualRating = factual;
             Response.GeminiFormattingRating = formatting;
             Response.GeminiRating = final;
@@ -130,7 +130,7 @@
 
         if (value.Contains("FACTUAL_SCORE:", StringComparison.OrdinalIgnoreCase))
         {
-            EvaluationParser.ParseEvaluation(value, out int? factual, out int? formatting, out int? final, out string desc);
+            EvaluationParser.ParseEvaluation(value, out int? factual, out int? formatting, out float? final, out string desc);
             Response.ChatGptFactualRating = factual;
             Response.ChatGptFormattingRating = formatting;
             Response.ChatGptRating = final;
