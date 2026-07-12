@@ -25,6 +25,10 @@ namespace OllamaFluentUIChat.Components.Pages.Components
 
         protected override async Task OnInitializedAsync() => await GetDataAsync();
 
+        protected void RefreshPage()
+        {
+            NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+        }
         private async Task GetDataAsync()
         {
             isLoading = true;

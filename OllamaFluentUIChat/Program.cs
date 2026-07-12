@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
-using Microsoft.FluentUI.AspNetCore.Components;
+﻿using Microsoft.FluentUI.AspNetCore.Components;
 using OllamaFluentUIChat.Components;
 using OllamaFluentUIChat.Services.Helpers;
 using OllamaFluentUIChat.Services.Implementations.Repositories;
@@ -34,7 +33,7 @@ try
         .AddInteractiveServerComponents();
 
     builder.Services.AddFluentUIComponents();
-    builder.Services.AddScoped(sp => new HttpClient());
+    //builder.Services.AddScoped(sp => new HttpClient());
     builder.Services.AddTransient<IDapperContext, DapperContext>();
     builder.Services.AddTransient<IOllamaGpuService, OllamaGpuService>();
 
@@ -46,7 +45,12 @@ try
     builder.Services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
     builder.Services.AddScoped<ILogRepository, LogRepository>();
 
-    builder.Services.AddTransient<ITranslationService, TranslationService>();
+    builder.Services.AddHttpClient<ITranslationService, TranslationService>(client =>
+    {
+        client.BaseAddress = new Uri("http://localhost:11434");
+        client.Timeout = TimeSpan.FromSeconds(90);       
+        client.DefaultRequestHeaders.Add("Accept", "application/json");
+    });
 
     var app = builder.Build();
 

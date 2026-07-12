@@ -21,7 +21,7 @@ public sealed class TranslateClientService
         try
         {
             var uri = $"{_baseUrl}/ai/translate";
-            using var resp = await System.Net.Http.Json.HttpClientJsonExtensions.PostAsJsonAsync(_http, uri, req, cancellationToken);
+            using var resp = await HttpClientJsonExtensions.PostAsJsonAsync(_http, uri, req, cancellationToken);
             if (!resp.IsSuccessStatusCode) return null;
             return await resp.Content.ReadFromJsonAsync<TranslateResponseDto>(cancellationToken: cancellationToken);
         }

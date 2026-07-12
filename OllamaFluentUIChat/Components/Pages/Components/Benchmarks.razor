@@ -8,11 +8,19 @@
 @inject IDialogService DialogService
 @inject ILogger<App> Logger
 @inject IJSRuntime JS
+@inject NavigationManager NavigationManager
 
 <div class="analise-container-horizontal">
 
     <div class="pagina-header">
         <h2>Análise de Qualidade e Métricas</h2>
+        <!-- Botão de Refrescar aqui -->
+        <FluentButton Appearance="Appearance.Outline"
+                      IconStart="@(new Icons.Regular.Size24.ArrowClockwise())"
+                      OnClick="RefreshPage"
+                      Title="Recarregar página (F5)">
+            Refrescar
+        </FluentButton>
     </div>
 
     @if (isLoading)

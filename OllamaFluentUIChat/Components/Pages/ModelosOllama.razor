@@ -21,7 +21,7 @@
     }
     else if (_localModels is null || !_localModels.Any())
     {
-        <FluentBadge Appearance="Appearance.Accent">
+        <FluentBadge  Appearance="Appearance.Accent">
             Nenhum modelo local detetado ou Ollama inacessível.
         </FluentBadge>
     }
@@ -39,7 +39,7 @@
             <TemplateColumn Title="Quantização">
                 @context.Details?.QuantizationLevel
             </TemplateColumn>
-            <TemplateColumn Title="Ano de Treino"
+            <TemplateColumn Title="Ano de Treino" Align="Align.Center"
                             Style="color:cadetblue; font-weight:500; font-size: 0.9rem;">
                 @context.TrainingYear
             </TemplateColumn>
@@ -47,7 +47,7 @@
             <TemplateColumn Title="Contexto Máximo" Sortable="true" Width="150px">
                 <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Right"
                              VerticalAlignment="VerticalAlignment.Center" Style="gap: 6px;">
-                   @*  <FluentIcon Value="@(new Icons.Regular.Size16.BroadActivityFeed())"
+                    @*  <FluentIcon Value="@(new Icons.Regular.Size16.BroadActivityFeed())"
                                 Color="Color.Neutral" /> *@
                     <span>@context.ContextLength.ToString("N0") tokens</span>
                 </FluentStack>
@@ -66,11 +66,13 @@
                     }
                     else if (gpuCheck.FitsInGpu)
                     {
-                        <FluentBadge Appearance="Appearance.Accent" Color="Color.Success">Compatível (~@gpuCheck.EstimatedRequiredMemoryGB GB)</FluentBadge>
+                        <FluentBadge Appearance="Appearance.Accent" Fill="success">Compatível (~@gpuCheck.EstimatedRequiredMemoryGB GB)</FluentBadge>
                     }
                     else
                     {
-                        <FluentBadge Appearance="Appearance.Accent" Color="Color.Warning">Excede VRAM (~@gpuCheck.EstimatedRequiredMemoryGB GB)</FluentBadge>
+                        <FluentBadge Fill="warning">
+                            Excede VRAM (~@gpuCheck.EstimatedRequiredMemoryGB GB)
+                        </FluentBadge>
                     }
                 }
             </TemplateColumn>
@@ -115,6 +117,16 @@
         padding: 40px;
         text-align: center;
         min-height: 120px;
+    }
+
+    fluent-badge {
+        --badge-fill-warning: #ff3c2e;
+        --badge-color-warning: blue;
+    }
+
+    fluent-badge {
+        --badge-fill-success: green;
+        --badge-color-success: #fff;
     }
 
 </style>

@@ -23,7 +23,8 @@ namespace OllamaFluentUIChat.Services.Implementations.Services
             _benchmarks = benchmarks;
             _logger = logger;
 
-            _http.BaseAddress = new Uri("http://localhost:11434");
+            if (_http.BaseAddress == null)
+                _http.BaseAddress = new Uri("http://localhost:11434");
         }
 
         public Task<TranslationResult> TranslateAsync(string text, string model)
