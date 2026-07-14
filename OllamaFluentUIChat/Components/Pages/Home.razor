@@ -1,7 +1,10 @@
 ﻿@page "/"
 @using OllamaFluentUIChat.Components.Pages.Components
 @using OllamaFluentUIChat.Services.Helpers
+@using OllamaFluentUIChat.Services.Interfaces.Services
+
 @inject IDialogService DialogService
+@inject ISystemPromptService SystemPromptService
 
 @rendermode InteractiveServer
 
@@ -29,6 +32,11 @@
     [Inject] public InternetConnectivityService Internet { get; set; }
 
     private ReadmePreview? preview;
+    CancellationToken cancellationToken;
+    override protected async Task OnInitializedAsync()
+    {
+           var systemPrompt = await SystemPromptService.GetSystemPrompt(cancellationToken);
+    }
 
     private async Task ShowReadme()
     {

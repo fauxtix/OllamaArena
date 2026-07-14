@@ -1,10 +1,12 @@
 ﻿using Microsoft.FluentUI.AspNetCore.Components;
 using OllamaFluentUIChat.Components;
+using OllamaFluentUIChat.Services;
 using OllamaFluentUIChat.Services.Helpers;
 using OllamaFluentUIChat.Services.Implementations.Repositories;
 using OllamaFluentUIChat.Services.Implementations.Services;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
+using OllamaFluentUIChat.Services.Providers;
 using Serilog;
 
 
@@ -36,6 +38,10 @@ try
     //builder.Services.AddScoped(sp => new HttpClient());
     builder.Services.AddTransient<IDapperContext, DapperContext>();
     builder.Services.AddTransient<IOllamaGpuService, OllamaGpuService>();
+
+    builder.Services.AddTransient<ISystemPromptService, SystemPromptService>();
+    builder.Services.AddTransient<IPromptTemplateProvider, PromptTemplateProvider>();
+    builder.Services.AddTransient<PromptFilesService>();
 
     builder.Services.AddHttpClient<InternetConnectivityService>();
 
