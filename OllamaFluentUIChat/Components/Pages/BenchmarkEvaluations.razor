@@ -119,11 +119,16 @@
                       TrapFocus="true"
                       AriaLabel="Detalhes da Avaliação Benchmark">
             <FluentDialogBody>
-                <BenchmarkAnalysisViewer IsAnalyzing="@_isAnalyzing" AnaliseResultado="@_resultadoLocal" />
+                <BenchmarkAnalysisViewer IsAnalyzing="@_isAnalyzing"
+                                         IsAnalyzingChanged="@((b) => _isAnalyzing = b)"
+                                         AnaliseResultado="@_resultadoLocal"
+                                         AnaliseResultadoChanged="@((r) => _resultadoLocal = r)"
+                                         OnCancelarAnalise="@CancelarAnaliseDoPai" />
             </FluentDialogBody>
             <FluentDialogFooter>
                 <FluentSpacer />
                 <FluentButton Appearance="Appearance.Outline" Color="Color.Neutral"
+                              Disabled="@_isAnalyzing"
                               OnClick="@(() => _mostrarPainelAnalise = false)">
                     Fechar
                 </FluentButton>
@@ -152,6 +157,7 @@
     private bool _isAnalyzing = false;
     private bool _mostrarPainelAnalise = false;
     private BenchmarkAnalysisResult? _resultadoLocal;
+    private CancellationTokenSource? _cts;
 
     [Inject]
     private IBenchmarkRepository _benchmarkRepository { get; set; } = default!;
@@ -354,14 +360,30 @@
         _resultadoLocal = null;
         StateHasChanged();
 
+
         try
         {
             // Recolhe os dados que estão visíveis e filtrados na Grid
             var dadosFiltrados = FilteredBenchmarks.ToList();
 
             // Invoca o serviço local que comunica com o Ollama
-            _resultadoLocal = await AnalysisService.AnalisarBenchmarksAsync(dadosFiltrados);
+
+            _cts?.Dispose();
+            _cts = new CancellationTokenSource();
+            _resultadoLocal = await AnalysisService.AnalisarBenchmarksAsync(dadosFiltrados, _cts.Token);
         }
+        catch (OperationCanceledException)
+        {
+            Logger.LogWarning("Análise cancelada pelo utilizador.");
+            _resultadoLocal = new BenchmarkAnalysisResult
+            {
+                Sumario = "Operação cancelada pelo utilizador",
+                AnaliseDetalhada = "❌ **Operação cancelada pelo utilizador.**"
+            };
+            StateHasChanged();
+
+        }
+
         catch (Exception ex)
         {
             Logger.LogError(ex, "Erro ao tentar efetuar a análise com o modelo local.");
@@ -376,6 +398,10 @@
             _isAnalyzing = false;
             StateHasChanged();
         }
+    }
+    private void CancelarAnaliseDoPai()
+    {
+        _cts?.Cancel();
     }
 
 }

@@ -42,123 +42,95 @@
                 Isto pode demorar algum tempo dependendo do hardware.
             </span>
 
-            <FluentButton Appearance="Appearance.Accent"
-                          OnClick="CancelarAnalise"
+            <FluentButton Appearance="Appearance.Lightweight"
+                          Color="rgba(255, 255,255, 1)"
+                          BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white; margin-top: 8px;"
                           IconStart="@(new Icons.Regular.Size20.Stop())"
-                          Style="margin-top: 8px;">
-                Cancelar Análise
+                          OnClick="CancelarAnalise">
+                Cancelar
             </FluentButton>
         </FluentCard>
     }
     else if (AnaliseResultado != null)
     {
-        <FluentTabs ActiveTabId="tab-sumario" Style="width: 100%;">
-            <FluentTab Id="tab-sumario" Label="Sumário Executivo" Icon="@(new Icons.Regular.Size20.DocumentBriefcase())">
-                <div class="markdown-content" style="padding: 20px 10px; line-height: 1.6; color: var(--neutral-foreground-rest);">
-                    @((MarkupString)ConvertMarkdownToHtml(AnaliseResultado.Sumario))
-                </div>
-            </FluentTab>
+        @if (AnaliseResultado.Sumario?.Contains("cancel", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            <FluentCard Style="padding: 30px; text-align: center; border-top: 4px solid var(--palette-orange-dark);">
+                <FluentIcon Value="@(new Icons.Regular.Size32.DismissCircle())" Color="@Color.Warning" />
+                <h3 style="color: var(--palette-orange-dark); margin: 16px 0 8px 0;">Análise Cancelada</h3>
+                <p style="color: var(--neutral-foreground-rest); font-size: 15px;">
+                    @AnaliseResultado.Sumario
+                </p>
+                <FluentButton Appearance="Appearance.Outline" OnClick="() => AnaliseResultado = null">
+                    Fechar
+                </FluentButton>
+            </FluentCard>
+        }
+        else
+        {
+            <FluentTabs ActiveTabId="tab-sumario" Style="width: 100%;">
+                <FluentTab Id="tab-sumario" Label="Sumário Executivo" Icon="@(new Icons.Regular.Size20.DocumentBriefcase())">
+                    <div class="markdown-content" style="padding: 20px 10px; line-height: 1.6; color: var(--neutral-foreground-rest);">
+                        @((MarkupString)ConvertMarkdownToHtml(AnaliseResultado.Sumario))
+                    </div>
+                </FluentTab>
 
-            <FluentTab Id="tab-insights" Label="Performance e Recomendações" Icon="@(new Icons.Regular.Size20.Lightbulb())">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; padding: 20px 0;">
-                    <FluentCard Style="padding: 16px; border-top: 4px solid var(--palette-green-dark);">
-                        <h4 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px; color: var(--palette-green-dark);">
-                            <FluentIcon Value="@(new Icons.Regular.Size16.Flash())" Color="@Color.Success" />
-                            Mais Rápido
-                        </h4>
-                        <div style="font-size: 20px; font-weight: bold; color: var(--neutral-foreground-rest); margin-bottom: 8px;">
-                            @AnaliseResultado.ModeloMaisRapido
-                        </div>
-                        <p style="font-size: 13px; margin: 0; color: var(--neutral-stroke-accessible-rest);">
-                            Atingiu a taxa de <strong>@AnaliseResultado.MaxTokensSec.ToString("F1") Tokens/s</strong>.
-                        </p>
-                    </FluentCard>
-
-                    <FluentCard Style="padding: 16px; border-top: 4px solid var(--palette-blue-dark);">
-                        <h4 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px; color: var(--palette-blue-dark);">
-                            <FluentIcon Value="@(new Icons.Regular.Size16.Star())" Color="@Color.Accent" />
-                            Melhor Qualidade
-                        </h4>
-                        <div style="font-size: 20px; font-weight: bold; color: var(--neutral-foreground-rest); margin-bottom: 8px;">
-                            @AnaliseResultado.ModeloMelhorAvaliado
-                        </div>
-                        <p style="font-size: 13px; margin: 0; color: var(--neutral-stroke-accessible-rest);">
-                            Obteve a melhor pontuação cruzada baseada nos avaliadores inteligentes.
-                        </p>
-                    </FluentCard>
-                </div>
-
-                <div style="margin-top: 10px;">
-                    <FluentAccordion>
-                        <FluentAccordionItem Heading="Análise Técnica Detalhada do Modelo" Expanded="true">
-                            <div class="markdown-content analysis-scroll">
-                                @((MarkupString)ConvertMarkdownToHtml(AnaliseResultado.AnaliseDetalhada))
+                <FluentTab Id="tab-insights" Label="Performance e Recomendações" Icon="@(new Icons.Regular.Size20.Lightbulb())">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; padding: 20px 0;">
+                        <FluentCard Style="padding: 16px; border-top: 4px solid var(--palette-green-dark);">
+                            <h4 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px; color: var(--palette-green-dark);">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Flash())" Color="@Color.Success" />
+                                Mais Rápido
+                            </h4>
+                            <div style="font-size: 20px; font-weight: bold; color: var(--neutral-foreground-rest); margin-bottom: 8px;">
+                                @AnaliseResultado.ModeloMaisRapido
                             </div>
-                        </FluentAccordionItem>
-                    </FluentAccordion>
-                </div>
-            </FluentTab>
-        </FluentTabs>
+                            <p style="font-size: 13px; margin: 0; color: var(--neutral-stroke-accessible-rest);">
+                                Atingiu a taxa de <strong>@AnaliseResultado.MaxTokensSec.ToString("F1") Tokens/s</strong>.
+                            </p>
+                        </FluentCard>
+
+                        <FluentCard Style="padding: 16px; border-top: 4px solid var(--palette-blue-dark);">
+                            <h4 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px; color: var(--palette-blue-dark);">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Star())" Color="@Color.Accent" />
+                                Melhor Qualidade
+                            </h4>
+                            <div style="font-size: 20px; font-weight: bold; color: var(--neutral-foreground-rest); margin-bottom: 8px;">
+                                @AnaliseResultado.ModeloMelhorAvaliado
+                            </div>
+                            <p style="font-size: 13px; margin: 0; color: var(--neutral-stroke-accessible-rest);">
+                                Obteve a melhor pontuação cruzada baseada nos avaliadores inteligentes.
+                            </p>
+                        </FluentCard>
+                    </div>
+
+                    <div style="margin-top: 10px;">
+                        <FluentAccordion>
+                            <FluentAccordionItem Heading="Análise Técnica Detalhada do Modelo" Expanded="true">
+                                <div class="markdown-content analysis-scroll">
+                                    @((MarkupString)ConvertMarkdownToHtml(AnaliseResultado.AnaliseDetalhada))
+                                </div>
+                            </FluentAccordionItem>
+                        </FluentAccordion>
+                    </div>
+                </FluentTab>
+            </FluentTabs>
+        }
     }
 </div>
 
 @code {
-    [Parameter] public bool IsAnalyzing { get; set; } = false;
+    [Parameter] public bool IsAnalyzing { get; set; }
     [Parameter] public EventCallback<bool> IsAnalyzingChanged { get; set; }
 
     [Parameter] public BenchmarkAnalysisResult? AnaliseResultado { get; set; }
     [Parameter] public EventCallback<BenchmarkAnalysisResult?> AnaliseResultadoChanged { get; set; }
 
-    private CancellationTokenSource? _cancellationTokenSource;
+    [Parameter] public EventCallback OnCancelarAnalise { get; set; }
 
-    // Método chamado pelo componente pai para iniciar a análise
-    public async Task IniciarAnaliseAsync(List<BenchmarkEvaluationModel> benchmarks)
+    private async Task CancelarAnalise()
     {
-        if (IsAnalyzing) return;
-
-        _cancellationTokenSource = new CancellationTokenSource();
-        IsAnalyzing = true;
-        AnaliseResultado = null;
-
-        await IsAnalyzingChanged.InvokeAsync(true);
-        await AnaliseResultadoChanged.InvokeAsync(null);
-
-        try
-        {
-            var resultado = await AnalysisService.AnalisarBenchmarksAsync(benchmarks, _cancellationTokenSource.Token);
-            AnaliseResultado = resultado;
-        }
-        catch (OperationCanceledException)
-        {
-            AnaliseResultado = new BenchmarkAnalysisResult
-            {
-                Sumario = "Análise cancelada pelo utilizador.",
-                AnaliseDetalhada = "A operação foi interrompida a pedido do utilizador.",
-                TempoAnaliseFormatado = "00:00"
-            };
-        }
-        catch (Exception ex)
-        {
-            AnaliseResultado = new BenchmarkAnalysisResult
-            {
-                Sumario = "Erro durante a análise.",
-                AnaliseDetalhada = $"Ocorreu um erro inesperado: {ex.Message}"
-            };
-        }
-        finally
-        {
-            IsAnalyzing = false;
-            _cancellationTokenSource?.Dispose();
-            _cancellationTokenSource = null;
-
-            await IsAnalyzingChanged.InvokeAsync(false);
-            await AnaliseResultadoChanged.InvokeAsync(AnaliseResultado);
-        }
-    }
-
-    private void CancelarAnalise()
-    {
-        _cancellationTokenSource?.Cancel();
+        await OnCancelarAnalise.InvokeAsync();
     }
 
     private string ConvertMarkdownToHtml(string? markdown)

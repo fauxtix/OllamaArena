@@ -1,4 +1,4 @@
-﻿// Services/LocalAnalysisService.cs
+﻿// Ficheiro: Services/LocalAnalysisService.cs
 using OllamaFluentUIChat.Models.DTO;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
@@ -15,14 +15,14 @@ public class LocalAnalysisService : IAnalysisService
     private readonly IBenchmarkRepository _benchmarkRepository;
     private const string OllamaEndpoint = "http://localhost:11434/api/chat";
 
-    // Modelos recomendados para boa obediência de JSON
-    private const string ModelName = "qwen2.5:3b"; // ou Gemma3:4B, llama3.2, etc.
+    // REQUISITO LOCAL: qwen2.5 (1.5b ou 3b) e llama3.2 são excelentes a obedecer à formatação JSON estruturada.
+    private const string ModelName = "qwen2.5:3b";
 
     public LocalAnalysisService(HttpClient httpClient, ILogger<LocalAnalysisService> logger, IBenchmarkRepository benchmarkRepository)
     {
         _httpClient = httpClient;
         _logger = logger;
-        _httpClient.Timeout = TimeSpan.FromMinutes(10); // Aumentado para análises longas
+        _httpClient.Timeout = TimeSpan.FromMinutes(5); // Modelos locais pequenos em CPUs podem demorar
         _benchmarkRepository = benchmarkRepository;
     }
 
@@ -36,13 +36,13 @@ public class LocalAnalysisService : IAnalysisService
             return new BenchmarkAnalysisResult { Sumario = "Não existem dados para analisar." };
         }
 
+        // 1. Converter os dados complexos numa tabela Markdown compacta (O LLM gosta deste formato)
         var stopwatch = Stopwatch.StartNew();
 
-        try
-        {
-            var markdownTabela = GerarTabelaMarkdown(benchmarks);
+        var markdownTabela = GerarTabelaMarkdown(benchmarks);
 
-            string systemPrompt = """
+        // 2. Prompt de Sistema focado e imperativo a exigir JSON limpo
+        string systemPrompt = """
 You are an AI assistant specialised in analysing software engineering benchmark results.
 
 You will receive a table containing benchmark results for multiple language models.
@@ -52,10 +52,12 @@ Analyse only the benchmark data provided by the user.
 Return exactly one valid JSON object.
 
 Rules:
+
 - Return only the JSON object.
 - Do not use Markdown code fences.
 - Do not write any text before or after the JSON.
 - Do not invent information.
+- Do not add properties other than those specified.
 - Return model names exactly as they appear in the benchmark table.
 
 The JSON object must contain exactly:
@@ -93,73 +95,80 @@ ModeloMelhorAvaliado
 - Return exactly the model with the highest average of Gemini Rating and ChatGPT Rating.
 """;
 
-            var payload = new
+        var payload = new
+        {
+            model = ModelName,
+            messages = new[]
             {
-                model = ModelName,
-                messages = new[]
+                new
                 {
-                    new { role = "system", content = systemPrompt },
-                    new
-                    {
-                        role = "user",
-                        content = $"""
-                            Segue a tabela de resultados dos benchmarks:
-
-                            {markdownTabela}
-                            """
-                    }
+                    role = "system",
+                    content = systemPrompt
                 },
-                stream = false,
-                options = new { temperature = 0.1 },
-                format = "json"
-            };
+                new
+                {
+                    role = "user",
+                    content = $"""
+                        Segue a tabela de resultados dos benchmarks.
 
-            var requestContent = new StringContent(
-                JsonSerializer.Serialize(payload),
-                Encoding.UTF8,
-                "application/json");
+                        {markdownTabela}
+                        """
+                }
+            },
+            stream = false,
+            options = new
+            {
+                temperature = 0.1
+            },
+            format = "json"
+        };
 
+        var requestContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+        try
+        {
             using var request = new HttpRequestMessage(HttpMethod.Post, OllamaEndpoint)
             {
                 Content = requestContent
             };
 
-            var response = await _httpClient.SendAsync(request, cancellationToken);
+            // Envio com suporte a cancelamento
+            var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             response.EnsureSuccessStatusCode();
 
             string responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
+            // 4. Desempacotar a resposta da estrutura padrão do Ollama
             using var doc = JsonDocument.Parse(responseBody);
             string contentGerado = doc.RootElement
                 .GetProperty("message")
                 .GetProperty("content")
                 .GetString() ?? string.Empty;
 
+            // 5. Tentar desserializar no nosso DTO
             var resultado = JsonSerializer.Deserialize<BenchmarkAnalysisResult>(contentGerado);
-
             stopwatch.Stop();
 
-            if (resultado != null)
-            {
-                resultado.TempoAnaliseFormatado = stopwatch.Elapsed.ToString(@"mm\:ss");
-                return resultado;
-            }
-
-            return ObterFallback(benchmarks, stopwatch.Elapsed);
+            resultado?.TempoAnaliseFormatado = stopwatch.Elapsed.ToString(@"mm\:ss");
+            return resultado ?? ObterFallback(benchmarks);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogInformation("Análise local foi cancelada pelo utilizador.");
-            throw;
+            _logger.LogInformation("Análise cancelada pelo utilizador.");
+            throw  new OperationCanceledException();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao analisar benchmarks localmente.");
+            _logger.LogError(ex, "Erro ao desserializar a resposta do modelo. Retornando fallback amigável.");
             stopwatch.Stop();
+
+            // Fallback amigável de contingência caso o modelo <4b cometa um erro de sintaxe JSON
             return new BenchmarkAnalysisResult
             {
-                Sumario = "⚠️ Ocorreu um erro durante a análise.",
-                AnaliseDetalhada = $"Erro: {ex.Message}",
+                Sumario = "⚠️ A análise local foi concluída, mas o modelo não conseguiu estruturar os dados em JSON.",
+                AnaliseDetalhada = "Erro durante o processamento.",
+                ModeloMaisRapido = "Ver Detalhes",
+                ModeloMelhorAvaliado = "Ver Detalhes",
                 TempoAnaliseFormatado = stopwatch.Elapsed.ToString(@"mm\:ss")
             };
         }
@@ -179,17 +188,16 @@ ModeloMelhorAvaliado
         return sb.ToString();
     }
 
-    private BenchmarkAnalysisResult ObterFallback(List<BenchmarkEvaluationModel> benchmarks, TimeSpan elapsed)
+    private BenchmarkAnalysisResult ObterFallback(List<BenchmarkEvaluationModel> benchmarks)
     {
         var maisRapido = benchmarks.OrderByDescending(b => b.TokensPorSegundo).FirstOrDefault();
         return new BenchmarkAnalysisResult
         {
             Sumario = "Análise concluída (Fallback de segurança).",
-            AnaliseDetalhada = "Ocorreu uma falha no processamento da resposta do modelo.",
+            AnaliseDetalhada = "Ocorreu uma falha no parse do modelo, mas a recolha de dados básicos foi concluída.",
             ModeloMaisRapido = maisRapido?.NomeModelo ?? "N/A",
             MaxTokensSec = maisRapido?.TokensPorSegundo ?? 0,
-            ModeloMelhorAvaliado = "N/A",
-            TempoAnaliseFormatado = elapsed.ToString(@"mm\:ss")
+            ModeloMelhorAvaliado = "N/A"
         };
     }
 }
