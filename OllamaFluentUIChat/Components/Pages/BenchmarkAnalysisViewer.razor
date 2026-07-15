@@ -1,0 +1,197 @@
+﻿@using Models.DTO
+@using OllamaFluentUIChat.Services.Interfaces.Services
+@inject IAnalysisService AnalysisService
+
+<div class="analysis-container" style="margin-top: 24px;">
+    <FluentCard Style="padding: 20px; margin-bottom: 20px; border-left: 6px solid var(--accent-fill-rest); background: var(--neutral-layer-1);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h3 style="margin: 0; color: var(--neutral-foreground-rest); display: flex; align-items: center; gap: 8px;">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.BrainCircuit())" Color="@Color.Accent" />
+                    Análise Analítica do Modelo Local
+                </h3>
+
+                <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--neutral-stroke-accessible-rest);">
+                    Relatório dinâmico gerado através do processamento local da sua tabela de benchmarks.
+                </p>
+            </div>
+
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+                <FluentBadge Appearance="Appearance.Accent">
+                    Análise Offline Ativa
+                </FluentBadge>
+
+                @if (AnaliseResultado != null)
+                {
+                    <span style="font-size:12px; color:var(--neutral-stroke-accessible-rest);">
+                        Tempo de análise: <strong>@AnaliseResultado.TempoAnaliseFormatado</strong>
+                    </span>
+                }
+            </div>
+        </div>
+    </FluentCard>
+
+    @if (IsAnalyzing)
+    {
+        <FluentCard Style="padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; min-height: 260px;">
+            <FluentProgressRing />
+            <p style="font-weight: 500; color: var(--neutral-foreground-rest); text-align: center;">
+                O modelo de IA local está a analisar os resultados e a gerar o relatório...
+            </p>
+            <span style="font-size: 13px; color: var(--neutral-stroke-accessible-rest); text-align: center;">
+                Isto pode demorar algum tempo dependendo do hardware.
+            </span>
+
+            <FluentButton Appearance="Appearance.Accent"
+                          OnClick="CancelarAnalise"
+                          IconStart="@(new Icons.Regular.Size20.Stop())"
+                          Style="margin-top: 8px;">
+                Cancelar Análise
+            </FluentButton>
+        </FluentCard>
+    }
+    else if (AnaliseResultado != null)
+    {
+        <FluentTabs ActiveTabId="tab-sumario" Style="width: 100%;">
+            <FluentTab Id="tab-sumario" Label="Sumário Executivo" Icon="@(new Icons.Regular.Size20.DocumentBriefcase())">
+                <div class="markdown-content" style="padding: 20px 10px; line-height: 1.6; color: var(--neutral-foreground-rest);">
+                    @((MarkupString)ConvertMarkdownToHtml(AnaliseResultado.Sumario))
+                </div>
+            </FluentTab>
+
+            <FluentTab Id="tab-insights" Label="Performance e Recomendações" Icon="@(new Icons.Regular.Size20.Lightbulb())">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; padding: 20px 0;">
+                    <FluentCard Style="padding: 16px; border-top: 4px solid var(--palette-green-dark);">
+                        <h4 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px; color: var(--palette-green-dark);">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Flash())" Color="@Color.Success" />
+                            Mais Rápido
+                        </h4>
+                        <div style="font-size: 20px; font-weight: bold; color: var(--neutral-foreground-rest); margin-bottom: 8px;">
+                            @AnaliseResultado.ModeloMaisRapido
+                        </div>
+                        <p style="font-size: 13px; margin: 0; color: var(--neutral-stroke-accessible-rest);">
+                            Atingiu a taxa de <strong>@AnaliseResultado.MaxTokensSec.ToString("F1") Tokens/s</strong>.
+                        </p>
+                    </FluentCard>
+
+                    <FluentCard Style="padding: 16px; border-top: 4px solid var(--palette-blue-dark);">
+                        <h4 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px; color: var(--palette-blue-dark);">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Star())" Color="@Color.Accent" />
+                            Melhor Qualidade
+                        </h4>
+                        <div style="font-size: 20px; font-weight: bold; color: var(--neutral-foreground-rest); margin-bottom: 8px;">
+                            @AnaliseResultado.ModeloMelhorAvaliado
+                        </div>
+                        <p style="font-size: 13px; margin: 0; color: var(--neutral-stroke-accessible-rest);">
+                            Obteve a melhor pontuação cruzada baseada nos avaliadores inteligentes.
+                        </p>
+                    </FluentCard>
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <FluentAccordion>
+                        <FluentAccordionItem Heading="Análise Técnica Detalhada do Modelo" Expanded="true">
+                            <div class="markdown-content analysis-scroll">
+                                @((MarkupString)ConvertMarkdownToHtml(AnaliseResultado.AnaliseDetalhada))
+                            </div>
+                        </FluentAccordionItem>
+                    </FluentAccordion>
+                </div>
+            </FluentTab>
+        </FluentTabs>
+    }
+</div>
+
+@code {
+    [Parameter] public bool IsAnalyzing { get; set; } = false;
+    [Parameter] public EventCallback<bool> IsAnalyzingChanged { get; set; }
+
+    [Parameter] public BenchmarkAnalysisResult? AnaliseResultado { get; set; }
+    [Parameter] public EventCallback<BenchmarkAnalysisResult?> AnaliseResultadoChanged { get; set; }
+
+    private CancellationTokenSource? _cancellationTokenSource;
+
+    // Método chamado pelo componente pai para iniciar a análise
+    public async Task IniciarAnaliseAsync(List<BenchmarkEvaluationModel> benchmarks)
+    {
+        if (IsAnalyzing) return;
+
+        _cancellationTokenSource = new CancellationTokenSource();
+        IsAnalyzing = true;
+        AnaliseResultado = null;
+
+        await IsAnalyzingChanged.InvokeAsync(true);
+        await AnaliseResultadoChanged.InvokeAsync(null);
+
+        try
+        {
+            var resultado = await AnalysisService.AnalisarBenchmarksAsync(benchmarks, _cancellationTokenSource.Token);
+            AnaliseResultado = resultado;
+        }
+        catch (OperationCanceledException)
+        {
+            AnaliseResultado = new BenchmarkAnalysisResult
+            {
+                Sumario = "Análise cancelada pelo utilizador.",
+                AnaliseDetalhada = "A operação foi interrompida a pedido do utilizador.",
+                TempoAnaliseFormatado = "00:00"
+            };
+        }
+        catch (Exception ex)
+        {
+            AnaliseResultado = new BenchmarkAnalysisResult
+            {
+                Sumario = "Erro durante a análise.",
+                AnaliseDetalhada = $"Ocorreu um erro inesperado: {ex.Message}"
+            };
+        }
+        finally
+        {
+            IsAnalyzing = false;
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
+
+            await IsAnalyzingChanged.InvokeAsync(false);
+            await AnaliseResultadoChanged.InvokeAsync(AnaliseResultado);
+        }
+    }
+
+    private void CancelarAnalise()
+    {
+        _cancellationTokenSource?.Cancel();
+    }
+
+    private string ConvertMarkdownToHtml(string? markdown)
+    {
+        if (string.IsNullOrEmpty(markdown)) return string.Empty;
+
+        var html = markdown
+            .Replace("\n", "<br />")
+            .Replace("**", "<strong>")
+            .Replace("*", "<em>")
+            .Replace("### ", "<h4>")
+            .Replace(" - ", " &bull; ");
+
+        return html;
+    }
+}
+
+<style>
+    .markdown-content {
+        line-height: 1.6;
+        color: var(--neutral-foreground-rest);
+        word-break: break-word;
+    }
+
+        .markdown-content h4 {
+            margin: 12px 0 6px 0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+    .analysis-scroll {
+        padding: 12px;
+        max-height: 45vh;
+        overflow-y: auto;
+    }
+</style>

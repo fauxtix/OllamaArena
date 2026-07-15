@@ -4,11 +4,13 @@
 @using Models.DTO
 @using OllamaFluentUIChat.Components.Pages.Components
 @using OllamaFluentUIChat.Services.Interfaces.Repositories
+@using OllamaFluentUIChat.Services.Interfaces.Services
 @using ClosedXML.Excel
 @using System.IO
 @inject IBenchmarkRepository BenchmarkRepo
 @inject IDialogService DialogService
 @inject ILogger<App> Logger
+@inject IAnalysisService AnalysisService
 
 
 @inject IJSRuntime JS
@@ -38,6 +40,12 @@
                               IconStart="@(new Icons.Regular.Size24.ArrowDownload())"
                               @onclick="ExportarParaExcel">
                     Exportar para Excel
+                </FluentButton>
+                <FluentButton Appearance="Appearance.Accent"
+                              Disabled="@(_benchmarks.Any() == false || _isAnalyzing)"
+                              IconStart="@(new Icons.Regular.Size24.BrainCircuit())"
+                              @onclick="AnalisarResultadosComModeloLocal">
+                    Análise IA Local
                 </FluentButton>
             </div>
 
@@ -102,6 +110,27 @@
     <div class="pager">
         <FluentPaginator State="@_pagination" />
     </div>
+    @if (_mostrarPainelAnalise)
+    {
+        <FluentDialog Hidden="@(!_mostrarPainelAnalise)"
+                      Modal="true"
+                      Class="evaluation-detail-benchmark"
+                      Style="--dialog-width: 800px; --dialog-height: auto;"
+                      TrapFocus="true"
+                      AriaLabel="Detalhes da Avaliação Benchmark">
+            <FluentDialogBody>
+                <BenchmarkAnalysisViewer IsAnalyzing="@_isAnalyzing" AnaliseResultado="@_resultadoLocal" />
+            </FluentDialogBody>
+            <FluentDialogFooter>
+                <FluentSpacer />
+                <FluentButton Appearance="Appearance.Outline" Color="Color.Neutral"
+                              OnClick="@(() => _mostrarPainelAnalise = false)">
+                    Fechar
+                </FluentButton>
+            </FluentDialogFooter>
+        </FluentDialog>
+    }
+
 </div>
 
 <BenchmarkEvaluationDetail Response="@_selectedBenchmarkResponse"
@@ -120,6 +149,9 @@
     private string? _search;
     private BenchmarkEvaluationModel? _selectedBenchmarkResponse;
     private bool _isDialogVisible = false;
+    private bool _isAnalyzing = false;
+    private bool _mostrarPainelAnalise = false;
+    private BenchmarkAnalysisResult? _resultadoLocal;
 
     [Inject]
     private IBenchmarkRepository _benchmarkRepository { get; set; } = default!;
@@ -143,7 +175,7 @@
         try
         {
             var confirmacao = await DialogService.ShowConfirmationAsync(
-                $"Tem a certeza que deseja apagar todos os Prompts? " + 
+                $"Tem a certeza que deseja apagar todos os Prompts? " +
                 $"Isto irá remover permanentemente todas as respostas associadas (Cascading Delete).",
                 "Sim, Apagar",
                 "Cancelar",
@@ -315,6 +347,37 @@
         _isDialogVisible = true;
     }
 
+    private async Task AnalisarResultadosComModeloLocal()
+    {
+        _mostrarPainelAnalise = true;
+        _isAnalyzing = true;
+        _resultadoLocal = null;
+        StateHasChanged();
+
+        try
+        {
+            // Recolhe os dados que estão visíveis e filtrados na Grid
+            var dadosFiltrados = FilteredBenchmarks.ToList();
+
+            // Invoca o serviço local que comunica com o Ollama
+            _resultadoLocal = await AnalysisService.AnalisarBenchmarksAsync(dadosFiltrados);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erro ao tentar efetuar a análise com o modelo local.");
+            _resultadoLocal = new BenchmarkAnalysisResult
+            {
+                Sumario = "❌ **Não foi possível comunicar com o Ollama.**",
+                AnaliseDetalhada = "Garanta que tem o Ollama a correr em segundo plano (`http://localhost:11434`) e o modelo descarregado."
+            };
+        }
+        finally
+        {
+            _isAnalyzing = false;
+            StateHasChanged();
+        }
+    }
+
 }
 <style>
     .page {
@@ -355,7 +418,7 @@
 
     .prompt-cell {
         display: block;
-        white-space: pre-wrap !important; 
+        white-space: pre-wrap !important;
         overflow-wrap: break-word !important;
         word-break: break-word !important;
         min-width: 0;

@@ -142,7 +142,14 @@ namespace OllamaFluentUIChat.Components.Pages.Components
 
             try
             {
+                // 1. Força o foco na janela para o browser dar permissão de escrita
+                await JS.InvokeVoidAsync("window.focus");
+
+                // 2. Executa a cópia
                 await JS.InvokeVoidAsync("navigator.clipboard.writeText", texto);
+
+                // 3. Dá tempo ao Sistema Operativo para atualizar a área de transferência
+                await Task.Delay(100);
             }
             catch (Exception ex)
             {

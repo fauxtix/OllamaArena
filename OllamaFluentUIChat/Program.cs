@@ -43,6 +43,8 @@ try
     builder.Services.AddTransient<IPromptTemplateProvider, PromptTemplateProvider>();
     builder.Services.AddTransient<PromptFilesService>();
 
+    builder.Services.AddHttpClient<IAnalysisService, LocalAnalysisService>();
+
     builder.Services.AddHttpClient<InternetConnectivityService>();
 
     builder.Services.AddSingleton<MarkdownRenderer>();

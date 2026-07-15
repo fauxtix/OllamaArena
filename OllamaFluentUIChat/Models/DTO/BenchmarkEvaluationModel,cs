@@ -8,9 +8,9 @@
         public string TextoPrompt { get; set; } = string.Empty;
         public int GeminiRating { get; set; }
         public int ChatGptRating { get; set; }
-        public float TokensPorSegundo { get; set; }
-        public float TempoPuroMs { get; set; }
-        public float TempoCargaMs { get; set; }
+        public double TokensPorSegundo { get; set; }
+        public double TempoPuroMs { get; set; }
+        public double TempoCargaMs { get; set; }
         public int TamanhoTokens { get; set; }
 
         public int? GeminiFactualRating { get; set; }    // Nota de Conteúdo (1-5)
