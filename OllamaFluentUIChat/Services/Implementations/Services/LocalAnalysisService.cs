@@ -1,5 +1,4 @@
-﻿// Ficheiro: Services/LocalAnalysisService.cs
-using OllamaFluentUIChat.Models.DTO;
+﻿using OllamaFluentUIChat.Models.DTO;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
 using System.Diagnostics;
@@ -15,34 +14,9 @@ public class LocalAnalysisService : IAnalysisService
     private readonly IBenchmarkRepository _benchmarkRepository;
     private const string OllamaEndpoint = "http://localhost:11434/api/chat";
 
-    // REQUISITO LOCAL: qwen2.5 (1.5b ou 3b) e llama3.2 são excelentes a obedecer à formatação JSON estruturada.
     private const string ModelName = "qwen2.5:3b";
 
-    public LocalAnalysisService(HttpClient httpClient, ILogger<LocalAnalysisService> logger, IBenchmarkRepository benchmarkRepository)
-    {
-        _httpClient = httpClient;
-        _logger = logger;
-        _httpClient.Timeout = TimeSpan.FromMinutes(5); // Modelos locais pequenos em CPUs podem demorar
-        _benchmarkRepository = benchmarkRepository;
-    }
-
-    public async Task<BenchmarkAnalysisResult> AnalisarBenchmarksAsync(
-        List<BenchmarkEvaluationModel> benchmarks,
-        CancellationToken cancellationToken = default)
-    {
-        if (benchmarks == null || !benchmarks.Any())
-        {
-            _logger.LogWarning("Nenhum benchmark para analisar.");
-            return new BenchmarkAnalysisResult { Sumario = "Não existem dados para analisar." };
-        }
-
-        // 1. Converter os dados complexos numa tabela Markdown compacta (O LLM gosta deste formato)
-        var stopwatch = Stopwatch.StartNew();
-
-        var markdownTabela = GerarTabelaMarkdown(benchmarks);
-
-        // 2. Prompt de Sistema focado e imperativo a exigir JSON limpo
-        string systemPrompt = """
+    string systemPrompt = """
 You are an AI assistant specialised in analysing software engineering benchmark results.
 
 You will receive a table containing benchmark results for multiple language models.
@@ -94,6 +68,32 @@ MaxTokensSec
 ModeloMelhorAvaliado
 - Return exactly the model with the highest average of Gemini Rating and ChatGPT Rating.
 """;
+
+
+    public LocalAnalysisService(HttpClient httpClient, ILogger<LocalAnalysisService> logger, IBenchmarkRepository benchmarkRepository)
+    {
+        _httpClient = httpClient;
+        _logger = logger;
+        _httpClient.Timeout = TimeSpan.FromMinutes(5); // Modelos locais pequenos em CPUs podem demorar
+        _benchmarkRepository = benchmarkRepository;
+    }
+
+    public async Task<BenchmarkAnalysisResult> AnalisarBenchmarksAsync(
+        List<BenchmarkEvaluationModel> benchmarks,
+        CancellationToken cancellationToken = default)
+    {
+        if (benchmarks == null || !benchmarks.Any())
+        {
+            _logger.LogWarning("Nenhum benchmark para analisar.");
+            return new BenchmarkAnalysisResult { Sumario = "Não existem dados para analisar." };
+        }
+
+        // 1. Converter os dados complexos numa tabela Markdown compacta (O LLM gosta deste formato)
+        var stopwatch = Stopwatch.StartNew();
+
+        var markdownTabela = GerarTabelaMarkdown(benchmarks);
+
+        // 2. Prompt de Sistema focado e imperativo a exigir JSON limpo
 
         var payload = new
         {
@@ -199,5 +199,94 @@ ModeloMelhorAvaliado
             MaxTokensSec = maisRapido?.TokensPorSegundo ?? 0,
             ModeloMelhorAvaliado = "N/A"
         };
+    }
+
+    public async Task<BenchmarkAnalysisResult> AnalisarBenchmarksWithStreamingAsync(
+        List<BenchmarkEvaluationModel> benchmarks,
+        Action<string>? onPartialOutput,
+        CancellationToken cancellationToken = default)
+    {
+        if (benchmarks == null || !benchmarks.Any())
+        {
+            return new BenchmarkAnalysisResult { Sumario = "Não existem dados para analisar." };
+        }
+
+        var stopwatch = Stopwatch.StartNew();
+        var markdownTabela = GerarTabelaMarkdown(benchmarks);
+
+        var payload = new
+        {
+            model = ModelName,
+            messages = new[]
+            {
+            new { role = "system", content = systemPrompt },
+            new { role = "user", content = $"Segue a tabela:\n\n{markdownTabela}" }
+        },
+            stream = true, // STREAMING ATIVADO
+            options = new { temperature = 0.1 },
+            format = "json"
+        };
+
+        var requestContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, OllamaEndpoint)
+        {
+            Content = requestContent
+        };
+
+        using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var reader = new StreamReader(stream);
+
+        var sb = new StringBuilder();
+
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var line = await reader.ReadLineAsync();
+            if (line == null) 
+                break;
+
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+
+            using var doc = JsonDocument.Parse(line);
+
+            if (doc.RootElement.TryGetProperty("message", out var msg))
+            {
+                string? content = msg.GetProperty("content").GetString();
+                sb.Append(content);
+                onPartialOutput?.Invoke(content ?? string.Empty);
+            }
+
+            if (doc.RootElement.TryGetProperty("done", out var doneFlag) &&
+                doneFlag.GetBoolean())
+            {
+                break;
+            }
+        }
+
+        var jsonFinal = sb.ToString();
+
+        try
+        {
+            var resultado = JsonSerializer.Deserialize<BenchmarkAnalysisResult>(jsonFinal);
+            stopwatch.Stop();
+
+            if (resultado != null)
+            {
+                resultado.TempoAnaliseFormatado = stopwatch.Elapsed.ToString(@"mm\:ss");
+                return resultado;
+            }
+        }
+        catch
+        {
+            // fallback
+        }
+
+        return ObterFallback(benchmarks);
     }
 }

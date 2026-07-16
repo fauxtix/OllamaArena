@@ -42,6 +42,15 @@
                 Isto pode demorar algum tempo dependendo do hardware.
             </span>
 
+            @if (!string.IsNullOrWhiteSpace(StreamingLog))
+            {
+                <div class="stream-log"
+                     style="margin-top:20px; padding:12px; width:100%; max-height:200px; overflow-y:auto;
+                    background:var(--neutral-layer-2); border-radius:6px; font-size:13px;">
+                    @StreamingLog
+                </div>
+            }
+
             <FluentButton Appearance="Appearance.Lightweight"
                           Color="rgba(255, 255,255, 1)"
                           BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white; margin-top: 8px;"
@@ -122,6 +131,7 @@
 @code {
     [Parameter] public bool IsAnalyzing { get; set; }
     [Parameter] public EventCallback<bool> IsAnalyzingChanged { get; set; }
+    [Parameter] public string StreamingLog { get; set; } = "";
 
     [Parameter] public BenchmarkAnalysisResult? AnaliseResultado { get; set; }
     [Parameter] public EventCallback<BenchmarkAnalysisResult?> AnaliseResultadoChanged { get; set; }

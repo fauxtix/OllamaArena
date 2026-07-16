@@ -159,6 +159,8 @@
     private BenchmarkAnalysisResult? _resultadoLocal;
     private CancellationTokenSource? _cts;
 
+    private string _streamingLog = "";
+
     [Inject]
     private IBenchmarkRepository _benchmarkRepository { get; set; } = default!;
 
@@ -370,7 +372,13 @@
 
             _cts?.Dispose();
             _cts = new CancellationTokenSource();
-            _resultadoLocal = await AnalysisService.AnalisarBenchmarksAsync(dadosFiltrados, _cts.Token);
+            _resultadoLocal = await AnalysisService.AnalisarBenchmarksWithStreamingAsync(
+                dadosFiltrados,
+                OnPartial, 
+                _cts.Token
+            );
+
+            // _resultadoLocal = await AnalysisService.AnalisarBenchmarksAsync(dadosFiltrados, _cts.Token);
         }
         catch (OperationCanceledException)
         {
@@ -398,6 +406,12 @@
             _isAnalyzing = false;
             StateHasChanged();
         }
+    }
+
+    private void OnPartial(string chunk)
+    {
+        _streamingLog += chunk;
+        StateHasChanged(); // 🔥 Atualiza o UI em tempo real
     }
     private void CancelarAnaliseDoPai()
     {
