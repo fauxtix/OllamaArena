@@ -1,6 +1,7 @@
 ﻿using OllamaFluentUIChat.Models.DTO;
 
 namespace OllamaFluentUIChat.Services.Interfaces.Services;
+
 public interface IAnalysisService
 {
     Task<BenchmarkAnalysisResult> AnalisarBenchmarksAsync(

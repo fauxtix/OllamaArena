@@ -284,7 +284,8 @@ namespace OllamaFluentUIChat.Components.Pages
                     return;
                 }
 
-                while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, _cts.Token)) > 0)
+                var cts = _cts;
+                while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cts.Token)) > 0)
                 {
                     var chunkString = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
@@ -433,7 +434,6 @@ namespace OllamaFluentUIChat.Components.Pages
                 {
                     await _cts.CancelAsync();
                     _cts.Dispose();
-                    _cts = null;
 
                     // 2. BENCHMARK: Força o Ollama a libertar a GPU imediatamente
                     _ = Task.Run(async () =>
@@ -739,6 +739,7 @@ namespace OllamaFluentUIChat.Components.Pages
         {
             try
             {
+                _cts?.Cancel();
                 _cts?.Dispose();
                 _dotNetRef?.Dispose();
             }

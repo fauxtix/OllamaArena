@@ -155,7 +155,7 @@ ModeloMelhorAvaliado
         catch (OperationCanceledException)
         {
             _logger.LogInformation("Análise cancelada pelo utilizador.");
-            throw  new OperationCanceledException();
+            throw new OperationCanceledException();
         }
         catch (Exception ex)
         {
@@ -247,7 +247,7 @@ ModeloMelhorAvaliado
             cancellationToken.ThrowIfCancellationRequested();
 
             var line = await reader.ReadLineAsync();
-            if (line == null) 
+            if (line == null)
                 break;
 
             if (string.IsNullOrWhiteSpace(line))

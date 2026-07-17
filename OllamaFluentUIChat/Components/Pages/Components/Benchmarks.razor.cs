@@ -143,6 +143,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             try
             {
                 // 1. Força o foco na janela para o browser dar permissão de escrita
+                await Task.Delay(100);
                 await JS.InvokeVoidAsync("window.focus");
 
                 // 2. Executa a cópia
@@ -196,7 +197,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             var modelName = _selectedEvaluation?.NomeModelo ?? "Modelo Desconhecido";
             var metadata = await GpuService.GetExtendedModelMetadataAsync(modelName);
             var trainingYear = metadata.TrainingYear;
-            var formattedPrompt = await EvaluatePromptTemplate.EvaluationCopyPrompt(originalPrompt, modelResponse, trainingYear);
+            var formattedPrompt =  EvaluatePromptTemplate.EvaluationCopyPrompt(originalPrompt, modelResponse, trainingYear);
             await CopyToClipboardAsync(formattedPrompt);
         }
 

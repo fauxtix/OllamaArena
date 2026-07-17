@@ -8,6 +8,7 @@
 @inject IToastService ToastService
 @inject ISystemPromptService SystemPromptService
 @inject PromptFilesService PromptFilesService
+@inject NavigationManager NavigationManager
 
 <PageTitle>Editor de Prompts</PageTitle>
 
@@ -33,8 +34,16 @@
                               OnClick="OnCancel">
                     Cancelar
                 </FluentButton>
+                <FluentButton Appearance="Appearance.Lightweight"
+                              Style="border-radius:10px"
+                              IconStart="@(new Icons.Regular.Size16.ArrowExit())"
+                              OnClick="@(() => NavigationManager.NavigateTo("/"))">
+                    Sair
+                </FluentButton>
+
             </div>
-        </div>        <hr />
+        </div>  
+        <hr />
         @if (_isLoading)
         {
             <FluentProgressRing>A carregar o prompt...</FluentProgressRing>
@@ -47,6 +56,7 @@
                             Style="width: 100%;" />
         }
     </div>
+
 </div>
 <FluentToastProvider />
 <FluentMenuProvider />
@@ -107,7 +117,7 @@
         margin-left: 10px;
         margin-right: 10px;
         display: flex;
-        gap: 0.5rem;
+        gap: 0.8rem;
         justify-content: flex-end;
         align-items: center;
     }

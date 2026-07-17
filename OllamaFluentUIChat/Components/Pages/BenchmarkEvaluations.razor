@@ -78,7 +78,8 @@
                         DisplayMode="DataGridDisplayMode.Grid"
                         class="benchmark-grid">
 
-            <PropertyColumn Property="@(b => b.PromptId)" Title="ID#" Width="60px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.Id)" Title="ID#" Width="60px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.ResponseId)" Title="ID2#" Width="60px" Sortable="true" />
             <PropertyColumn Property="@(b => b.DataCriacaoFormatada)" Title="Data de Criação" Width="160px" Align="Align.Center" Sortable="true" />
             <PropertyColumn Property="@(b => b.NomeModelo)" Title="Modelo" Sortable="true" Width="160px" />
 
@@ -88,18 +89,24 @@
                 </div>
             </TemplateColumn>
 
-            <PropertyColumn Property="@(b => b.GeminiRating)" Title="Gemini" Align="Align.Center" Width="120px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.ChatGptRating)" Title="ChatGPT" Align="Align.Center" Width="120px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.TokensPorSegundo)" Title="Tokens/s" Align="Align.Center" Width="120px" Format="F2" Sortable="true" />
+            <PropertyColumn Property="@(b => b.GeminiRating)" Title="Gemini" Align="Align.Center" Width="100px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.ChatGptRating)" Title="ChatGPT" Align="Align.Center" Width="100px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.TokensPorSegundo)" Title="Tokens/s" Align="Align.Center" Width="110px" Format="F2" Sortable="true" />
             <PropertyColumn Property="@(b => b.TempoPuroFormatado)" Title="Tempo" Align="Align.Center" Width="100px" Sortable="true" />
             <PropertyColumn Property="@(b => b.TempoCargaFormatado)" Title="Carga" Align="Align.Center" Width="100px" Sortable="true" />
             <PropertyColumn Property="@(b => b.TamanhoTokens)" Title="Tokens" Align="Align.Center" Width="100px" Sortable="true" />
 
             <TemplateColumn Title="Ações" Align="Align.Center" Width="100px">
                 <FluentButton Appearance="Appearance.Stealth"
-                              IconStart="@(new Icons.Regular.Size24.Eye())"
+                              IconStart="@(new Icons.Regular.Size16.Eye())"
                               OnClick="@(() => OpenDetailDialog(context))"
                               Title="Ver Detalhes" />
+                <FluentButton Appearance="Appearance.Outline"
+                              Color="rgba(255, 255,255, 1)"
+                              BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
+                              IconStart="@(new Icons.Regular.Size16.Delete())"
+                              OnClick="@(() => DeleteBenchmark(context.ResponseId))"
+                              Title="Eliminar" />
             </TemplateColumn>
 
 
@@ -121,7 +128,7 @@
             <FluentDialogBody>
                 <BenchmarkAnalysisViewer IsAnalyzing="@_isAnalyzing"
                                          IsAnalyzingChanged="@((b) => _isAnalyzing = b)"
-                                         AnaliseResultado="@_resultadoLocal"
+                                         AnaliseResultado="@_resultadoLocal" 
                                          AnaliseResultadoChanged="@((r) => _resultadoLocal = r)"
                                          OnCancelarAnalise="@CancelarAnaliseDoPai" />
             </FluentDialogBody>
@@ -161,12 +168,15 @@
 
     private string _streamingLog = "";
 
-    [Inject]
-    private IBenchmarkRepository _benchmarkRepository { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
-        var result = await _benchmarkRepository.BenchmarkResponseEvaluationAsync();
+        await GetAllBenchmarks();
+    }
+
+    private async Task GetAllBenchmarks()
+    {
+        var result = await BenchmarkRepo.BenchmarkResponseEvaluationAsync();
         _benchmarks = result.AsQueryable();
     }
 
@@ -182,12 +192,17 @@
 
         try
         {
+            string mensagemHtml = @"
+                        <div style='padding: 4px; border-left: 4px solid #e73618;'>
+                            <strong style='color: #e73618; font-size: 16px; display: block; margin-bottom: 8px;'>Confirme, por favot</strong>
+                            <span style='color: var(--neutral-foreground-rest);'>Tem a certeza que deseja apagar todos os Prompts e Respostas associadas? Esta operação não pode ser revertida.</span>
+                        </div>";
+
             var confirmacao = await DialogService.ShowConfirmationAsync(
-                $"Tem a certeza que deseja apagar todos os Prompts? " +
-                $"Isto irá remover permanentemente todas as respostas associadas (Cascading Delete).",
+                message: mensagemHtml,
                 "Sim, Apagar",
                 "Cancelar",
-                "Apagar");
+                "Apagar todos os benchmarks");
 
             if (confirmacao == null) return;
             var resultado = await confirmacao.Result;
@@ -211,6 +226,50 @@
         }
 
     }
+
+    private async Task DeleteBenchmark(int responseId)
+    {
+
+        if (DialogService == null) return;
+
+        try
+        {
+
+                string mensagemHtml = @"
+                        <div style='padding: 4px; border-left: 4px solid #e73618;'>
+                            <strong style='color: #e73618; font-size: 16px; display: block; margin-bottom: 8px;'>Confirme, por favor</strong>
+                            <span style='color: var(--neutral-foreground-rest);'>Tem a certeza que deseja apagar o registo? Esta operação não pode ser revertida.</span>
+                        </div>";
+            var confirmacao = await DialogService.ShowConfirmationAsync(
+                message: mensagemHtml,
+                "Sim, Apagar",
+                "Cancelar",
+                "Apagar benchmark"
+            );
+            // var confirmacao = await DialogService.ShowConfirmationAsync(
+            //     $"Tem a certeza que deseja apagar este benchmark? ",
+            //     "Sim, Apagar",
+            //     "Cancelar",
+            //     "Apagar");
+
+            if (confirmacao == null) return;
+            var resultado = await confirmacao.Result;
+
+            if (resultado != null && !resultado.Cancelled)
+            {
+                bool eliminado = await BenchmarkRepo.DeleteSpecificResponseAsync(responseId);
+                if (eliminado)
+                {
+                    _benchmarks = _benchmarks.Where(b => b.ResponseId != responseId).AsQueryable();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, $"Erro ao apagar o Prompt");
+        }
+    }
+
 
     private IQueryable<BenchmarkEvaluationModel> FilteredBenchmarks
     {
@@ -365,10 +424,15 @@
 
         try
         {
-            // Recolhe os dados que estão visíveis e filtrados na Grid
             var dadosFiltrados = FilteredBenchmarks.ToList();
-
-            // Invoca o serviço local que comunica com o Ollama
+            if (dadosFiltrados.Count == 0)
+            {
+                _resultadoLocal = new BenchmarkAnalysisResult
+                {
+                    Sumario = "Nenhum dado disponível para análise."
+                };
+                return;
+            }
 
             _cts?.Dispose();
             _cts = new CancellationTokenSource();
@@ -377,6 +441,12 @@
                 OnPartial, 
                 _cts.Token
             );
+
+            // _resultadoLocal = await AnalysisService.AnalisarBenchmarksAsync(
+            //     dadosFiltrados,
+            //     _cts.Token
+            // );
+
 
             // _resultadoLocal = await AnalysisService.AnalisarBenchmarksAsync(dadosFiltrados, _cts.Token);
         }

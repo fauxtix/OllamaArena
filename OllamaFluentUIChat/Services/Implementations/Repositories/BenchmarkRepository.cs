@@ -63,7 +63,13 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
         public async Task<List<BenchmarkPrompt>> GetAllBenchmarksAsync()
         {
             var sql = @"
-                SELECT p.*, r.* FROM Prompts p
+                SELECT p.Id, p.TextoPrompt, p.DataCriacao, 
+                        r.Id as ResponseId, r.NomeModelo, r.TextoResposta, 
+                        r.TokensPorSegundo, r.TempoPuroMs, r.TempoCargaMs, 
+                        r.TamanhoTokens, r.GeminiFactualRating, r.GeminiFormattingRating, 
+                        r.GeminiRating, r.GeminiFeedback, r.ChatGptFactualRating, 
+                        r.ChatGptFormattingRating, r.ChatGptRating, r.ChatGptFeedback
+                FROM Prompts p
                 LEFT JOIN Respostas r ON p.Id = r.PromptId
                 ORDER BY p.Id DESC, r.TokensPorSegundo DESC;"; // Ordena pelos mais recentes e melhores modelos
 
@@ -88,7 +94,7 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
 
                     return existingPrompt;
                 },
-                splitOn: "Id" // Diz ao Dapper que a segunda tabela começa na coluna 'Id' da Resposta
+                splitOn: "ResponseId" // Diz ao Dapper que a segunda tabela começa na coluna 'Id' da Resposta
             );
 
             return promptDictionary.Values.ToList();
@@ -160,6 +166,18 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
             int AffectedLines = await connection.ExecuteAsync(sql, new { Id = promptId });
             return AffectedLines > 0;
         }
+
+
+        public async Task<bool> DeleteResponseByIdAsync(int responseId)
+        {
+            var sql = "DELETE FROM Respostas WHERE Id = @Id;";
+            using var connection = _context.CreateConnection();
+            int AffectedLines = await connection.ExecuteAsync(sql, new { Id = responseId });
+            return AffectedLines > 0;
+        }
+
+
+
         /// <summary>
         /// Apaga todos os Prompts. Como configurámos ON DELETE CASCADE no DB Browser,
         /// todas as respostas associadas serão apagadas automaticamente pelo SQLite!
@@ -206,7 +224,7 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
         public async Task<IEnumerable<BenchmarkEvaluationModel>> BenchmarkResponseEvaluationAsync()
         {
             StringBuilder sb = new();
-            sb.Append("SELECT R.PromptId, P.TextoPrompt, R.NomeModelo, ");
+            sb.Append("SELECT P.Id, R.Id AS ResponseId, P.TextoPrompt, R.NomeModelo, ");
             sb.Append("R.GeminiRating, R.GeminiFactualRating, R.GeminiFormattingRating, "); 
             sb.Append("R.ChatGptRating, R.ChatGptFactualRating, R.ChatGptFormattingRating, "); 
             sb.Append("P.DataCriacao, R.TokensPorSegundo, R.TempoPuroMs, R.TempoCargaMs, R.TamanhoTokens ");

@@ -2,7 +2,9 @@
 
     public class BenchmarkEvaluationModel
     {
+        public int Id { get; set; }
         public int PromptId { get; set; }
+        public int ResponseId { get; set; }
         public DateTime DataCriacao { get; set; }
         public string NomeModelo { get; set; } = string.Empty;
         public string TextoPrompt { get; set; } = string.Empty;

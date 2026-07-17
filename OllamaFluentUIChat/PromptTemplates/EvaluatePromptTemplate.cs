@@ -4,7 +4,7 @@ namespace OllamaFluentUIChat.PromptTemplates
 {
     public static class EvaluatePromptTemplate
     {
-        public static async Task<string> EvaluationCopyPrompt(string originalPrompt, string modelResponse, string trainingYear)
+        public static string EvaluationCopyPrompt(string originalPrompt, string modelResponse, string trainingYear)
         {
             StringBuilder sb = new();
             sb.Append("Act as a strict Artificial Intelligence judge. ");
