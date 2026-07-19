@@ -436,19 +436,16 @@
 
             _cts?.Dispose();
             _cts = new CancellationTokenSource();
-            _resultadoLocal = await AnalysisService.AnalisarBenchmarksWithStreamingAsync(
-                dadosFiltrados,
-                OnPartial, 
-                _cts.Token
-            );
-
-            // _resultadoLocal = await AnalysisService.AnalisarBenchmarksAsync(
+            // _resultadoLocal = await AnalysisService.AnalisarBenchmarksWithStreamingAsync(
             //     dadosFiltrados,
+            //     OnPartial, 
             //     _cts.Token
             // );
 
-
-            // _resultadoLocal = await AnalysisService.AnalisarBenchmarksAsync(dadosFiltrados, _cts.Token);
+            _resultadoLocal = await AnalysisService.AnalisarBenchmarksAsync(
+                dadosFiltrados,
+                _cts.Token
+            );
         }
         catch (OperationCanceledException)
         {

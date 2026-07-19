@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Prompts\analysis-prompt.txt" />
     <None Remove="Prompts\system-prompt.txt" />
   </ItemGroup>
 
@@ -16,6 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Prompts\analysis-prompt.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Prompts\system-prompt.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

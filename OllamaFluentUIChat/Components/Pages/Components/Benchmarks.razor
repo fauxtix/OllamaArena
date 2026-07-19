@@ -152,9 +152,10 @@
                                                 </div>
                                                 <FluentButton Appearance="Appearance.Accent"
                                                               IconStart="@(new Icons.Regular.Size24.ClipboardCode())"
-                                                              OnClick="@(() => CopyPromptForEvaluationAsync(_selectedPrompt.TextoPrompt, resp.TextoResposta))"
+                                                              OnClick="() => CopyPromptForEvaluationAsync(_selectedPrompt.TextoPrompt, resp.TextoResposta)"
                                                               Title="Copiar Prompt Formatado para o Juiz IA"
-                                                              Color="rgba(255,255,255, 0.9)" BackgroundColor="rgba(25, 116, 210, 1.0)">
+                                                              Color="rgba(255,255,255, 0.9)"
+                                                              BackgroundColor="rgba(25, 116, 210, 1.0)">
                                                     Copiar para avaliação
                                                 </FluentButton>
                                             </div>

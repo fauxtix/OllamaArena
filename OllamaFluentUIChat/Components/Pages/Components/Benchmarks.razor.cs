@@ -142,22 +142,20 @@ namespace OllamaFluentUIChat.Components.Pages.Components
 
             try
             {
-                // 1. Força o foco na janela para o browser dar permissão de escrita
-                await Task.Delay(100);
-                await JS.InvokeVoidAsync("window.focus");
+                bool copied = await JS.InvokeAsync<bool>("copyToClipboard", texto);
 
-                // 2. Executa a cópia
-                await JS.InvokeVoidAsync("navigator.clipboard.writeText", texto);
-
-                // 3. Dá tempo ao Sistema Operativo para atualizar a área de transferência
-                await Task.Delay(100);
+                if (copied)
+                {
+                    // TODO: Mostrar toast de sucesso (FluentToast ou similar)
+                    Console.WriteLine("✅ Copiado com sucesso!");
+                }
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Erro ao tentar copiar texto para o Clipboard.");
+                Logger.LogError(ex, "Erro ao copiar para o Clipboard.");
+                // Opcional: mostrar toast de erro
             }
         }
-
         private void OpenChartDialog(BenchmarkPrompt prompt)
         {
             _chartPrompt = prompt;
@@ -194,13 +192,18 @@ namespace OllamaFluentUIChat.Components.Pages.Components
 
         private async Task CopyPromptForEvaluationAsync(string originalPrompt, string modelResponse)
         {
+            if (string.IsNullOrEmpty(originalPrompt) || string.IsNullOrEmpty(modelResponse))
+                return;
+
             var modelName = _selectedEvaluation?.NomeModelo ?? "Modelo Desconhecido";
             var metadata = await GpuService.GetExtendedModelMetadataAsync(modelName);
             var trainingYear = metadata.TrainingYear;
-            var formattedPrompt =  EvaluatePromptTemplate.EvaluationCopyPrompt(originalPrompt, modelResponse, trainingYear);
+
+            var formattedPrompt = EvaluatePromptTemplate.EvaluationCopyPrompt(
+                originalPrompt, modelResponse, trainingYear);
+
             await CopyToClipboardAsync(formattedPrompt);
         }
-
         private void OpenEvaluation(BenchmarkResponse resp)
         {
             _selectedEvaluation = resp;

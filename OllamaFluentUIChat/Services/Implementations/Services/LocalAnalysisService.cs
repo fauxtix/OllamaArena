@@ -14,60 +14,60 @@ public class LocalAnalysisService : IAnalysisService
     private readonly IBenchmarkRepository _benchmarkRepository;
     private const string OllamaEndpoint = "http://localhost:11434/api/chat";
 
-    private const string ModelName = "qwen2.5:3b";
+    private const string ModelName = "Impulse2000/smollm3:latest";
 
     string systemPrompt = """
-You are an AI assistant specialised in analysing software engineering benchmark results.
+            You are an AI assistant specialised in analysing software engineering benchmark results.
 
-You will receive a table containing benchmark results for multiple language models.
+            You will receive a table containing benchmark results for multiple language models.
 
-Analyse only the benchmark data provided by the user.
+            Analyse only the benchmark data provided by the user.
 
-Return exactly one valid JSON object.
+            Return exactly one valid JSON object.
 
-Rules:
+            Rules:
 
-- Return only the JSON object.
-- Do not use Markdown code fences.
-- Do not write any text before or after the JSON.
-- Do not invent information.
-- Do not add properties other than those specified.
-- Return model names exactly as they appear in the benchmark table.
+            - Return only the JSON object.
+            - Do not use Markdown code fences.
+            - Do not write any text before or after the JSON.
+            - Do not invent information.
+            - Do not add properties other than those specified.
+            - Return model names exactly as they appear in the benchmark table.
 
-The JSON object must contain exactly:
-{
-  "Sumario": "",
-  "AnaliseDetalhada": "",
-  "ModeloMaisRapido": "",
-  "MaxTokensSec": 0.0,
-  "ModeloMelhorAvaliado": ""
-}
+            The JSON object must contain exactly:
+            {
+              "Sumario": "",
+              "AnaliseDetalhada": "",
+              "ModeloMaisRapido": "",
+              "MaxTokensSec": 0.0,
+              "ModeloMelhorAvaliado": ""
+            }
 
-Requirements:
+            Requirements:
 
-Sumario
-- Write in European Portuguese.
-- Maximum 4 sentences.
-- Summarise the benchmark results.
-- Mention the main conclusions.
+            Sumario
+            - Write in European Portuguese.
+            - Maximum 6 sentences.
+            - Summarise the benchmark results.
+            - Mention the main conclusions.
 
-AnaliseDetalhada
-- Write in European Portuguese.
-- Use Markdown.
-- Compare speed (Tokens/s), execution time and quality ratings.
-- Explain the most relevant trade-offs.
-- Base every conclusion only on the benchmark data.
-- Use \n for line breaks.
+            AnaliseDetalhada
+            - Write in European Portuguese.
+            - Compare speed (Tokens/s), execution time and quality ratings.
+            - Explain the most relevant trade-offs.
+            - Base every conclusion only on the benchmark data.
+            - Use \n for line breaks.
 
-ModeloMaisRapido
-- Return exactly the model with the highest Tokens/s.
+            ModeloMaisRapido
+            - Return exactly the model with the highest Tokens/s.
 
-MaxTokensSec
-- Return exactly the Tokens/s value corresponding to ModeloMaisRapido.
+            MaxTokensSec
+            - Return exactly the Tokens/s value corresponding to ModeloMaisRapido.
 
-ModeloMelhorAvaliado
-- Return exactly the model with the highest average of Gemini Rating and ChatGPT Rating.
-""";
+            ModeloMelhorAvaliado
+            - Return exactly the model with the highest average of Gemini Rating and ChatGPT Rating.
+            """
+;
 
 
     public LocalAnalysisService(HttpClient httpClient, ILogger<LocalAnalysisService> logger, IBenchmarkRepository benchmarkRepository)

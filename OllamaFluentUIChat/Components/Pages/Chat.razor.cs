@@ -5,7 +5,7 @@ using Microsoft.JSInterop;
 using OllamaFluentUIChat.Components.Pages.Components;
 using OllamaFluentUIChat.Models.DTO;
 using OllamaFluentUIChat.Models.Entities;
-using OllamaFluentUIChat.PromptTemplates;
+using OllamaFluentUIChat.Services;
 using OllamaFluentUIChat.Services.Helpers;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
@@ -21,6 +21,7 @@ namespace OllamaFluentUIChat.Components.Pages
         [Inject] public IOllamaGpuService? GpuService { get; set; }
         [Inject] public IDialogService? DialogService { get; set; }
         [Inject] public IBenchmarkRepository? BenchmarkRepo { get; set; }
+        [Inject] public PromptFilesService PromptFilesService { get; set; } = default!;
         [Inject] public HttpClient? _httpClient { get; set; }
         [Inject] public ILogger<App>? _logger { get; set; }
 
@@ -190,13 +191,12 @@ namespace OllamaFluentUIChat.Components.Pages
 
             long loadDurationNs = 0;
             long evalDurationNs = 0;
-            long promptEvalCount = 0;
             int evalCount = 0;
 
             try
             {
                 var historyPayload = new List<OllamaChatMessage>();
-                var systemInstructions = ChatInstructionsPrompt.GetSystemInstructionPrompt();
+                string systemInstructions = await PromptFilesService.GetPromptFileContentAsync("system-prompt.txt") ?? string.Empty;
 
 
                 historyPayload.Add(new OllamaChatMessage

@@ -63,20 +63,33 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
         public async Task<List<BenchmarkPrompt>> GetAllBenchmarksAsync()
         {
             var sql = @"
-                SELECT p.Id, p.TextoPrompt, p.DataCriacao, 
-                        r.Id as ResponseId, r.NomeModelo, r.TextoResposta, 
-                        r.TokensPorSegundo, r.TempoPuroMs, r.TempoCargaMs, 
-                        r.TamanhoTokens, r.GeminiFactualRating, r.GeminiFormattingRating, 
-                        r.GeminiRating, r.GeminiFeedback, r.ChatGptFactualRating, 
-                        r.ChatGptFormattingRating, r.ChatGptRating, r.ChatGptFeedback
+                SELECT 
+                    p.Id, 
+                    p.TextoPrompt, 
+                    p.DataCriacao, 
+                    r.Id,
+                    r.PromptId,
+                    r.NomeModelo, 
+                    r.TextoResposta, 
+                    r.TokensPorSegundo, 
+                    r.TempoPuroMs, 
+                    r.TempoCargaMs, 
+                    r.TamanhoTokens, 
+                    r.GeminiFactualRating, 
+                    r.GeminiFormattingRating, 
+                    r.GeminiRating, 
+                    r.GeminiFeedback, 
+                    r.ChatGptFactualRating, 
+                    r.ChatGptFormattingRating, 
+                    r.ChatGptRating, 
+                    r.ChatGptFeedback
                 FROM Prompts p
                 LEFT JOIN Respostas r ON p.Id = r.PromptId
-                ORDER BY p.Id DESC, r.TokensPorSegundo DESC;"; // Ordena pelos mais recentes e melhores modelos
+                ORDER BY p.Id DESC, r.TokensPorSegundo DESC;";
 
+            using var connection = _context.CreateConnection();
             var promptDictionary = new Dictionary<int, BenchmarkPrompt>();
 
-            // Técnica Multi-Mapping do Dapper para juntar 1-para-Muitos em C#
-            using var connection = _context.CreateConnection();
             await connection.QueryAsync<BenchmarkPrompt, BenchmarkResponse, BenchmarkPrompt>(
                 sql,
                 (prompt, response) =>
@@ -94,7 +107,7 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
 
                     return existingPrompt;
                 },
-                splitOn: "ResponseId" // Diz ao Dapper que a segunda tabela começa na coluna 'Id' da Resposta
+                splitOn: "Id" // Diz ao Dapper que a segunda tabela começa na coluna 'Id' da Resposta
             );
 
             return promptDictionary.Values.ToList();

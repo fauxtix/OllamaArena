@@ -13,11 +13,50 @@ public class PromptFilesService
         _promptProvider = promptProvider;
     }
 
-    public async Task<List<string>> GetPromptFilesAsync(CancellationToken cancellationToken = default)
+    public List<string> GetPromptFilesAsync()
     {
-        return [];
+        var promptsDir = Path.Combine(AppContext.BaseDirectory, "Prompts");
+
+        if (!Directory.Exists(promptsDir))
+            return new List<string>();
+
+        return [.. Directory.GetFiles(promptsDir, "*.*")
+            .Where(f => f.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) ||
+                        f.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+            .Select(Path.GetFileName)
+            .OfType<string>()];
     }
 
+    // Novo método integrado para carregar o conteúdo do ficheiro selecionado
+    public async Task<string?> GetPromptFileContentAsync(string fileName, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+            throw new ArgumentException("fileName required", nameof(fileName));
+
+        if (!IsValidPromptFilename(fileName))
+            throw new ArgumentException("Invalid filename.", nameof(fileName));
+
+        try
+        {
+            var promptsDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "Prompts"));
+            var file = Path.GetFullPath(Path.Combine(promptsDir, fileName));
+            string expectedPrefix = promptsDir + Path.DirectorySeparatorChar;
+
+            // Proteção de Path Traversal idêntica à do SavePromptFileAsync
+            if (!file.StartsWith(expectedPrefix, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Invalid filename path.");
+
+            if (!File.Exists(file))
+                throw new FileNotFoundException("O ficheiro de prompt selecionado não existe.");
+
+            return await File.ReadAllTextAsync(file, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao ler o ficheiro de prompt: {File}", fileName);
+            throw;
+        }
+    }
 
     public async Task SavePromptFileAsync(string fileName, string content, CancellationToken cancellationToken = default)
     {
@@ -50,15 +89,15 @@ public class PromptFilesService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Erro ao gravar system prompt");
-            throw; // Relança a exceção para que o ToastService no Blazor saiba que falhou e mostre a mensagem de erro
+            throw;
         }
     }
+
     private static bool IsValidPromptFilename(string? filename)
     {
         if (string.IsNullOrWhiteSpace(filename))
             return false;
 
-        // Reject any path separators or parent-directory traversal attempts.
         if (filename.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
             return false;
 
@@ -67,5 +106,4 @@ public class PromptFilesService
 
         return true;
     }
-
 }

@@ -1,11 +1,11 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
+using OllamaFluentUIChat.Services;
 
 namespace OllamaFluentUIChat.PromptTemplates
 {
     public static class ChatInstructionsPrompt
     {
-        public static string GetSystemInstructionPrompt()
+        public static async  Task<string> GetSystemInstructionPrompt()
         {
             StringBuilder systemInstruction = new StringBuilder();
 
