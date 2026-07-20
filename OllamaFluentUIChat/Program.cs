@@ -1,5 +1,6 @@
 ﻿using Microsoft.FluentUI.AspNetCore.Components;
 using OllamaFluentUIChat.Components;
+using OllamaFluentUIChat.PromptTemplates;
 using OllamaFluentUIChat.Services;
 using OllamaFluentUIChat.Services.Helpers;
 using OllamaFluentUIChat.Services.Implementations.Repositories;
@@ -42,6 +43,7 @@ try
     builder.Services.AddTransient<ISystemPromptService, SystemPromptService>();
     builder.Services.AddTransient<IPromptTemplateProvider, PromptTemplateProvider>();
     builder.Services.AddTransient<PromptFilesService>();
+    builder.Services.AddTransient<EvaluatePromptTemplate>();
 
     builder.Services.AddHttpClient<IAnalysisService, LocalAnalysisService>();
 

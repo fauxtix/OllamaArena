@@ -26,10 +26,9 @@
 
 @code {
 
-    [Inject] public InternetConnectivityService Internet { get; set; }
+    [Inject] public required InternetConnectivityService Internet { get; set; }
 
     private ReadmePreview? preview;
-    CancellationToken cancellationToken;
 
     private async Task ShowReadme()
     {

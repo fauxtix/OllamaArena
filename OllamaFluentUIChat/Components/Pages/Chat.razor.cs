@@ -52,6 +52,9 @@ namespace OllamaFluentUIChat.Components.Pages
 
         private int _currentPromptId;
 
+        private bool showOllamaError = false;
+        private string ollamaErrorMessage = "";
+
         private string ModelName
         {
             get => _modelName;
@@ -83,39 +86,60 @@ namespace OllamaFluentUIChat.Components.Pages
 
         private async Task GetModelsInfoAsync()
         {
+            if (DialogService == null) return;
+
             try
             {
+
+
                 isLoadingModels = true;
-                var allModels = await GpuService!.GetLocalModelsAsync();
-                _models.Clear();
-                _models.AddRange(allModels.Models.Select(m => m.Model));
-
-                if (string.IsNullOrEmpty(ModelName))
-                {
-                    if (_models.Contains(_modelName))
-                    {
-                        ModelName = _modelName;
-                    }
-                    else if (_models.Count > 0)
-                    {
-                        ModelName = _models.First();
-                    }
-                }
-
-                var currentModelDetails = allModels?.Models?
-                    .FirstOrDefault(m =>
-                        m.Name.Equals(ModelName, StringComparison.OrdinalIgnoreCase) ||
-                        m.Model.Equals(ModelName, StringComparison.OrdinalIgnoreCase));
-
-                if (currentModelDetails != null)
-                    _gpuReport = GpuService.CheckGpuCompatibility(currentModelDetails.SizeInBytes);
-
-                isLoadingModels = false;
                 StateHasChanged();
+                var isOllamaRunning = await OllamaChecker.IsOllamaRunningAsync();
+                if (!isOllamaRunning)
+                {
+                    showOllamaError = true;
+                    ollamaErrorMessage = "O servidor Ollama não está em execução. Por favor, inicia o Ollama.";
+
+                    _logger?.LogError("Ollama server is not running.");
+                    return;
+                }
+                else
+                {
+                    var allModels = await GpuService!.GetLocalModelsAsync();
+                    _models.Clear();
+                    _models.AddRange(allModels.Models.Select(m => m.Model));
+
+                    if (string.IsNullOrEmpty(ModelName))
+                    {
+                        if (_models.Contains(_modelName))
+                        {
+                            ModelName = _modelName;
+                        }
+                        else if (_models.Count > 0)
+                        {
+                            ModelName = _models.First();
+                        }
+                    }
+
+                    var currentModelDetails = allModels?.Models?
+                        .FirstOrDefault(m =>
+                            m.Name.Equals(ModelName, StringComparison.OrdinalIgnoreCase) ||
+                            m.Model.Equals(ModelName, StringComparison.OrdinalIgnoreCase));
+
+                    if (currentModelDetails != null)
+                        _gpuReport = GpuService.CheckGpuCompatibility(currentModelDetails.SizeInBytes);
+
+                    StateHasChanged();
+                }
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Erro detetado no OnAfterRenderAsync do Chat");
+            }
+            finally
+            {
+                isLoadingModels = false;
+                StateHasChanged();
             }
 
         }
@@ -579,7 +603,7 @@ namespace OllamaFluentUIChat.Components.Pages
         }
 
 
-    private async Task<string> SearchWebContext_DuckDuckGo_Async(string query)
+        private async Task<string> SearchWebContext_DuckDuckGo_Async(string query)
         {
             try
             {
@@ -628,7 +652,7 @@ namespace OllamaFluentUIChat.Components.Pages
 
                 foreach (var titleNode in titleNodes)
                 {
-                    if (count >= 3) break; 
+                    if (count >= 3) break;
 
                     string title = HtmlAgilityPack.HtmlEntity.DeEntitize(titleNode.InnerText.Trim());
                     string rawUrl = titleNode.GetAttributeValue("href", "");
@@ -653,7 +677,7 @@ namespace OllamaFluentUIChat.Components.Pages
                         {
                             var uri = new Uri(link);
                             var queryParams = HttpUtility.ParseQueryString(uri.Query);
-                            string realUrl = queryParams["uddg"];
+                            string realUrl = queryParams["uddg"] ?? string.Empty;
                             if (!string.IsNullOrEmpty(realUrl))
                             {
                                 link = realUrl;
@@ -720,7 +744,7 @@ namespace OllamaFluentUIChat.Components.Pages
                 var searchResults = jsonDoc.RootElement.GetProperty("query").GetProperty("search");
 
                 var sb = new StringBuilder();
-                foreach (var item in searchResults.EnumerateArray().Take(4)) 
+                foreach (var item in searchResults.EnumerateArray().Take(4))
                 {
                     string snippet = item.GetProperty("snippet").GetString() ?? "";
                     snippet = snippet.Replace("<span class=\"searchmatch\">", "").Replace("</span>", "");

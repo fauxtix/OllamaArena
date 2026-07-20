@@ -9,154 +9,173 @@
 
 <PageTitle>Chat - Ollama</PageTitle>
 
-<div class="container" style="display: flex; justify-content: start; margin-left:10px;padding: 20px;">
-    <FluentCard Style="
-        width: 75vw;
-        height: 80vh;
-        display: flex;
-        flex-direction: column;
-        padding: 16px;
-        border-radius: 12px;">
+@if (showOllamaError)
+{
+<div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+            display: flex; justify-content: center; align-items: center; 
+            background-color: rgba(0, 0, 0, 0.2); z-index: 9999;">
+            
+    <FluentMessageBar Title="Não foi possível carregar os modelos" 
+                      Style="width: 500px; border: 1px solid var(--accent-fill-rest);"
+                      Intent="MessageIntent.Error"
+                      Type="@MessageType.Notification">
+                      <hr /"/>
+        O serviço Ollama não está em execução. Por favor, inicie o Ollama e recarregue a página.
+    </FluentMessageBar>
+</div>}
+else
+{
 
-        <FluentStack Orientation="Orientation.Horizontal"
-                     HorizontalAlignment="HorizontalAlignment.Stretch"
-                     VerticalAlignment="VerticalAlignment.Center"
-                     Style="border-bottom: 1px solid var(--neutral-stroke-layer-rest);
-                            padding-bottom: 12px;
-                            margin-bottom: 12px;
-                            justify-content: space-between;">
+    <div class="container" style="display: flex; justify-content: start; margin-left:10px;padding: 20px;">
+        <FluentCard Style="
+            width: 75vw;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            border-radius: 12px;">
 
-            <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
-                <FluentPersona Name="Ollama Streaming AI"
-                               Status="@(_isThinking ? PresenceStatus.Busy : PresenceStatus.Available)"
-                               Initials="AI" />
+            <FluentStack Orientation="Orientation.Horizontal"
+                         HorizontalAlignment="HorizontalAlignment.Stretch"
+                         VerticalAlignment="VerticalAlignment.Center"
+                         Style="border-bottom: 1px solid var(--neutral-stroke-layer-rest);
+                padding-bottom: 12px;
+                margin-bottom: 12px;
+                justify-content: space-between;">
+
+                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
+                    <FluentPersona Name="Ollama Streaming AI"
+                                   Status="@(_isThinking ? PresenceStatus.Busy : PresenceStatus.Available)"
+                                   Initials="AI" />
+                </FluentStack>
+
+                @if (isLoadingModels)
+                {
+                    <div class="loading-state">
+                        <FluentProgressRing />
+                    </div>
+                }
+                else
+                {
+                    <FluentStack Orientation="Orientation.Horizontal"
+                                 HorizontalAlignment="HorizontalAlignment.Center">
+                        <FluentSelect Style="width: 220px;"
+                                      Items="@_models"
+                                      @bind-SelectedOption="@ModelName" />
+                    </FluentStack>
+                }
+
+                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 4px;">
+                    @if (_gpuReport != null)
+                    {
+                        @if (_gpuReport.FitsInGpu)
+                        {
+                            <span style="font-size: 0.8rem; background-color: rgba(34, 197, 94, 0.15); border: 1px solid rgb(34, 197, 94); padding: 4px 8px; border-radius: 6px; color: rgb(21, 128, 61); display: flex; align-items: start; gap: 4px;">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.CheckmarkCircle())" Color="Color.Success" />
+                                GPU OK (@_gpuReport.EstimatedRequiredMemoryGB GB / @_gpuReport.AvailableVramGB GB VRAM)
+                            </span>
+                        }
+                        else
+                        {
+                            <span style="font-size: 0.8rem; background-color: rgba(245, 158, 11, 0.15); border: 1px solid rgb(245, 158, 11); padding: 4px 8px; border-radius: 6px; color: rgb(255,255,255); display: flex; justify-content:start; align-items: center; gap: 4px;"
+                                  title="O modelo excede a VRAM da GPU e vai correr dividido com a CPU (Lentidão esperada).">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Warning())" Color="Color.Warning" />
+                                CPU Fallback (@_gpuReport.EstimatedRequiredMemoryGB GB necessários, só tem @_gpuReport.AvailableVramGB GB)
+                            </span>
+
+                            <FluentButton Appearance="Appearance.Stealth" @bind-Visible="GPUDialogVisibility"
+                                          Style="min-width: 24px; width: 24px; height: 24px; padding: 0; border-radius: 50%;"
+                                          OnClick="() => GPUDialogVisibility = true"
+                                          Title="Saber mais sobre o desempenho">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.QuestionCircle())" Color="Color.Warning" />
+                            </FluentButton>
+
+                            <GpuInfoDialog @ref="gpuDialog" Visible="GPUDialogVisibility" VisibleChanged="v => GPUDialogVisibility = v" />
+                        }
+                    }
+                </FluentStack>
+
             </FluentStack>
 
-            @if (isLoadingModels)
-            {
-                <div class="loading-state">
-                    <FluentProgressRing/>
-                </div>
-            }
-            else
-            {
-                <FluentStack Orientation="Orientation.Horizontal"
-                             HorizontalAlignment="HorizontalAlignment.Center">
-                    <FluentSelect Style="width: 220px;"
-                                  Items="@_models"
-                                  @bind-SelectedOption="@ModelName" />
-                </FluentStack>
-            }
+            <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px; margin-bottom: 12px;">
+                <FluentButton Appearance="Appearance.Outline"
+                              IconStart="@(new Icons.Regular.Size16.Add())"
+                              OnClick="NewChat"
+                              Disabled="@_isThinking">
+                    Novo Chat
+                </FluentButton>
 
-            <FluentStack Orientation="Orientation.Horizontal" Style="gap: 4px;">
-                @if (_gpuReport != null)
+                <FluentButton Appearance="Appearance.Outline"
+                              Disabled="@_isThinking"
+                              OnClick="@OpenHistory">
+                    Histórico
+                </FluentButton>
+            </FluentStack>
+
+            <div @ref="messagesDiv" @onscroll="OnScroll"
+                 style="flex-grow: 1; min-height: 0; overflow-y: auto; padding-right: 8px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px;">
+
+                @foreach (var msg in _messages)
                 {
-                    @if (_gpuReport.FitsInGpu)
-                    {
-                        <span style="font-size: 0.8rem; background-color: rgba(34, 197, 94, 0.15); border: 1px solid rgb(34, 197, 94); padding: 4px 8px; border-radius: 6px; color: rgb(21, 128, 61); display: flex; align-items: start; gap: 4px;">
-                            <FluentIcon Value="@(new Icons.Regular.Size16.CheckmarkCircle())" Color="Color.Success" />
-                            GPU OK (@_gpuReport.EstimatedRequiredMemoryGB GB / @_gpuReport.AvailableVramGB GB VRAM)
-                        </span>
-                    }
-                    else
-                    {
-                        <span style="font-size: 0.8rem; background-color: rgba(245, 158, 11, 0.15); border: 1px solid rgb(245, 158, 11); padding: 4px 8px; border-radius: 6px; color: rgb(255,255,255); display: flex; justify-content:start; align-items: center; gap: 4px;"
-                              title="O modelo excede a VRAM da GPU e vai correr dividido com a CPU (Lentidão esperada).">
-                            <FluentIcon Value="@(new Icons.Regular.Size16.Warning())" Color="Color.Warning" />
-                            CPU Fallback (@_gpuReport.EstimatedRequiredMemoryGB GB necessários, só tem @_gpuReport.AvailableVramGB GB)
+                    <div style="display: flex; flex-direction: column; align-items: @(msg.IsCurrentUser ? "flex-end" : "flex-start"); width: 100%;">
+                        <span style="font-size: 0.75rem; color: var(--neutral-foreground-hint); margin-bottom: 2px;">
+                            @msg.User • @msg.Timestamp.ToString("HH:mm")
                         </span>
 
-                        <FluentButton Appearance="Appearance.Stealth" @bind-Visible="GPUDialogVisibility"
-                                      Style="min-width: 24px; width: 24px; height: 24px; padding: 0; border-radius: 50%;"
-                                      OnClick="() => GPUDialogVisibility = true"
-                                      Title="Saber mais sobre o desempenho">
-                            <FluentIcon Value="@(new Icons.Regular.Size16.QuestionCircle())" Color="Color.Warning" />
-                        </FluentButton>
+                        <div class="chat-content"
+                             style="max-width: 95%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem;
+                            background-color: @(msg.IsCurrentUser ? "var(--accent-fill-rest)" : "var(--neutral-layer-2)");
+                            color: @(msg.IsCurrentUser ? "var(--foreground-on-accent-rest)" : "var(--neutral-foreground-rest)");">
 
-                        <GpuInfoDialog @ref="gpuDialog" Visible="GPUDialogVisibility" VisibleChanged="v => GPUDialogVisibility = v" />
-                    }
+                            @((MarkupString)FormatMessage(msg.Text))
+
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <FluentStack Orientation="Orientation.Horizontal"
+                         Width="100%"
+                         VerticalAlignment="VerticalAlignment.Center"
+                         Style="gap: 8px;">
+
+                <textarea class="chat-input" style="color:var(--neutral-foreground-rest);"
+                          @bind="_currentMessage"
+                          @bind:event="oninput"
+                          @ref="chatInputRef"
+                          placeholder="Escreve uma mensagem..."
+                          disabled="@_isThinking">
+                </textarea>
+
+                @if (!_isThinking)
+                {
+                    <FluentButton Appearance="Appearance.Accent"
+                                  OnClick="@SendMessage"
+                                  Disabled="@(string.IsNullOrWhiteSpace(_currentMessage))"
+                                  Style="border-radius: 50%; min-width: 40px; width: 40px; height: 40px; padding: 2px; display: flex; align-items: center; justify-content: center;">
+                        <div style="transform: rotate(-45deg); display: flex; margin-left: 2px; margin-top: -2px; margin-bottom:2px">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Send())" Color="Color.Lightweight" />
+                        </div>
+                    </FluentButton>
+                }
+                else
+                {
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  OnClick="@CancelRequest"
+                                  Style="border-radius: 50%; min-width: 40px; width: 40px; height: 40px; padding: 0;
+                        background-color: var(--status-error-background, rgba(220, 38, 38, 0.15));
+                        color: var(--status-error-foreground, #dc2626);
+                        display: flex; align-items: center; justify-content: center;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Square())" Color="Color.Custom" CustomColor="currentColor" />
+                    </FluentButton>
                 }
             </FluentStack>
+        </FluentCard>
+        <HistoryPanel @ref="historyPanel" />
+    </div>
+}
+<FluentDialogProvider />
 
-        </FluentStack>
-
-        <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px; margin-bottom: 12px;">
-            <FluentButton Appearance="Appearance.Outline"
-                          IconStart="@(new Icons.Regular.Size16.Add())"
-                          OnClick="NewChat"
-                          Disabled="@_isThinking">
-                Novo Chat
-            </FluentButton>
-
-            <FluentButton Appearance="Appearance.Outline"
-                          Disabled="@_isThinking"
-                          OnClick="@OpenHistory">
-                Histórico
-            </FluentButton>
-        </FluentStack>
-
-        <div @ref="messagesDiv" @onscroll="OnScroll"             
-             style="flex-grow: 1; min-height: 0; overflow-y: auto; padding-right: 8px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px;">
-
-            @foreach (var msg in _messages)
-            {
-                <div style="display: flex; flex-direction: column; align-items: @(msg.IsCurrentUser ? "flex-end" : "flex-start"); width: 100%;">
-                    <span style="font-size: 0.75rem; color: var(--neutral-foreground-hint); margin-bottom: 2px;">
-                        @msg.User • @msg.Timestamp.ToString("HH:mm")
-                    </span>
-
-                    <div class="chat-content"
-                         style="max-width: 95%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem;
-                        background-color: @(msg.IsCurrentUser ? "var(--accent-fill-rest)" : "var(--neutral-layer-2)");
-                        color: @(msg.IsCurrentUser ? "var(--foreground-on-accent-rest)" : "var(--neutral-foreground-rest)");">
-
-                        @((MarkupString)FormatMessage(msg.Text))
-                        
-                    </div>
-                </div>
-            }
-        </div>
-
-        <FluentStack Orientation="Orientation.Horizontal"
-                     Width="100%"
-                     VerticalAlignment="VerticalAlignment.Center"
-                     Style="gap: 8px;">
-
-            <textarea class="chat-input" style="color:var(--neutral-foreground-rest);"
-                      @bind="_currentMessage"
-                      @bind:event="oninput"
-                      @ref="chatInputRef"
-                      placeholder="Escreve uma mensagem..."
-                      disabled="@_isThinking">
-            </textarea>
-
-            @if (!_isThinking)
-            {
-                <FluentButton Appearance="Appearance.Accent"
-                              OnClick="@SendMessage"
-                              Disabled="@(string.IsNullOrWhiteSpace(_currentMessage))"
-                              Style="border-radius: 50%; min-width: 40px; width: 40px; height: 40px; padding: 2px; display: flex; align-items: center; justify-content: center;">
-                    <div style="transform: rotate(-45deg); display: flex; margin-left: 2px; margin-top: -2px; margin-bottom:2px">
-                        <FluentIcon Value="@(new Icons.Regular.Size20.Send())" Color="Color.Lightweight" />
-                    </div>
-                </FluentButton>
-            }
-            else
-            {
-                <FluentButton Appearance="Appearance.Stealth"
-                              OnClick="@CancelRequest"
-                              Style="border-radius: 50%; min-width: 40px; width: 40px; height: 40px; padding: 0;
-                    background-color: var(--status-error-background, rgba(220, 38, 38, 0.15));
-                    color: var(--status-error-foreground, #dc2626);
-                    display: flex; align-items: center; justify-content: center;">
-                    <FluentIcon Value="@(new Icons.Regular.Size20.Square())" Color="Color.Custom" CustomColor="currentColor" />
-                </FluentButton>
-            }
-        </FluentStack>
-    </FluentCard>
-
-    <HistoryPanel @ref="historyPanel" />
-</div>
 
 <style>
     .cursor {
@@ -172,9 +191,9 @@
     .chat-content h4 {
         font-size: 0.95rem !important;
         font-weight: bold !important;
-        margin-top: 0px !important; 
+        margin-top: 0px !important;
         margin-bottom: 2px !important;
-        display: block !important; 
+        display: block !important;
         color: inherit !important;
     }
 

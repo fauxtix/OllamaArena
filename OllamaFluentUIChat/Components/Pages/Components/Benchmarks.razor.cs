@@ -2,25 +2,26 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using OllamaFluentUIChat.Models.Entities;
 using OllamaFluentUIChat.PromptTemplates;
-using OllamaFluentUIChat.Services.Implementations.Services;
 using OllamaFluentUIChat.Services.Interfaces.Services;
-using System.Text;
 
 namespace OllamaFluentUIChat.Components.Pages.Components
 {
     public partial class Benchmarks
     {
-        [Inject]
-        public IOllamaGpuService GpuService { get; set; }
+        [Inject] public required IOllamaGpuService GpuService { get; set; }
+        [Inject] public required EvaluatePromptTemplate EvaluatePromptTemplate { get; set; }
+        [Inject] public ILogger<App> _logger { get; set; } = default!;
+
         private List<BenchmarkPrompt>? _promptsList;
         private BenchmarkPrompt? _selectedPrompt;
         private BenchmarkPrompt? _promptGrafico;
+        private BenchmarkPrompt? _chartPrompt;
+        private BenchmarkResponse? _selectedEvaluation;
+
         private bool _mostrarGrafico = false;
         private bool _chartDialogVisible = false;
-        private BenchmarkPrompt? _chartPrompt;
         private bool isLoading = false;
-
-        private BenchmarkResponse? _selectedEvaluation;
+        private bool isCreatingPrompt = false;
         private bool _evaluationDialogVisible;
 
         protected override async Task OnInitializedAsync() => await GetDataAsync();
@@ -33,16 +34,25 @@ namespace OllamaFluentUIChat.Components.Pages.Components
         {
             isLoading = true;
             StateHasChanged();
-            _promptsList = null;
-            _promptsList = await BenchmarkRepo.GetAllBenchmarksAsync();
-
-            if (_selectedPrompt != null && _promptsList != null)
+            try
             {
-                _selectedPrompt = _promptsList.FirstOrDefault(p => p.Id == _selectedPrompt.Id);
-            }
+                _promptsList = null;
+                _promptsList = await BenchmarkRepo.GetAllBenchmarksAsync();
 
-            isLoading = false; 
-            StateHasChanged();
+                if (_selectedPrompt != null && _promptsList != null)
+                {
+                    _selectedPrompt = _promptsList.FirstOrDefault(p => p.Id == _selectedPrompt.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Erro ao obter os dados dos prompts de benchmark.");
+            }
+            finally
+            {
+                isLoading = false;
+                StateHasChanged();
+            }
         }
 
 
@@ -140,6 +150,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
         {
             if (string.IsNullOrEmpty(texto)) return;
 
+            isCreatingPrompt = true;
             try
             {
                 bool copied = await JS.InvokeAsync<bool>("copyToClipboard", texto);
@@ -153,7 +164,10 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Erro ao copiar para o Clipboard.");
-                // Opcional: mostrar toast de erro
+            }
+            finally
+            {
+                isCreatingPrompt = false;
             }
         }
         private void OpenChartDialog(BenchmarkPrompt prompt)
@@ -195,14 +209,28 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             if (string.IsNullOrEmpty(originalPrompt) || string.IsNullOrEmpty(modelResponse))
                 return;
 
-            var modelName = _selectedEvaluation?.NomeModelo ?? "Modelo Desconhecido";
-            var metadata = await GpuService.GetExtendedModelMetadataAsync(modelName);
-            var trainingYear = metadata.TrainingYear;
+            isCreatingPrompt = true;
 
-            var formattedPrompt = EvaluatePromptTemplate.EvaluationCopyPrompt(
-                originalPrompt, modelResponse, trainingYear);
+            try
+            {
+                var modelName = _selectedEvaluation?.NomeModelo ?? "Modelo Desconhecido";
+                var metadata = await GpuService.GetExtendedModelMetadataAsync(modelName);
+                var trainingYear = metadata.TrainingYear;
 
-            await CopyToClipboardAsync(formattedPrompt);
+                var formattedPrompt = await EvaluatePromptTemplate.EvaluationCopyPromptAsync(
+                    originalPrompt, modelResponse, trainingYear);
+
+                await CopyToClipboardAsync(formattedPrompt);
+
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Erro ao copiar prompt para avaliação.");
+            }
+            finally
+            {
+                isCreatingPrompt = false;
+            }
         }
         private void OpenEvaluation(BenchmarkResponse resp)
         {

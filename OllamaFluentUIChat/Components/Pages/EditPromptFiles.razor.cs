@@ -73,7 +73,7 @@ public partial class EditPromptFiles
             StateHasChanged();
 
             var promptContent = await PromptFilesService.GetPromptFileContentAsync(filename, _cancellationToken);
-            EditorContent = promptContent;
+            EditorContent = promptContent ?? string.Empty;
         }
         catch (Exception ex)
         {

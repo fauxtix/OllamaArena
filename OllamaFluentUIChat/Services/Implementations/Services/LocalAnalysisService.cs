@@ -1,4 +1,5 @@
-﻿using OllamaFluentUIChat.Models.DTO;
+﻿using Microsoft.AspNetCore.Components;
+using OllamaFluentUIChat.Models.DTO;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
 using System.Diagnostics;
@@ -12,6 +13,8 @@ public class LocalAnalysisService : IAnalysisService
     private readonly HttpClient _httpClient;
     private readonly ILogger<LocalAnalysisService> _logger;
     private readonly IBenchmarkRepository _benchmarkRepository;
+    private readonly PromptFilesService _promptFilesService;
+
     private const string OllamaEndpoint = "http://localhost:11434/api/chat";
 
     private const string ModelName = "Impulse2000/smollm3:latest";
@@ -70,12 +73,13 @@ public class LocalAnalysisService : IAnalysisService
 ;
 
 
-    public LocalAnalysisService(HttpClient httpClient, ILogger<LocalAnalysisService> logger, IBenchmarkRepository benchmarkRepository)
+    public LocalAnalysisService(HttpClient httpClient, ILogger<LocalAnalysisService> logger, IBenchmarkRepository benchmarkRepository, PromptFilesService promptFilesService)
     {
         _httpClient = httpClient;
         _logger = logger;
         _httpClient.Timeout = TimeSpan.FromMinutes(5); // Modelos locais pequenos em CPUs podem demorar
         _benchmarkRepository = benchmarkRepository;
+        _promptFilesService = promptFilesService;
     }
 
     public async Task<BenchmarkAnalysisResult> AnalisarBenchmarksAsync(
@@ -90,7 +94,7 @@ public class LocalAnalysisService : IAnalysisService
 
         // 1. Converter os dados complexos numa tabela Markdown compacta (O LLM gosta deste formato)
         var stopwatch = Stopwatch.StartNew();
-
+        var analysisSystemPrompt =  await _promptFilesService.GetPromptFileContentAsync("system-prompt.txt") ?? string.Empty;
         var markdownTabela = GerarTabelaMarkdown(benchmarks);
 
         // 2. Prompt de Sistema focado e imperativo a exigir JSON limpo
@@ -103,7 +107,7 @@ public class LocalAnalysisService : IAnalysisService
                 new
                 {
                     role = "system",
-                    content = systemPrompt
+                    content = analysisSystemPrompt
                 },
                 new
                 {

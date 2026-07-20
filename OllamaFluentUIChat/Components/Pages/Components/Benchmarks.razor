@@ -30,7 +30,7 @@
             <p>A carregar o histórico do SQLite...</p>
         </div>
     }
-    else if (!_promptsList.Any())
+    else if (_promptsList == null || !_promptsList.Any())
     {
         <div class="empty-state">
             <p>Nenhum registo de benchmark encontrado na Base de Dados.</p>
@@ -134,6 +134,14 @@
                         }
                         else
                         {
+                            @if (isCreatingPrompt)
+                            {
+                                <div class="loading-state">
+                                    <FluentProgressRing></FluentProgressRing>
+                                    <p>A criar o prompt para para avaliação...</p>
+                                </div>
+                            }
+
                             <div class="conteudo-respostas-scroll">
                                 <div class="cartoes-respostas-container">
                                     @foreach (var resp in _selectedPrompt.Answers)
@@ -479,5 +487,14 @@
             margin-left: auto;
             color: var(--accent-fill-rest);
         }
+
+    .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        text-align: center;
+    }
 
 </style>
