@@ -14,40 +14,63 @@
                 </div>
             </div>
 
-            <!-- Grupo de Ratings com cabeçalho unificado -->
+            <!-- Grupo de Ratings com grelha para as 10 métricas -->
             <div class="ratings-group-container">
                 <div class="ratings-group-header">Métricas de Avaliação (Escala 1-5)</div>
-                <div class="ratings-row">
+                <div class="ratings-grid">
                     <div class="rating-cell">
                         <span class="rating-label">Factual</span>
-                        <FluentNumberField Min="1" Max="5"
-                                           @bind-Value="Response.GeminiFactualRating"
-                                           Disabled="@(Response.GeminiFactualRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiFactualRating" Disabled="@(Response.GeminiFactualRating != null)" />
                     </div>
-
                     <div class="rating-cell">
                         <span class="rating-label">Formatação</span>
-                        <FluentNumberField Min="1" Max="5"
-                                           @bind-Value="Response.GeminiFormattingRating"
-                                           Disabled="@(Response.GeminiFormattingRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiFormattingRating" Disabled="@(Response.GeminiFormattingRating != null)" />
                     </div>
-
+                    <div class="rating-cell">
+                        <span class="rating-label">Compliance</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiComplianceRating" Disabled="@(Response.GeminiComplianceRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">Relevância</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiRelevanceRating" Disabled="@(Response.GeminiRelevanceRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">Tom</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiToneRating" Disabled="@(Response.GeminiToneRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">Concisão</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiConcisenessRating" Disabled="@(Response.GeminiConcisenessRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">Clareza</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiClarityRating" Disabled="@(Response.GeminiClarityRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">Legibilidade</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiReadabilityRating" Disabled="@(Response.GeminiReadabilityRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">Halo Effect</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiHaloEffectRating" Disabled="@(Response.GeminiHaloEffectRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">Segurança</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiSafetyRating" Disabled="@(Response.GeminiSafetyRating != null)" />
+                    </div>
                     <div class="rating-cell">
                         <span class="rating-label-bold">Global</span>
-                        <FluentNumberField Min="1" Max="5"
-                                           @bind-Value="Response.GeminiRating"
-                                           Class="final-rating-field"
-                                           Disabled="@(Response.GeminiRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiRating" Class="final-rating-field" Disabled="@(Response.GeminiRating != null)" />
                     </div>
                 </div>
             </div>
 
-            <!-- Caixa de Feedback original (Rows="10") -->
+            <!-- Caixa de Feedback -->
             <FluentTextArea Value="@Response.GeminiFeedback"
                             ValueChanged="@OnGeminiInputChanged"
                             Label="Feedback (Cole aqui o output bruto do Gemini)"
                             Style="font-size:14px;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; width: 100%;"
-                            Rows="10"
+                            Rows="8"
                             Disabled="@(!string.IsNullOrWhiteSpace(Response.GeminiFeedback))" />
         </div>
 
@@ -60,40 +83,63 @@
                 </div>
             </div>
 
-            <!-- Grupo de Ratings com cabeçalho unificado -->
+            <!-- Grupo de Ratings com grelha para as 10 métricas -->
             <div class="ratings-group-container">
                 <div class="ratings-group-header">Métricas de Avaliação (Escala 1-5)</div>
-                <div class="ratings-row">
+                <div class="ratings-grid">
                     <div class="rating-cell">
                         <span class="rating-label">Factual</span>
-                        <FluentNumberField Min="1" Max="5"
-                                           @bind-Value="Response.ChatGptFactualRating"
-                                           Disabled="@(Response.ChatGptFactualRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptFactualRating" Disabled="@(Response.ChatGptFactualRating != null)" />
                     </div>
-
                     <div class="rating-cell">
                         <span class="rating-label">Formatação</span>
-                        <FluentNumberField Min="1" Max="5"
-                                           @bind-Value="Response.ChatGptFormattingRating"
-                                           Disabled="@(Response.ChatGptFormattingRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptFormattingRating" Disabled="@(Response.ChatGptFormattingRating != null)" />
                     </div>
-
+                    <div class="rating-cell">
+                        <span class="rating-label">Compliance</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptComplianceRating" Disabled="@(Response.ChatGptComplianceRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">Relevância</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptRelevanceRating" Disabled="@(Response.ChatGptRelevanceRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">Tom</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptToneRating" Disabled="@(Response.ChatGptToneRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">Concisão</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptConcisenessRating" Disabled="@(Response.ChatGptConcisenessRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">Clareza</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptClarityRating" Disabled="@(Response.ChatGptClarityRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">Legibilidade</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptReadabilityRating" Disabled="@(Response.ChatGptReadabilityRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">Halo Effect</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptHaloEffectRating" Disabled="@(Response.ChatGptHaloEffectRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">Segurança</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptSafetyRating" Disabled="@(Response.ChatGptSafetyRating != null)" />
+                    </div>
                     <div class="rating-cell">
                         <span class="rating-label-bold">Global</span>
-                        <FluentNumberField Min="1" Max="5"
-                                           @bind-Value="Response.ChatGptRating"
-                                           Class="final-rating-field"
-                                           Disabled="@(Response.ChatGptRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptRating" Class="final-rating-field" Disabled="@(Response.ChatGptRating != null)" />
                     </div>
                 </div>
             </div>
 
-            <!-- Caixa de Feedback original (Rows="10") -->
+            <!-- Caixa de Feedback -->
             <FluentTextArea Value="@Response.ChatGptFeedback"
                             ValueChanged="@OnChatGptInputChanged"
                             Label="Feedback (Cole aqui o output bruto do ChatGPT)"
                             Style="font-size:14px;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; width: 100%;"
-                            Rows="10"
+                            Rows="8"
                             Disabled="@(!string.IsNullOrWhiteSpace(Response.ChatGptFeedback))" />
         </div>
     </div>
@@ -109,11 +155,21 @@
 
         if (value.Contains("FACTUAL_SCORE:", StringComparison.OrdinalIgnoreCase))
         {
-            EvaluationParser.ParseEvaluation(value, out int? factual, out int? formatting, out float? final, out string desc);
-            Response.GeminiFactualRating = factual;
-            Response.GeminiFormattingRating = formatting;
-            Response.GeminiRating = final;
-            Response.GeminiFeedback = desc;
+            var parsed = EvaluationParser.ParseEvaluation(value);
+
+            Response.GeminiFactualRating = parsed.FactualScore;
+            Response.GeminiFormattingRating = parsed.FormattingScore;
+            Response.GeminiComplianceRating = parsed.ComplianceScore;
+            Response.GeminiRelevanceRating = parsed.RelevanceScore;
+            Response.GeminiToneRating = parsed.ToneScore;
+            Response.GeminiConcisenessRating = parsed.ConcisenessScore;
+            Response.GeminiClarityRating = parsed.ClarityScore;
+            Response.GeminiReadabilityRating = parsed.ReadabilityScore;
+            Response.GeminiHaloEffectRating = parsed.HaloEffectScore;
+            Response.GeminiSafetyRating = parsed.SafetyScore;
+
+            Response.GeminiRating = parsed.FinalScore;
+            Response.GeminiFeedback = parsed.Description;
         }
         else
         {
@@ -130,11 +186,21 @@
 
         if (value.Contains("FACTUAL_SCORE:", StringComparison.OrdinalIgnoreCase))
         {
-            EvaluationParser.ParseEvaluation(value, out int? factual, out int? formatting, out float? final, out string desc);
-            Response.ChatGptFactualRating = factual;
-            Response.ChatGptFormattingRating = formatting;
-            Response.ChatGptRating = final;
-            Response.ChatGptFeedback = desc;
+            var parsed = EvaluationParser.ParseEvaluation(value);
+
+            Response.ChatGptFactualRating = parsed.FactualScore;
+            Response.ChatGptFormattingRating = parsed.FormattingScore;
+            Response.ChatGptComplianceRating = parsed.ComplianceScore;
+            Response.ChatGptRelevanceRating = parsed.RelevanceScore;
+            Response.ChatGptToneRating = parsed.ToneScore;
+            Response.ChatGptConcisenessRating = parsed.ConcisenessScore;
+            Response.ChatGptClarityRating = parsed.ClarityScore;
+            Response.ChatGptReadabilityRating = parsed.ReadabilityScore;
+            Response.ChatGptHaloEffectRating = parsed.HaloEffectScore;
+            Response.ChatGptSafetyRating = parsed.SafetyScore;
+
+            Response.ChatGptRating = parsed.FinalScore;
+            Response.ChatGptFeedback = parsed.Description;
         }
         else
         {
@@ -217,41 +283,44 @@
         opacity: 0.7;
     }
 
-    /* Linha dos inputs */
-    .ratings-row {
-        display: flex !important;
-        flex-direction: row !important;
-        gap: 20px !important;
+    /* Grelha adaptativa para os 11 campos de rating */
+    .ratings-grid {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)) !important;
+        gap: 10px !important;
         width: 100%;
     }
 
     .rating-cell {
         display: flex;
         flex-direction: column;
-        align-items: start;
-        gap: 4px;
+        align-items: flex-start;
+        gap: 2px;
     }
 
     .rating-label {
-        font-size: 12px;
+        font-size: 11px;
         color: var(--neutral-foreground-rest);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 75px;
     }
 
     .rating-label-bold {
-        font-size: 12px;
-        font-weight: 600;
+        font-size: 11px;
+        font-weight: 700;
         color: var(--accent-fill-rest, #0078d4);
     }
 
-    /* Definição das caixas de número */
+    /* Ajuste no tamanho das caixas de texto/número */
     .rating-cell fluent-number-field,
     .rating-cell > * {
-        width: 55px !important;
-        min-width: 55px !important;
+        width: 100% !important;
+        min-width: 50px !important;
         height: 32px;
     }
 
-        /* Centraliza o número e arredonda */
         .rating-cell fluent-number-field::part(control) {
             text-align: center !important;
             font-weight: 600;

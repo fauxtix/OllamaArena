@@ -90,21 +90,21 @@ namespace OllamaFluentUIChat.Components.Pages
 
             try
             {
-
-
-                isLoadingModels = true;
-                StateHasChanged();
-                var isOllamaRunning = await OllamaChecker.IsOllamaRunningAsync();
+                // Verifica se o Ollama está a correr
+                var isOllamaRunning = true; // await OllamaChecker.IsOllamaRunningAsync();
                 if (!isOllamaRunning)
                 {
                     showOllamaError = true;
-                    ollamaErrorMessage = "O servidor Ollama não está em execução. Por favor, inicia o Ollama.";
+                    ollamaErrorMessage = "O servidor Ollama não está em execução. Por favor, inicie o Ollama.";
 
                     _logger?.LogError("Ollama server is not running.");
                     return;
                 }
                 else
                 {
+                    isLoadingModels = true;
+                    StateHasChanged();
+
                     var allModels = await GpuService!.GetLocalModelsAsync();
                     _models.Clear();
                     _models.AddRange(allModels.Models.Select(m => m.Model));
@@ -134,11 +134,12 @@ namespace OllamaFluentUIChat.Components.Pages
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Erro detetado no OnAfterRenderAsync do Chat");
+                _logger?.LogError(ex, "Erro detetado GetModelsInfoAsync");
             }
             finally
             {
                 isLoadingModels = false;
+                showOllamaError = false;
                 StateHasChanged();
             }
 

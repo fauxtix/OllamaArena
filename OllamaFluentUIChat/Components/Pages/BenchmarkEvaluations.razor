@@ -11,8 +11,6 @@
 @inject IDialogService DialogService
 @inject ILogger<App> Logger
 @inject IAnalysisService AnalysisService
-
-
 @inject IJSRuntime JS
 
 <div class="page">
@@ -89,8 +87,8 @@
                 </div>
             </TemplateColumn>
 
-            <PropertyColumn Property="@(b => b.GeminiRating)" Title="Gemini" Align="Align.Center" Width="100px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.ChatGptRating)" Title="ChatGPT" Align="Align.Center" Width="100px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.GeminiRating)" Title="Gemini" Align="Align.Center" Width="90px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.ChatGptRating)" Title="ChatGPT" Align="Align.Center" Width="90px" Sortable="true" />
             <PropertyColumn Property="@(b => b.TokensPorSegundo)" Title="Tokens/s" Align="Align.Center" Width="110px" Format="F2" Sortable="true" />
             <PropertyColumn Property="@(b => b.TempoPuroFormatado)" Title="Tempo" Align="Align.Center" Width="100px" Sortable="true" />
             <PropertyColumn Property="@(b => b.TempoCargaFormatado)" Title="Carga" Align="Align.Center" Width="100px" Sortable="true" />
@@ -128,7 +126,7 @@
             <FluentDialogBody>
                 <BenchmarkAnalysisViewer IsAnalyzing="@_isAnalyzing"
                                          IsAnalyzingChanged="@((b) => _isAnalyzing = b)"
-                                         AnaliseResultado="@_resultadoLocal" 
+                                         AnaliseResultado="@_resultadoLocal"
                                          AnaliseResultadoChanged="@((r) => _resultadoLocal = r)"
                                          OnCancelarAnalise="@CancelarAnaliseDoPai" />
             </FluentDialogBody>
@@ -235,7 +233,7 @@
         try
         {
 
-                string mensagemHtml = @"
+            string mensagemHtml = @"
                         <div style='padding: 4px; border-left: 4px solid #e73618;'>
                             <strong style='color: #e73618; font-size: 16px; display: block; margin-bottom: 8px;'>Confirme, por favor</strong>
                             <span style='color: var(--neutral-foreground-rest);'>Tem a certeza que deseja apagar o registo? Esta operação não pode ser revertida.</span>
@@ -416,15 +414,48 @@
 
     private async Task AnalisarResultadosComModeloLocal()
     {
+        var dadosFiltrados = FilteredBenchmarks.ToList();
+
+        // === NOVA VERIFICAÇÃO: Todos os benchmarks foram avaliados? ===
+        bool todosAvaliados = dadosFiltrados.All(b =>
+            b.GeminiRating > 0 && b.ChatGptRating > 0);
+
+        if (!todosAvaliados)
+        {
+            var naoAvaliados = dadosFiltrados.Count(b => b.GeminiRating == 0 || b.ChatGptRating == 0);
+
+            string mensagemHtml = $@"
+            <div style='padding: 8px; border-left: 5px solid #e73618;'>
+                <strong style='color: #e73618; font-size: 16px;'>⚠️ Atenção</strong><br><br>
+                <span style='color: var(--neutral-foreground-rest);'>
+                    Existem <strong>{naoAvaliados}</strong> benchmark(s) ainda não avaliados (Gemini ou ChatGPT).<br><br>
+                    Avalie os benchmarks antes de prosseguir com a análise.
+                </span>
+            </div>";
+
+            var confirmacao = await DialogService.ShowConfirmationAsync(
+                message: mensagemHtml,
+                primaryText: null,
+                secondaryText: "Cancelar",
+                title: "Nem todos os benchmarks estão avaliados");
+
+            if (confirmacao == null) return;
+
+            var resultado = await confirmacao.Result;
+            if (resultado?.Cancelled == true)
+            {
+                return; 
+            }
+        }
+
+        // === Prossegue com a análise ===
         _mostrarPainelAnalise = true;
         _isAnalyzing = true;
         _resultadoLocal = null;
         StateHasChanged();
 
-
         try
         {
-            var dadosFiltrados = FilteredBenchmarks.ToList();
             if (dadosFiltrados.Count == 0)
             {
                 _resultadoLocal = new BenchmarkAnalysisResult
@@ -436,11 +467,6 @@
 
             _cts?.Dispose();
             _cts = new CancellationTokenSource();
-            // _resultadoLocal = await AnalysisService.AnalisarBenchmarksWithStreamingAsync(
-            //     dadosFiltrados,
-            //     OnPartial, 
-            //     _cts.Token
-            // );
 
             _resultadoLocal = await AnalysisService.AnalisarBenchmarksAsync(
                 dadosFiltrados,
@@ -456,9 +482,7 @@
                 AnaliseDetalhada = "❌ **Operação cancelada pelo utilizador.**"
             };
             StateHasChanged();
-
         }
-
         catch (Exception ex)
         {
             Logger.LogError(ex, "Erro ao tentar efetuar a análise com o modelo local.");
@@ -474,7 +498,6 @@
             StateHasChanged();
         }
     }
-
     private void OnPartial(string chunk)
     {
         _streamingLog += chunk;

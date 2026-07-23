@@ -11,18 +11,19 @@
 
 @if (showOllamaError)
 {
-<div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-            display: flex; justify-content: center; align-items: center; 
-            background-color: rgba(0, 0, 0, 0.2); z-index: 9999;">
-            
-    <FluentMessageBar Title="Não foi possível carregar os modelos" 
-                      Style="width: 500px; border: 2px solid var(--accent-fill-rest);"
-                      Intent="MessageIntent.Error"
-                      Type="@MessageType.Notification">
-                      <hr/>
-        O serviço Ollama não está em execução. Por favor, inicie o Ollama e recarregue a página.
-    </FluentMessageBar>
-</div>}
+    <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        display: flex; justify-content: center; align-items: center;
+        background-color: rgba(0, 0, 0, 0.2); z-index: 9999;">
+
+        <FluentMessageBar Title="Não foi possível carregar os modelos"
+                          Style="width: 500px; border: 2px solid var(--accent-fill-rest);"
+                          Intent="MessageIntent.Error"
+                          Type="@MessageType.Notification">
+            <hr />
+            O serviço Ollama não está em execução. Por favor, inicie o Ollama e recarregue a página.
+        </FluentMessageBar>
+    </div>
+}
 else
 {
 
@@ -49,21 +50,12 @@ else
                                    Initials="AI" />
                 </FluentStack>
 
-                @if (isLoadingModels)
-                {
-                    <div class="loading-state">
-                        <FluentProgressRing />
-                    </div>
-                }
-                else
-                {
-                    <FluentStack Orientation="Orientation.Horizontal"
-                                 HorizontalAlignment="HorizontalAlignment.Center">
-                        <FluentSelect Style="width: 220px;"
-                                      Items="@_models"
-                                      @bind-SelectedOption="@ModelName" />
-                    </FluentStack>
-                }
+                <FluentStack Orientation="Orientation.Horizontal"
+                             HorizontalAlignment="HorizontalAlignment.Center">
+                    <FluentSelect Style="width: 220px;"
+                                  Items="@_models"
+                                  @bind-SelectedOption="@ModelName" />
+                </FluentStack>
 
                 <FluentStack Orientation="Orientation.Horizontal" Style="gap: 4px;">
                     @if (_gpuReport != null)
@@ -114,23 +106,31 @@ else
 
             <div @ref="messagesDiv" @onscroll="OnScroll"
                  style="flex-grow: 1; min-height: 0; overflow-y: auto; padding-right: 8px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px;">
-
-                @foreach (var msg in _messages)
+                @if (isLoadingModels)
                 {
-                    <div style="display: flex; flex-direction: column; align-items: @(msg.IsCurrentUser ? "flex-end" : "flex-start"); width: 100%;">
-                        <span style="font-size: 0.75rem; color: var(--neutral-foreground-hint); margin-bottom: 2px;">
-                            @msg.User • @msg.Timestamp.ToString("HH:mm")
-                        </span>
-
-                        <div class="chat-content"
-                             style="max-width: 95%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem;
-                            background-color: @(msg.IsCurrentUser ? "var(--accent-fill-rest)" : "var(--neutral-layer-2)");
-                            color: @(msg.IsCurrentUser ? "var(--foreground-on-accent-rest)" : "var(--neutral-foreground-rest)");">
-
-                            @((MarkupString)FormatMessage(msg.Text))
-
-                        </div>
+                    <div class="loading-state">
+                        <FluentProgressRing />
                     </div>
+                }
+                else
+                {
+                    @foreach (var msg in _messages)
+                    {
+                        <div style="display: flex; flex-direction: column; align-items: @(msg.IsCurrentUser ? "flex-end" : "flex-start"); width: 100%;">
+                            <span style="font-size: 0.75rem; color: var(--neutral-foreground-hint); margin-bottom: 2px;">
+                                @msg.User • @msg.Timestamp.ToString("HH:mm")
+                            </span>
+
+                            <div class="chat-content"
+                                 style="max-width: 95%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem;
+                                background-color: @(msg.IsCurrentUser ? "var(--accent-fill-rest)" : "var(--neutral-layer-2)");
+                                color: @(msg.IsCurrentUser ? "var(--foreground-on-accent-rest)" : "var(--neutral-foreground-rest)");">
+
+                                @((MarkupString)FormatMessage(msg.Text))
+
+                            </div>
+                        </div>
+                    }
                 }
             </div>
 
@@ -337,5 +337,4 @@ else
         padding: 40px;
         text-align: center;
     }
-
 </style>

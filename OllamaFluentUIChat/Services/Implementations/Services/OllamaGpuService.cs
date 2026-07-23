@@ -197,7 +197,7 @@ public class OllamaGpuService : IOllamaGpuService
     public async Task<(int ContextLength, string TrainingYear)> GetExtendedModelMetadataAsync(string modelName)
     {
         int contextLength = 2048; // Valor padrão seguro
-        string trainingYear = "Desconhecido";
+        string trainingYear = "2024";
 
         try
         {

@@ -219,17 +219,31 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
             StringBuilder sb = new();
             sb.Append("UPDATE Respostas ");
             sb.Append("SET ");
+            // Avaliações Gerais / Ratings Finais
             sb.Append("GeminiRating = @GeminiRating, GeminiFeedback = @GeminiFeedback, ");
             sb.Append("ChatGptRating = @ChatGptRating, ChatGptFeedback = @ChatGptFeedback, ");
+
+            // Novas métricas específicas do Gemini
             sb.Append("GeminiFactualRating = @GeminiFactualRating, GeminiFormattingRating = @GeminiFormattingRating, ");
-            sb.Append("ChatGptFactualRating = @ChatGptFactualRating, ChatGptFormattingRating = @ChatGptFormattingRating ");
-            sb.Append("WHERE Id = @Id");
+            sb.Append("GeminiComplianceRating = @GeminiComplianceRating, GeminiRelevanceRating = @GeminiRelevanceRating, ");
+            sb.Append("GeminiToneRating = @GeminiToneRating, GeminiConcisenessRating = @GeminiConcisenessRating, ");
+            sb.Append("GeminiClarityRating = @GeminiClarityRating, GeminiReadabilityRating = @GeminiReadabilityRating, ");
+            sb.Append("GeminiHaloEffectRating = @GeminiHaloEffectRating, GeminiSafetyRating = @GeminiSafetyRating, ");
+
+            // Novas métricas específicas do ChatGPT
+            sb.Append("ChatGptFactualRating = @ChatGptFactualRating, ChatGptFormattingRating = @ChatGptFormattingRating, ");
+            sb.Append("ChatGptComplianceRating = @ChatGptComplianceRating, ChatGptRelevanceRating = @ChatGptRelevanceRating, ");
+            sb.Append("ChatGptToneRating = @ChatGptToneRating, ChatGptConcisenessRating = @ChatGptConcisenessRating, ");
+            sb.Append("ChatGptClarityRating = @ChatGptClarityRating, ChatGptReadabilityRating = @ChatGptReadabilityRating, ");
+            sb.Append("ChatGptHaloEffectRating = @ChatGptHaloEffectRating, ChatGptSafetyRating = @ChatGptSafetyRating ");
+
+            sb.Append("WHERE Id = @Id;");
+
             var sql = sb.ToString();
             using var connection = _context.CreateConnection();
-            int AffectedLines = await connection.ExecuteAsync(sql, res);
-            return AffectedLines > 0;
+            int affectedLines = await connection.ExecuteAsync(sql, res);
+            return affectedLines > 0;
         }
-
         /// <summary>
         /// Obtém uma lista de avaliações de benchmark, incluindo as classificações dos modelos Gemini e ChatGPT, para cada prompt.
         /// </summary>
@@ -238,8 +252,20 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
         {
             StringBuilder sb = new();
             sb.Append("SELECT P.Id, R.Id AS ResponseId, P.TextoPrompt, R.NomeModelo, ");
-            sb.Append("R.GeminiRating, R.GeminiFactualRating, R.GeminiFormattingRating, "); 
-            sb.Append("R.ChatGptRating, R.ChatGptFactualRating, R.ChatGptFormattingRating, "); 
+
+            // Métricas Gemini
+            sb.Append("R.GeminiRating, R.GeminiFactualRating, R.GeminiFormattingRating, ");
+            sb.Append("R.GeminiComplianceRating, R.GeminiRelevanceRating, R.GeminiToneRating, ");
+            sb.Append("R.GeminiConcisenessRating, R.GeminiClarityRating, R.GeminiReadabilityRating, ");
+            sb.Append("R.GeminiHaloEffectRating, R.GeminiSafetyRating, ");
+
+            // Métricas ChatGPT
+            sb.Append("R.ChatGptRating, R.ChatGptFactualRating, R.ChatGptFormattingRating, ");
+            sb.Append("R.ChatGptComplianceRating, R.ChatGptRelevanceRating, R.ChatGptToneRating, ");
+            sb.Append("R.ChatGptConcisenessRating, R.ChatGptClarityRating, R.ChatGptReadabilityRating, ");
+            sb.Append("R.ChatGptHaloEffectRating, R.ChatGptSafetyRating, ");
+
+            // Métricas de Performance e Datas
             sb.Append("P.DataCriacao, R.TokensPorSegundo, R.TempoPuroMs, R.TempoCargaMs, R.TamanhoTokens ");
             sb.Append("FROM Prompts P ");
             sb.Append("LEFT JOIN Respostas R ON R.PromptId = P.Id");
@@ -249,7 +275,6 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories
             var result = await connection.QueryAsync<BenchmarkEvaluationModel>(sql);
             return [.. result];
         }
-
         public async Task<IEnumerable<HistoryResponse>> HistoryResponseAsync()
         {
             StringBuilder sb = new();

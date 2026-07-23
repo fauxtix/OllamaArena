@@ -27,14 +27,15 @@
  Requirements:
 
  Sumario
-	 - Write in European Portuguese.
+	 - Write in European Portuguese (pt-PT).
 	 - Maximum 6 sentences.
 	 - Summarise the benchmark results.
 	 - Mention the main conclusions.
 
  AnaliseDetalhada
-	 - Write in European Portuguese.
-	 - Compare speed (Tokens/s), execution time and quality ratings.
+	 - Write in European Portuguese (pt-PT).
+ 	 - Maximum 12 sentences.
+	 - Compare speed (Tokens/s), execution time and quality and ratings.
 	 - Explain the most relevant trade-offs.
 	 - Base every conclusion only on the benchmark data.
 	 - Use \n for line breaks.
@@ -46,4 +47,4 @@
 	 - Return exactly the Tokens/s value corresponding to ModeloMaisRapido.
 
  ModeloMelhorAvaliado
-	 - Return exactly the model with the highest average of Gemini Rating and ChatGPT Rating.
+	 - Return exactly the model with the highest average of Gemini Rating, ChatGPT Rating, Gemini Factual Rating and ChatGPT Factual Rating.

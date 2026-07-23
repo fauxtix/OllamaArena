@@ -14,10 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Models\DTO\BenchmarkEvaluationModel,cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="Prompts\analysis-prompt.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

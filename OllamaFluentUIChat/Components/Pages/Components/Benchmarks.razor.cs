@@ -204,7 +204,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             }
         }
 
-        private async Task CopyPromptForEvaluationAsync(string originalPrompt, string modelResponse)
+        private async Task CopyPromptForEvaluationAsync(string originalPrompt, string modelResponse, string modelName)
         {
             if (string.IsNullOrEmpty(originalPrompt) || string.IsNullOrEmpty(modelResponse))
                 return;
@@ -213,8 +213,8 @@ namespace OllamaFluentUIChat.Components.Pages.Components
 
             try
             {
-                var modelName = _selectedEvaluation?.NomeModelo ?? "Modelo Desconhecido";
                 var metadata = await GpuService.GetExtendedModelMetadataAsync(modelName);
+                
                 var trainingYear = metadata.TrainingYear;
 
                 var formattedPrompt = await EvaluatePromptTemplate.EvaluationCopyPromptAsync(

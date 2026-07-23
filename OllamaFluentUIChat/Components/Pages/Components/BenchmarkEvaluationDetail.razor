@@ -42,54 +42,28 @@
                         </div>
                     </div>
 
+                    @* 1. FACTUAL *@
                     <div class="ratings-row">
                         <div class="metric-cell">Factual</div>
                         <div class="rating-cell">
-                            @if (Response.GeminiFactualRating.HasValue && Response.GeminiFactualRating > 0)
-                            {
-                                <span class="rating-value">@Response.GeminiFactualRating</span>
-                            }
-                            else
-                            {
-                                <span class="rating-empty">—</span>
-                            }
+                            @RenderRating(Response.GeminiFactualRating)
                         </div>
                         <div class="rating-cell">
-                            @if (Response.ChatGptFactualRating.HasValue && Response.ChatGptFactualRating > 0)
-                            {
-                                <span class="rating-value">@Response.ChatGptFactualRating</span>
-                            }
-                            else
-                            {
-                                <span class="rating-empty">—</span>
-                            }
+                            @RenderRating(Response.ChatGptFactualRating)
                         </div>
                     </div>
 
+                    @* 2. FORMATAÇÃO *@
                     <div class="ratings-row">
                         <div class="metric-cell">Formatação</div>
                         <div class="rating-cell">
-                            @if (Response.GeminiFormattingRating.HasValue && Response.GeminiFormattingRating > 0)
-                            {
-                                <span class="rating-value">@Response.GeminiFormattingRating</span>
-                            }
-                            else
-                            {
-                                <span class="rating-empty">—</span>
-                            }
+                            @RenderRating(Response.GeminiFormattingRating)
                         </div>
                         <div class="rating-cell">
-                            @if (Response.ChatGptFormattingRating.HasValue && Response.ChatGptFormattingRating > 0)
-                            {
-                                <span class="rating-value">@Response.ChatGptFormattingRating</span>
-                            }
-                            else
-                            {
-                                <span class="rating-empty">—</span>
-                            }
+                            @RenderRating(Response.ChatGptFormattingRating)
                         </div>
                     </div>
-
+                    @* PONTUAÇÃO GLOBAL *@
                     <div class="ratings-row global-row">
                         <div class="metric-cell global-metric">Global</div>
                         <div class="rating-cell">
@@ -113,33 +87,89 @@
                             }
                         </div>
                     </div>
+
+                    <hr />
+                    <div class="ratings-row">
+                        <div class="metric-cell">Compliance</div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.GeminiComplianceRating)
+                        </div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.ChatGptComplianceRating)
+                        </div>
+                    </div>
+
+                    <div class="ratings-row">
+                        <div class="metric-cell">Relevância</div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.GeminiRelevanceRating)
+                        </div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.ChatGptRelevanceRating)
+                        </div>
+                    </div>
+
+                    <div class="ratings-row">
+                        <div class="metric-cell">Tom</div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.GeminiToneRating)
+                        </div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.ChatGptToneRating)
+                        </div>
+                    </div>
+
+                    <div class="ratings-row">
+                        <div class="metric-cell">Concisão</div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.GeminiConcisenessRating)
+                        </div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.ChatGptConcisenessRating)
+                        </div>
+                    </div>
+
+                    <div class="ratings-row">
+                        <div class="metric-cell">Clareza</div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.GeminiClarityRating)
+                        </div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.ChatGptClarityRating)
+                        </div>
+                    </div>
+
+                    <div class="ratings-row">
+                        <div class="metric-cell">Legibilidade</div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.GeminiReadabilityRating)
+                        </div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.ChatGptReadabilityRating)
+                        </div>
+                    </div>
+
+                    <div class="ratings-row">
+                        <div class="metric-cell">Efeito Halo</div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.GeminiHaloEffectRating)
+                        </div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.ChatGptHaloEffectRating)
+                        </div>
+                    </div>
+
+                    <div class="ratings-row">
+                        <div class="metric-cell">Segurança</div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.GeminiSafetyRating)
+                        </div>
+                        <div class="rating-cell">
+                            @RenderRating(Response.ChatGptSafetyRating)
+                        </div>
+                    </div>
+
                 </div>
-
-                @* <div class="model-grid-container">
-                    <div class="model-grid-header">
-                        <div class="model-cell header-cell">
-                            <FluentIcon Value="@(new Icons.Regular.Size16.Table())" Color="Color.Accent" />
-                            <span>Tempo</span>
-                        </div>
-
-                        <div class="model-cell header-cell">
-                            <FluentIcon Value="@(new Icons.Regular.Size16.Calendar())" Color="Color.Accent" />
-                            <span>Carga</span>
-                        </div>
-
-                        <div class="model-cell header-cell">
-                            <FluentIcon Value="@(new Icons.Regular.Size16.TopSpeed())" Color="Color.Accent" />
-                            <span>Total de Tokens</span>
-                        </div>
-
-                    </div>
-
-                    <div class="model-grid-row">
-                        <div class="model-cell">@Response.TempoPuroFormatado</div>
-                        <div class="model-cell">@Response.TempoCargaFormatado</div>
-                        <div class="model-cell">@Response.TamanhoTokens</div>
-                    </div>
-                </div> *@
             </div>
         }
     </FluentDialogBody>
@@ -169,6 +199,25 @@
         await OnClose.InvokeAsync();
         await VisibleChanged.InvokeAsync(false);
     }
+
+    // Helper render fragment para evitar repetição massiva de if/else no HTML
+    private RenderFragment RenderRating(int? rating) => builder =>
+    {
+        if (rating.HasValue && rating > 0)
+        {
+            builder.OpenElement(0, "span");
+            builder.AddAttribute(1, "class", "rating-value");
+            builder.AddContent(2, rating.Value);
+            builder.CloseElement();
+        }
+        else
+        {
+            builder.OpenElement(0, "span");
+            builder.AddAttribute(1, "class", "rating-empty");
+            builder.AddContent(2, "—");
+            builder.CloseElement();
+        }
+    };
 }
 
 <style>
@@ -182,7 +231,7 @@
         gap: 24px;
     }
 
-    /* RATINGS GRID - CSS Grid layout (no tables) */
+    /* RATINGS GRID - CSS Grid layout */
     .ratings-grid-container {
         display: flex;
         flex-direction: column;
@@ -195,7 +244,7 @@
 
     .ratings-header {
         display: grid;
-        grid-template-columns: 100px 1fr 1fr;
+        grid-template-columns: 140px 1fr 1fr;
         gap: 0;
         background-color: var(--neutral-layer-2);
         border-bottom: 2px solid var(--neutral-stroke-divider);
@@ -204,7 +253,7 @@
 
     .ratings-row {
         display: grid;
-        grid-template-columns: 100px 1fr 1fr;
+        grid-template-columns: 140px 1fr 1fr;
         gap: 0;
         border-bottom: 1px solid var(--neutral-stroke-rest);
     }
@@ -218,12 +267,13 @@
         }
 
     .metric-cell {
-        padding: 12px;
+        padding: 10px 12px;
         text-align: left;
         font-weight: 600;
         color: var(--neutral-foreground-secondary);
         display: flex;
         align-items: center;
+        font-size: 13px;
     }
 
         .metric-cell.header-metric {
@@ -236,7 +286,7 @@
         }
 
     .rating-cell {
-        padding: 12px;
+        padding: 10px 12px;
         text-align: center;
         display: flex;
         align-items: center;
@@ -258,12 +308,13 @@
         display: inline-block;
         font-weight: 700;
         color: var(--accent-fill-rest);
-        font-size: 16px;
+        font-size: 15px;
         min-width: 30px;
     }
 
         .rating-value.global-value {
             color: var(--accent-fill-rest);
+            font-size: 16px;
         }
 
     .rating-empty {
@@ -281,51 +332,6 @@
             background-color: rgba(0, 120, 212, 0.08);
         }
 
-    .info-grid-container {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-        padding: 0;
-        background-color: var(--neutral-layer-1);
-        border: 1px solid var(--neutral-stroke-rest);
-        border-radius: 4px;
-        overflow: hidden;
-    }
-
-    .info-row {
-        display: grid;
-        grid-template-columns: fr 1fr;
-        gap: 0;
-        border-bottom: 1px solid var(--neutral-stroke-rest);
-        padding: 0;
-    }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .info-row:hover {
-            background-color: rgba(0, 0, 0, 0.02);
-        }
-
-    .info-label {
-        padding: 12px;
-        font-weight: 600;
-        color: var(--neutral-foreground-rest);
-        text-align: left;
-        display: flex;
-        align-items: center;
-    }
-
-    .info-value {
-        padding: 12px;
-        color: var(--neutral-foreground-secondary);
-        text-align: right;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-    }
-
     .prompt-citacao {
         max-height: 18.0em;
         overflow-y: auto;
@@ -335,52 +341,4 @@
         font-size: 14px;
         line-height: 1.5;
     }
-
-    .model-grid-container {
-        display: flex;
-        flex-direction: column;
-        background-color: var(--neutral-layer-1);
-        border: 1px solid var(--neutral-stroke-rest);
-        border-radius: 4px;
-        overflow: hidden;
-    }
-
-    .model-grid-header {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        background-color: var(--neutral-layer-2);
-        border-bottom: 2px solid var(--neutral-stroke-divider);
-    }
-
-    .model-grid-row {
-        display: grid;        
-        grid-template-columns: 1fr 1fr 1fr;
-        border-bottom: 1px solid var(--neutral-stroke-rest);
-    }
-
-        .model-grid-row:last-child {
-            border-bottom: none;
-        }
-
-        .model-grid-row:hover {
-            background-color: rgba(0, 0, 0, 0.02);
-        }
-
-    .model-cell {
-        padding: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--neutral-foreground-rest);
-        font-size: 14px;
-    }
-
-    .header-cell {
-        gap: 6px;
-        font-weight: 600;
-        color: var(--neutral-foreground-rest);
-        font-size: 13px;
-        justify-content: center;
-    }
-
 </style>

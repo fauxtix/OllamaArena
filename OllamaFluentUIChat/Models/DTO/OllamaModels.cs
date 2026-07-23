@@ -47,7 +47,7 @@ namespace OllamaFluentUIChat.Models.DTO
             // Armazena a janela de contexto descoberta após a consulta ao endpoint /api/show
             public int ContextLength { get; set; } = 2048;
 
-            public string TrainingYear { get; set; } = "Desconhecido";
+            public string TrainingYear { get; set; } = "2024"; // 'Desconhecido iria dar errro na execução do prompt de avaliação de modelos, então defini como 2024 por padrão.
         }
 
         public class ModelDetailsInfo

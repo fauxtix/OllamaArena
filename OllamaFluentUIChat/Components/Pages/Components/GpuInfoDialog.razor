@@ -45,18 +45,21 @@
     </FluentDialogBody>
 
     <FluentDialogFooter>
-        <FluentButton Appearance="Appearance.Stealth" OnClick="Close">
-            Fechar
-        </FluentButton>
+        <div class="dialog-footer-right">
+            <FluentButton Appearance="Appearance.Stealth"
+                          OnClick="Close"
+                          class="btn-fechar">
+                Fechar
+            </FluentButton>
+        </div>
     </FluentDialogFooter>
-
 </FluentDialog>
 
 @code {
     [Parameter, EditorRequired]
     public bool Visible { get; set; } = false;
 
-    [Parameter] public EventCallback<bool> VisibleChanged  { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
 
     private Task OnVisibleChanged(bool value)
     {
@@ -71,6 +74,26 @@
 
     public async Task Close()
     {
-            await VisibleChanged.InvokeAsync(false);
+        await VisibleChanged.InvokeAsync(false);
     }
 }
+<style>
+    .dialog-footer-right {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+        padding: 8px 0;
+    }
+
+    .btn-fechar {
+        border-radius: 6px;
+        border: 1px solid var(--neutral-stroke-rest);
+        padding: 8px 20px;
+        min-width: 90px;
+    }
+
+        .btn-fechar:hover {
+            background-color: var(--neutral-layer-3);
+            border-color: var(--neutral-stroke-strong);
+        }
+</style>
