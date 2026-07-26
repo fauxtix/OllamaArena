@@ -29,8 +29,8 @@
         <div>
             <FluentDataGrid Items="@History.AsQueryable()"
                             Pagination="@pagination">
-                <PropertyColumn Property="@(h => h.Prompt)"
-                                Title="Prompt"
+                <PropertyColumn Property="@(h => h.Descricao)"
+                                Title="Descrição do Prompt"
                                 Width="250px"
                                 Tooltip="true" />
                 <PropertyColumn Property="@(h => h.Modelo)"

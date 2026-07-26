@@ -1,9 +1,11 @@
 @using OllamaFluentUIChat.Models.DTO
+@using OllamaFluentUIChat.Services.Interfaces.Repositories
+@inject IBenchmarkRepository BenchmarkRepo
 
 <FluentDialog Hidden="@(!Visible)"
               Modal="true"
               Class="evaluation-detail-benchmark"
-              Style="--dialog-width: 800px; --dialog-height: auto;"
+              Style="--dialog-width: 900px; --dialog-height: auto;"
               TrapFocus="true"
               AriaLabel="Detalhes da Avaliação Benchmark">
 
@@ -11,7 +13,7 @@
         <FluentStack Orientation="Orientation.Horizontal"
                      VerticalAlignment="VerticalAlignment.Center">
 
-            <div style="display: flex; align-items: flex-start; gap: 10px;">
+            <div style="display: flex; align-items: flex-start; gap: 10px; width: 100%;">
                 <FluentIcon Value="@(new Icons.Regular.Size24.Eye())" />
                 <FluentLabel Typo="Typography.Body">
                     Detalhes - @Response?.NomeModelo
@@ -25,174 +27,238 @@
     </FluentDialogHeader>
 
     <FluentDialogBody>
-
         @if (Response != null)
         {
             <div class="detail-container">
-                <div class="ratings-grid-container">
-                    <div class="ratings-header">
-                        <div class="metric-cell header-metric">Métrica</div>
-                        <div class="rating-cell header-cell">
-                            <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())" Color="Color.Accent" />
-                            <span>Google Gemini</span>
-                        </div>
-                        <div class="rating-cell header-cell">
-                            <FluentIcon Value="@(new Icons.Regular.Size16.Chat())" Color="Color.Accent" />
-                            <span>Open AI ChatGPT</span>
-                        </div>
-                    </div>
+                <hr />
+                <FluentTabs ActiveTabId="tab-metrics">
 
-                    @* 1. FACTUAL *@
-                    <div class="ratings-row">
-                        <div class="metric-cell">Factual</div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.GeminiFactualRating)
-                        </div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.ChatGptFactualRating)
-                        </div>
-                    </div>
+                    @* ABA 1: MÉTRICAS E PONTUAÇÕES *@
+                    <FluentTab Id="tab-metrics">
+                        <Header>
+                            <FluentIcon Value="@(new Icons.Regular.Size16.DataHistogram())" Style="margin-right: 6px;" />
+                            <span>Métricas</span>
+                        </Header>
+                        <Content>
+                            <div class="tab-content-wrapper">
+                                <div class="ratings-grid-container">
+                                    <div class="ratings-header">
+                                        <div class="metric-cell header-metric">Métrica</div>
+                                        <div class="rating-cell header-cell">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())" Color="Color.Accent" />
+                                            <span>Google Gemini</span>
+                                        </div>
+                                        <div class="rating-cell header-cell">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Chat())" Color="Color.Accent" />
+                                            <span>Open AI ChatGPT</span>
+                                        </div>
+                                    </div>
 
-                    @* 2. FORMATAÇÃO *@
-                    <div class="ratings-row">
-                        <div class="metric-cell">Formatação</div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.GeminiFormattingRating)
-                        </div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.ChatGptFormattingRating)
-                        </div>
-                    </div>
-                    @* PONTUAÇÃO GLOBAL *@
-                    <div class="ratings-row global-row">
-                        <div class="metric-cell global-metric">Global</div>
-                        <div class="rating-cell">
-                            @if (Response.GeminiRating > 0)
-                            {
-                                <span class="rating-value global-value">@Response.GeminiRating</span>
-                            }
-                            else
-                            {
-                                <span class="rating-empty">—</span>
-                            }
-                        </div>
-                        <div class="rating-cell">
-                            @if (Response.ChatGptRating > 0)
-                            {
-                                <span class="rating-value global-value">@Response.ChatGptRating</span>
-                            }
-                            else
-                            {
-                                <span class="rating-empty">—</span>
-                            }
-                        </div>
-                    </div>
+                                    @* 1. FACTUAL *@
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">Factual</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiFactualRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.ChatGptFactualRating)</div>
+                                    </div>
 
-                    <hr />
-                    <div class="ratings-row">
-                        <div class="metric-cell">Compliance</div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.GeminiComplianceRating)
-                        </div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.ChatGptComplianceRating)
-                        </div>
-                    </div>
+                                    @* 2. FORMATAÇÃO *@
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">Formatação</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiFormattingRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.ChatGptFormattingRating)</div>
+                                    </div>
 
-                    <div class="ratings-row">
-                        <div class="metric-cell">Relevância</div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.GeminiRelevanceRating)
-                        </div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.ChatGptRelevanceRating)
-                        </div>
-                    </div>
+                                    @* PONTUAÇÃO GLOBAL *@
+                                    <div class="ratings-row global-row">
+                                        <div class="metric-cell global-metric">Global</div>
+                                        <div class="rating-cell">
+                                            @if (Response.GeminiRating > 0)
+                                            {
+                                                <span class="rating-value global-value">@Response.GeminiRating</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="rating-empty">—</span>
+                                            }
+                                        </div>
+                                        <div class="rating-cell">
+                                            @if (Response.ChatGptRating > 0)
+                                            {
+                                                <span class="rating-value global-value">@Response.ChatGptRating</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="rating-empty">—</span>
+                                            }
+                                        </div>
+                                    </div>
 
-                    <div class="ratings-row">
-                        <div class="metric-cell">Tom</div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.GeminiToneRating)
-                        </div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.ChatGptToneRating)
-                        </div>
-                    </div>
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">Compliance</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiComplianceRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.ChatGptComplianceRating)</div>
+                                    </div>
 
-                    <div class="ratings-row">
-                        <div class="metric-cell">Concisão</div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.GeminiConcisenessRating)
-                        </div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.ChatGptConcisenessRating)
-                        </div>
-                    </div>
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">Relevância</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiRelevanceRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.ChatGptRelevanceRating)</div>
+                                    </div>
 
-                    <div class="ratings-row">
-                        <div class="metric-cell">Clareza</div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.GeminiClarityRating)
-                        </div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.ChatGptClarityRating)
-                        </div>
-                    </div>
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">Tom</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiToneRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.ChatGptToneRating)</div>
+                                    </div>
 
-                    <div class="ratings-row">
-                        <div class="metric-cell">Legibilidade</div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.GeminiReadabilityRating)
-                        </div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.ChatGptReadabilityRating)
-                        </div>
-                    </div>
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">Concisão</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiConcisenessRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.ChatGptConcisenessRating)</div>
+                                    </div>
 
-                    <div class="ratings-row">
-                        <div class="metric-cell">Efeito Halo</div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.GeminiHaloEffectRating)
-                        </div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.ChatGptHaloEffectRating)
-                        </div>
-                    </div>
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">Clareza</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiClarityRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.ChatGptClarityRating)</div>
+                                    </div>
 
-                    <div class="ratings-row">
-                        <div class="metric-cell">Segurança</div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.GeminiSafetyRating)
-                        </div>
-                        <div class="rating-cell">
-                            @RenderRating(Response.ChatGptSafetyRating)
-                        </div>
-                    </div>
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">Legibilidade</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiReadabilityRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.ChatGptReadabilityRating)</div>
+                                    </div>
 
-                </div>
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">Efeito Halo</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiHaloEffectRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.ChatGptHaloEffectRating)</div>
+                                    </div>
+
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">Segurança</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiSafetyRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.ChatGptSafetyRating)</div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </Content>
+                    </FluentTab>
+
+                    @* ABA 2: FEEDBACKS (CARDS LADO A LADO) *@
+                    <FluentTab Id="tab-feedbacks">
+                        <Header>
+                            <FluentIcon Value="@(new Icons.Regular.Size16.CommentMultiple())" Style="margin-right: 6px;" />
+                            <span>Feedbacks dos Juízes</span>
+                        </Header>
+                        <Content>
+                            <div class="tab-content-wrapper">
+                                @if (_isLoadingFeedback)
+                                {
+                                    <div style="display: flex; justify-content: center; padding: 40px;">
+                                        <FluentProgressRing />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <FluentGrid Spacing="3" Justify="JustifyContent.FlexStart">
+
+                                        @* CARD GEMINI *@
+                                        <FluentGridItem xs="12" sm="6">
+                                            <FluentCard Class="feedback-card">
+                                                <div class="feedback-card-header">
+                                                    <FluentIcon Value="@(new Icons.Regular.Size20.Sparkle())" Color="Color.Accent" />
+                                                    <FluentLabel Typo="Typography.H5" Weight="FontWeight.Bold" Style="color: #7B68EE;">Google Gemini</FluentLabel>
+                                                </div>
+                                                <div class="feedback-card-body">
+                                                    @if (!string.IsNullOrWhiteSpace(Feedback?.GeminiFeedback))
+                                                    {
+                                                        <div class="feedback-text">@Feedback.GeminiFeedback</div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <p class="feedback-empty">Nenhum feedback registrado.</p>
+                                                    }
+                                                </div>
+                                            </FluentCard>
+                                        </FluentGridItem>
+
+                                        @* CARD CHATGPT *@
+                                        <FluentGridItem xs="12" sm="6">
+                                            <FluentCard Class="feedback-card">
+                                                <div class="feedback-card-header">
+                                                    <FluentIcon Value="@(new Icons.Regular.Size20.Chat())" Color="Color.Accent" />
+                                                    <FluentLabel Typo="Typography.H5" Weight="FontWeight.Bold" Style="color: #7B68EE;">OpenAI ChatGPT</FluentLabel>
+                                                </div>
+                                                <div class="feedback-card-body">
+                                                    @if (!string.IsNullOrWhiteSpace(Feedback?.ChatGptFeedback))
+                                                    {
+                                                        <div class="feedback-text">@Feedback.ChatGptFeedback</div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <p class="feedback-empty">Nenhum feedback registrado.</p>
+                                                    }
+                                                </div>
+                                            </FluentCard>
+                                        </FluentGridItem>
+
+                                    </FluentGrid>
+                                }
+                            </div>
+                        </Content>
+                    </FluentTab>
+
+                </FluentTabs>
             </div>
         }
     </FluentDialogBody>
 
     <FluentDialogFooter>
         <FluentSpacer />
-
-        <FluentButton Appearance="Appearance.Outline" Color="Color.Neutral"
-                      OnClick="Fechar">
+        <FluentButton Appearance="Appearance.Outline" Color="Color.Neutral" OnClick="Fechar">
             Fechar
         </FluentButton>
-
     </FluentDialogFooter>
 
 </FluentDialog>
 
 @code {
+    [Inject] public IBenchmarkRepository? BenchmarkRepository { get; set; }
     [Parameter, EditorRequired] public BenchmarkEvaluationModel? Response { get; set; }
-
     [Parameter, EditorRequired] public bool Visible { get; set; }
     [Parameter, EditorRequired] public EventCallback<bool> VisibleChanged { get; set; }
-
     [Parameter] public EventCallback OnClose { get; set; }
+
+    protected PromptFeedback Feedback { get; set; } = new();
+    private int _lastResponseId;
+    private bool _isLoadingFeedback = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Response is not null && Response.Id != _lastResponseId)
+        {
+            _lastResponseId = Response.Id;
+            await GetJudgesFeedback();
+        }
+    }
+
+    protected async Task GetJudgesFeedback()
+    {
+        if (Response is not null && BenchmarkRepository is not null)
+        {
+            _isLoadingFeedback = true;
+            try
+            {
+                Feedback = await BenchmarkRepository.GetBenchmarkJudgesFeedbackByIdAsync(Response.Id) ?? new();
+            }
+            finally
+            {
+                _isLoadingFeedback = false;
+            }
+        }
+    }
 
     private async Task Fechar()
     {
@@ -200,7 +266,6 @@
         await VisibleChanged.InvokeAsync(false);
     }
 
-    // Helper render fragment para evitar repetição massiva de if/else no HTML
     private RenderFragment RenderRating(int? rating) => builder =>
     {
         if (rating.HasValue && rating > 0)
@@ -221,14 +286,57 @@
 }
 
 <style>
-    .evaluation-detail-benchmark {
-        /* Dialog styling inherited from Fluent UI */
-    }
-
     .detail-container {
         display: flex;
         flex-direction: column;
-        gap: 24px;
+        gap: 16px;
+    }
+
+    .tab-content-wrapper {
+        padding-top: 16px;
+    }
+
+    /* CARDS DE FEEDBACK */
+    .feedback-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 320px;
+        background-color: var(--neutral-layer-1);
+        border: 1px solid var(--neutral-stroke-rest);
+        border-radius: 6px;
+        padding: 12px 16px;
+    }
+
+    .feedback-card-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--neutral-stroke-divider);
+        margin-bottom: 12px;
+    }
+
+    .feedback-card-body {
+        flex: 1;
+        max-height: 350px;
+        overflow-y: auto;
+        padding-right: 6px;
+    }
+
+    .feedback-text {
+        white-space: pre-wrap;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        color: var(--neutral-foreground-rest);
+    }
+
+    .feedback-empty {
+        color: var(--neutral-foreground-hint);
+        font-style: italic;
+        text-align: center;
+        margin-top: 40px;
+        font-size: 13px;
     }
 
     /* RATINGS GRID - CSS Grid layout */

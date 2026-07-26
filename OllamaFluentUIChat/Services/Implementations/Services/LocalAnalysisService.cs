@@ -16,7 +16,7 @@ public class LocalAnalysisService : IAnalysisService
     private string analysisSystemPrompt = string.Empty;
 
     private const string OllamaEndpoint = "http://localhost:11434/api/chat";
-    private const string ModelName = "Qwen2.5:3b";
+    private const string ModelName = "phi4-mini:3.8b";
 
     public LocalAnalysisService(HttpClient httpClient,
                                 ILogger<LocalAnalysisService> logger,
@@ -25,7 +25,7 @@ public class LocalAnalysisService : IAnalysisService
     {
         _httpClient = httpClient;
         _logger = logger;
-        _httpClient.Timeout = TimeSpan.FromMinutes(5); 
+        _httpClient.Timeout = TimeSpan.FromMinutes(5);
         _benchmarkRepository = benchmarkRepository;
         _promptFilesService = promptFilesService;
     }
@@ -41,9 +41,25 @@ public class LocalAnalysisService : IAnalysisService
         }
 
         var stopwatch = Stopwatch.StartNew();
-         analysisSystemPrompt =  await _promptFilesService.GetPromptFileContentAsync("analysis-prompt.txt") ?? string.Empty;
 
-        // 1. Converter os dados complexos numa tabela Markdown compacta (O LLM gosta deste formato)
+        var modeloMaisRapido = benchmarks
+            .OrderByDescending(b => b.TokensPorSegundo)
+            .FirstOrDefault();
+
+        var maxTokens = modeloMaisRapido?.TokensPorSegundo ?? 0;
+
+        var modeloMelhorAvaliado = benchmarks
+            .Select(b => new
+            {
+                Model = b.NomeModelo,
+                AvgRating = (b.GeminiRating + b.ChatGptRating +
+                            b.GeminiFormattingRating + b.ChatGptFormattingRating) / 4.0
+            })
+            .OrderByDescending(x => x.AvgRating)
+            .FirstOrDefault()?.Model ?? "N/A";
+
+        analysisSystemPrompt = await _promptFilesService.GetPromptFileContentAsync("analysis-prompt.txt") ?? string.Empty;
+
         var markdownTable = GenerateMarkdownTable(benchmarks);
 
         var payload = new
@@ -51,29 +67,19 @@ public class LocalAnalysisService : IAnalysisService
             model = ModelName,
             messages = new[]
             {
-                new
-                {
-                    role = "system",
-                    content = analysisSystemPrompt
-                },
-                new
-                {
-                    role = "user",
-                    content = $"""
-                        Below is the table showing the benchmark results.
-
-                        {markdownTable}
-                        """
-                }
-            },
+        new { role = "system", content = analysisSystemPrompt },
+        new { role = "user", content = $"Below is the table showing the benchmark results across prompts:\n\n{markdownTable}" }
+    },
             stream = false,
             options = new
             {
-                temperature = 0.1
+                temperature = 0.0,
+                seed = 42,
+                top_k = 1,
+                top_p = 0.1
             },
             format = "json"
         };
-
         var requestContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
         try
@@ -89,53 +95,61 @@ public class LocalAnalysisService : IAnalysisService
             string responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
             using var doc = JsonDocument.Parse(responseBody);
-            string contentGerado = doc.RootElement
+            string generatedContent = doc.RootElement
                 .GetProperty("message")
                 .GetProperty("content")
                 .GetString() ?? string.Empty;
 
-            var resultado = JsonSerializer.Deserialize<BenchmarkAnalysisResult>(contentGerado);
-            stopwatch.Stop();
+            var resultado = JsonSerializer.Deserialize<BenchmarkAnalysisResult>(generatedContent);
 
-            resultado?.TempoAnaliseFormatado = stopwatch.Elapsed.ToString(@"mm\:ss");
-            return resultado ?? GetFallback(benchmarks);
+            if (resultado != null)
+            {
+                resultado.ModeloMaisRapido = modeloMaisRapido?.NomeModelo ?? "N/A";
+                resultado.MaxTokensSec = Math.Round(maxTokens, 2); 
+                resultado.ModeloMelhorAvaliado = modeloMelhorAvaliado;
+
+                stopwatch.Stop();
+                resultado.TempoAnaliseFormatado = stopwatch.Elapsed.ToString(@"mm\:ss");
+
+                return resultado;
+            }
         }
         catch (OperationCanceledException)
         {
-            _logger.LogInformation("Análise cancelada pelo utilizador.");
+            _logger.LogWarning("Análise cancelada pelo utilizador.");
             throw new OperationCanceledException();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao desserializar a resposta do modelo. Retornando fallback amigável.");
-            stopwatch.Stop();
-
-            // Fallback
-            return new BenchmarkAnalysisResult
-            {
-                Sumario = "⚠️ A análise local foi concluída, mas o modelo não conseguiu estruturar os dados em JSON.",
-                AnaliseDetalhada = "Erro durante o processamento.",
-                ModeloMaisRapido = "Ver Detalhes",
-                ModeloMelhorAvaliado = "Ver Detalhes",
-                TempoAnaliseFormatado = stopwatch.Elapsed.ToString(@"mm\:ss")
-            };
+            _logger.LogError(ex, "Erro na geração da análise textual");
         }
+
+        stopwatch.Stop();
+        return new BenchmarkAnalysisResult
+        {
+            Sumario = "Análise concluída com sucesso.",
+            AnaliseDetalhada = "Não foi possível gerar a análise textual detalhada devido a um erro técnico.",
+            ModeloMaisRapido = modeloMaisRapido?.NomeModelo ?? "N/A",
+            MaxTokensSec = Math.Round(maxTokens, 2),
+            ModeloMelhorAvaliado = modeloMelhorAvaliado,
+            TempoAnaliseFormatado = stopwatch.Elapsed.ToString(@"mm\:ss")
+        };
     }
 
     private string GenerateMarkdownTable(List<BenchmarkEvaluationModel> lista)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("| Prompt ID | Model | Gemini Rating | ChatGPT Rating |  Gemini Format Rating | ChatGPT Format Rating | Tokens/s | Time it took |");
-        sb.AppendLine("|---|---|---|---|---|---|");
+        // A inclusão do 'Test ID' permite ao LLM distinguir as execuções do mesmo modelo
+        sb.AppendLine("| Test ID | Model | Gemini Rating | ChatGPT Rating | Gemini Format Rating | ChatGPT Format Rating | Tokens/s | Time (ms) |");
+        sb.AppendLine("|---|---|---|---|---|---|---|---|");
 
         foreach (var item in lista)
         {
-            sb.AppendLine($"| {item.PromptId} | {item.NomeModelo} | {item.GeminiRating} | {item.ChatGptRating} | {item.ChatGptFormattingRating} | {item.GeminiFormattingRating} {item.TokensPorSegundo:F1} | {item.TempoPuroFormatado} |");
+            sb.AppendLine($"| {item.Id} | {item.NomeModelo} | {item.GeminiRating} | {item.ChatGptRating} | {item.GeminiFormattingRating} | {item.ChatGptFormattingRating} | {item.TokensPorSegundo:F1} | {item.TempoPuroMs} |");
         }
 
         return sb.ToString();
     }
-
     private BenchmarkAnalysisResult GetFallback(List<BenchmarkEvaluationModel> benchmarks)
     {
         var fasterModel = benchmarks.OrderByDescending(b => b.TokensPorSegundo).FirstOrDefault();
@@ -149,92 +163,5 @@ public class LocalAnalysisService : IAnalysisService
         };
     }
 
-    public async Task<BenchmarkAnalysisResult> AnalisarBenchmarksWithStreamingAsync(
-        List<BenchmarkEvaluationModel> benchmarks,
-        Action<string>? onPartialOutput,
-        CancellationToken cancellationToken = default)
-    {
-        if (benchmarks == null || !benchmarks.Any())
-        {
-            return new BenchmarkAnalysisResult { Sumario = "Não existem dados para analisar." };
-        }
 
-        var stopwatch = Stopwatch.StartNew();
-        var markdownTable = GenerateMarkdownTable(benchmarks);
-
-        var payload = new
-        {
-            model = ModelName,
-            messages = new[]
-            {
-            new { role = "system", content = analysisSystemPrompt },
-            new { role = "user", content = $"Segue a tabela:\n\n{markdownTable}" }
-        },
-            stream = false, 
-            options = new { temperature = 0.1 },
-            format = "json"
-        };
-
-        var requestContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-
-        using var request = new HttpRequestMessage(HttpMethod.Post, OllamaEndpoint)
-        {
-            Content = requestContent
-        };
-
-        using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
-
-        var sb = new StringBuilder();
-
-        while (true)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var line = await reader.ReadLineAsync();
-            if (line == null)
-                break;
-
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
-
-            using var doc = JsonDocument.Parse(line);
-
-            if (doc.RootElement.TryGetProperty("message", out var msg))
-            {
-                string? content = msg.GetProperty("content").GetString();
-                sb.Append(content);
-                onPartialOutput?.Invoke(content ?? string.Empty);
-            }
-
-            if (doc.RootElement.TryGetProperty("done", out var doneFlag) &&
-                doneFlag.GetBoolean())
-            {
-                break;
-            }
-        }
-
-        var jsonFinal = sb.ToString();
-
-        try
-        {
-            var resultado = JsonSerializer.Deserialize<BenchmarkAnalysisResult>(jsonFinal);
-            stopwatch.Stop();
-
-            if (resultado != null)
-            {
-                resultado.TempoAnaliseFormatado = stopwatch.Elapsed.ToString(@"mm\:ss");
-                return resultado;
-            }
-        }
-        catch
-        {
-            // fallback
-        }
-
-        return GetFallback(benchmarks);
-    }
 }

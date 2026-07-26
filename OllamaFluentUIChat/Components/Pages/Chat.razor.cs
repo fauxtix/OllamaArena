@@ -72,13 +72,14 @@ namespace OllamaFluentUIChat.Components.Pages
         protected override async Task OnInitializedAsync()
         {
             _messages.Add(new Models.DTO.ChatMessage { User = "Ollama", Text = "Olá! Como posso ajudar?" });
-            await GetModelsInfoAsync();
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender)
             {
+                await GetModelsInfoAsync();
+
                 _dotNetRef = DotNetObjectReference.Create(this);
                 await JS.InvokeVoidAsync("chatInput.attachHandlers", chatInputRef, _dotNetRef);
             }
@@ -90,35 +91,39 @@ namespace OllamaFluentUIChat.Components.Pages
 
             try
             {
-                // Verifica se o Ollama está a correr
-                var isOllamaRunning = true; // await OllamaChecker.IsOllamaRunningAsync();
-                if (!isOllamaRunning)
-                {
-                    showOllamaError = true;
-                    ollamaErrorMessage = "O servidor Ollama não está em execução. Por favor, inicie o Ollama.";
+                isLoadingModels = true;
+                StateHasChanged();
 
-                    _logger?.LogError("Ollama server is not running.");
-                    return;
+                var localModels = await LoadModelsFromLocalStorage();
+
+                if (localModels.Count > 0)
+                {
+                    _models = localModels;
+
+                    ModelName = _models.First();
+
+                    var allModels = await GpuService!.GetLocalModelsAsync();
+                    var currentModelDetails = allModels?.Models?
+                        .FirstOrDefault(m =>
+                            m.Name.Equals(ModelName, StringComparison.OrdinalIgnoreCase) ||
+                            m.Model.Equals(ModelName, StringComparison.OrdinalIgnoreCase));
+
+                    if (currentModelDetails != null)
+                        _gpuReport = GpuService.CheckGpuCompatibility(currentModelDetails.SizeInBytes);
+
+                    StateHasChanged();
                 }
                 else
                 {
-                    isLoadingModels = true;
-                    StateHasChanged();
-
                     var allModels = await GpuService!.GetLocalModelsAsync();
                     _models.Clear();
                     _models.AddRange(allModels.Models.Select(m => m.Model));
 
-                    if (string.IsNullOrEmpty(ModelName))
+                    await SaveModelsToLocalStorage();
+
+                    if (_models.Count > 0)
                     {
-                        if (_models.Contains(_modelName))
-                        {
-                            ModelName = _modelName;
-                        }
-                        else if (_models.Count > 0)
-                        {
-                            ModelName = _models.First();
-                        }
+                        ModelName = _models.First();
                     }
 
                     var currentModelDetails = allModels?.Models?
@@ -142,8 +147,24 @@ namespace OllamaFluentUIChat.Components.Pages
                 showOllamaError = false;
                 StateHasChanged();
             }
-
         }
+        private async Task  SaveModelsToLocalStorage()
+        {
+            var modelsJson = JsonSerializer.Serialize(_models);
+            await JS.InvokeVoidAsync("localStorage.setItem", "ollamaModels", modelsJson);
+        }
+
+        private async Task<List<string>> LoadModelsFromLocalStorage()
+        {
+            var modelsJson = await  JS.InvokeAsync<string>("localStorage.getItem", "ollamaModels");
+            if (!string.IsNullOrEmpty(modelsJson))
+            {
+                return JsonSerializer.Deserialize<List<string>>(modelsJson) ?? new List<string>();
+            }
+            return [];
+        }
+
+
         private async Task ShowGpuInfoDialogAsync()
         {
             if (DialogService == null) return;
@@ -198,22 +219,18 @@ namespace OllamaFluentUIChat.Components.Pages
             var userPrompt = _currentMessage;
 
             _messages.Add(new Models.DTO.ChatMessage { User = "Tu", Text = userPrompt, IsCurrentUser = true });
-
             _currentMessage = string.Empty;
             _inputKey++;
             _isThinking = true;
-
             StateHasChanged();
             await ForceScrollToBottomAsync();
 
             var aiMessage = new Models.DTO.ChatMessage { User = "Ollama", Text = "...", IsCurrentUser = false };
             _messages.Add(aiMessage);
-
             StateHasChanged();
             await ForceScrollToBottomAsync();
 
             _cts = new CancellationTokenSource();
-
             long loadDurationNs = 0;
             long evalDurationNs = 0;
             int evalCount = 0;
@@ -221,9 +238,8 @@ namespace OllamaFluentUIChat.Components.Pages
             try
             {
                 var historyPayload = new List<OllamaChatMessage>();
+
                 string systemInstructions = await PromptFilesService.GetPromptFileContentAsync("system-prompt.txt") ?? string.Empty;
-
-
                 historyPayload.Add(new OllamaChatMessage
                 {
                     Role = "system",
@@ -270,7 +286,16 @@ namespace OllamaFluentUIChat.Components.Pages
                     ModelName = "phi4-mini:latest";
                 }
 
-                int maxTokens = _gpuReport?.FitsInGpu == true ? 1500 : 1000;
+                double temperature = ChatMeasureTemperature.ObterTemperaturaRecomendada(userPrompt);
+
+                int baseTokens = _gpuReport?.FitsInGpu == true ? 1800 : 1200;
+                int maxTokens = temperature switch
+                {
+                    <= 0.25 => (int)(baseTokens * 1.15),
+                    >= 0.75 => (int)(baseTokens * 0.90),
+                    _ => baseTokens
+                };
+
                 var payload = new OllamaChatPayload
                 {
                     Model = ModelName,
@@ -278,13 +303,15 @@ namespace OllamaFluentUIChat.Components.Pages
                     Stream = true,
                     Options = new Dictionary<string, object>
                     {
-                        { "temperature", 0.2 },
-                        { "num_predict", maxTokens }
+                        { "temperature", Math.Round(temperature, 2)},
+                        { "num_predict", maxTokens },
+                        { "repeat_penalty", 1.1 },
+                        { "top_k", temperature <= 0.25 ? 40 : 600 },
+                        { "top_p", temperature <= 0.30 ? 0.85 : 0.92 }
                     }
                 };
+
                 var json = JsonSerializer.Serialize(payload);
-
-
                 using var request = new HttpRequestMessage(HttpMethod.Post, OllamaEndpoint);
                 request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -300,16 +327,15 @@ namespace OllamaFluentUIChat.Components.Pages
                 using var stream = await response.Content.ReadAsStreamAsync(_cts.Token);
                 var buffer = new byte[4096];
                 int bytesRead;
-
                 bool firstChunk = true;
 
                 if (_cts is null)
                 {
-                    //_cts = new CancellationTokenSource();
                     return;
                 }
 
                 var cts = _cts;
+
                 while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cts.Token)) > 0)
                 {
                     var chunkString = Encoding.UTF8.GetString(buffer, 0, bytesRead);
@@ -327,6 +353,7 @@ namespace OllamaFluentUIChat.Components.Pages
                             var root = doc.RootElement;
 
                             string? chunkText = null;
+
                             if (root.TryGetProperty("message", out var msgProp) && msgProp.TryGetProperty("content", out var contentProp))
                             {
                                 chunkText = contentProp.GetString();
@@ -358,10 +385,10 @@ namespace OllamaFluentUIChat.Components.Pages
                                 var metrics = JsonSerializer.Deserialize<OllamaMetrics>(singleLine);
                                 if (metrics != null)
                                 {
-                                    int totalTokens = metrics.PromptEvalCount + metrics.EvalCount;
+                                    // Guarda os valores exatamente como o Ollama envia (nanoseconds)
                                     loadDurationNs = metrics.LoadDuration;
                                     evalDurationNs = metrics.EvalDuration;
-                                    evalCount = totalTokens; // metrics.EvalCount;
+                                    evalCount = metrics.PromptEvalCount + metrics.EvalCount;
                                 }
                             }
                         }
@@ -376,7 +403,6 @@ namespace OllamaFluentUIChat.Components.Pages
                             _logger?.LogError(ocEx, "O streaming da resposta foi cancelado.");
                             aiMessage.Text = aiMessage.Text == "..." ? "⏱️ O tempo de resposta expirou." : aiMessage.Text + " *(Cancelado)*";
                         }
-
                         catch (Exception ex)
                         {
                             aiMessage.Text += $"\n[Erro inesperado: {ex.Message}]";
@@ -412,9 +438,9 @@ namespace OllamaFluentUIChat.Components.Pages
                                 _currentPromptId = await BenchmarkRepo.CreatePromptAsync(userPrompt);
                             }
 
-                            double loadMs = loadDurationNs / 1000000.0;
-                            double evalMs = evalDurationNs / 1000000.0;
-                            double tokensPerSecond = evalCount / (evalMs / 1000.0);
+                            // Cálculo de tokens/s (evalDurationNs está em nanoseconds)
+                            double evalSeconds = evalDurationNs / 1_000_000_000.0;
+                            double tokensPerSecond = evalCount / evalSeconds;
 
                             var newResponse = new BenchmarkResponse
                             {
@@ -422,8 +448,8 @@ namespace OllamaFluentUIChat.Components.Pages
                                 NomeModelo = ModelName,
                                 TextoResposta = aiMessage.Text,
                                 TokensPorSegundo = Math.Round(tokensPerSecond, 1),
-                                TempoPuroMs = Math.Round(evalMs, 0),
-                                TempoCargaMs = Math.Round(loadMs, 0),
+                                TempoPuroMs = evalDurationNs,   // valor cru (ns)
+                                TempoCargaMs = loadDurationNs,  // valor cru (ns)
                                 TamanhoTokens = evalCount
                             };
 
@@ -450,7 +476,6 @@ namespace OllamaFluentUIChat.Components.Pages
                 await ForceScrollToBottomAsync();
             }
         }
-
         private async Task CancelRequest()
         {
             try

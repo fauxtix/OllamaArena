@@ -3,6 +3,7 @@
     public class BenchmarkPrompt
     {
         public int Id { get; set; }
+        public string Descricao { get; set; } = string.Empty;
         public string TextoPrompt { get; set; } = string.Empty;
         public DateTime DataCriacao { get; set; }
 

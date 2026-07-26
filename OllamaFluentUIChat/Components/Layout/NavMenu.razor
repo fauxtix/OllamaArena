@@ -4,30 +4,53 @@
     <input type="checkbox" title="Menu expand/collapse toggle" id="navmenu-toggle" class="navmenu-icon" />
     <label for="navmenu-toggle" class="navmenu-icon">
         <FluentIcon Value="@(new Icons.Regular.Size20.Navigation())" Color="Color.Fill" />
-        </label>
+    </label>
     <nav class="sitenav" aria-labelledby="main-menu" onclick="document.getElementById('navmenu-toggle').click();">
-        <FluentNavMenu Id="main-menu" Collapsible="true" Width="250" Title="Navigation menu" @bind-Expanded="expanded" >
-            <FluentNavLink Href="/" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Home())" IconColor="Color.Accent">Home</FluentNavLink>
+        <FluentNavMenu Id="main-menu" Collapsible="true" Width="250" Title="Navigation menu" @bind-Expanded="expanded">
+            <FluentNavLink Href="/" Match="NavLinkMatch.All"
+                           Icon="@(new Icons.Regular.Size20.Home())"
+                           IconColor="Color.Accent">Home</FluentNavLink>
+
             <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
-            <FluentNavLink Href="/chat" Icon="@(new Icons.Regular.Size20.Chat())" IconColor="Color.Accent">Chat</FluentNavLink>
+
+            <FluentNavLink Href="/chat"
+                           Icon="@(new Icons.Regular.Size20.Chat())"
+                           IconColor="Color.Accent">Chat</FluentNavLink>
+
             <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
-            <FluentNavLink Href="/edit-prompts" Icon="@(new Icons.Regular.Size20.Chat())" IconColor="Color.Accent">Edit Prompts</FluentNavLink>
+
+            <FluentNavLink Href="/edit-prompts"
+                           Icon="@(new Icons.Regular.Size20.DocumentEdit())"
+                           IconColor="Color.Accent">Edit Prompts</FluentNavLink>
+
             <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
-            <FluentNavLink Href="/benchmark-evaluations" Icon="@(new Icons.Regular.Size20.BookToolbox())" IconColor="Color.Accent">Benchmarks</FluentNavLink>
-            <FluentNavLink Href="/benchmarks" Icon="@(new Icons.Regular.Size20.BookToolbox())" IconColor="Color.Accent">Qualidade e Métricas</FluentNavLink>
+
+            <FluentNavLink Href="/benchmark-evaluations"
+                           Icon="@(new Icons.Regular.Size20.DataBarVertical())"
+                           IconColor="Color.Accent">Benchmarks</FluentNavLink>
+
+            <FluentNavLink Href="/benchmarks"
+                           Icon="@(new Icons.Regular.Size20.DataBarHorizontal())"
+                           IconColor="Color.Accent">Qualidade e Métricas</FluentNavLink>
+
             <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
-            @* <FluentNavLink Href="/settings2" Icon="@(new Icons.Regular.Size20.Settings())" IconColor="Color.Accent">Modelos</FluentNavLink> *@
-            <FluentNavLink Href="/modelos-ollama" Icon="@(new Icons.Regular.Size20.Settings())" IconColor="Color.Accent">Modelos carregados</FluentNavLink>
+
+            <FluentNavLink Href="/modelos-ollama"
+                           Icon="@(new Icons.Regular.Size20.Bot())"
+                           IconColor="Color.Accent">Modelos carregados</FluentNavLink>
+
             <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
-            <FluentNavLink Href="/system-logs" Icon="@(new Icons.Regular.Size20.Settings())" IconColor="Color.Accent">Logs</FluentNavLink>
+
+            <FluentNavLink Href="/system-logs"
+                           Icon="@(new Icons.Regular.Size20.DocumentText())"
+                           IconColor="Color.Accent">Logs</FluentNavLink>
         </FluentNavMenu>
-    </nav>  
+    </nav>
 </div>
 
 @code {
     private bool expanded = true;
 }
-
 <style>
     .sitenav .nav-link.active {
         background-color: #f0f0f0; /* Change this to your desired highlight color */

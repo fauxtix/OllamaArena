@@ -89,11 +89,12 @@
                                             Gráfico
                                         </FluentButton>
 
-                                        <FluentButton Appearance="Appearance.Stealth"
+                                        <FluentButton Appearance="Appearance.Outline"
                                                       Color="Color.Error"
                                                       IconStart="@(new Icons.Regular.Size24.Delete())"
                                                       OnClick="@( async () => await DeletePromptAsync(prompt))"
-                                                      Title="Apagar registo"
+                                                      Title="Apagar benchmark"
+                                                      Style="--neutral-stroke-rest: #d32f2f; --neutral-stroke-hover: #c62828; color: #d32f2f;"
                                                       StopPropagation="true">
                                         </FluentButton>
 
@@ -152,11 +153,11 @@
                                                     <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" Color="Color.Neutral" />
                                                     <h4>@resp.NomeModelo</h4>
                                                 </div>
-                                                <div class="metricas-tags" style="display: flex; justify-content: space-around; align-items: center;">
+                                                <div class="metricas-tags" style="display: flex; justify-content: space-around; align-items: center; gap:16px">
                                                     <FluentBadge Appearance="Appearance.Accent">@resp.TokensPorSegundo T/s</FluentBadge>
-                                                    <FluentBadge Appearance="Appearance.Neutral">Eval: @(resp.TempoPuroMs)ms</FluentBadge>
-                                                    <FluentBadge Appearance="Appearance.Neutral">Load: @(resp.TempoCargaMs)ms</FluentBadge>
-                                                    <FluentBadge Appearance="Appearance.Neutral">Tokens: @resp.TamanhoTokens</FluentBadge>
+                                                    <FluentBadge Appearance="Appearance.Accent">Eval: @(resp.TempoPuroFormatado) m:s</FluentBadge>
+                                                    <FluentBadge Appearance="Appearance.Accent">Load: @(resp.TempoCargaFormatado) m:s</FluentBadge>
+                                                    <FluentBadge Appearance="Appearance.Accent">Tokens: @resp.TamanhoTokens</FluentBadge>
                                                 </div>
                                                 <FluentButton Appearance="Appearance.Accent"
                                                               IconStart="@(new Icons.Regular.Size24.ClipboardCode())"

@@ -25,13 +25,6 @@
                               class="search-box" />
 
                 <FluentSpacer />
-                <FluentButton Appearance="Appearance.Lightweight"
-                              Disabled="@(_benchmarks.Any() == false)"
-                              Color="rgba(255, 255,255, 1)"
-                              BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
-                              IconStart="@(new Icons.Regular.Size16.Delete())" OnClick="DeleteAllDataAsync">
-                    Apagar Benchmarks
-                </FluentButton>
 
                 <FluentButton Appearance="Appearance.Outline"
                               Disabled="@(_benchmarks.Any() == false)"
@@ -45,6 +38,15 @@
                               @onclick="AnalisarResultadosComModeloLocal">
                     Análise IA Local
                 </FluentButton>
+
+                <FluentButton Appearance="Appearance.Lightweight"
+                              Disabled="@(_benchmarks.Any() == false)"
+                              Color="rgba(255, 255,255, 1)"
+                              BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
+                              IconStart="@(new Icons.Regular.Size16.Delete())" OnClick="DeleteAllDataAsync">
+                    Apagar Benchmarks
+                </FluentButton>
+
             </div>
 
             <div class="filter-bar">
@@ -73,30 +75,62 @@
         <FluentDataGrid Items="@FilteredBenchmarks"
                         TGridItem="BenchmarkEvaluationModel"
                         Pagination="@_pagination"
+                        RowSize="DataGridRowSize.Medium" 
                         DisplayMode="DataGridDisplayMode.Grid"
                         class="benchmark-grid">
 
-            <PropertyColumn Property="@(b => b.Id)" Title="ID#" Width="60px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.ResponseId)" Title="ID2#" Width="60px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.DataCriacaoFormatada)" Title="Data de Criação" Width="160px" Align="Align.Center" Sortable="true" />
+            @* <PropertyColumn Property="@(b => b.Id)" Title="ID#" Width="60px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.ResponseId)" Title="ID2#" Width="60px" Sortable="true" /> *@
+
+            @* <PropertyColumn Property="@(b => b.DataCriacaoFormatada)" Title="Data de Criação" Width="160px" Align="Align.Center" Sortable="true" /> *@
             <PropertyColumn Property="@(b => b.NomeModelo)" Title="Modelo" Sortable="true" Width="160px" />
 
-            <TemplateColumn Title="Prompt" Tooltip="true" Width="300px">
+            @* <TemplateColumn Title="Prompt" Tooltip="true" Width="300px">
                 <div class="prompt-cell">
                     @context.TextoPrompt
                 </div>
-            </TemplateColumn>
+            </TemplateColumn> *@
 
-            <PropertyColumn Property="@(b => b.GeminiRating)" Title="Gemini" Align="Align.Center" Width="90px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.ChatGptRating)" Title="ChatGPT" Align="Align.Center" Width="90px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.TokensPorSegundo)" Title="Tokens/s" Align="Align.Center" Width="110px" Format="F2" Sortable="true" />
-            <PropertyColumn Property="@(b => b.TempoPuroFormatado)" Title="Tempo" Align="Align.Center" Width="100px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.TempoCargaFormatado)" Title="Carga" Align="Align.Center" Width="100px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.TamanhoTokens)" Title="Tokens" Align="Align.Center" Width="100px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.GeminiRating)" Title="Gemini" Align="Align.Center" Width="100px" Sortable="true">
+                <HeaderCellItemTemplate>
+                    <span class="header-blue">Gemini</span>
+                </HeaderCellItemTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="@(b => b.GeminiFactualRating)" Title="Factual" Align="Align.Center" Width="90px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.GeminiFormattingRating)" Title="Formato" Align="Align.Center" Width="90px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.ChatGptRating)" Title="ChatGPT" Align="Align.Center" Width="100px" Sortable="true">
+                <HeaderCellItemTemplate>
+                    <span class="header-blue">ChatGPT</span>
+                </HeaderCellItemTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="@(b => b.ChatGptFactualRating)" Title="Factual" Align="Align.Center" Width="90px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.ChatGptFormattingRating)" Title="Formato" Align="Align.Center" Width="90px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.TokensPorSegundo)" Title="Tokens/s" Align="Align.Center" Width="110px" Format="F2" Sortable="true">
+                <HeaderCellItemTemplate>
+                    <span class="header-columns">Tokens/s</span>
+                </HeaderCellItemTemplate>
+                </PropertyColumn>
+            <PropertyColumn Property="@(b => b.TempoPuroFormatado)" Title="Tempo" Align="Align.Center" Width="100px" Sortable="true" >
+                <HeaderCellItemTemplate>
+                    <span class="header-columns">Tempo</span>
+                </HeaderCellItemTemplate>
+
+            </PropertyColumn>
+            <PropertyColumn Property="@(b => b.TempoCargaFormatado)" Title="Carga" Align="Align.Center" Width="100px" Sortable="true" >
+                <HeaderCellItemTemplate>
+                    <span class="header-columns">Carga</span>
+                </HeaderCellItemTemplate>
+
+            </PropertyColumn>
+            <PropertyColumn Property="@(b => b.TamanhoTokens)" Title="Tokens" Align="Align.Center" Width="100px" Sortable="true" >
+                <HeaderCellItemTemplate>
+                    <span class="header-columns">Tokens</span>
+                </HeaderCellItemTemplate>
+            </PropertyColumn>
 
             <TemplateColumn Title="Ações" Align="Align.Center" Width="100px">
-                <FluentButton Appearance="Appearance.Stealth"
-                              IconStart="@(new Icons.Regular.Size16.Eye())"
+                <FluentButton Appearance="Appearance.Outline"
+                              IconStart="@(new Icons.Regular.Size24.Eye())"
                               OnClick="@(() => OpenDetailDialog(context))"
                               Title="Ver Detalhes" />
                 <FluentButton Appearance="Appearance.Outline"
@@ -192,7 +226,7 @@
         {
             string mensagemHtml = @"
                         <div style='padding: 4px; border-left: 4px solid #e73618;'>
-                            <strong style='color: #e73618; font-size: 16px; display: block; margin-bottom: 8px;'>Confirme, por favot</strong>
+                            <strong style='color: #e73618; font-size: 16px; display: block; margin-bottom: 8px;'>Confirme, por favor</strong>
                             <span style='color: var(--neutral-foreground-rest);'>Tem a certeza que deseja apagar todos os Prompts e Respostas associadas? Esta operação não pode ser revertida.</span>
                         </div>";
 
@@ -242,8 +276,10 @@
                 message: mensagemHtml,
                 "Sim, Apagar",
                 "Cancelar",
-                "Apagar benchmark"
+                "Apagar resposta do benchmark"
             );
+
+            await InvokeAsync(StateHasChanged);
             // var confirmacao = await DialogService.ShowConfirmationAsync(
             //     $"Tem a certeza que deseja apagar este benchmark? ",
             //     "Sim, Apagar",
@@ -416,22 +452,56 @@
     {
         var dadosFiltrados = FilteredBenchmarks.ToList();
 
-        // === NOVA VERIFICAÇÃO: Todos os benchmarks foram avaliados? ===
+        // ===================================
+        // Verifica quantidade de grupos de prompts
+        // só deverá ser analisado um grupo de cada vez
+        // ===================================
+        var gruposDePrompts = dadosFiltrados
+            .GroupBy(b => b.PromptId)
+            .ToList();
+
+        if (gruposDePrompts.Count > 1)
+        {
+            string mensagemHtml = $@"
+            <div style='padding: 8px; border-left: 5px solid #e73618;'>
+                <strong style='color: #e73618; font-size: 16px;'>⚠️ Atenção - Múltiplos Grupos de Prompts</strong><br><br>
+                <span style='color: var(--neutral-foreground-rest);'>
+                    Foram detetados <strong>{gruposDePrompts.Count}</strong> grupos de prompts diferentes.<br><br>
+                    A análise IA Local está otimizada para um único prompt/grupo. 
+                    Recomenda-se filtrar para apenas um prompt antes de prosseguir.
+                </span>
+            </div>";
+
+            var confirmacao = await DialogService.ShowConfirmationAsync(
+                message: mensagemHtml,
+                primaryText: null,
+                secondaryText: "Cancelar",
+                title: "Múltiplos Prompts Detetados");
+
+            if (confirmacao == null) return;
+
+            var resultado = await confirmacao.Result;
+            if (resultado?.Cancelled == true)
+            {
+                return;
+            }
+        }
+
+        // === Verificação existente: benchmarks não avaliados ===
         bool todosAvaliados = dadosFiltrados.All(b =>
             b.GeminiRating > 0 && b.ChatGptRating > 0);
 
         if (!todosAvaliados)
         {
             var naoAvaliados = dadosFiltrados.Count(b => b.GeminiRating == 0 || b.ChatGptRating == 0);
-
             string mensagemHtml = $@"
-            <div style='padding: 8px; border-left: 5px solid #e73618;'>
-                <strong style='color: #e73618; font-size: 16px;'>⚠️ Atenção</strong><br><br>
-                <span style='color: var(--neutral-foreground-rest);'>
-                    Existem <strong>{naoAvaliados}</strong> benchmark(s) ainda não avaliados (Gemini ou ChatGPT).<br><br>
-                    Avalie os benchmarks antes de prosseguir com a análise.
-                </span>
-            </div>";
+        <div style='padding: 8px; border-left: 5px solid #e73618;'>
+            <strong style='color: #e73618; font-size: 16px;'>⚠️ Atenção</strong><br><br>
+            <span style='color: var(--neutral-foreground-rest);'>
+                Existem <strong>{naoAvaliados}</strong> benchmark(s) ainda não avaliados (Gemini ou ChatGPT).<br><br>
+                Avalie os benchmarks antes de prosseguir com a análise.
+            </span>
+        </div>";
 
             var confirmacao = await DialogService.ShowConfirmationAsync(
                 message: mensagemHtml,
@@ -440,11 +510,10 @@
                 title: "Nem todos os benchmarks estão avaliados");
 
             if (confirmacao == null) return;
-
             var resultado = await confirmacao.Result;
             if (resultado?.Cancelled == true)
             {
-                return; 
+                return;
             }
         }
 
@@ -467,7 +536,6 @@
 
             _cts?.Dispose();
             _cts = new CancellationTokenSource();
-
             _resultadoLocal = await AnalysisService.AnalisarBenchmarksAsync(
                 dadosFiltrados,
                 _cts.Token
@@ -614,4 +682,21 @@
                 min-width: auto;
             }
     }
+
+    .header-blue {
+        display:flex;
+        justify-content:center;
+        color: var(--accent-fill-rest, #0078d4) !important;
+        font-weight: 700;
+        font-size: 0.9rem;
+        border-radius: 3px;
+        border: 1px solid var(--neutral-stroke-rest);
+        align-items:center;
+    }
+
+    .header-columns {
+        color: var(--accent-fill-rest, #0078d4);
+        font-weight: 700;
+    }
+
 </style>

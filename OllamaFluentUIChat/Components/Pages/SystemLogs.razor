@@ -11,101 +11,137 @@
 
 <FluentStack VerticalGap="15" Orientation="Orientation.Vertical">
 
+    <!-- Cabeçalho Principal -->
     <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Right">
-        <FluentLabel Typo="Typography.PageTitle">Logs do Sistema</FluentLabel>
-        <FluentSpacer />
-        <FluentButton Appearance="Appearance.Lightweight"
-                      Color="" BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
-                      IconStart="@(new Icons.Regular.Size20.Delete())"
-                      OnClick="ConfirmarLimpezaLogs">
-            Limpar Todos os Logs
-        </FluentButton>
-    </FluentStack>
+        <div style="display: flex; gap: 12px; align-items: center; width: 100%; margin:16px;">
 
-    <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="10" Style="margin-top:16px;">
+            <FluentLabel Typo="Typography.PageTitle">Logs do Sistema</FluentLabel>
 
+            <FluentSpacer />
 
-        <FluentButton Appearance="Appearance.Outline"
-                      OnClick="@(() => FiltrarLogs("warnings"))"
-                      IconStart="@(new Icons.Regular.Size20.Warning())"
-                      Style="--neutral-stroke-rest: #ff9800; --neutral-stroke-hover: #e68a00; color: #ff9800;">
-            Alertas
-        </FluentButton>
-
-        <FluentButton Appearance="Appearance.Outline"
-                      OnClick="@(() => FiltrarLogs("errors"))"
-                      IconStart="@(new Icons.Regular.Size20.ErrorCircle())"
-                      Style="--neutral-stroke-rest: #d32f2f; --neutral-stroke-hover: #c62828; color: #d32f2f;">
-            Erros
-        </FluentButton>
-
-        <FluentButton Appearance="Appearance.Outline"
-                      OnClick="@(() => FiltrarLogs("all"))"
-                      IconStart="@(new Icons.Regular.Size20.Filter())"
-                      Style="--neutral-stroke-rest: #0078d4; --neutral-stroke-hover: #106ebe; color: #ffffff;">
-            Todos
-        </FluentButton>
-    </FluentStack>
-    
-    @if (_logsFiltrados == null)
-    {
-        <FluentProgressRing>A carregar registos...</FluentProgressRing>
-    }
-    else if (!_logsFiltrados.Any())
-    {
-        <FluentStack Orientation="Orientation.Horizontal"
-                     HorizontalAlignment="HorizontalAlignment.Center"
-                     VerticalAlignment="VerticalAlignment.Center"
-                     Class="no-logs-box">
-            <FluentLabel Typo="Typography.Body" Style="border-color:white; border-radius:16px;">
-                Sem registos para o filtro selecionado.
-            </FluentLabel>
-        </FluentStack>
-    }
-    else
-    {
-        <div style="width: 75%; overflow-x: auto;">
-            <FluentDataGrid Items="@_logsFiltrados.AsQueryable()" Pagination="@_pagination"
-                            TGridItem="LogEntity" ResizableColumns="true">
-
-                <PropertyColumn Property="@(p => p.Id)" Title="ID" Sortable="true" Width="100px" />
-                <TemplateColumn Title="Data/Hora" Width="160px">
-                    @{
-                        <FluentBadge Appearance="Appearance.Neutral">
-                            @FormatHora(context.Timestamp)
-                        </FluentBadge>
-                    }
-                </TemplateColumn>
-                <TemplateColumn Title="Nível" Sortable="true" SortBy="@_sortByLevel" Width="120px">
-                    @{
-                        var level = context.Level ?? "Information";
-                        var badgeAppearance = level.Contains("Error") || level.Contains("Fatal") ? Appearance.Accent :
-                                             level.Contains("Warning") ? Appearance.Neutral :
-                                             Appearance.Lightweight;
-
-                        var customStyle = level.Contains("Error") || level.Contains("Fatal") ? "background-color: var(--fluent-color-status-danger); color: white;" :
-                                          level.Contains("Warning") ? "background-color: var(--fluent-color-status-warning); color: black;" :
-                                          "background-color: var(--fluent-color-status-success); color: white;";
-                    }
-                    <FluentBadge Appearance="@badgeAppearance" Style="@customStyle">
-                        @level
-                    </FluentBadge>
-                </TemplateColumn>
-
-                <PropertyColumn Property="@(p => p.RenderedMessage)" Title="Mensagem" Sortable="true" />
-
-                <TemplateColumn Title="Ações" Align="Align.Center" Width="100px">
-                    <FluentButton Appearance="Appearance.Stealth"
-                                  IconStart="@(new Icons.Regular.Size24.Eye())"
-                                  OnClick="@(() => AbrirDetalhesLog(context))"
-                                  Title="Ver Detalhes" />
-                </TemplateColumn>
-
-            </FluentDataGrid>
+            <FluentButton Appearance="Appearance.Lightweight"
+                          Color="" BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
+                          IconStart="@(new Icons.Regular.Size20.Delete())"
+                          OnClick="ConfirmarLimpezaLogs">
+                Limpar Logs @(_filtroAtual == "all" && string.IsNullOrWhiteSpace(_search) ? "Visíveis" : "Filtrados")
+            </FluentButton>
         </div>
+    </FluentStack>
 
-        <FluentPaginator State="@_pagination" />
-    }
+    <!-- Linha Única: Opções de Filtro (Esquerda) + Pesquisa (Direita) -->
+    <div style="width: 75%;">
+        <FluentStack Orientation="Orientation.Horizontal"
+                     HorizontalGap="10"
+                     VerticalAlignment="VerticalAlignment.Center"
+                     Style="margin-top:16px; margin-bottom: 12px; width: 100%;">
+
+            <FluentButton Appearance="Appearance.Outline"
+                          OnClick="@(() => AlterarFiltroNivel("information"))"
+                          IconStart="@(new Icons.Regular.Size20.Info())"
+                          Style="--neutral-stroke-rest: #0078d4; --neutral-stroke-hover: #106ebe; color: #0078d4;">
+                Informações
+            </FluentButton>
+
+            <FluentButton Appearance="Appearance.Outline"
+                          OnClick="@(() => AlterarFiltroNivel("warnings"))"
+                          IconStart="@(new Icons.Regular.Size20.Warning())"
+                          Style="--neutral-stroke-rest: #ff9800; --neutral-stroke-hover: #e68a00; color: #ff9800;">
+                Alertas
+            </FluentButton>
+
+            <FluentButton Appearance="Appearance.Outline"
+                          OnClick="@(() => AlterarFiltroNivel("errors"))"
+                          IconStart="@(new Icons.Regular.Size20.ErrorCircle())"
+                          Style="--neutral-stroke-rest: #d32f2f; --neutral-stroke-hover: #c62828; color: #d32f2f;">
+                Erros
+            </FluentButton>
+
+            <FluentButton Appearance="Appearance.Outline"
+                          OnClick="@(() => AlterarFiltroNivel("all"))"
+                          IconStart="@(new Icons.Regular.Size20.Filter())"
+                          Style="--neutral-stroke-rest: #0078d4; --neutral-stroke-hover: #106ebe; color: #0078d4;">
+                Todos
+            </FluentButton>
+
+            <!-- Empurra a barra de pesquisa para a extremidade direita da grelha -->
+            <FluentSpacer />
+
+            <FluentSearch @bind-Value="_search"
+                          @bind-Value:after="AplicarFiltros"
+                          Placeholder="Texto a pesquisar..."
+                          class="search-box"
+                          Clearable="true" />
+        </FluentStack>
+
+        @if (_logsFiltrados == null)
+        {
+            <FluentProgressRing>A carregar registos...</FluentProgressRing>
+        }
+        else if (!_logsFiltrados.Any())
+        {
+            <FluentStack Orientation="Orientation.Horizontal"
+                         HorizontalAlignment="HorizontalAlignment.Center"
+                         VerticalAlignment="VerticalAlignment.Center"
+                         Class="no-logs-box">
+                <FluentLabel Typo="Typography.Body" Style="border-color:white; border-radius:16px;">
+                    Sem registos para o filtro ou pesquisa selecionada.
+                </FluentLabel>
+            </FluentStack>
+        }
+        else
+        {
+            <div style="overflow-x: auto;">
+                <FluentDataGrid Items="@_logsFiltrados.AsQueryable()" Pagination="@_pagination"
+                                RowSize="DataGridRowSize.Medium"
+                                TGridItem="LogEntity" ResizableColumns="true">
+
+                    <PropertyColumn Property="@(p => p.Id)" Title="ID" Sortable="true" Width="100px" />
+                    <TemplateColumn Title="Data/Hora" Width="160px">
+                        @{
+                            <FluentBadge Appearance="Appearance.Neutral">
+                                @FormatHora(context.Timestamp)
+                            </FluentBadge>
+                        }
+                    </TemplateColumn>
+                    <TemplateColumn Title="Nível" Sortable="true" SortBy="@_sortByLevel" Width="120px">
+                        @{
+                            var level = context.Level ?? "Information";
+                            var badgeAppearance = level.Contains("Error") || level.Contains("Fatal") ? Appearance.Accent :
+                                                  level.Contains("Warning") ? Appearance.Neutral :
+                                                  Appearance.Lightweight;
+
+                            var customStyle = level.Contains("Error") || level.Contains("Fatal") ? "background-color: var(--fluent-color-status-danger); color: white;" :
+                                              level.Contains("Warning") ? "background-color: var(--fluent-color-status-warning); color: black;" :
+                                              "background-color: var(--fluent-color-status-success); color: white;";
+                        }
+                        <FluentBadge Appearance="@badgeAppearance" Style="@customStyle">
+                            @level
+                        </FluentBadge>
+                    </TemplateColumn>
+                    <PropertyColumn Property="@(p => p.RenderedMessage)" Title="Mensagem" Sortable="true" />
+                    <TemplateColumn Title="Ações" Align="Align.Center" Width="120px">
+                        <FluentStack Orientation="Orientation.Horizontal"
+                                     HorizontalAlignment="HorizontalAlignment.Center"
+                                     VerticalAlignment="VerticalAlignment.Center"
+                                     HorizontalGap="4">
+
+                            <FluentButton Appearance="Appearance.Outline"
+                                          IconStart="@(new Icons.Regular.Size20.Eye())"
+                                          OnClick="@(() => AbrirDetalhesLog(context))"
+                                          Title="Ver Detalhes" />
+                            <FluentButton Appearance="Appearance.Outline"
+                                          OnClick="@(() => ApagarLog(context.Id))"
+                                          IconStart="@(new Icons.Regular.Size20.Delete())"
+                                          Style="--neutral-stroke-rest: #d32f2f; --neutral-stroke-hover: #c62828; color: #d32f2f;">
+                            </FluentButton>
+                        </FluentStack>
+                    </TemplateColumn>
+                </FluentDataGrid>
+            </div>
+
+            <FluentPaginator State="@_pagination" />
+        }
+    </div>
 </FluentStack>
 
 <LogDetailDialog Log="@_logSelecionado"
@@ -117,8 +153,9 @@
 @code {
     private List<LogEntity>? _logs;
     private List<LogEntity>? _logsFiltrados;
+    private string? _search;
 
-    private PaginationState _pagination = new() { ItemsPerPage = 12};
+    private PaginationState _pagination = new() { ItemsPerPage = 10 };
     private GridSort<LogEntity> _sortByLevel = GridSort<LogEntity>.ByAscending(p => p.Level ?? "");
 
     private LogEntity? _logSelecionado;
@@ -134,7 +171,7 @@
     private async Task CarregarLogsAsync()
     {
         _logs = await LogRepository.GetAllLogsAsync();
-        FiltrarLogs(_filtroAtual);
+        AplicarFiltros();
     }
 
     private string FormatHora(string? timestamp)
@@ -147,29 +184,99 @@
 
         return timestamp;
     }
-    private void FiltrarLogs(string filtro)
+
+    private void AlterarFiltroNivel(string filtro)
     {
         _filtroAtual = filtro;
+        AplicarFiltros();
+    }
 
+    private void AplicarFiltros()
+    {
         if (_logs == null)
         {
             _logsFiltrados = new();
             return;
         }
 
-        _logsFiltrados = filtro switch
+        IEnumerable<LogEntity> resultado = _logs;
+
+        // 1. Filtro por nível (Botões)
+        resultado = _filtroAtual switch
         {
-            "warnings" => _logs
-                .Where(l => (l.Level ?? "").Contains("Warning"))
-                .ToList(),
+            "information" => resultado.Where(l =>
+            {
+                var level = (l.Level ?? "").Trim().ToLower();
+                return level.Contains("information") || level.Contains("info") || string.IsNullOrWhiteSpace(l.Level);
+            }),
 
-            "errors" => _logs
-                .Where(l => (l.Level ?? "").Contains("Error") ||
-                            (l.Level ?? "").Contains("Fatal"))
-                .ToList(),
+            "warnings" => resultado.Where(l => (l.Level ?? "").Trim().ToLower().Contains("warning")),
 
-            _ => _logs.ToList()
+            "errors" => resultado.Where(l =>
+            {
+                var level = (l.Level ?? "").Trim().ToLower();
+                return level.Contains("error") || level.Contains("fatal");
+            }),
+
+            _ => resultado
         };
+
+        // 2. Filtro por texto de pesquisa
+        if (!string.IsNullOrWhiteSpace(_search))
+        {
+            var termo = _search.Trim();
+
+            resultado = resultado.Where(l =>
+                (l.RenderedMessage != null && l.RenderedMessage.Contains(termo, StringComparison.OrdinalIgnoreCase)) ||
+                (l.Level != null && l.Level.Contains(termo, StringComparison.OrdinalIgnoreCase)) ||
+                l.Id.ToString().Contains(termo)
+            );
+        }
+
+        _logsFiltrados = resultado.ToList();
+    }
+
+    private async Task ConfirmarLimpezaLogs()
+    {
+        if (_logsFiltrados == null || !_logsFiltrados.Any())
+        {
+            await DialogService.ShowInfoAsync("Nenhum registo",
+                "Não existem logs para apagar com os filtros atuais.");
+            return;
+        }
+
+        int quantidade = _logsFiltrados.Count;
+        bool isAll = _filtroAtual == "all" && string.IsNullOrWhiteSpace(_search);
+
+        string titulo = isAll ? "ATENÇÃO - VAI LIMPAR TODOS OS REGISTOS" : "Confirme Eliminação";
+
+        string mensagem = isAll
+                ? $"Tem a certeza de que deseja eliminar **TODOS** os logs?\n\nTotal: {quantidade} registos"
+                : $"Vai eliminar **{quantidade}** registo(s) filtrados.\n\nDeseja continuar?";
+
+        var dialog = await DialogService.ShowConfirmationAsync(mensagem, "Sim, Apagar", "Cancelar", titulo);
+
+        var resultado = await dialog.Result;
+
+        if (!resultado.Cancelled)
+        {
+            var idsParaApagar = _logsFiltrados.Select(l => l.Id).ToList();
+
+            try
+            {
+                await LogRepository.DeleteLogsByIdsAsync(idsParaApagar);
+
+                await CarregarLogsAsync();
+
+                await DialogService.ShowInfoAsync("Sucesso",
+                    $"{quantidade} log(s) foram eliminados com sucesso.");
+            }
+            catch (Exception ex)
+            {
+                await DialogService.ShowErrorAsync("Erro ao eliminar",
+                    $"Ocorreu um erro: {ex.Message}");
+            }
+        }
     }
 
     private void AbrirDetalhesLog(LogEntity log)
@@ -178,20 +285,23 @@
         _isDialogVisible = true;
     }
 
-    private async Task ConfirmarLimpezaLogs()
+    private async Task ApagarLog(int logId)
     {
-        var dialog = await DialogService.ShowConfirmationAsync(
-            "Tem a certeza de que deseja eliminar permanentemente todos os logs da base de dados?",
-            "Sim, Apagar Tudo",
-            "Cancelar",
-            "Limpar Logs");
+        string mensagem = $"Vai apagar o log {logId}.\n\nDeseja continuar?";
+        string titulo = "Apagar registo";
+
+        var dialog = await DialogService.ShowConfirmationAsync(mensagem, "Sim, Apagar", "Cancelar", titulo);
 
         var resultado = await dialog.Result;
 
         if (!resultado.Cancelled)
         {
-            await LogRepository.DeleteAllLogsAsync();
-            await CarregarLogsAsync();
+            var logParaApagar = _logsFiltrados?.FirstOrDefault(l => l.Id == logId);
+            if (logParaApagar != null)
+            {
+                await LogRepository.DeleteLogByIdAsync(logId);
+                await CarregarLogsAsync();
+            }
         }
     }
 }
@@ -221,9 +331,12 @@
     .separator-line {
         width: 100%;
         height: 1px;
-        margin:0;
+        margin: 0;
         background-color: #d1d1d1;
         margin: 10px 0 5px 0;
     }
 
+    .search-box {
+        width: 280px;
+    }
 </style>

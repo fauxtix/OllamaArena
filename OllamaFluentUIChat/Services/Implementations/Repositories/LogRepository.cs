@@ -8,10 +8,12 @@ namespace OllamaFluentUIChat.Services.Implementations.Repositories;
 public class LogRepository : ILogRepository
 {
     private readonly IDapperContext _context;
+    private readonly ILogger<LogRepository> _logger;
 
-    public LogRepository(IDapperContext context)
+    public LogRepository(IDapperContext context, ILogger<LogRepository> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task<List<LogEntity>> GetAllLogsAsync()
@@ -31,9 +33,54 @@ public class LogRepository : ILogRepository
 
     public async Task<bool> DeleteAllLogsAsync()
     {
-        var sql = "DELETE FROM Logs; VACUUM;"; // VACUUM liberta o espaço em disco do SQLite imediatamente
-        using var connection = _context.CreateConnection();
-        int affectedLines = await connection.ExecuteAsync(sql);
-        return true;
+        try
+        {
+            var sql = "DELETE FROM Logs; VACUUM;"; // VACUUM liberta o espaço em disco do SQLite imediatamente
+            using var connection = _context.CreateConnection();
+            int affectedLines = await connection.ExecuteAsync(sql);
+            return true;
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao apagar Todos os logs");
+            return false;
+        }
+    }
+
+    public async Task DeleteLogByIdAsync(int id)
+    {
+        if (id < 1)
+            return;
+
+        var sql = "DELETE FROM Logs WHERE Id  = @Id; VACUUM;";
+
+        try
+        {
+            using var connection = _context.CreateConnection();
+            await connection.ExecuteAsync(sql, new { Id = id });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Erro ao apagar registo {id}");
+        }
+    }
+
+    public async Task DeleteLogsByIdsAsync(IEnumerable<int> ids)
+    {
+        if (ids == null || !ids.Any())
+            return;
+
+        var sql = "DELETE FROM Logs WHERE Id IN @Ids; VACUUM;";
+
+        try
+        {
+            using var connection = _context.CreateConnection();
+            await connection.ExecuteAsync(sql, new { Ids = ids });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao apagar registos filtrados");
+        }
     }
 }

@@ -7,5 +7,7 @@ namespace OllamaFluentUIChat.Services.Interfaces.Repositories
         Task<List<LogEntity>> GetAllLogsAsync();
         Task<LogEntity?> GetLogByIdAsync(int id);
         Task<bool> DeleteAllLogsAsync();
+        Task DeleteLogsByIdsAsync(IEnumerable<int> ids);
+        Task DeleteLogByIdAsync(int id);
     }
 }

@@ -8,4 +8,7 @@ If you are able to, use standard markdown formatting as appropriate:
 - Lists
 - Bold text
 - Tabular format
-At the end of your answer, on a new row, add a final line stating your dataset training year. Don't penalize the formatting for the inclusion of this information.
+If not, provide the response in a list of bullet points.
+
+Use \n for line breaks, when needed, to separate paragraphs.
+

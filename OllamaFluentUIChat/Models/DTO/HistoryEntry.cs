@@ -4,6 +4,7 @@
     {
         public string Model { get; set; } = "";
         public string Prompt { get; set; } = "";
+        public string Descricao { get; set; } = "";
         public DateTime Date { get; set; }
         public long DurationMs { get; set; }
 

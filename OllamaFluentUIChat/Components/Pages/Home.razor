@@ -1,6 +1,9 @@
 ﻿@page "/"
+@using System.Text.Json
 @using OllamaFluentUIChat.Components.Pages.Components
+@using OllamaFluentUIChat.Services
 @using OllamaFluentUIChat.Services.Helpers
+@using OllamaFluentUIChat.Services.Interfaces.Services
 
 @inject IDialogService DialogService
 @rendermode InteractiveServer
@@ -8,34 +11,136 @@
 
 <PageTitle>Home</PageTitle>
 
-<FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" Gap="20">
+<div style="display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    width: 100%;">
 
-    <FluentCard Style="padding: 12px; width: max-content; height: max-content;">
-        <img src="images/OllamaWithFluentUI.jpg"
-             alt="Imagem gerada por IA"
-             style="box-shadow: var(--elevation-shadow-card-hover); max-height: 65vh; max-width: 75vw; width: auto; height: auto; display: block; border-radius: calc(var(--layer-corner-radius) * 1px);" />
-    </FluentCard>
+    <FluentStack Orientation="Orientation.Vertical"
+                 HorizontalAlignment="HorizontalAlignment.Center"
+                 VerticalAlignment="VerticalAlignment.Center"
+                 Style="width: 100%; gap: 30px;">
+        <!-- espaço vertical -->
+        <!-- Stack horizontal das imagens -->
+        <FluentStack Orientation="Orientation.Horizontal"
+                     HorizontalAlignment="HorizontalAlignment.Center"
+                     VerticalAlignment="VerticalAlignment.Center"
+                     Style="gap: 50px;">
+            <!-- ← espaço entre as imagens -->
 
-    <div>
-        <FluentButton Appearance="Appearance.Outline" OnClick="ShowReadme">Ver README</FluentButton>
-    </div>
+            <FluentCard Style="padding: 12px; width: max-content; height: max-content;">
+                <img src="images/OllamaAsAJudge.png"
+                     alt="Imagem gerada por IA"
+                     style="box-shadow: var(--elevation-shadow-card-hover);
+                width: 28vw;
+                height: 36vh;
+                object-fit: cover;
+                display: block;
+                overflow: hidden;
+                border-radius: calc(var(--layer-corner-radius) * 1px);" />
+            </FluentCard>
 
-</FluentStack>
+            <FluentCard Style="padding: 12px; width: max-content; height: max-content;">
+                <img src="images/OllamaWithFluentUI.jpg"
+                     alt="Imagem gerada por IA"
+                     style="box-shadow: var(--elevation-shadow-card-hover);
+                width: 28vw;
+                height: 36vh;
+                object-fit: cover;
+                display: block;
+                overflow: hidden;
+                border-radius: calc(var(--layer-corner-radius) * 1px);" />
+            </FluentCard>
 
+        </FluentStack>
+
+        <div>
+            <FluentButton Appearance="Appearance.Outline" OnClick="ShowReadme">Ver README</FluentButton>
+        </div>
+
+        @if (showOllamaError)
+        {
+            <div style="background-color: rgba(0, 0, 0, 0.2); z-index: 9999;">
+                <FluentMessageBar Title="Não foi possível carregar os modelos"
+                                  Style="width: 500px; border: 2px solid var(--accent-fill-rest);"
+                                  Intent="MessageIntent.Error"
+                                  Type="@MessageType.Notification">
+                    O serviço Ollama não está em execução. Inicie o serviço e recarregue a página.
+                </FluentMessageBar>
+            </div>
+        }
+
+    </FluentStack>
+</div>
 <ReadmePreview @ref="preview" />
 
 @code {
 
     [Inject] public required InternetConnectivityService Internet { get; set; }
+    [Inject] public IJSRuntime JS { get; set; } = default!;
+    [Inject] public IOllamaGpuService? GpuService { get; set; }
+    [Inject] public ILogger<App>? _logger { get; set; }
+
 
     private ReadmePreview? preview;
+    private List<string> _models = new();
+    private DotNetObjectReference<Home>? _dotNetRef;
+
+    private bool showOllamaError = false;
+    private string ollamaErrorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        showOllamaError = false;
+        var isOllamaRunning = await OllamaChecker.IsOllamaRunningAsync();
+        if (!isOllamaRunning)
+        {
+            showOllamaError = true;
+            ollamaErrorMessage = "O servidor Ollama não está em execução. Por favor, inicie o Ollama.";
+
+            _logger?.LogError("Ollama server is not running.");
+            return;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ClearDataModels();
+            var allModels = await GpuService!.GetLocalModelsAsync();
+            _models.Clear();
+            _models.AddRange(allModels.Models.Select(m => m.Model));
+
+            await SaveModelsToLocalStorage();
+
+        }
+    }
+
+    private async Task SaveModelsToLocalStorage()
+    {
+        var modelsJson = JsonSerializer.Serialize(_models);
+        await JS.InvokeVoidAsync("localStorage.setItem", "ollamaModels", modelsJson);
+    }
+
+
+    private async Task ClearDataModels()
+    {
+        _models.Clear();
+        await JS.InvokeVoidAsync("localStorage.removeItem", "ollamaModels");
+    }
+
+
 
     private async Task ShowReadme()
     {
         var hasInternet = await Internet.HasInternetAsync();
         if (!hasInternet)
         {
-            await DialogService.ShowErrorAsync($"Internet indisponível. Verifique, por favor.", "Acesso ao ficheiro" );
+            await DialogService.ShowErrorAsync($"Internet indisponível. Verifique, por favor.", "Acesso ao ficheiro");
 
         }
         if (preview is not null)

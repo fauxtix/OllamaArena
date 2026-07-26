@@ -27,7 +27,7 @@
     }
     else
     {
-        <FluentDataGrid Items="@_localModels.AsQueryable()" TGridItem="ModelDetails" ResizableColumns="true">
+        <FluentDataGrid Items="@_localModels.AsQueryable()" TGridItem="ModelDetails" ResizableColumns="true" >
             <PropertyColumn Property="@(m => m.Name)" Title="Nome" Sortable="true" Style="color:steelblue; font-weight:700; font-size: 1rem;" />
 
             <TemplateColumn Title="Família">
@@ -36,15 +36,15 @@
             <TemplateColumn Title="Parâmetros" Align="Align.Center">
                 @context.Details?.ParameterSize
             </TemplateColumn>
-            <TemplateColumn Title="Quantização">
-                @context.Details?.QuantizationLevel
+            <TemplateColumn Title="Quantização" >
+                @context.Details?.QuantizationLevel 
             </TemplateColumn>
-            <TemplateColumn Title="Ano de Treino" Align="Align.Center"
+            <TemplateColumn Title="Ano de Treino" Align="Align.Center" 
                             Style="color:cadetblue; font-weight:500; font-size: 0.9rem;">
                 @context.TrainingYear
             </TemplateColumn>
 
-            <TemplateColumn Title="Contexto Máximo" Sortable="true" Width="150px">
+            <TemplateColumn Title="Contexto Máximo" Width="150px">
                 <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Right"
                              VerticalAlignment="VerticalAlignment.Center" Style="gap: 6px;">
                     @*  <FluentIcon Value="@(new Icons.Regular.Size16.BroadActivityFeed())"

@@ -118,11 +118,11 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             {
                 int totalRespostas = prompt.Answers?.Count ?? 0;
                 var confirmacao = await DialogService.ShowConfirmationAsync(
-                    $"Tem a certeza que deseja apagar o Prompt #{prompt.Id}? " +
-                    $"Isto irá remover permanentemente todas as {totalRespostas} respostas associadas (Cascading Delete).",
-                    "Sim, Apagar",
+                    $"Tem a certeza que deseja apagar o Benchmark #{prompt.Id}? " +
+                    $"Se confirmar, irá remover permanentemente todas as {totalRespostas} respostas associadas (Cascading Delete).",
+                    "Sim, Apagar benchmark",
                     "Cancelar",
-                    "Apagar Prompt");
+                    "Apagar Benchmark");
 
                 if (confirmacao == null) return;
                 var resultado = await confirmacao.Result;

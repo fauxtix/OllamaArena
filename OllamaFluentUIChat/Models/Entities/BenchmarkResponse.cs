@@ -4,6 +4,7 @@
     {
         public int Id { get; set; }
         public int PromptId { get; set; }
+        public string Descricao { get; set; } = string.Empty;
         public string NomeModelo { get; set; } = string.Empty;
         public string TextoResposta { get; set; } = string.Empty;
         public double TokensPorSegundo { get; set; }
@@ -40,5 +41,11 @@
         public int? ChatGptReadabilityRating { get; set; }
         public int? ChatGptHaloEffectRating { get; set; }
         public int? ChatGptSafetyRating { get; set; }
+
+        public string TempoPuroFormatado =>
+    TimeSpan.FromMilliseconds(TempoPuroMs).ToString(@"m\:ss");
+        public string TempoCargaFormatado =>
+            TimeSpan.FromMilliseconds(TempoCargaMs).ToString(@"m\:ss");
+
     }
 }

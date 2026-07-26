@@ -5,7 +5,8 @@ namespace OllamaFluentUIChat.Models.DTO
     public class HistoryResponse
     {
         public int Id { get; set; }
-        public string Prompt{ get; set; } = string.Empty;
+        public string Prompt { get; set; } = string.Empty;
+        public string Descricao { get; set; } = string.Empty;
         public string Modelo { get; set; } = string.Empty;
         public float TempoPuro { get; set; }
         public float TempoCarga { get; set; }

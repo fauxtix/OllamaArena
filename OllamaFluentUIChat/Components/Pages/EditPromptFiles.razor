@@ -7,7 +7,6 @@
 <div class="edit-prompts-main">
     <div class="prompt-editor-pane prompt-card">
 
-        <!-- Cabeçalho de 3 secções: Título (Esquerda), Selector (Meio) e Botões (Direita) -->
         <div class="prompt-header-row">
             <div class="prompt-title">
                 <FluentHeader Style="background-color:transparent; color: #2ecc71; font-size:1.5rem; margin: 0; padding: 0;">
@@ -15,7 +14,6 @@
                 </FluentHeader>
             </div>
 
-            <!-- Selector posicionado estritamente no meio -->
             <div class="prompt-selector-middle">
                 <FluentSelect Items="@_promptFiles" TOption="string"
                               Height="200px"
@@ -25,7 +23,6 @@
                 </FluentSelect>
             </div>
 
-            <!-- Botões Gravar e Cancelar fixados na linha do topo à direita -->
             <div class="prompt-actions-top-right">
                 <FluentButton Appearance="Appearance.Accent"
                               Style="border-radius:10px"
@@ -37,7 +34,7 @@
                               Style="border-radius:10px"
                               IconStart="@(new Icons.Regular.Size16.Dismiss())"
                               OnClick="OnCancel">
-                    Cancelar
+                    Cancelar edição
                 </FluentButton>
             </div>
         </div>
