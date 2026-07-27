@@ -2,12 +2,14 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using OllamaFluentUIChat.Models.Entities;
 using OllamaFluentUIChat.PromptTemplates;
+using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
 
 namespace OllamaFluentUIChat.Components.Pages.Components
 {
     public partial class Benchmarks
     {
+        [Inject] public required IBenchmarkRepository BenchmarkRepo { get; set; }
         [Inject] public required IOllamaGpuService GpuService { get; set; }
         [Inject] public required EvaluatePromptTemplate EvaluatePromptTemplate { get; set; }
         [Inject] public ILogger<App> _logger { get; set; } = default!;
@@ -56,7 +58,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
         }
 
 
-        private void SelectPrompt(BenchmarkPrompt prompt)
+        private void  SelectPrompt(BenchmarkPrompt prompt)
         {
             _mostrarGrafico = false;
             _selectedPrompt = prompt;
@@ -75,7 +77,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
 
         private async Task RenderChartPromptAsync(BenchmarkPrompt prompt)
         {
-            if (prompt.Answers == null || !prompt.Answers.Any())
+            if (prompt.Answers == null || prompt.Answers.Count == 0)
                 return;
 
             var dados = new
@@ -196,6 +198,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
                 if (guardado && DialogService != null)
                 {
                     await DialogService.ShowInfoAsync($"Avaliação do modelo {resposta.NomeModelo} atualizada com sucesso no SQLite.", "Sucesso");
+                    StateHasChanged();
                 }
             }
             catch (Exception ex)
@@ -214,7 +217,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             try
             {
                 var metadata = await GpuService.GetExtendedModelMetadataAsync(modelName);
-                
+
                 var trainingYear = metadata.TrainingYear;
 
                 var formattedPrompt = await EvaluatePromptTemplate.EvaluationCopyPromptAsync(
@@ -232,9 +235,10 @@ namespace OllamaFluentUIChat.Components.Pages.Components
                 isCreatingPrompt = false;
             }
         }
-        private void OpenEvaluation(BenchmarkResponse resp)
+        private async Task OpenEvaluation(int id)
         {
-            _selectedEvaluation = resp;
+            var benchmarkEvaluation = await BenchmarkRepo.GetBenchmarkAnswersByIdAsync(id);
+            _selectedEvaluation = benchmarkEvaluation;
             _evaluationDialogVisible = true;
         }
         private Task CloseDialogAsync()

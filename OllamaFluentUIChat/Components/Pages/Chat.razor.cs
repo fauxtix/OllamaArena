@@ -448,11 +448,10 @@ namespace OllamaFluentUIChat.Components.Pages
                                 NomeModelo = ModelName,
                                 TextoResposta = aiMessage.Text,
                                 TokensPorSegundo = Math.Round(tokensPerSecond, 1),
-                                TempoPuroMs = evalDurationNs,   // valor cru (ns)
-                                TempoCargaMs = loadDurationNs,  // valor cru (ns)
+                                TempoPuroMs = evalDurationNs / 1_000_000.0,   // ns → ms
+                                TempoCargaMs = loadDurationNs / 1_000_000.0,  // ns → ms
                                 TamanhoTokens = evalCount
                             };
-
                             await BenchmarkRepo.CreateResponseAsync(newResponse);
                         }
                     }

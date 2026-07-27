@@ -19,4 +19,5 @@ public interface IBenchmarkRepository
     Task<bool> DeleteAllPromptsAndHistoryAsync();
     Task<IEnumerable<HistoryResponse>> HistoryResponseAsync();
     Task<PromptFeedback> GetBenchmarkJudgesFeedbackByIdAsync(int promptId);
+    Task<BenchmarkResponse> GetBenchmarkAnswersByIdAsync(int promptId);
 }

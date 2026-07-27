@@ -21,7 +21,7 @@
 
             <div style="display: flex; gap: 12px; align-items: center; width: 100%; margin:16px;">
                 <FluentSearch @bind-Value="_search"
-                              Placeholder="Pesquisa benchmarks (modelo, prompt)"
+                              Placeholder="Pesquisa benchmarks (modelo, descrição)"
                               class="search-box" />
 
                 <FluentSpacer />
@@ -79,17 +79,15 @@
                         DisplayMode="DataGridDisplayMode.Grid"
                         class="benchmark-grid">
 
-            @* <PropertyColumn Property="@(b => b.Id)" Title="ID#" Width="60px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.ResponseId)" Title="ID2#" Width="60px" Sortable="true" /> *@
 
             @* <PropertyColumn Property="@(b => b.DataCriacaoFormatada)" Title="Data de Criação" Width="160px" Align="Align.Center" Sortable="true" /> *@
             <PropertyColumn Property="@(b => b.NomeModelo)" Title="Modelo" Sortable="true" Width="160px" />
 
-            @* <TemplateColumn Title="Prompt" Tooltip="true" Width="300px">
+            <TemplateColumn Title="Descrição" Tooltip="true" Width="200px">
                 <div class="prompt-cell">
-                    @context.TextoPrompt
+                    @context.Descricao
                 </div>
-            </TemplateColumn> *@
+            </TemplateColumn>
 
             <PropertyColumn Property="@(b => b.GeminiRating)" Title="Gemini" Align="Align.Center" Width="100px" Sortable="true">
                 <HeaderCellItemTemplate>
@@ -110,7 +108,7 @@
                     <span class="header-columns">Tokens/s</span>
                 </HeaderCellItemTemplate>
                 </PropertyColumn>
-            <PropertyColumn Property="@(b => b.TempoPuroFormatado)" Title="Tempo" Align="Align.Center" Width="100px" Sortable="true" >
+            <PropertyColumn Property="@(b => b.TempoPuroFormatado)"  Title="Tempo" Align="Align.Center" Width="100px" Sortable="true" >
                 <HeaderCellItemTemplate>
                     <span class="header-columns">Tempo</span>
                 </HeaderCellItemTemplate>

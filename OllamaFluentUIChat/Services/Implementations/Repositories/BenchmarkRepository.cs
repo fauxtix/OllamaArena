@@ -168,8 +168,32 @@ public class BenchmarkRepository : IBenchmarkRepository
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Erro ao buscar feedback dos juízes para o prompt ID {PromptId}", promptId);
+            return new();
+        }
+    }
 
-            throw;
+
+    /// <summary>
+    /// Procura um único prompt e o feedback dos juizes através do ID.
+    /// </summary>
+    public async Task<BenchmarkResponse> GetBenchmarkAnswersByIdAsync(int id)
+    {
+        var sql = @"
+                SELECT * FROM Respostas
+                WHERE Id = @Id;";
+
+        try
+        {
+            using var connection = _context.CreateConnection();
+            var response = await connection.QueryFirstAsync<BenchmarkResponse>(sql, new { Id = id });
+            return response ?? new();
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao buscar resposta para o  ID {id}", id);
+            return new();
         }
     }
 
@@ -343,7 +367,7 @@ public class BenchmarkRepository : IBenchmarkRepository
         sb.Append("R.ChatGptHaloEffectRating, R.ChatGptSafetyRating, ");
 
         // Métricas de Performance e Datas
-        sb.Append("P.DataCriacao, R.TokensPorSegundo, R.TempoPuroMs, R.TempoCargaMs, R.TamanhoTokens ");
+        sb.Append("P.DataCriacao, P.Descricao, R.TokensPorSegundo, R.TempoPuroMs, R.TempoCargaMs, R.TamanhoTokens ");
         sb.Append("FROM Prompts P ");
         sb.Append("LEFT JOIN Respostas R ON R.PromptId = P.Id");
 

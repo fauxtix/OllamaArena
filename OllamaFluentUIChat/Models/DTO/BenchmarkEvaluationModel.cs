@@ -7,6 +7,7 @@ public class BenchmarkEvaluationModel
     public int ResponseId { get; set; }
     public DateTime DataCriacao { get; set; }
     public string NomeModelo { get; set; } = string.Empty;
+    public string Descricao { get; set; } = string.Empty;
     public string TextoPrompt { get; set; } = string.Empty;
 
     public double TokensPorSegundo { get; set; }
@@ -43,10 +44,23 @@ public class BenchmarkEvaluationModel
     public int? ChatGptSafetyRating { get; set; }
 
     // Propriedades Formatadas
-    public string TempoPuroFormatado =>
-        TimeSpan.FromMilliseconds(TempoPuroMs).ToString(@"m\:ss");
-    public string TempoCargaFormatado =>
-        TimeSpan.FromMilliseconds(TempoCargaMs).ToString(@"m\:ss");
+    public string TempoPuroFormatado
+    {
+        get
+        {
+            var ts = TimeSpan.FromMilliseconds(TempoPuroMs);
+            return $"{(int)ts.TotalMinutes}:{ts.Seconds:D2}";
+        }
+    }
+
+    public string TempoCargaFormatado
+    {
+        get
+        {
+            var ts = TimeSpan.FromMilliseconds(TempoCargaMs);
+            return $"{(int)ts.TotalMinutes}:{ts.Seconds:D2}";
+        }
+    }
     public string DataCriacaoFormatada =>
         DataCriacao.ToString("dd/MM/yyyy HH:mm");
 }

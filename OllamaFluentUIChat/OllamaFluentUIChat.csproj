@@ -48,10 +48,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Docs\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Update="wwwroot\images\OllamaAsAJudge.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

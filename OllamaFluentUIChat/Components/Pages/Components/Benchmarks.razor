@@ -3,8 +3,6 @@
 
 @using Microsoft.FluentUI.AspNetCore.Components
 @using OllamaFluentUIChat.Services.Helpers
-@using OllamaFluentUIChat.Services.Interfaces.Repositories
-@inject IBenchmarkRepository BenchmarkRepo
 @inject IDialogService DialogService
 @inject ILogger<App> Logger
 @inject IJSRuntime JS
@@ -195,7 +193,7 @@
                                                     <div>
                                                         <FluentButton Appearance="Appearance.Accent" Color="Color.Success"
                                                                       IconStart="@(new Icons.Regular.Size16.Edit())"
-                                                                      OnClick="@(() => OpenEvaluation(resp))">
+                                                                      OnClick="@(() => OpenEvaluation(resp.Id))">
                                                             Avaliação
                                                         </FluentButton>
                                                     </div>
