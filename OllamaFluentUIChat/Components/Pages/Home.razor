@@ -4,32 +4,24 @@
 @using OllamaFluentUIChat.Services
 @using OllamaFluentUIChat.Services.Helpers
 @using OllamaFluentUIChat.Services.Interfaces.Services
+@using static OllamaFluentUIChat.Models.DTO.OllamaModels
 
 @inject IDialogService DialogService
+@inject OllamaModelsInitializer ModelsInitializer
 @rendermode InteractiveServer
 
 
 <PageTitle>Home</PageTitle>
 
-<div style="display: flex;
-    justify-content: center;
-    align-items: center;
-    flex: 1 1 auto;
-    min-height: 0;
-    height: 100%;
-    width: 100%;">
-
+<div class="home-container">
     <FluentStack Orientation="Orientation.Vertical"
                  HorizontalAlignment="HorizontalAlignment.Center"
                  VerticalAlignment="VerticalAlignment.Center"
                  Style="width: 100%; gap: 30px;">
-        <!-- espaço vertical -->
-        <!-- Stack horizontal das imagens -->
         <FluentStack Orientation="Orientation.Horizontal"
                      HorizontalAlignment="HorizontalAlignment.Center"
                      VerticalAlignment="VerticalAlignment.Center"
                      Style="gap: 50px;">
-            <!-- ← espaço entre as imagens -->
 
             <FluentCard Style="padding: 12px; width: max-content; height: max-content;">
                 <img src="images/OllamaAsAJudge.png"
@@ -78,74 +70,61 @@
 <ReadmePreview @ref="preview" />
 
 @code {
-
     [Inject] public required InternetConnectivityService Internet { get; set; }
     [Inject] public IJSRuntime JS { get; set; } = default!;
     [Inject] public IOllamaGpuService? GpuService { get; set; }
     [Inject] public ILogger<App>? _logger { get; set; }
 
-
     private ReadmePreview? preview;
     private List<string> _models = new();
+    private List<ModelDetails> _fullModels = new();
     private DotNetObjectReference<Home>? _dotNetRef;
 
     private bool showOllamaError = false;
     private string ollamaErrorMessage = "";
 
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = false
+    };
+
     protected override async Task OnInitializedAsync()
     {
         showOllamaError = false;
+
         var isOllamaRunning = await OllamaChecker.IsOllamaRunningAsync();
         if (!isOllamaRunning)
         {
             showOllamaError = true;
             ollamaErrorMessage = "O servidor Ollama não está em execução. Por favor, inicie o Ollama.";
-
             _logger?.LogError("Ollama server is not running.");
-            return;
         }
     }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await ClearDataModels();
-            var allModels = await GpuService!.GetLocalModelsAsync();
-            _models.Clear();
-            _models.AddRange(allModels.Models.Select(m => m.Model));
-
-            await SaveModelsToLocalStorage();
-
-        }
-    }
-
-    private async Task SaveModelsToLocalStorage()
-    {
-        var modelsJson = JsonSerializer.Serialize(_models);
-        await JS.InvokeVoidAsync("localStorage.setItem", "ollamaModels", modelsJson);
-    }
-
-
-    private async Task ClearDataModels()
-    {
-        _models.Clear();
-        await JS.InvokeVoidAsync("localStorage.removeItem", "ollamaModels");
-    }
-
-
 
     private async Task ShowReadme()
     {
         var hasInternet = await Internet.HasInternetAsync();
         if (!hasInternet)
         {
-            await DialogService.ShowErrorAsync($"Internet indisponível. Verifique, por favor.", "Acesso ao ficheiro");
-
+            await DialogService.ShowErrorAsync("Internet indisponível. Verifique, por favor.", "Acesso ao ficheiro");
+            return;
         }
+
         if (preview is not null)
         {
             await preview.OpenAsync();
         }
     }
 }
+<style>
+    .home-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex: 1 1 auto;
+        min-height: 0;
+        height: 100%;
+        width: 100%;
+    }
+</style>

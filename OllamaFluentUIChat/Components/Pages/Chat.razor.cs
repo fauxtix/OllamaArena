@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.InkML;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.FluentUI.AspNetCore.Components;
@@ -9,6 +10,9 @@ using OllamaFluentUIChat.Services;
 using OllamaFluentUIChat.Services.Helpers;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
+using OllamaSharp;
+using OllamaSharp.Models.Chat;
+using OllamaSharp.Models;
 using System.Text;
 using System.Text.Json;
 using System.Web;
@@ -94,6 +98,7 @@ namespace OllamaFluentUIChat.Components.Pages
                 isLoadingModels = true;
                 StateHasChanged();
 
+                //var allModelsTest = await GpuService!.GetLocalModelsAsync();
                 var localModels = await LoadModelsFromLocalStorage();
 
                 if (localModels.Count > 0)
@@ -218,17 +223,47 @@ namespace OllamaFluentUIChat.Components.Pages
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var userPrompt = _currentMessage;
 
-            _messages.Add(new Models.DTO.ChatMessage { User = "Tu", Text = userPrompt, IsCurrentUser = true });
+            _messages.Add(new Models.DTO.ChatMessage
+            {
+                User = "Tu",
+                Text = userPrompt,
+                IsCurrentUser = true
+            });
+
             _currentMessage = string.Empty;
             _inputKey++;
             _isThinking = true;
             StateHasChanged();
             await ForceScrollToBottomAsync();
 
-            var aiMessage = new Models.DTO.ChatMessage { User = "Ollama", Text = "...", IsCurrentUser = false };
+            var aiMessage = new Models.DTO.ChatMessage
+            {
+                User = "Ollama",
+                Text = "...",
+                IsCurrentUser = false,
+                ElapsedTime = "0.00s"
+            };
+
             _messages.Add(aiMessage);
             StateHasChanged();
             await ForceScrollToBottomAsync();
+
+            // ========== TIMER DO TEMPO EM TEMPO REAL ==========
+            bool firstChunkReceived = false;
+
+            var timer = new System.Threading.Timer(_ =>
+            {
+                if (firstChunkReceived || !_isThinking) return;
+
+                var elapsed = stopwatch.Elapsed;
+                string tempo = elapsed.TotalSeconds < 10
+                    ? $"{elapsed.TotalSeconds:F2}s"
+                    : $"{elapsed.TotalSeconds:F1}s";
+
+                aiMessage.ElapsedTime = tempo;
+                _ = InvokeAsync(StateHasChanged);
+            }, null, 0, 150); // atualiza a cada 150ms
+                              // ==================================================
 
             _cts = new CancellationTokenSource();
             long loadDurationNs = 0;
@@ -238,8 +273,8 @@ namespace OllamaFluentUIChat.Components.Pages
             try
             {
                 var historyPayload = new List<OllamaChatMessage>();
-
                 string systemInstructions = await PromptFilesService.GetPromptFileContentAsync("system-prompt.txt") ?? string.Empty;
+
                 historyPayload.Add(new OllamaChatMessage
                 {
                     Role = "system",
@@ -272,7 +307,6 @@ namespace OllamaFluentUIChat.Components.Pages
                     historyPayload.RemoveAt(historyPayload.Count - 1);
                 }
 
-                // Se por algum motivo o histórico ficou vazio (ex: falha de mapeamento), aborta de forma segura
                 if (historyPayload.Count == 0 || historyPayload[^1].Role != "user")
                 {
                     _isThinking = false;
@@ -281,13 +315,7 @@ namespace OllamaFluentUIChat.Components.Pages
                     return;
                 }
 
-                if (string.IsNullOrWhiteSpace(ModelName))
-                {
-                    ModelName = "phi4-mini:latest";
-                }
-
                 double temperature = ChatMeasureTemperature.ObterTemperaturaRecomendada(userPrompt);
-
                 int baseTokens = _gpuReport?.FitsInGpu == true ? 1800 : 1200;
                 int maxTokens = temperature switch
                 {
@@ -302,13 +330,13 @@ namespace OllamaFluentUIChat.Components.Pages
                     Messages = historyPayload,
                     Stream = true,
                     Options = new Dictionary<string, object>
-                    {
-                        { "temperature", Math.Round(temperature, 2)},
-                        { "num_predict", maxTokens },
-                        { "repeat_penalty", 1.1 },
-                        { "top_k", temperature <= 0.25 ? 40 : 600 },
-                        { "top_p", temperature <= 0.30 ? 0.85 : 0.92 }
-                    }
+            {
+                { "temperature", Math.Round(temperature, 2) },
+                { "num_predict", maxTokens },
+                { "repeat_penalty", 1.1 },
+                { "top_k", temperature <= 0.25 ? 40 : 600 },
+                { "top_p", temperature <= 0.30 ? 0.85 : 0.92 }
+            }
                 };
 
                 var json = JsonSerializer.Serialize(payload);
@@ -329,18 +357,13 @@ namespace OllamaFluentUIChat.Components.Pages
                 int bytesRead;
                 bool firstChunk = true;
 
-                if (_cts is null)
-                {
-                    return;
-                }
+                if (_cts is null) return;
 
                 var cts = _cts;
 
                 while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cts.Token)) > 0)
                 {
                     var chunkString = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-
-                    // O Ollama pode enviar múltiplos objetos JSON separados por quebras de linha
                     var lines = chunkString.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
 
                     foreach (var singleLine in lines)
@@ -369,6 +392,7 @@ namespace OllamaFluentUIChat.Components.Pages
                                 {
                                     aiMessage.Text = chunkText;
                                     firstChunk = false;
+                                    firstChunkReceived = true;   // ← para o timer
                                 }
                                 else
                                 {
@@ -379,13 +403,11 @@ namespace OllamaFluentUIChat.Components.Pages
                                 await StreamScrollAsync();
                             }
 
-                            // Captura as métricas finais quando o Ollama terminar (done = true)
                             if (root.TryGetProperty("done", out var doneProp) && doneProp.GetBoolean() == true)
                             {
                                 var metrics = JsonSerializer.Deserialize<OllamaMetrics>(singleLine);
                                 if (metrics != null)
                                 {
-                                    // Guarda os valores exatamente como o Ollama envia (nanoseconds)
                                     loadDurationNs = metrics.LoadDuration;
                                     evalDurationNs = metrics.EvalDuration;
                                     evalCount = metrics.PromptEvalCount + metrics.EvalCount;
@@ -423,10 +445,17 @@ namespace OllamaFluentUIChat.Components.Pages
             }
             finally
             {
-                StateHasChanged();
                 stopwatch.Stop();
+                timer?.Dispose();   // ← limpa o timer
 
-                // 4. Gravação na Base de Dados SQLite
+                // Garante o valor final correto
+                string tempoFinal = stopwatch.Elapsed.TotalSeconds < 10
+                    ? $"{stopwatch.Elapsed.TotalSeconds:F2}s"
+                    : $"{stopwatch.Elapsed.TotalSeconds:F1}s";
+
+                aiMessage.ElapsedTime = tempoFinal;
+
+                // Gravação na Base de Dados SQLite
                 if (evalCount > 0 && evalDurationNs > 0)
                 {
                     try
@@ -438,7 +467,6 @@ namespace OllamaFluentUIChat.Components.Pages
                                 _currentPromptId = await BenchmarkRepo.CreatePromptAsync(userPrompt);
                             }
 
-                            // Cálculo de tokens/s (evalDurationNs está em nanoseconds)
                             double evalSeconds = evalDurationNs / 1_000_000_000.0;
                             double tokensPerSecond = evalCount / evalSeconds;
 
@@ -448,10 +476,12 @@ namespace OllamaFluentUIChat.Components.Pages
                                 NomeModelo = ModelName,
                                 TextoResposta = aiMessage.Text,
                                 TokensPorSegundo = Math.Round(tokensPerSecond, 1),
-                                TempoPuroMs = evalDurationNs / 1_000_000.0,   // ns → ms
-                                TempoCargaMs = loadDurationNs / 1_000_000.0,  // ns → ms
+                                TempoPuroMs = evalDurationNs / 1_000_000.0,
+                                TempoCargaMs = loadDurationNs / 1_000_000.0,
+                                TempoProcessamento = stopwatch.Elapsed.TotalMilliseconds,
                                 TamanhoTokens = evalCount
                             };
+
                             await BenchmarkRepo.CreateResponseAsync(newResponse);
                         }
                     }
@@ -467,10 +497,8 @@ namespace OllamaFluentUIChat.Components.Pages
                 }
 
                 _isThinking = false;
-
                 try { _cts?.Dispose(); } catch { }
                 _cts = null;
-
                 StateHasChanged();
                 await ForceScrollToBottomAsync();
             }
@@ -627,6 +655,71 @@ namespace OllamaFluentUIChat.Components.Pages
             return MessageFormatter.FormatMessagePlus(content);
         }
 
+        private async Task<string> GerarTituloCurtoAsync(string promptUtilizador)
+        {
+            try
+            {
+
+                if (_httpClient == null)
+                {
+                    throw new InvalidOperationException("HttpClient is not initialized.");
+                }
+
+                var payload = new OllamaChatPayload
+                {
+                    Model = ModelName,          // ou um modelo mais leve se quiseres (ex: "phi3:mini")
+                    Stream = false,             // importante: sem streaming
+                    Messages = new List<OllamaChatMessage>
+            {
+                new OllamaChatMessage
+                {
+                    Role = "system",
+                    Content = """
+                        Generate a very short title (maximum 3–4 words) that summarises the main theme of the user’s prompt.
+                        Rules:
+                        - Just the title, without quotation marks, without full stop at the end, without explanations.
+                        - Prefer concrete nouns and adjectives.
+                        - In Portuguese (unless the prompt is clearly in English).
+                        - Examples: ‘Cake Recipe’, ‘Python Pandas Error’, ‘Travel Ideas’, ‘React Hooks Code’
+                        """
+                },
+                new OllamaChatMessage
+                {
+                    Role = "user",
+                    Content = promptUtilizador
+                }
+            },
+                    Options = new Dictionary<string, object>
+            {
+                { "temperature", 0.3 },
+                { "num_predict", 20 }   // título é curto, não precisa de muitos tokens
+            }
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                using var request = new HttpRequestMessage(HttpMethod.Post, OllamaEndpoint);
+                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                using var response = await _httpClient.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+
+                var responseJson = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(responseJson);
+
+                string? titulo = doc.RootElement
+                                    .GetProperty("message")
+                                    .GetProperty("content")
+                                    .GetString()?
+                                    .Trim();
+
+                return string.IsNullOrWhiteSpace(titulo) ? "Nova conversa" : titulo;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "Falha ao gerar título curto");
+                return "Nova conversa";
+            }
+        }
 
         private async Task<string> SearchWebContext_DuckDuckGo_Async(string query)
         {
@@ -784,6 +877,477 @@ namespace OllamaFluentUIChat.Components.Pages
                 return string.Empty;
             }
         }
+        private async Task SendMessageWithOllamaSharpAsync()
+        {
+            if (string.IsNullOrWhiteSpace(_currentMessage) || _isThinking) return;
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var userPrompt = _currentMessage;
+
+            // --- UI: add user message ---
+            _messages.Add(new Models.DTO.ChatMessage
+            {
+                User = "Tu",
+                Text = userPrompt,
+                IsCurrentUser = true
+            });
+            _currentMessage = string.Empty;
+            _inputKey++;
+            _isThinking = true;
+            StateHasChanged();
+            await ForceScrollToBottomAsync();
+
+            // --- UI: placeholder AI message ---
+            var aiMessage = new Models.DTO.ChatMessage
+            {
+                User = "Ollama",
+                Text = "...",
+                IsCurrentUser = false,
+                ElapsedTime = "0.00s"
+            };
+            _messages.Add(aiMessage);
+            StateHasChanged();
+            await ForceScrollToBottomAsync();
+
+            // Real-time timer (same as before)
+            bool firstChunkReceived = false;
+            var timer = new System.Threading.Timer(_ =>
+            {
+                if (firstChunkReceived || !_isThinking) return;
+                var elapsed = stopwatch.Elapsed;
+                aiMessage.ElapsedTime = elapsed.TotalSeconds < 10
+                    ? $"{elapsed.TotalSeconds:F2}s"
+                    : $"{elapsed.TotalSeconds:F1}s";
+                _ = InvokeAsync(StateHasChanged);
+            }, null, 0, 150);
+
+            _cts = new CancellationTokenSource();
+            long loadDurationNs = 0;
+            long evalDurationNs = 0;
+            int evalCount = 0;
+
+            try
+            {
+                // ---------- Build history (same logic you already have) ----------
+                var historyPayload = new List<OllamaSharp.Models.Chat.Message>();
+
+                string systemInstructions = await PromptFilesService.GetPromptFileContentAsync("system-prompt.txt") ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(systemInstructions))
+                {
+                    historyPayload.Add(new OllamaSharp.Models.Chat.Message
+                    {
+                        Role = OllamaSharp.Models.Chat.ChatRole.System,
+                        Content = systemInstructions
+                    });
+                }
+
+                foreach (var msg in _messages)
+                {
+                    if (string.IsNullOrWhiteSpace(msg.Text) || msg.Text == "...") continue;
+                    if (msg.Text.StartsWith("Olá!", StringComparison.OrdinalIgnoreCase)) continue;
+
+                    var role = msg.IsCurrentUser
+                        ? OllamaSharp.Models.Chat.ChatRole.User
+                        : OllamaSharp.Models.Chat.ChatRole.Assistant;
+
+                    if (historyPayload.Count == 0 || historyPayload[^1].Role != role)
+                    {
+                        historyPayload.Add(new OllamaSharp.Models.Chat.Message
+                        {
+                            Role = role,
+                            Content = msg.Text
+                        });
+                    }
+                    else
+                    {
+                        historyPayload[^1].Content += "\n" + msg.Text;
+                    }
+                }
+
+                // Remove trailing assistant message if present
+                if (historyPayload.Count > 0 && historyPayload[^1].Role == OllamaSharp.Models.Chat.ChatRole.Assistant)
+                    historyPayload.RemoveAt(historyPayload.Count - 1);
+
+                if (historyPayload.Count == 0 || historyPayload[^1].Role != OllamaSharp.Models.Chat.ChatRole.User)
+                {
+                    _isThinking = false;
+                    _messages.Remove(aiMessage);
+                    StateHasChanged();
+                    return;
+                }
+
+                // ---------- Temperature & token limits (same logic) ----------
+                double temperature = ChatMeasureTemperature.ObterTemperaturaRecomendada(userPrompt);
+                int baseTokens = _gpuReport?.FitsInGpu == true ? 1800 : 1200;
+                int maxTokens = temperature switch
+                {
+                    <= 0.25 => (int)(baseTokens * 1.15),
+                    >= 0.75 => (int)(baseTokens * 0.90),
+                    _ => baseTokens
+                };
+
+                // ---------- OllamaSharp client ----------
+                // Re-use your existing HttpClient if you want
+                //var ollama = new OllamaApiClient(_httpClient!, ModelName);
+                var ollama = new OllamaApiClient("http://localhost:11434", ModelName);
+
+                var request = new ChatRequest
+                {
+                    Model = ModelName,
+                    Messages = historyPayload,
+                    Stream = true,
+                    Options = new RequestOptions
+                    {
+                        Temperature = (float)Math.Round(temperature, 2),
+                        NumPredict = maxTokens,
+                        RepeatPenalty = 1.1f,
+                        TopK = temperature <= 0.25 ? 40 : 600,
+                        TopP = temperature <= 0.30f ? 0.85f : 0.92f
+                    }
+                };
+
+                bool firstChunk = true;
+
+                await foreach (var chunk in ollama.ChatAsync(request, _cts.Token))
+                {
+                    if (chunk?.Message?.Content is { Length: > 0 } content)
+                    {
+                        if (firstChunk)
+                        {
+                            aiMessage.Text = content;
+                            firstChunk = false;
+                            firstChunkReceived = true;
+                        }
+                        else
+                        {
+                            aiMessage.Text += content;
+                        }
+
+                        StateHasChanged();
+                        await StreamScrollAsync();
+                    }
+
+                    // Final metrics (done == true)
+                    if (chunk is ChatDoneResponseStream done)
+                    {
+                        loadDurationNs = done.LoadDuration;
+                        evalDurationNs = done.EvalDuration;
+                        evalCount = done.PromptEvalCount + done.EvalCount;
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                aiMessage.Text = aiMessage.Text == "..."
+                    ? "⏱️ O tempo de resposta expirou."
+                    : aiMessage.Text + " *(Cancelado)*";
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Erro inesperado durante o streaming (OllamaSharp).");
+                aiMessage.Text = $"❌ Erro inesperado: {ex.Message}";
+            }
+            finally
+            {
+                stopwatch.Stop();
+                timer?.Dispose();
+
+                string tempoFinal = stopwatch.Elapsed.TotalSeconds < 10
+                    ? $"{stopwatch.Elapsed.TotalSeconds:F2}s"
+                    : $"{stopwatch.Elapsed.TotalSeconds:F1}s";
+                aiMessage.ElapsedTime = tempoFinal;
+
+                // ----- Benchmark (exactly the same as before) -----
+                if (evalCount > 0 && evalDurationNs > 0)
+                {
+                    try
+                    {
+                        if (BenchmarkRepo != null)
+                        {
+                            if (_currentPromptId == 0)
+                                _currentPromptId = await BenchmarkRepo.CreatePromptAsync(userPrompt);
+
+                            double evalSeconds = evalDurationNs / 1_000_000_000.0;
+                            double tokensPerSecond = evalCount / evalSeconds;
+
+                            var newResponse = new BenchmarkResponse
+                            {
+                                PromptId = _currentPromptId,
+                                NomeModelo = ModelName,
+                                TextoResposta = aiMessage.Text,
+                                TokensPorSegundo = Math.Round(tokensPerSecond, 1),
+                                TempoPuroMs = evalDurationNs / 1_000_000.0,
+                                TempoCargaMs = loadDurationNs / 1_000_000.0,
+                                TempoProcessamento = stopwatch.Elapsed.TotalMilliseconds,
+                                TamanhoTokens = evalCount
+                            };
+                            await BenchmarkRepo.CreateResponseAsync(newResponse);
+                        }
+                    }
+                    catch (Exception dbEx)
+                    {
+                        _logger?.LogError(dbEx, "[SQLITE ERROR] Falha ao gravar dados: {Message}", dbEx.Message);
+                    }
+                }
+                else
+                {
+                    _currentPromptId = 0;
+                    _logger?.LogInformation("[BENCHMARK] Teste descartado para o modelo {ModelName}. Prompt incompleto.", ModelName);
+                }
+
+                _isThinking = false;
+                try { _cts?.Dispose(); } catch { }
+                _cts = null;
+                StateHasChanged();
+                await ForceScrollToBottomAsync();
+            }
+        }
+
+        private async Task SendMessageWithOllamaFastAsync()
+        {
+            if (string.IsNullOrWhiteSpace(_currentMessage) || _isThinking) return;
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var userPrompt = _currentMessage;
+
+            // --- UI: add user message ---
+            _messages.Add(new Models.DTO.ChatMessage
+            {
+                User = "Tu",
+                Text = userPrompt,
+                IsCurrentUser = true
+            });
+            _currentMessage = string.Empty;
+            _inputKey++;
+            _isThinking = true;
+            StateHasChanged();
+            await ForceScrollToBottomAsync();
+
+            // --- AI placeholder ---
+            var aiMessage = new Models.DTO.ChatMessage
+            {
+                User = "Ollama",
+                Text = "...",
+                IsCurrentUser = false,
+                ElapsedTime = "0.00s"
+            };
+            _messages.Add(aiMessage);
+            StateHasChanged();
+            await ForceScrollToBottomAsync();
+
+            // --- Timer UI ---
+            bool firstChunkReceived = false;
+            var timer = new System.Threading.Timer(_ =>
+            {
+                if (firstChunkReceived || !_isThinking) return;
+                var elapsed = stopwatch.Elapsed;
+                aiMessage.ElapsedTime = elapsed.TotalSeconds < 10
+                    ? $"{elapsed.TotalSeconds:F2}s"
+                    : $"{elapsed.TotalSeconds:F1}s";
+                _ = InvokeAsync(StateHasChanged);
+            }, null, 0, 150);
+
+            _cts = new CancellationTokenSource();
+
+            long loadDurationNs = 0;
+            long evalDurationNs = 0;
+            int evalCount = 0;
+
+            try
+            {
+                // ---------- Build history ----------
+                var historyPayload = new List<OllamaSharp.Models.Chat.Message>();
+
+                string systemInstructions = await PromptFilesService.GetPromptFileContentAsync("system-prompt.txt") ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(systemInstructions))
+                {
+                    historyPayload.Add(new OllamaSharp.Models.Chat.Message
+                    {
+                        Role = OllamaSharp.Models.Chat.ChatRole.System,
+                        Content = systemInstructions
+                    });
+                }
+
+                foreach (var msg in _messages)
+                {
+                    if (string.IsNullOrWhiteSpace(msg.Text) || msg.Text == "...") continue;
+                    if (msg.Text.StartsWith("Olá!", StringComparison.OrdinalIgnoreCase)) continue;
+
+                    var role = msg.IsCurrentUser
+                        ? OllamaSharp.Models.Chat.ChatRole.User
+                        : OllamaSharp.Models.Chat.ChatRole.Assistant;
+
+                    if (historyPayload.Count == 0 || historyPayload[^1].Role != role)
+                    {
+                        historyPayload.Add(new OllamaSharp.Models.Chat.Message
+                        {
+                            Role = role,
+                            Content = msg.Text
+                        });
+                    }
+                    else
+                    {
+                        historyPayload[^1].Content += "\n" + msg.Text;
+                    }
+                }
+
+                if (historyPayload.Count > 0 && historyPayload[^1].Role == OllamaSharp.Models.Chat.ChatRole.Assistant)
+                    historyPayload.RemoveAt(historyPayload.Count - 1);
+
+                if (historyPayload.Count == 0 || historyPayload[^1].Role != OllamaSharp.Models.Chat.ChatRole.User)
+                {
+                    _isThinking = false;
+                    _messages.Remove(aiMessage);
+                    StateHasChanged();
+                    return;
+                }
+
+                // ---------- Temperature & token limits ----------
+                double temperature = ChatMeasureTemperature.ObterTemperaturaRecomendada(userPrompt);
+                int baseTokens = _gpuReport?.FitsInGpu == true ? 1800 : 1200;
+                int maxTokens = temperature switch
+                {
+                    <= 0.25 => (int)(baseTokens * 1.15),
+                    >= 0.75 => (int)(baseTokens * 0.90),
+                    _ => baseTokens
+                };
+
+                // ---------- HttpClient otimizado ----------
+                var handler = new SocketsHttpHandler
+                {
+                    PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+                    PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
+                    MaxConnectionsPerServer = 10
+                };
+
+                using var fastClient = new HttpClient(handler)
+                {
+                    BaseAddress = new Uri("http://localhost:11434"),
+                    Timeout = Timeout.InfiniteTimeSpan
+                };
+
+                var ollama = new OllamaApiClient(fastClient, ModelName);
+
+                var request = new ChatRequest
+                {
+                    Model = ModelName,
+                    Messages = historyPayload,
+                    Stream = true,
+                    Options = new RequestOptions
+                    {
+                        Temperature = (float)Math.Round(temperature, 2),
+                        NumPredict = maxTokens,
+                        RepeatPenalty = 1.1f,
+                        TopK = temperature <= 0.25 ? 40 : 600,
+                        TopP = temperature <= 0.30f ? 0.85f : 0.92f
+                    }
+                };
+
+                // ---------- StringBuilder para acelerar concatenação ----------
+                var sb = new System.Text.StringBuilder(4096);
+
+                bool firstChunk = true;
+
+                await foreach (var chunk in ollama.ChatAsync(request, _cts.Token))
+                {
+                    if (chunk?.Message?.Content is { Length: > 0 } content)
+                    {
+                        if (firstChunk)
+                        {
+                            sb.Append(content);
+                            aiMessage.Text = sb.ToString();
+                            firstChunk = false;
+                            firstChunkReceived = true;
+                        }
+                        else
+                        {
+                            sb.Append(content);
+                            aiMessage.Text = sb.ToString();
+                        }
+
+                        // UI menos agressiva
+                        if (sb.Length % 512 == 0)
+                        {
+                            StateHasChanged();
+                            await StreamScrollAsync();
+                        }
+                    }
+
+                    if (chunk is ChatDoneResponseStream done)
+                    {
+                        loadDurationNs = done.LoadDuration;
+                        evalDurationNs = done.EvalDuration;
+                        evalCount = done.PromptEvalCount + done.EvalCount;
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                aiMessage.Text = aiMessage.Text == "..."
+                    ? "⏱️ O tempo de resposta expirou."
+                    : aiMessage.Text + " *(Cancelado)*";
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Erro inesperado durante o streaming (OllamaFast).");
+                aiMessage.Text = $"❌ Erro inesperado: {ex.Message}";
+            }
+            finally
+            {
+                stopwatch.Stop();
+                timer?.Dispose();
+
+                string tempoFinal = stopwatch.Elapsed.TotalSeconds < 10
+                    ? $"{stopwatch.Elapsed.TotalSeconds:F2}s"
+                    : $"{stopwatch.Elapsed.TotalSeconds:F1}s";
+                aiMessage.ElapsedTime = tempoFinal;
+
+                // ----- Benchmark -----
+                if (evalCount > 0 && evalDurationNs > 0)
+                {
+                    try
+                    {
+                        if (BenchmarkRepo != null)
+                        {
+                            if (_currentPromptId == 0)
+                                _currentPromptId = await BenchmarkRepo.CreatePromptAsync(userPrompt);
+
+                            double evalSeconds = evalDurationNs / 1_000_000_000.0;
+                            double tokensPerSecond = evalCount / evalSeconds;
+
+                            var newResponse = new BenchmarkResponse
+                            {
+                                PromptId = _currentPromptId,
+                                NomeModelo = ModelName,
+                                TextoResposta = aiMessage.Text,
+                                TokensPorSegundo = Math.Round(tokensPerSecond, 1),
+                                TempoPuroMs = evalDurationNs / 1_000_000.0,
+                                TempoCargaMs = loadDurationNs / 1_000_000.0,
+                                TempoProcessamento = stopwatch.Elapsed.TotalMilliseconds,
+                                TamanhoTokens = evalCount
+                            };
+                            await BenchmarkRepo.CreateResponseAsync(newResponse);
+                        }
+                    }
+                    catch (Exception dbEx)
+                    {
+                        _logger?.LogError(dbEx, "[SQLITE ERROR] Falha ao gravar dados: {Message}", dbEx.Message);
+                    }
+                }
+                else
+                {
+                    _currentPromptId = 0;
+                    _logger?.LogInformation("[BENCHMARK] Teste descartado para o modelo {ModelName}. Prompt incompleto.", ModelName);
+                }
+
+                _isThinking = false;
+                try { _cts?.Dispose(); } catch { }
+                _cts = null;
+                StateHasChanged();
+                await ForceScrollToBottomAsync();
+            }
+        }
+
         public void Dispose()
         {
             try

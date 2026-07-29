@@ -9,6 +9,10 @@
         public string TextoResposta { get; set; } = string.Empty;
         public double TokensPorSegundo { get; set; }
         public double TempoPuroMs { get; set; }
+
+        // Alterado para double (milissegundos), igual ao TempoPuroMs e TempoCargaMs
+        public double TempoProcessamento { get; set; }
+
         public double TempoCargaMs { get; set; }
         public int TamanhoTokens { get; set; }
 
@@ -42,10 +46,28 @@
         public int? ChatGptHaloEffectRating { get; set; }
         public int? ChatGptSafetyRating { get; set; }
 
+        // PROPRIEDADES DE FORMATAÇÃO PARA A UI
+
         public string TempoPuroFormatado =>
-    TimeSpan.FromMilliseconds(TempoPuroMs).ToString(@"m\:ss");
+            TimeSpan.FromMilliseconds(TempoPuroMs).ToString(@"m\:ss");
+
         public string TempoCargaFormatado =>
             TimeSpan.FromMilliseconds(TempoCargaMs).ToString(@"m\:ss");
 
+        // Formato hh:mm:ss (mesmo do DurationDisplay)
+        public string TempoProcessamentoDisplay =>
+            TimeSpan.FromMilliseconds(TempoProcessamento).ToString(@"hh\:mm\:ss");
+
+        // Formato curto "96.5s" ou "3.42s" se precisares de mostrar no formato antigo no UI
+        public string TempoProcessamentoCurtoFormatado
+        {
+            get
+            {
+                var totalSegundos = TempoProcessamento / 1000.0;
+                return totalSegundos < 10
+                    ? $"{totalSegundos:F2}s"
+                    : $"{totalSegundos:F1}s";
+            }
+        }
     }
 }

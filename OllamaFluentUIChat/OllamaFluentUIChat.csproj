@@ -35,11 +35,11 @@
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.14.2" />
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.14.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="OllamaSharp" Version="5.4.30" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.1" />
     <PackageReference Include="Serilog.Sinks.SQLite" Version="7.0.0" />
     <PackageReference Include="SharpToken" Version="2.0.6" />
-    <PackageReference Include="Syncfusion.Blazor.Charts" Version="33.2.13" />
     <PackageReference Include="System.Management" Version="10.0.9" />
   </ItemGroup>
 

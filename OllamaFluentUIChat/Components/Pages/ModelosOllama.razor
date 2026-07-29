@@ -1,8 +1,11 @@
 ﻿@page "/modelos-ollama"
+@using System.Text.Json
 @using Microsoft.FluentUI.AspNetCore.Components
 @using OllamaFluentUIChat.Services.Interfaces.Services
 @using static OllamaFluentUIChat.Models.DTO.OllamaModels
 @inject IOllamaGpuService OllamaGpuService
+@inject IJSRuntime JS
+@inject ILogger<ModelosOllama>? Logger
 @rendermode InteractiveServer
 
 <PageTitle>Modelos Disponíveis - Ollama</PageTitle>
@@ -21,43 +24,47 @@
     }
     else if (_localModels is null || !_localModels.Any())
     {
-        <FluentBadge  Appearance="Appearance.Accent">
+        <FluentBadge Appearance="Appearance.Accent">
             Nenhum modelo local detetado ou Ollama inacessível.
         </FluentBadge>
     }
     else
     {
-        <FluentDataGrid Items="@_localModels.AsQueryable()" TGridItem="ModelDetails" ResizableColumns="true" >
-            <PropertyColumn Property="@(m => m.Name)" Title="Nome" Sortable="true" Style="color:steelblue; font-weight:700; font-size: 1rem;" />
+        <FluentDataGrid Items="@_localModels.AsQueryable()" TGridItem="ModelDetails" ResizableColumns="true">
+            <PropertyColumn Property="@(m => m.Name)" Title="Nome" Sortable="true"
+                            Style="color:steelblue; font-weight:700; font-size: 1rem;" />
 
-            <TemplateColumn Title="Família">
+            <TemplateColumn Title="Família" Width="180px">
                 @context.Details?.Family
             </TemplateColumn>
-            <TemplateColumn Title="Parâmetros" Align="Align.Center">
+
+            <TemplateColumn Title="Parâmetros" Align="Align.Center" Width="120px">
                 @context.Details?.ParameterSize
             </TemplateColumn>
-            <TemplateColumn Title="Quantização" >
-                @context.Details?.QuantizationLevel 
+
+            <TemplateColumn Title="Quantização" Width="130px" Align="Align.Center">
+                @context.Details?.QuantizationLevel
             </TemplateColumn>
-            <TemplateColumn Title="Ano de Treino" Align="Align.Center" 
+
+            <TemplateColumn Title="Ano de Treino" Align="Align.Center" Width="140px"
                             Style="color:cadetblue; font-weight:500; font-size: 0.9rem;">
                 @context.TrainingYear
             </TemplateColumn>
 
-            <TemplateColumn Title="Contexto Máximo" Width="150px">
-                <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Right"
-                             VerticalAlignment="VerticalAlignment.Center" Style="gap: 6px;">
-                    @*  <FluentIcon Value="@(new Icons.Regular.Size16.BroadActivityFeed())"
-                                Color="Color.Neutral" /> *@
+            <TemplateColumn Title="Contexto Máximo" Width="170px">
+                <FluentStack Orientation="Orientation.Horizontal"
+                             HorizontalAlignment="HorizontalAlignment.Right"
+                             VerticalAlignment="VerticalAlignment.Center"
+                             Style="gap: 6px;">
                     <span>@context.ContextLength.ToString("N0") tokens</span>
                 </FluentStack>
             </TemplateColumn>
 
-            <TemplateColumn Title="Tamanho no Disco" Align="Align.Center">
+            <TemplateColumn Title="Tamanho no Disco" Align="Align.Center" Width="170px">
                 @context.SizeInGB GB
             </TemplateColumn>
 
-            <TemplateColumn Title="Compatibilidade GPU">
+            <TemplateColumn Title="Compatibilidade GPU" Width="180px">
                 @{
                     var gpuCheck = OllamaGpuService.CheckGpuCompatibility(context.SizeInBytes);
                     if (gpuCheck.AvailableVramGB == 0)
@@ -66,7 +73,9 @@
                     }
                     else if (gpuCheck.FitsInGpu)
                     {
-                        <FluentBadge Appearance="Appearance.Accent" Fill="success">Compatível (~@gpuCheck.EstimatedRequiredMemoryGB GB)</FluentBadge>
+                        <FluentBadge Appearance="Appearance.Accent" Fill="success">
+                            Compatível (~@gpuCheck.EstimatedRequiredMemoryGB GB)
+                        </FluentBadge>
                     }
                     else
                     {
@@ -78,36 +87,96 @@
             </TemplateColumn>
         </FluentDataGrid>
     }
-
 </div>
 
 @code {
-    private List<ModelDetails>? _localModels = null;
-    private bool _isLoading { get; set; }
-    public string TrainingYear { get; set; } = "2024";
+    private List<ModelDetails>? _localModels;
+    private bool _isLoading = true;
 
-    protected override async Task OnInitializedAsync()
+    private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        _isLoading = true;
-        await Task.Delay(100);
-        var tagsResponse = await OllamaGpuService.GetLocalModelsAsync();
-        _localModels = tagsResponse.Models;
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = false
+    };
 
-        if (_localModels != null && _localModels.Any())
+    private const string NamesKey = "ollamaModels";       // o que a Home grava
+    private const string FullKey = "ollamaModelsFull";   // lista completa (só este componente usa)
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
         {
-            foreach (var model in _localModels)
-            {
-                var metadata = await OllamaGpuService.GetExtendedModelMetadataAsync(model.Model);
+            // 1. Tentar carregar a lista completa já enriquecida
+            _localModels = await LoadFullFromStorageAsync();
 
-                model.ContextLength = metadata.ContextLength;
-                model.TrainingYear = metadata.TrainingYear;
+            // 2. Se não existir, construir a partir dos nomes + Ollama
+            if (_localModels is null || !_localModels.Any())
+            {
+                var names = await LoadNamesFromStorageAsync() ?? [];
+
+                var response = await OllamaGpuService.GetLocalModelsAsync();
+                var allModels = response.Models ?? [];
+
+                // Filtrar só os que estão nos nomes guardados (ou usar todos se a lista de nomes estiver vazia)
+                _localModels = names.Any()
+                    ? allModels.Where(m => names.Contains(m.Model)).ToList()
+                    : allModels;
+
+                // Enriquecer
+                foreach (var model in _localModels)
+                {
+                    var metadata = await OllamaGpuService.GetExtendedModelMetadataAsync(model.Model);
+                    model.ContextLength = metadata.ContextLength;
+                    model.TrainingYear = metadata.TrainingYear;
+                }
+
+                // Guardar a versão completa para próximas visitas
+                await SaveFullToStorageAsync(_localModels);
             }
         }
-        _isLoading = false;
-        StateHasChanged();
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Erro ao carregar modelos na página Modelos Ollama");
+            _localModels = [];
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
 
+    private async Task<List<string>?> LoadNamesFromStorageAsync()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("localStorage.getItem", NamesKey);
+            if (string.IsNullOrWhiteSpace(json)) return null;
+            return JsonSerializer.Deserialize<List<string>>(json);
+        }
+        catch { return null; }
+    }
+
+    private async Task<List<ModelDetails>?> LoadFullFromStorageAsync()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("localStorage.getItem", FullKey);
+            if (string.IsNullOrWhiteSpace(json)) return null;
+            return JsonSerializer.Deserialize<List<ModelDetails>>(json, JsonOptions);
+        }
+        catch { return null; }
+    }
+
+    private async Task SaveFullToStorageAsync(List<ModelDetails> models)
+    {
+        var json = JsonSerializer.Serialize(models, JsonOptions);
+        await JS.InvokeVoidAsync("localStorage.setItem", FullKey, json);
     }
 }
+
 <style>
     .loading-state {
         display: flex;

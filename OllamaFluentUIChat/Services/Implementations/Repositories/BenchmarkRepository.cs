@@ -47,17 +47,27 @@ public class BenchmarkRepository : IBenchmarkRepository
         StringBuilder sb = new();
         sb.Append("INSERT INTO Respostas ");
         sb.Append("(PromptId, NomeModelo, TextoResposta, TokensPorSegundo, ");
-        sb.Append("TempoPuroMs, TempoCargaMs, TamanhoTokens, ");
+        sb.Append("TempoPuroMs, TempoCargaMs, TamanhoTokens, TempoProcessamento, ");
         sb.Append("GeminiFactualRating, GeminiFormattingRating, GeminiRating, GeminiFeedback, ");
         sb.Append("ChatGptFactualRating, ChatGptFormattingRating, ChatGptRating, ChatGptFeedback) ");
         sb.Append("VALUES ");
-        sb.Append("(@PromptId, @NomeModelo, @TextoResposta, @TokensPorSegundo, @TempoPuroMs, @TempoCargaMs, @TamanhoTokens, ");
+        sb.Append("(@PromptId, @NomeModelo, @TextoResposta, @TokensPorSegundo, ");
+        sb.Append("@TempoPuroMs, @TempoCargaMs, @TamanhoTokens, @TempoProcessamento, ");
         sb.Append("@GeminiFactualRating, @GeminiFormattingRating, @GeminiRating, @GeminiFeedback, ");
         sb.Append("@ChatGptFactualRating, @ChatGptFormattingRating, @ChatGptRating, @ChatGptFeedback);");
 
 
-        using var connection = _context.CreateConnection();
-        await connection.ExecuteAsync(sb.ToString(), response);
+
+        try
+        {
+            using var connection = _context.CreateConnection();
+            await connection.ExecuteAsync(sb.ToString(), response);
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falha ao criar Response");
+        }
     }
 
     /// <summary>
@@ -385,7 +395,7 @@ public class BenchmarkRepository : IBenchmarkRepository
     {
         StringBuilder sb = new();
         sb.Append("SELECT P.id, P.Descricao, P.TextoPrompt Prompt, P.DataCriacao, ");
-        sb.Append("R.TempoPuroMs TempoPuro, R.TempoCargaMs TempoCarga, R.NomeModelo Modelo ");
+        sb.Append("R.TempoPuroMs TempoPuro, R.TempoCargaMs TempoCarga, R.NomeModelo Modelo, R.TempoProcessamento ");
         sb.Append("FROM prompts P ");
         sb.Append("INNER JOIN Respostas R ");
         sb.Append("ON P.id = R.PromptId ");

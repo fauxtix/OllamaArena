@@ -39,6 +39,7 @@ try
     //builder.Services.AddScoped(sp => new HttpClient());
     builder.Services.AddTransient<IDapperContext, DapperContext>();
     builder.Services.AddTransient<IOllamaGpuService, OllamaGpuService>();
+    builder.Services.AddScoped<OllamaModelsInitializer>();
 
     builder.Services.AddTransient<ISystemPromptService, SystemPromptService>();
     builder.Services.AddTransient<IPromptTemplateProvider, PromptTemplateProvider>();

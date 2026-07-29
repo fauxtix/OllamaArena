@@ -35,10 +35,12 @@
                                 Tooltip="true" />
                 <PropertyColumn Property="@(h => h.Modelo)"
                                 Title="Modelo" />
-                <PropertyColumn Property="@(h => h.DateDisplay)"
+                <PropertyColumn Property="@(h => h.DateDisplay)" Align="Align.Center"
                                 Title="Data" />
-                <PropertyColumn Property="@(h => h.DurationDisplay)"
-                                Title="Tempo" />
+                <PropertyColumn Property="@(h => h.DurationDisplay)" Align="Align.Center"
+                                Title="Tempo Eval." />
+                <PropertyColumn Property="@(h => h.ProcessDurationDisplay)" Align="Align.Center"
+                                Title="Tempo Procº" />
             </FluentDataGrid>
         </div>
     }
@@ -99,7 +101,7 @@
         position: fixed;
         top: 0;
         right: 0;
-        width: 40vw;
+        width: 50vw;
         height: 80vh;
         background: var(--neutral-layer-1);
         color: var(--neutral-foreground-rest);

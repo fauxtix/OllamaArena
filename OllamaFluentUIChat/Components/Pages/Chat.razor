@@ -118,7 +118,15 @@ else
                     {
                         <div style="display: flex; flex-direction: column; align-items: @(msg.IsCurrentUser ? "flex-end" : "flex-start"); width: 100%;">
                             <span style="font-size: 0.75rem; color: var(--neutral-foreground-hint); margin-bottom: 2px;">
-                                @msg.User • @msg.Timestamp.ToString("HH:mm")
+                                <span>@msg.User</span>
+
+                                @if (!string.IsNullOrEmpty(msg.ElapsedTime))
+                                {
+                                    <span class="elapsed-time">• @msg.ElapsedTime</span>
+                                }
+
+                                <span class="timestamp">• @msg.Timestamp.ToString("HH:mm")</span>
+                                @* @msg.User • @msg.Timestamp.ToString("HH:mm") *@
                             </span>
 
                             <div class="chat-content"
@@ -336,5 +344,11 @@ else
         justify-content: center;
         padding: 40px;
         text-align: center;
+    }
+
+    .elapsed-time {
+        color: #8b9cb3;
+        font-size: 0.85em;
+        margin-left: 4px;
     }
 </style>

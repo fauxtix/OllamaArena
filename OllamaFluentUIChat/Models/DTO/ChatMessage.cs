@@ -7,5 +7,6 @@
         public string Text { get; set; } = string.Empty;
         public DateTime Timestamp { get; set; } = DateTime.Now;
         public bool IsCurrentUser { get; set; }
+        public string? ElapsedTime { get; set; }
     }
 }
