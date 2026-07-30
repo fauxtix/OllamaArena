@@ -73,6 +73,8 @@ namespace OllamaFluentUIChat.Components.Pages
 
         private List<string> _models = new();
 
+        double temperature;
+
         protected override async Task OnInitializedAsync()
         {
             _messages.Add(new Models.DTO.ChatMessage { User = "Ollama", Text = "Olá! Como posso ajudar?" });
@@ -98,7 +100,6 @@ namespace OllamaFluentUIChat.Components.Pages
                 isLoadingModels = true;
                 StateHasChanged();
 
-                //var allModelsTest = await GpuService!.GetLocalModelsAsync();
                 var localModels = await LoadModelsFromLocalStorage();
 
                 if (localModels.Count > 0)
@@ -153,7 +154,7 @@ namespace OllamaFluentUIChat.Components.Pages
                 StateHasChanged();
             }
         }
-        private async Task  SaveModelsToLocalStorage()
+        private async Task SaveModelsToLocalStorage()
         {
             var modelsJson = JsonSerializer.Serialize(_models);
             await JS.InvokeVoidAsync("localStorage.setItem", "ollamaModels", modelsJson);
@@ -161,7 +162,7 @@ namespace OllamaFluentUIChat.Components.Pages
 
         private async Task<List<string>> LoadModelsFromLocalStorage()
         {
-            var modelsJson = await  JS.InvokeAsync<string>("localStorage.getItem", "ollamaModels");
+            var modelsJson = await JS.InvokeAsync<string>("localStorage.getItem", "ollamaModels");
             if (!string.IsNullOrEmpty(modelsJson))
             {
                 return JsonSerializer.Deserialize<List<string>>(modelsJson) ?? new List<string>();
@@ -262,8 +263,10 @@ namespace OllamaFluentUIChat.Components.Pages
 
                 aiMessage.ElapsedTime = tempo;
                 _ = InvokeAsync(StateHasChanged);
-            }, null, 0, 150); // atualiza a cada 150ms
-                              // ==================================================
+            }, null, 0, 150);
+
+            // atualiza a cada 150ms
+            // ==================================================
 
             _cts = new CancellationTokenSource();
             long loadDurationNs = 0;
@@ -315,7 +318,7 @@ namespace OllamaFluentUIChat.Components.Pages
                     return;
                 }
 
-                double temperature = ChatMeasureTemperature.ObterTemperaturaRecomendada(userPrompt);
+                temperature = ChatMeasureTemperature.ObterTemperaturaRecomendada(userPrompt);
                 int baseTokens = _gpuReport?.FitsInGpu == true ? 1800 : 1200;
                 int maxTokens = temperature switch
                 {
@@ -464,7 +467,7 @@ namespace OllamaFluentUIChat.Components.Pages
                         {
                             if (_currentPromptId == 0)
                             {
-                                _currentPromptId = await BenchmarkRepo.CreatePromptAsync(userPrompt);
+                                _currentPromptId = await BenchmarkRepo.CreatePromptAsync(userPrompt, temperature);
                             }
 
                             double evalSeconds = evalDurationNs / 1_000_000_000.0;
@@ -1065,7 +1068,7 @@ namespace OllamaFluentUIChat.Components.Pages
                         if (BenchmarkRepo != null)
                         {
                             if (_currentPromptId == 0)
-                                _currentPromptId = await BenchmarkRepo.CreatePromptAsync(userPrompt);
+                                _currentPromptId = await BenchmarkRepo.CreatePromptAsync(userPrompt, temperature);
 
                             double evalSeconds = evalDurationNs / 1_000_000_000.0;
                             double tokensPerSecond = evalCount / evalSeconds;
@@ -1310,7 +1313,7 @@ namespace OllamaFluentUIChat.Components.Pages
                         if (BenchmarkRepo != null)
                         {
                             if (_currentPromptId == 0)
-                                _currentPromptId = await BenchmarkRepo.CreatePromptAsync(userPrompt);
+                                _currentPromptId = await BenchmarkRepo.CreatePromptAsync(userPrompt, temperature);
 
                             double evalSeconds = evalDurationNs / 1_000_000_000.0;
                             double tokensPerSecond = evalCount / evalSeconds;

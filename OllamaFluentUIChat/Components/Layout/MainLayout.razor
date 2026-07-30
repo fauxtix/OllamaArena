@@ -6,7 +6,7 @@
     <FluentLayout Style="background-color: var(--neutral-layer-1);
         color: var(--neutral-foreground-rest);">
 
-        <FluentHeader>
+        <FluentHeader Style="background-color: var(--neutral-layer-2); color: var(--neutral-foreground-rest);">
             Usando Ollama localmente
         </FluentHeader>
 
@@ -20,7 +20,7 @@
             </FluentBodyContent>
         </FluentStack>
 
-        <FluentFooter>
+        <FluentFooter Style="background-color: var(--neutral-layer-2); color: var(--neutral-foreground-rest);">
             <div>
                 <a href="https://github.com/fauxtix/OllamaFluentUIChat" target="_blank">Repositório</a>
                 <a href="https://docs.ollama.com/" target="_blank">Documentação do Ollama</a>
@@ -29,8 +29,6 @@
     </FluentLayout>
 
 </CascadingValue>
-
-<OllamaInitializer />
 
 <FluentToastProvider />
 <FluentDialogProvider />

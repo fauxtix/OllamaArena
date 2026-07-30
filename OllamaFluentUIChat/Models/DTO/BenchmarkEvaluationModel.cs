@@ -9,6 +9,7 @@ public class BenchmarkEvaluationModel
     public string NomeModelo { get; set; } = string.Empty;
     public string Descricao { get; set; } = string.Empty;
     public string TextoPrompt { get; set; } = string.Empty;
+    public double Temperatura { get; set; } = 0;
 
     public double TokensPorSegundo { get; set; }
     public double TempoPuroMs { get; set; }

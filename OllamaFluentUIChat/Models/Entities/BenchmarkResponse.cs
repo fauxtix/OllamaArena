@@ -9,6 +9,7 @@
         public string TextoResposta { get; set; } = string.Empty;
         public double TokensPorSegundo { get; set; }
         public double TempoPuroMs { get; set; }
+        public double Temperatura { get; set; } = 0;
 
         // Alterado para double (milissegundos), igual ao TempoPuroMs e TempoCargaMs
         public double TempoProcessamento { get; set; }

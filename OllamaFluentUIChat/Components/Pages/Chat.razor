@@ -52,6 +52,13 @@ else
 
                 <FluentStack Orientation="Orientation.Horizontal"
                              HorizontalAlignment="HorizontalAlignment.Center">
+                    <FluentLabel Style="font-size: 14px; color: var(--neutral-foreground-hint);">
+                        @if (temperature > 0)
+                        {
+                            <span class="temperature">Temp: @temperature</span>
+                        }
+
+                    </FluentLabel>
                     <FluentSelect Style="width: 220px;"
                                   Items="@_models"
                                   @bind-SelectedOption="@ModelName" />
@@ -117,16 +124,15 @@ else
                     @foreach (var msg in _messages)
                     {
                         <div style="display: flex; flex-direction: column; align-items: @(msg.IsCurrentUser ? "flex-end" : "flex-start"); width: 100%;">
-                            <span style="font-size: 0.75rem; color: var(--neutral-foreground-hint); margin-bottom: 2px;">
-                                <span>@msg.User</span>
 
+                            <span style="font-size: 0.75rem; color: var(--neutral-foreground-hint); margin-bottom: 2px;">
+
+                                <span>@msg.User</span>
+                                <span class="timestamp">• @msg.Timestamp.ToString("HH:mm")</span>
                                 @if (!string.IsNullOrEmpty(msg.ElapsedTime))
                                 {
                                     <span class="elapsed-time">• @msg.ElapsedTime</span>
-                                }
-
-                                <span class="timestamp">• @msg.Timestamp.ToString("HH:mm")</span>
-                                @* @msg.User • @msg.Timestamp.ToString("HH:mm") *@
+                                }                               
                             </span>
 
                             <div class="chat-content"

@@ -7,7 +7,6 @@
 @using static OllamaFluentUIChat.Models.DTO.OllamaModels
 
 @inject IDialogService DialogService
-@inject OllamaModelsInitializer ModelsInitializer
 @rendermode InteractiveServer
 
 
@@ -78,27 +77,87 @@
     private ReadmePreview? preview;
     private List<string> _models = new();
     private List<ModelDetails> _fullModels = new();
-    private DotNetObjectReference<Home>? _dotNetRef;
 
     private bool showOllamaError = false;
     private string ollamaErrorMessage = "";
+    private bool _isLoading = true;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
     protected override async Task OnInitializedAsync()
     {
         showOllamaError = false;
-
         var isOllamaRunning = await OllamaChecker.IsOllamaRunningAsync();
         if (!isOllamaRunning)
         {
             showOllamaError = true;
             ollamaErrorMessage = "O servidor Ollama não está em execução. Por favor, inicie o Ollama.";
             _logger?.LogError("Ollama server is not running.");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            // 1. Verificar se já limpamos a cache nesta sessão do browser
+            var alreadyCleared = await JS.InvokeAsync<string?>("sessionStorage.getItem", "ollamaCacheCleared");
+
+            if (string.IsNullOrEmpty(alreadyCleared))
+            {
+                // Ainda não limpamos → limpar localStorage e marcar a sessão
+                await JS.InvokeVoidAsync("localStorage.removeItem", "ollamaModels");
+                await JS.InvokeVoidAsync("localStorage.removeItem", "ollamaModelsFull");
+                await JS.InvokeVoidAsync("sessionStorage.setItem", "ollamaCacheCleared", "1");
+            }
+
+            // 2. Tentar ler a cache
+            var json = await JS.InvokeAsync<string?>("localStorage.getItem", "ollamaModelsFull");
+
+            if (!string.IsNullOrEmpty(json))
+            {
+                // Cache existe → usar
+                _fullModels = JsonSerializer.Deserialize<List<ModelDetails>>(json, JsonOptions) ?? [];
+                _models = _fullModels.Select(m => m.Model).ToList();
+            }
+            else
+            {
+                // Cache vazia → ir ao Ollama, enriquecer e gravar
+                if (showOllamaError) return; // Ollama não está a correr
+
+                var response = await GpuService!.GetLocalModelsAsync();
+                _fullModels = response.Models ?? [];
+
+                foreach (var model in _fullModels)
+                {
+                    var metadata = await GpuService.GetExtendedModelMetadataAsync(model.Model);
+                    model.ContextLength = metadata.ContextLength;
+                    model.TrainingYear = metadata.TrainingYear;
+                }
+
+                _models = _fullModels.Select(m => m.Model).ToList();
+
+                // Gravar as duas chaves
+                await JS.InvokeVoidAsync("localStorage.setItem", "ollamaModels",
+                    JsonSerializer.Serialize(_models));
+
+                await JS.InvokeVoidAsync("localStorage.setItem", "ollamaModelsFull",
+                    JsonSerializer.Serialize(_fullModels, JsonOptions));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Erro ao gerir cache dos modelos na Home");
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
         }
     }
 

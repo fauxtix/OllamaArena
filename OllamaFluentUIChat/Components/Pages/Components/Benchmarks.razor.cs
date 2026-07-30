@@ -221,7 +221,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
                 var trainingYear = metadata.TrainingYear;
 
                 var formattedPrompt = await EvaluatePromptTemplate.EvaluationCopyPromptAsync(
-                    originalPrompt, modelResponse, trainingYear);
+                    originalPrompt, modelResponse, trainingYear, modelName);
 
                 await CopyToClipboardAsync(formattedPrompt);
 

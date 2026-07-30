@@ -99,8 +99,8 @@
         WriteIndented = false
     };
 
-    private const string NamesKey = "ollamaModels";       // o que a Home grava
-    private const string FullKey = "ollamaModelsFull";   // lista completa (só este componente usa)
+    private const string NamesKey = "ollamaModels"; 
+    private const string FullKey = "ollamaModelsFull"; 
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -108,10 +108,6 @@
 
         try
         {
-            // 1. Tentar carregar a lista completa já enriquecida
-            _localModels = await LoadFullFromStorageAsync();
-
-            // 2. Se não existir, construir a partir dos nomes + Ollama
             if (_localModels is null || !_localModels.Any())
             {
                 var names = await LoadNamesFromStorageAsync() ?? [];

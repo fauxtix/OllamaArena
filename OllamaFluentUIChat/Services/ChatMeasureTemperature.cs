@@ -264,7 +264,187 @@ public static class ChatMeasureTemperature
         ["merge"] = 2.5f,
         ["test"] = 2.6f,
         ["assert"] = 2.8f,
-        ["mock"] = 2.8f
+        ["mock"] = 2.8f,
+
+        // PT – história / política
+        ["historia"] = 3.2f,
+        ["historico"] = 3.0f,
+        ["cronologia"] = 3.5f,
+        ["periodo"] = 2.5f,
+        ["epoca"] = 2.5f,
+        ["dinastia"] = 3.2f,
+        ["monarquia"] = 3.2f,
+        ["republica"] = 3.2f,
+        ["rei"] = 2.8f,
+        ["rainha"] = 2.8f,
+        ["imperador"] = 3.0f,
+        ["governo"] = 2.8f,
+        ["presidente"] = 2.8f,
+        ["primeiro"] = 1.0f,
+        ["ministro"] = 1.8f,
+        ["parlamento"] = 2.8f,
+        ["assembleia"] = 2.5f,
+        ["eleicao"] = 2.8f,
+        ["votacao"] = 2.5f,
+        ["constituicao"] = 3.2f,
+        ["tratado"] = 3.0f,
+        ["guerra"] = 3.2f,
+        ["revolucao"] = 3.2f,
+        ["independencia"] = 3.0f,
+        ["colonizacao"] = 3.0f,
+        ["imperio"] = 3.0f,
+
+        // EN – history / politics
+        ["history"] = 3.2f,
+        ["historical"] = 3.0f,
+        ["chronology"] = 3.5f,
+        ["period"] = 2.5f,
+        ["era"] = 2.5f,
+        ["dynasty"] = 3.2f,
+        ["monarchy"] = 3.2f,
+        ["republic"] = 3.2f,
+        ["king"] = 2.8f,
+        ["queen"] = 2.8f,
+        ["emperor"] = 3.0f,
+        ["government"] = 2.8f,
+        ["president"] = 2.8f,
+        ["prime"] = 1.0f,
+        ["minister"] = 1.8f,
+        ["parliament"] = 2.8f,
+        ["assembly"] = 2.5f,
+        ["election"] = 2.8f,
+        ["vote"] = 2.5f,
+        ["constitution"] = 3.2f,
+        ["treaty"] = 3.0f,
+        ["war"] = 3.2f,
+        ["revolution"] = 3.2f,
+        ["independence"] = 3.0f,
+        ["colonization"] = 3.0f,
+        ["empire"] = 3.0f,
+
+        // PT – geografia
+        ["capital"] = 3.2f,
+        ["pais"] = 3.0f,
+        ["continente"] = 3.0f,
+        ["oceano"] = 3.0f,
+        ["mar"] = 2.5f,
+        ["rio"] = 2.5f,
+        ["lago"] = 2.5f,
+        ["ilha"] = 2.5f,
+        ["arquipelago"] = 3.0f,
+        ["montanha"] = 2.8f,
+        ["serra"] = 2.8f,
+        ["fronteira"] = 2.8f,
+        ["regiao"] = 2.5f,
+        ["provincia"] = 2.5f,
+        ["cidade"] = 2.5f,
+        ["municipio"] = 2.5f,
+        ["territorio"] = 2.8f,
+        ["mapa"] = 2.6f,
+        ["localizacao"] = 2.8f,
+        ["coordenadas"] = 3.0f,
+
+        // EN – geography
+        ["capital"] = 3.2f,
+        ["country"] = 3.0f,
+        ["continent"] = 3.0f,
+        ["ocean"] = 3.0f,
+        ["sea"] = 2.5f,
+        ["river"] = 2.5f,
+        ["lake"] = 2.5f,
+        ["island"] = 2.5f,
+        ["archipelago"] = 3.0f,
+        ["mountain"] = 2.8f,
+        ["range"] = 2.6f,
+        ["border"] = 2.8f,
+        ["region"] = 2.5f,
+        ["province"] = 2.5f,
+        ["city"] = 2.5f,
+        ["municipality"] = 2.5f,
+        ["territory"] = 2.8f,
+        ["map"] = 2.6f,
+        ["location"] = 2.8f,
+        ["coordinates"] = 3.0f,
+
+        // PT – ciencia
+        ["ciencia"] = 3.0f,
+        ["fisica"] = 3.2f,
+        ["quimica"] = 3.2f,
+        ["biologia"] = 3.2f,
+        ["geologia"] = 3.0f,
+        ["astronomia"] = 3.0f,
+        ["matematica"] = 3.2f,
+        ["planeta"] = 2.8f,
+        ["estrela"] = 2.8f,
+        ["galaxia"] = 2.8f,
+        ["universo"] = 2.8f,
+        ["atomo"] = 3.0f,
+        ["molecula"] = 3.0f,
+        ["energia"] = 2.8f,
+        ["massa"] = 2.6f,
+        ["gravidade"] = 3.0f,
+        ["evolucao"] = 3.0f,
+        ["especie"] = 2.8f,
+        ["formula"] = 2.8f,
+        ["equacao"] = 3.0f,
+
+        // EN – science
+        ["science"] = 3.0f,
+        ["physics"] = 3.2f,
+        ["chemistry"] = 3.2f,
+        ["biology"] = 3.2f,
+        ["geology"] = 3.0f,
+        ["astronomy"] = 3.0f,
+        ["mathematics"] = 3.2f,
+        ["planet"] = 2.8f,
+        ["star"] = 2.8f,
+        ["galaxy"] = 2.8f,
+        ["universe"] = 2.8f,
+        ["atom"] = 3.0f,
+        ["molecule"] = 3.0f,
+        ["energy"] = 2.8f,
+        ["mass"] = 2.6f,
+        ["gravity"] = 3.0f,
+        ["evolution"] = 3.0f,
+        ["species"] = 2.8f,
+        ["formula"] = 2.8f,
+        ["equation"] = 3.0f,
+
+        // PT – saude
+        ["saude"] = 2.8f,
+        ["medicina"] = 3.0f,
+        ["doenca"] = 3.2f,
+        ["virus"] = 3.0f,
+        ["bacteria"] = 3.0f,
+        ["tratamento"] = 3.0f,
+        ["vacina"] = 3.0f,
+        ["diagnostico"] = 3.0f,
+        ["sintoma"] = 2.8f,
+        ["terapia"] = 2.8f,
+        ["hospital"] = 2.5f,
+        ["medico"] = 2.5f,
+        ["paciente"] = 2.5f,
+        ["farmaco"] = 2.8f,
+        ["medicamento"] = 2.8f,
+
+        // EN – health
+        ["health"] = 2.8f,
+        ["medicine"] = 3.0f,
+        ["disease"] = 3.2f,
+        ["virus"] = 3.0f,
+        ["bacteria"] = 3.0f,
+        ["treatment"] = 3.0f,
+        ["vaccine"] = 3.0f,
+        ["diagnosis"] = 3.0f,
+        ["symptom"] = 2.8f,
+        ["therapy"] = 2.8f,
+        ["hospital"] = 2.5f,
+        ["doctor"] = 2.5f,
+        ["patient"] = 2.5f,
+        ["drug"] = 2.8f,
+        ["medication"] = 2.8f,
+
+
     };
 
     private static readonly Dictionary<string, float> TermosCriativos = new(StringComparer.Ordinal)
@@ -467,12 +647,18 @@ public static class ChatMeasureTemperature
         else if (a.CharCount > 300)
             a.FactualScore += 1.2f;
 
+        // Poucas palavras e já com intenção criativa
+        if (a.TokenCount <= 4 &&
+            a.CreativeScore > a.FactualScore)
+        {
+            a.CreativeScore += 1.5f;
+        }
         // Prompts muito curtos + criativos → ainda mais criativos
         if (a.CharCount < 80 && a.CreativeScore > a.FactualScore)
             a.CreativeScore += 2.0f;
 
         // Muitas perguntas → ligeiro boost factual
-        a.FactualScore += a.QuestionDensity * 2.5f;
+        a.FactualScore += a.QuestionDensity * 4.0f;
     }
 
     // ============================================================
@@ -529,9 +715,9 @@ public static class ChatMeasureTemperature
             lower.Contains("const ") || lower.Contains("let ") ||
             lower.Contains("var ") || lower.Contains("import ") ||
             lower.Contains("using ") || lower.Contains("namespace ") ||
-            lower.Contains("SELECT ") || lower.Contains("FROM ") ||
-            lower.Contains("WHERE ") || lower.Contains("console.log") ||
-            lower.Contains("System.out") || lower.Contains("printf") ||
+            lower.Contains("select ") || lower.Contains("from ") ||
+            lower.Contains("where ") || lower.Contains("console.log") ||
+            lower.Contains("system.out") || lower.Contains("printf") ||
             lower.Contains("=>") || lower.Contains("->");
 
         // Decisão

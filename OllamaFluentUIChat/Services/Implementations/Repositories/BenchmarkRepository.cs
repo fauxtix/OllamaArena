@@ -21,13 +21,13 @@ public class BenchmarkRepository : IBenchmarkRepository
     /// <summary>
     /// Insere um novo prompt e retorna o ID gerado pelo SQLite.
     /// </summary>
-    public async Task<int> CreatePromptAsync(string textoPrompt)
+    public async Task<int> CreatePromptAsync(string textoPrompt, double temperatura)
     {
         var description = PromptSummarizer.ExtractDescription(textoPrompt);
 
         var sql = @"
-                INSERT INTO Prompts (Descricao, TextoPrompt, DataCriacao) 
-                VALUES (@Descricao, @TextoPrompt, @DataCriacao);
+                INSERT INTO Prompts (Descricao, TextoPrompt, DataCriacao, Temperatura ) 
+                VALUES (@Descricao, @TextoPrompt, @DataCriacao, @Temperatura);
                 SELECT last_insert_rowid();";
         using var connection = _context.CreateConnection();
 
@@ -35,7 +35,8 @@ public class BenchmarkRepository : IBenchmarkRepository
         {
             Descricao = description,
             TextoPrompt = textoPrompt,
-            DataCriacao = DateTime.UtcNow.ToString("o")
+            DataCriacao = DateTime.UtcNow.ToString("o"),
+            Temperatura = temperatura
         });
     }
 
@@ -80,6 +81,7 @@ public class BenchmarkRepository : IBenchmarkRepository
                     p.Id, 
                     p.TextoPrompt, 
                     p.DataCriacao, 
+                    p.Temperatura,
                     r.Id,
                     r.PromptId,
                     r.NomeModelo, 
@@ -394,7 +396,7 @@ public class BenchmarkRepository : IBenchmarkRepository
     public async Task<IEnumerable<HistoryResponse>> HistoryResponseAsync()
     {
         StringBuilder sb = new();
-        sb.Append("SELECT P.id, P.Descricao, P.TextoPrompt Prompt, P.DataCriacao, ");
+        sb.Append("SELECT P.id, P.Descricao, P.TextoPrompt Prompt, P.DataCriacao, P.Temperatura, ");
         sb.Append("R.TempoPuroMs TempoPuro, R.TempoCargaMs TempoCarga, R.NomeModelo Modelo, R.TempoProcessamento ");
         sb.Append("FROM prompts P ");
         sb.Append("INNER JOIN Respostas R ");
