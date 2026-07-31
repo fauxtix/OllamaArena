@@ -1,181 +1,106 @@
-﻿# Ollama FluentUI Chat & Benchmark Laboratory 🚀
+# Ollama FluentUI Chat & Benchmark Laboratory
 
-Uma aplicação web desenvolvida em **.NET 10 / Blazor** que funciona como um laboratório de testes locais para Modelos de Linguagem Pequenos (SLMs); poderá evoluir para modelos maiores (nº de parâmetros), dependendo da capacidade da sua GPU (VRAM).
-A aplicação combina uma interface de chat em tempo real com um painel de telemetria e avaliação de qualidade (*LLM-as-a-Judge*).
+A sua central pessoal de inteligência artificial **100% local**. Converse com modelos de IA que correm no seu próprio computador, teste o desempenho de cada um e descubra qual responde mais depressa e com melhor qualidade — tudo através de uma interface moderna, fluida e totalmente em português.
 
----
-
-## 💻 Notas Importantes sobre o Hardware e Desempenho
-
-### Ambiente de Teste Inicial (Máquina Antiga)
-Este laboratório foi projetado e testado inicialmente numa **máquina antiga limitada a apenas 1GB de VRAM**. Sob estas restrições estritas, o sistema funciona de forma híbrida: o **Ollama** faz a gestão inteligente da memória, enviando o que não cabe na placa gráfica para processamento direto na memória RAM e processador (CPU) do computador.
-
-### Upgrade Recomendado para Modelos Maiores
-Para obter respostas com maior maturidade intelectual e menor índice de alucinações, **devem ser utilizadas placas gráficas (GPUs) modernas e dedicadas**. Um upgrade de hardware permitirá carregar localmente modelos muito mais potentes, que exigem maior capacidade de processamento gráfico para entregar resultados de qualidade superior em tempo útil.
+A aplicação é mais do que um simples chat: é um **laboratório de experimentação** que o ajuda a escolher, comparar e aperfeiçoar os modelos de IA que já tem instalados no seu equipamento, sem depender de serviços externos nem de ligação à internet.
 
 ---
 
-## 🧠 Características Principais
+## Motivação, Filosofia e Engenharia de Seleção
 
-### 1. Chat Local em Tempo Real (Modo Offline)
-- Interface de chat interativa desenvolvida com **Microsoft FluentUI Blazor Components v4**.
-- Processamento de texto por fluxo de rede (*Streaming HTTP*) de alto desempenho com processamento por blocos brutos (`buffer`).
-- Configuração determinista controlada (`temperature: 0.3` / `repeat_penalty: 1.2`), mitigando alucinações ou loops infinitos de texto em modelos de pequena escala.
+Este laboratório nasceu para resolver um desafio prático e diário no ecossistema local: **como escolher o modelo de IA certo para a tarefa certa?** No universo de modelos abertos, o tamanho nem sempre dita a eficácia. Um modelo de `1.5B` ou `3B` pode ter um desempenho factual e de formatação superior ao de um modelo maior para um determinado tipo de prompt. 
 
-### 2. Laboratório de Benchmarks & Telemetria
-- Captura das métricas oficiais do Ollama quando o fluxo termina (`done = true`).
-- Gravação automática de estatísticas críticas na base de dados:
-  - **Tokens por Segundo (T/s)**: Desempenho real de geração de texto.
-  - **Tempo Puro (Eval Ms)**: Velocidade estrita do processamento de tokens.
-  - **Tempo de Carga (Load Ms)**: O tempo que o Ollama demora a carregar/paginar o modelo para a memória.
-  - **Tamanho (Count)**: Contagem total de tokens gerados.
+Desenvolvido sob uma filosofia de **soberania digital e engenharia orientada a dados**, este projeto público foca-se em dois pilares fundamentais:
 
-### 3. Painel de Análise Master-Detail (Layout Proporcional 1/3 e 2/3)
-- **Painel Esquerdo**: Lista cronológica de prompts executados, com informação sobre o nº de modelos usados; opções para visualizar resultados em forma de gráfico e para apagar prompt.
-- **Painel Direito**: Cabeçalho fixo com o prompt selecionado e área de scroll independente para os cartões de resposta das IAs lado a lado.
+### 1. Seleção Científica do Modelo Ideal (O Core da App)
+A aplicação permite cruzar dados e benchmarks para que o utilizador descubra empiricamente qual o modelo local que oferece o melhor equilíbrio para os seus prompts específicos:
+- **Pontuação Isolada:** Ao separar de forma cirúrgica o *Score Factual*, o *Score de Formatação* e o *Score Final* (além de outras métricas), a app revela se um modelo pequeno é brilhante em lógica (mas peca no markdown) ou se apenas gera texto bonito sem substância;
+- **Contexto Justo (`[CRITICAL CONTEXT]`):** Protege a avaliação de modelos antigos ou pequenos, instruindo os juízes externos (ChatGPT/Gemini) a avaliarem as respostas estritamente com base no ano de treino do modelo local;
+- **Arquitetura Híbrida:** O utilizador interage como uma ponte manual, segura e gratuita para recolher feedbacks avançados da nuvem sem gastar um único cêntimo em subscrições ou chaves de API dispendiosas.
 
-### 4. Avaliação Cruzada (LLM-as-a-Judge)
-- Painel integrado para introdução de métricas de qualidade baseadas em modelos de fronteira (**Google Gemini** e **OpenAI ChatGPT**).
-- Permite atribuir classificações de 1 a 5 e justificações de erros/alucinações com redimensionamento vertical).
-- Persistência via **Dapper** para fechar o ciclo de análise.
+### 2. Um Guia Prático de Engenharia Ollama (O Bónus para Devs)
+Para quem faz o *clone* do repositório, este projeto funciona como uma ferramenta pedagógica. O código serve como um guia de como integrar e explorar o ecossistema local:
+- **Domínio Completo da API do Ollama:** Demonstração prática de como consumir quase todas as APIs disponibilizadas pelo Ollama (Streaming de respostas, listagem de modelos locais, leitura profunda de metadados, tamanhos e gestão de contexto);
+- **Cálculo de Infraestrutura Local:** Exemplo real de código que extrai o peso do modelo no disco e calcula a compatibilidade com a memória de vídeo da placa gráfica do utilizador, exibindo alertas visuais de VRAM em tempo real.
 
----
+## Laboratório de Benchmarking (Testes de Desempenho)
 
-## 🛠️ Stack Tecnológica
+Transforme cada conversa num teste científico. Sempre que envia uma mensagem, a aplicação mede automaticamente o comportamento do modelo em tempo real:
 
-- **Frontend**: Blazor Server (InteractiveServer Mode)
-- **Componentes UI**: Microsoft FluentUI Blazor Library v4.1.2
-- **Motor Local de IA**: Ollama API (`/api/chat`)
-- **Base de Dados**: SQLite
-- **Micro-ORM**: Dapper (Mapeamento por reflexão de objetos)
+- **Velocidade de geração** (tokens por segundo) — quão rápido o modelo escreve;
+- **Tempo de resposta** — quanto tempo demora a começar e a terminar cada resposta;
+- **Tempo de carregamento** — o tempo que o modelo demora a ficar pronto para responder;
+- **Volume de texto gerado** — a quantidade de conteúdo produzida em cada resposta.
 
----
+Com estes dados recolhidos automaticamente, pode:
 
-## 📊 Modelos Utilizados nos Testes
+- Consultar o **histórico completo de todos os testes** numa tabela organizada, com pesquisa e filtros (Todos, Por Avaliar, Avaliados);
+- **Atribuir uma nota de 1 a 5** à qualidade de cada resposta (factualidade, formato e lógica), criando uma avaliação cruzada entre os seus modelos locais e o seu critério de qualidade;
+- **Analisar os resultados com um modelo de IA local**, que lê os testes e gera um resumo inteligente com conclusões e recomendações;
+- **Exportar os resultados para Excel**, com relatórios agrupados por pergunta, prontos a partilhar;
+- Comparar as respostas de **vários modelos lado a lado** para a mesma pergunta, no painel de Qualidade e Metrics;
+- Gerir os seus registos, apagando testes individuais ou todo o histórico quando pretender.
 
-Os seguintes modelos de pequena escala (SLMs) foram escolhidos especificamente para avaliar o comportamento do ecossistema sob cenários de baixa memória e paginação por CPU:
-- **`qwen2.5:0.5b`** (Ultrarápido; devido ao tamanho reduzido, executa quase na totalidade dentro do teto de 1GB de VRAM).
-- **`llama3.2:1b`** (Equilibrado; modelo compacto e eficiente da Meta para lógica simples).
-- **`qwen2.5:1.5b`** (Excelente coesão estrutural em inglês; começa a exigir *offloading* acrescido para o CPU).
-- **`gemma2:2b`** (Modelo da Google surpreendentemente forte em conhecimento geral para o tamanho que tem).
-- **`phi4-mini:latest`** (O modelo mais pesado da lista, com cerca de 3.8B de parâmetros; corre maioritariamente no CPU nesta máquina antiga, demonstrando alta precisão factual em inglês, mas com um tempo de processamento mais elevado).
+## Avaliação dos Dois Juízes (ChatGPT & Gemini)
 
----
+A aplicação integra um processo estruturado de auditoria externa no painel de **Qualidade e Métricas** para avaliar e pontuar as respostas dadas pelos modelos locais do Ollama, utilizando o ChatGPT e o Gemini como juízes de qualidade:
 
-## ⚙️ Guia de Configuração do Ambiente
+1. **Copiar para Avaliação:** O utilizador acede à resposta de um modelo específico e clica no botão **"Copiar para avaliação"**. A aplicação gera internamente o prompt de auditoria e coloca-o no clipboard.
+2. **Contexto Crítico Injetado:** O prompt gerado inclui automaticamente metadados inteligentes (como o ano de treino do modelo local) sob a marca `[CRITICAL CONTEXT]`, instruindo o juiz externo a não penalizar o modelo por falta de conhecimento de eventos futuros.
+3. **Processamento nos Browsers:** O utilizador abre manualmente o seu navegador de internet, acede às sessões do ChatGPT e do Gemini, e faz `Ctrl+V` para submeter o prompt a ambos os juízes.
+4. **Abertura do Ecrã de Avaliação:** Após obter as respostas dos juízes no browser, o utilizador regressa à aplicação e clica no botão **"Avaliação"** (situado junto aos contadores dos juízes).
+5. **Colagem do Output Bruto:** No ecrã de avaliação, o utilizador cola o texto copiado do browser diretamente nos campos **"Feedback (Cole aqui o output bruto do Gemini/ChatGPT)"**.
+6. **Extração Automática de Métricas:** O sistema analisa o texto bruto colado e preenche automaticamente as **Métricas de Avaliação (Escala 1-5)**, incluindo critérios como *Factual, Formatação, Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Halo Effect, Segurança* e a nota *Global*.
+7. **Tradução e Consolidação:** O utilizador pode utilizar a opção **"Traduzir Feedback"** para passar as análises para português europeu e, por fim, clica em **"Guardar avaliação"** para persistir todos os dados permanentemente na Base de Dados.
 
-### 1. Como Instalar o Ollama
-Para correr os modelos de inteligência artificial localmente na sua máquina, siga os passos conforme o seu sistema operativo:
+## Interface de Chat Avançada
 
-- **Windows**: Transfira o instalador oficial em [://ollama.com](https://://ollama.com). Execute o ficheiro `.exe` e siga o assistente até ao fim.
-- **Linux**: Abra o terminal e execute o comando oficial de instalação automática:
-  ```bash
-  curl -fsSL https://ollama.com | sh
-  ```
-- **macOS**: Transfira o ficheiro `.zip` oficial no site do Ollama, descomprima-o e arraste a aplicação para a pasta *Applications*.
+Uma experiência de conversação moderna e confortável:
 
-### 2. Como Carregar os Modelos para Testar
-Abra o seu terminal (CMD, PowerShell ou Bash) e execute os seguintes comandos para descarregar a suite de modelos utilizada nos testes:
-Claro que poderão ser usados outros, fica à escolha do utilizador
+- **Respostas em tempo real (streaming)** — o texto aparece no ecrã palavra a palavra, à medida que o modelo o gera;
+- **Formatação inteligente** — títulos, listas, tabelas e blocos de código são apresentados de forma limpa e legível;
+- **Histórico de conversas** — guarda e reabre as suas conversas anteriores em qualquer altura;
+- **Novo chat com um clique** — começa uma conversa do zero instantaneamente, libertando os recursos do computador;
+- **Cronómetro integrado** — cada resposta mostra quanto tempo demorou, para monitorizar o desempenho;
+- **Cancelamento a qualquer momento** — interrompa uma resposta com um simples botão;
+- **Indicador de compatibilidade gráfica** — a aplicação avisa-o se o modelo cabe na memória da sua placa gráfica ou se vai correr mais devagar no processador;
+- **Comportamento ajustado automaticamente** — a aplicação deteta o tipo de pedido (criativo, factual, tradução) e afina automaticamente o modelo para obter o melhor resultado em cada situação.
 
-```bash
-ollama pull qwen2.5:0.5b
-ollama pull llama3.2:1b
-ollama pull qwen2.5:1.5b
-ollama pull gemma2:2b
-ollama pull phi4-mini:latest
-```
-Para verificar a lista de modelos guardados com sucesso no seu disco, execute:
-```bash
-ollama list
-```
+## Gestão de Modelos de IA
 
-## ⚙️ Configuração da Aplicação & Gestão Dinâmica de Modelos
+- **Alternância instantânea de modelos** — mude de modelo de IA no meio da conversa, diretamente a partir do chat;
+- **Página de Modelos Carregados** — consulte todos os modelos instalados no seu computador, com informação sobre cada um: família, dimensão (parâmetros), nível de quantização, ano de treino, contexto máximo suportado, espaço ocupado no disco e compatibilidade com a sua placa gráfica;
 
-Acedendo à opção 'Settings', o utilizador pode parametrizar o ecossistema da aplicação sem interferir na base de dados SQLite.
+## Gestão e Edição de Prompts
 
-### 1. Personalização do Tema Visível
-- **Theme**: Permite forçar o modo Claro, Escuro ou herdar automaticamente as configurações do Sistema Operativo.
-- **Color**: Altera a cor de destaque principal (*Accent Color*) utilizando tokens do ecossistema Fluent UI (Word, Excel, Access, etc.), incluindo suporte a um algoritmo de cores aleatórias através do botão *"Feeling lucky?"*.
-- **Persistência**: Os estados visuais são serializados de forma automática sob a chave de armazenamento `"theme"`.
+Ajuste o "carácter" e as diretrizes do seu assistente de IA sem sair da aplicação:
 
-### 2. Como Incluir/Excluir Modelos na Aplicação
-A lista de modelos disponíveis para seleção na interface é gerida de forma dinâmica de modo a que a aplicação consiga crescer à medida que descarrega novos modelos do ecossistema Ollama.
+- **Editor integrado** — abra, edite e grave os ficheiros de diretrizes (prompts) que orientam o comportamento da IA;
+- **Aplicação imediata** — as alterações entram em vigor de forma simples e transparente na próxima utilização;
+- **Total controlo** — refine o tom, o estilo e as regras das respostas para afinar a inteligência artificial à sua medida, incluindo as instruções de sistema que moldam cada conversa;
+- **Segurança de edição** — grave ou cancele as suas alterações sempre que pretender, sem alterações acidentais.
 
-#### **Como Incluir um Novo Modelo:**
-1. Execute primeiro o `ollama pull [nome-do-modelo]` no terminal do seu sistema operativo para garantir que os ficheiros binários existem localmente.
-2. No ecrã de Definições da app, localize o campo **"Gestão de Modelos Ollama"**.
-3. Introduza a Tag exata do modelo no campo de texto (ex: `phi4:latest` ou `mistral:7b`).
-4. Clique no botão **"Adicionar"**. A lista será atualizada e o modelo passará a estar disponível para testes no Chat.
+## Tradução e Utilidades Automáticas
 
-#### **Como Excluir um Modelo:**
-1. Na listagem de modelos exibida em formato de cartões na página de definições, localize o modelo que deseja ocultar.
-2. Clique no botão **"Remover"**.
-3. O modelo é instantaneamente expurgado da memória ativa da aplicação.
+Poupe tempo em tarefas repetitivas:
 
-#### **Mecanismo de Persistência Técnica:**
-Sempre que um modelo é incluído ou excluído, o Blazor invoca o método assíncrono `SaveModels()`, que serializa a lista em formato string JSON e injeta-a de forma persistente na sandbox do navegador utilizando a API Web Storage:
-```csharp
-await JS.InvokeVoidAsync("localStorage.setItem", "ollama_models", JsonSerializer.Serialize(Models));
-```
-Ao iniciar a aplicação (`OnInitializedAsync`), o estado é automaticamente reidratado a partir da chave `"ollama_models"`.
-
----
----
-
-## 🚀 Como Executar o Projeto
-
-1. Certifique-se de que o daemon do Ollama está ativo no sistema (`ollama serve`).
-2. Configure a Connection String do SQLite no ficheiro `appsettings.json`.
-3. Abra a pasta do projeto no terminal e execute o comando .NET:
-   ```bash
-   dotnet watch run
-   ```
-4. Aceda ao endereço local indicado no terminal para interagir com a interface.
+- **Tradução automática para português** — traduza instantaneamente textos e avaliações para português europeu com um clique, usando o seu modelo local;
+- **Otimização automática de texto** — o assistente auxilia na reescrita, resumo e melhoria de conteúdos quando solicitado;
+- **Detecção inteligente de intenção** — a aplicação reconhece quando está a pedir uma tradução ou uma tarefa criativa e ajusta o comportamento do modelo em conformidade, garantindo melhores resultados sem qualquer configuração manual.
 
 ---
 
-## ⚖️ Processo de Avaliação Cruzada (LLM-as-a-Judge)
+## Experiência do Utilizador
 
-O objetivo desta etapa é avaliar a **qualidade factual** das respostas geradas pelos modelos pequenos, comparando-as com o discernimento de modelos de fronteira (*Frontier Models*).
+A navegação é simples. No menu lateral encontra todas as secções da aplicação: **Chat**, **Benchmarks**, **Qualidade e Métricas**, **Modelos carregados**, **Prompts** e **Logs**.
 
-### 1. Quais são os campos a preencher?
-No painel direito da aplicação, após selecionar um prompt, terá acesso a 2 controlos de input por cada cartão de modelo:
-- **Google Gemini**: Rating (campo numérico de 1 a 5) e Problemas Encontrados adaptado para 3 linhas com redimensionamento).
-- **OpenAI ChatGPT**: Rating (campo numérico de 1 a 5) e Problemas Encontrados adaptado para 3 linhas com redimensionamento).
+- **Conversar**: abra o Chat, escreva a sua mensagem na caixa de texto e prima **Enter** ou o botão de envio. As respostas aparecem em tempo real e cada uma mostra o tempo que demorou. Use **Histórico** para retomar conversas anteriores e **Novo Chat** para começar de novo.
+- **Processo de Avaliação de Juízes:** Para cada resposta obtida, selecione a opção **"Copia para avaliação"**. Serão abertas duas novas abas no browser. Aceda a cada uma e faça `Ctrl+V`. De seguida, selecione a opção **"Avaliação"** na aplicação. Copie a resposta do primeiro juiz no browser e cole-a no ecrã de avaliação da app. Repita o processo para o segundo juiz para guardar os veredictos na BD.
+- **Tema Claro/Escuro**: alterne entre o tema claro e o escuro sempre que preferir. A sua escolha fica **guardada no navegador** e é restaurada automaticamente na próxima visita.
+- **Definições**: aceda à página de Definições para gerir os seus modelos de IA (definir o modelo predefinido e controlar os disponíveis) e personalizar a aparência da aplicação.
 
-### 2. O Processo de Trabalho
-1. Aceda ao ecrã de **Análise de Benchmarks**.
-2. Selecione um Prompt na barra lateral esquerda (1/3).
-3. No painel direito, copie o **Prompt** e a **Resposta** gerada pelo modelo local que deseja avaliar, usando a opção de "cópia" para cada um.
-4. Abra a interface web do Google Gemini ou do ChatGPT e submeta o prompt de avaliação (descrito abaixo).
-5. Copie a nota e o resumo dos problemas gerados pelos juízes de IA e cole-os nos respetivos campos do seu painel.
-6. Clique em **"Gravar Avaliação"** para persistir as notas no SQLite através do Dapper utilizando reflexão automática de propriedades (`WHERE Id = @Id`).
+Comece por enviar uma mensagem no Chat — a aplicação trata de tudo o resto.
 
-### 3. O Prompt Padrão para dar ao Gemini / ChatGPT
-Para obter respostas consistentes, envie exatamente o seguinte prompt estruturado para as interfaces do Gemini e do ChatGPT:
+## Nota à navegação
 
-> **Prompt de Avaliação (Juiz de IA):**
-> 
-> "Age como um juiz rigoroso de Inteligência Artificial. Analisa a qualidade factual, lógica e gramatical da resposta gerada por um modelo local pequeno para o prompt fornecido.
-> 
-> **Prompt Original Submetido:**
-> [Colar aqui o 'Prompt Executado' da sua app]
-> 
-> **Resposta Gerada pelo Modelo Local:**
-> [Colar aqui o texto da resposta do cartão da sua app]
-> 
-> **Instruções de Resposta:**
-> Dá-me estritamente uma nota de 1 a 5 (onde 1 é péssimo/alucinação total e 5 é perfeito/factual) seguido de uma descrição muito breve, com um máximo de duas frases, apontando onde estão os principais problemas (alucinações, inversão de datas, omissões ou erros de tradução). Se não houver problemas, elogia de forma concisa."
-
-A página de 'Settings' tem funcionalidades que permitem que o prompt:
-
-- possa ser alterado e guardado na localstorage;
-- seja copiado para o clipboard.
-
----
-
-## 📝 Boas Práticas Identificadas no Laboratório
-- **Prompting em Inglês**: Para modelos abaixo de 4B de parâmetros, prompts em inglês reduzem o consumo de atenção cognitiva da IA com traduções em tempo real, aumentando a precisão factual em até 80%.
-- **Temperatura Zero/Baixa**: Manter `temperature: 0.3` ou inferior é fundamental para testes comparativos justos (benchmarks científicos deterministas).
-- **Segurança de Componentes**: Utilização de `StopPropagation="true"` no Blazor ao acionar botões de eliminação dentro de cartões clicáveis, evitando disparos em cascata na UI.
+O repositório é público e aberto à comunidade. Sinta-se à vontade para clonar, aprender com a arquitetura de integrações e contribuir para otimizar a tomada de decisão no ecossistema local.
