@@ -74,7 +74,7 @@
 
         <FluentDataGrid Items="@FilteredBenchmarks"
                         TGridItem="BenchmarkEvaluationModel"
-                        Pagination="@_pagination"
+                        Pagination="@_pagination" OnRowDoubleClick="OnDoubleClick" 
                         RowSize="DataGridRowSize.Medium" 
                         DisplayMode="DataGridDisplayMode.Grid"
                         class="benchmark-grid">
@@ -278,11 +278,6 @@
             );
 
             await InvokeAsync(StateHasChanged);
-            // var confirmacao = await DialogService.ShowConfirmationAsync(
-            //     $"Tem a certeza que deseja apagar este benchmark? ",
-            //     "Sim, Apagar",
-            //     "Cancelar",
-            //     "Apagar");
 
             if (confirmacao == null) return;
             var resultado = await confirmacao.Result;
@@ -440,8 +435,9 @@
         return _filtroAtual == filtro ? Appearance.Accent : Appearance.Stealth;
     }
 
-    private void OpenDetailDialog(BenchmarkEvaluationModel response)
+    private void OpenDetailDialog(BenchmarkEvaluationModel? response)
     {
+        if (response == null) return;
         _selectedBenchmarkResponse = response;
         _isDialogVisible = true;
     }
@@ -544,18 +540,24 @@
             Logger.LogWarning("Análise cancelada pelo utilizador.");
             _resultadoLocal = new BenchmarkAnalysisResult
             {
-                Sumario = "Operação cancelada pelo utilizador",
-                AnaliseDetalhada = "❌ **Operação cancelada pelo utilizador.**"
+                Sumario = "Operação cancelada pelo utilizador.",
+                LinhasAnaliseDetalhada = new List<string>
+                {
+                    "❌ <strong>Operação cancelada:</strong> A análise foi interrompida antes de ser concluída."
+                }
             };
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Erro ao tentar efetuar a análise com o modelo local.");
+            Logger.LogError(ex, "Erro ao tentar efetuar a análise dos benchmarks.");
             _resultadoLocal = new BenchmarkAnalysisResult
             {
-                Sumario = "❌ **Não foi possível comunicar com o Ollama.**",
-                AnaliseDetalhada = "Garanta que tem o Ollama a correr em segundo plano (`http://localhost:11434`) e o modelo descarregado."
+                Sumario = "❌ Erro ao processar os dados.",
+                LinhasAnaliseDetalhada = new List<string>
+                {
+                    "Ocorreu um erro ao calcular as métricas de benchmark localmente. Verifique os logs para mais detalhes."
+                }
             };
         }
         finally
@@ -567,11 +569,17 @@
     private void OnPartial(string chunk)
     {
         _streamingLog += chunk;
-        StateHasChanged(); // 🔥 Atualiza o UI em tempo real
+        StateHasChanged(); // 🔥 Atualiza o UI
     }
     private void CancelarAnaliseDoPai()
     {
         _cts?.Cancel();
+    }
+
+    private void OnDoubleClick(FluentDataGridRow<BenchmarkEvaluationModel> row)
+    {
+        if (row?.Item == null) return;
+        OpenDetailDialog(row.Item);
     }
 
 }

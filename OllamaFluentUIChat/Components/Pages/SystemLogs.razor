@@ -92,7 +92,8 @@
         {
             <div style="overflow-x: auto;">
                 <FluentDataGrid Items="@_logsFiltrados.AsQueryable()" Pagination="@_pagination"
-                                RowSize="DataGridRowSize.Medium"
+                                RowSize="DataGridRowSize.Medium" 
+                                OnRowDoubleClick="OnDoubleClick"
                                 TGridItem="LogEntity" ResizableColumns="true">
 
                     <PropertyColumn Property="@(p => p.Id)" Title="ID" Sortable="true" Width="100px" />
@@ -304,6 +305,12 @@
             }
         }
     }
+    private void OnDoubleClick(FluentDataGridRow<LogEntity> row)
+    {
+        if (row?.Item == null) return;
+        AbrirDetalhesLog(row.Item);
+    }
+
 }
 
 <style>

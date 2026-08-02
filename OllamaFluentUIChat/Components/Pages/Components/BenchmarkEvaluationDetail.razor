@@ -16,7 +16,7 @@
             <div style="display: flex; align-items: flex-start; gap: 10px; width: 100%;">
                 <FluentIcon Value="@(new Icons.Regular.Size24.Eye())" />
                 <FluentLabel Typo="Typography.Body">
-                    Detalhes - @Response?.NomeModelo
+                    @Response?.NomeModelo
                 </FluentLabel>
 
                 <blockquote class="prompt-citacao" style="flex: 1; margin: 0;">
@@ -237,7 +237,7 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        if (Response is not null && Response.Id != _lastResponseId)
+        if (Response is not null) 
         {
             _lastResponseId = Response.Id;
             await GetJudgesFeedback();
@@ -251,7 +251,7 @@
             _isLoadingFeedback = true;
             try
             {
-                Feedback = await BenchmarkRepository.GetBenchmarkJudgesFeedbackByIdAsync(Response.Id) ?? new();
+                Feedback = await BenchmarkRepository.GetBenchmarkJudgesFeedbackByIdAsync(Response.ResponseId) ?? new();
             }
             finally
             {
@@ -296,7 +296,6 @@
         padding-top: 16px;
     }
 
-    /* CARDS DE FEEDBACK */
     .feedback-card {
         display: flex;
         flex-direction: column;
@@ -339,7 +338,6 @@
         font-size: 13px;
     }
 
-    /* RATINGS GRID - CSS Grid layout */
     .ratings-grid-container {
         display: flex;
         flex-direction: column;
@@ -375,13 +373,14 @@
         }
 
     .metric-cell {
-        padding: 10px 12px;
+        padding: 5px 6px;
         text-align: left;
-        font-weight: 600;
+        font-weight: 400;
         color: var(--neutral-foreground-secondary);
         display: flex;
+        font-family: Arial;
         align-items: center;
-        font-size: 13px;
+        font-size: 14px;
     }
 
         .metric-cell.header-metric {
@@ -394,7 +393,7 @@
         }
 
     .rating-cell {
-        padding: 10px 12px;
+        padding: 5px 6px;
         text-align: center;
         display: flex;
         align-items: center;
@@ -441,7 +440,7 @@
         }
 
     .prompt-citacao {
-        max-height: 18.0em;
+        max-height: 10.0em;
         overflow-y: auto;
         overflow-x: hidden;
         white-space: normal;

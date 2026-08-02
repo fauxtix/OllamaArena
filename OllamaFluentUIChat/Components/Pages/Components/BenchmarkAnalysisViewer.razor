@@ -16,12 +16,6 @@
             </div>
             <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
                 <FluentBadge Appearance="Appearance.Accent">Análise Offline Ativa</FluentBadge>
-                @if (AnaliseResultado != null && !IsAnalyzing)
-                {
-                    <span style="font-size:12px; color:var(--neutral-stroke-accessible-rest);">
-                        Tempo de análise: <strong>@AnaliseResultado.TempoAnaliseFormatado</strong>
-                    </span>
-                }
             </div>
         </div>
     </FluentCard>
@@ -79,56 +73,58 @@
                 <div class="streaming-output"
                      style="padding: 14px; background: var(--neutral-layer-2); border-radius: 6px; border-left: 4px solid var(--accent-fill-rest); font-family: 'Courier New', monospace; font-size: 12.5px; line-height: 1.5; max-height: 420px; overflow-y: auto; white-space: pre-wrap;">
                     @MessageFormatter.FormatMessagePlus(StreamingLog);
-                    @* @((MarkupString)System.Net.WebUtility.HtmlEncode(StreamingLog).Replace("\n", "<br />")) *@
                 </div>
             }
 
             @if (AnaliseResultado != null)
             {
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px;">
-                    <div style="padding: 12px 14px; background: var(--neutral-layer-1); border-radius: 6px; border-left: 4px solid var(--palette-green-dark);">
-                        <div style="font-size: 13px; font-weight: 700; color: var(--palette-green-dark); margin-bottom: 5px;">⚡ MAIS RÁPIDO</div>
-                        <div style="font-size: 14.5px; font-weight: 600;">@AnaliseResultado.ModeloMaisRapido</div>
-                        <div style="font-size: 13px; color: var(--palette-green-dark); margin-top: 5px;">
-                            <strong>@AnaliseResultado.MaxTokensSec.ToString("F1")</strong> Tokens/s
+                <div class="benchmark-analysis-container" style="display: flex; flex-direction: column; gap: 16px; padding: 16px; background: var(--neutral-layer-2); border-radius: 8px;">
+
+                    @* 1. Sumário Executivo *@
+                    @if (!string.IsNullOrEmpty(AnaliseResultado.Sumario))
+                    {
+                        <div style="padding: 12px; background: var(--neutral-layer-1); border-radius: 6px; border-left: 4px solid var(--accent-fill-rest);">
+                            <h5 style="margin: 0 0 6px 0; font-size: 13px; font-weight: 600;">📊 Sumário Executivo</h5>
+                            <p style="margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--neutral-foreground-rest);">
+                                @AnaliseResultado.Sumario
+                            </p>
+                        </div>
+                    }
+
+                    @* 2. Cards de Métricas Rápidas *@
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                        <div style="padding: 10px 14px; background: var(--neutral-layer-1); border-radius: 6px;">
+                            <span style="font-size: 11px; color: var(--neutral-foreground-hint); display: block;">⚡ Mais Rápido</span>
+                            <strong style="font-size: 14px; color: var(--neutral-foreground-rest);">@AnaliseResultado.ModeloMaisRapido</strong>
+                            <span style="font-size: 12px; color: var(--neutral-foreground-rest); display: block; margin-top: 2px;">(@AnaliseResultado.MaxTokensSec t/s)</span>
+                        </div>
+
+                        <div style="padding: 10px 14px; background: var(--neutral-layer-1); border-radius: 6px;">
+                            <span style="font-size: 11px; color: var(--neutral-foreground-hint); display: block;">⭐ Melhor Avaliado</span>
+                            <strong style="font-size: 14px; color: var(--neutral-foreground-rest);">@AnaliseResultado.ModeloMelhorAvaliado</strong>
                         </div>
                     </div>
 
-                    <div style="padding: 12px 14px; background: var(--neutral-layer-1); border-radius: 6px; border-left: 4px solid var(--palette-blue-dark);">
-                        <div style="font-size: 13px; font-weight: 700; color: var(--palette-blue-dark); margin-bottom: 5px;">⭐ MELHOR QUALIDADE</div>
-                        <div style="font-size: 14.5px; font-weight: 600;">@AnaliseResultado.ModeloMelhorAvaliado</div>
-                        <div style="font-size: 13px; color: var(--palette-blue-dark); margin-top: 5px;">Pontuação mais alta</div>
-                    </div>
-                </div>
-
-                <div style="max-height: 320px; overflow-y: auto; padding-right: 6px; display: grid; gap: 12px;">
-                    <div style="padding: 14px; background: var(--neutral-layer-1); border-radius: 6px;">
-                        <h5 style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">📋 Sumário Executivo</h5>
-                        <div class="markdown-content" style="font-size: 13.5px; line-height: 1.5;">
-                            @* @((MarkupString)FormatMessage(AnaliseResultado.AnaliseResultado.Sumario)) *@
-
-                            
-                            @((MarkupString)ConvertMarkdownToHtml(AnaliseResultado.Sumario))
-
-
-                        </div>
-                    </div>
-
-                    @if (!string.IsNullOrEmpty(AnaliseResultado.AnaliseDetalhada))
+                    @* 3. Análise Técnica Detalhada *@
+                    @if (AnaliseResultado.LinhasAnaliseDetalhada?.Any() == true)
                     {
                         <div style="padding: 14px; background: var(--neutral-layer-1); border-radius: 6px;">
-                            <h5 style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">🔍 Análise Técnica Detalhada</h5>
-                            <div class="markdown-content" style="font-size: 13.5px; line-height: 1.5;">
-                                @((MarkupString)FormatMessage(AnaliseResultado.AnaliseDetalhada))
-                                @* @((MarkupString)ConvertMarkdownToHtml(AnaliseResultado.AnaliseDetalhada)) *@
+                            <h5 style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600;">🔍 Análise Técnica Detalhada</h5>
+                            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; line-height: 1.5; color: var(--neutral-foreground-rest);">
+                                @foreach (var linha in AnaliseResultado.LinhasAnaliseDetalhada)
+                                {
+                                    <div>@((MarkupString)linha)</div>
+                                }
                             </div>
                         </div>
                     }
+
                 </div>
             }
         </FluentCard>
     }
 </div>
+
 @code {
     [Parameter] public bool IsAnalyzing { get; set; }
     [Parameter] public EventCallback<bool> IsAnalyzingChanged { get; set; }
@@ -162,8 +158,6 @@
         return MessageFormatter.FormatMessagePlus(content);
     }
 }
-
-
 
 <style>
     .analysis-container {

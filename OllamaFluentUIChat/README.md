@@ -53,16 +53,14 @@ A aplicação integra um processo estruturado de auditoria externa no painel de 
 6. **Extração Automática de Métricas:** O sistema analisa o texto bruto colado e preenche automaticamente as **Métricas de Avaliação (Escala 1-5)**, incluindo critérios como *Factual, Formatação, Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Halo Effect, Segurança* e a nota *Global*.
 7. **Tradução e Consolidação:** O utilizador pode utilizar a opção **"Traduzir Feedback"** para passar as análises para português europeu e, por fim, clica em **"Guardar avaliação"** para persistir todos os dados permanentemente na Base de Dados.
 
-## Interface de Chat Avançada
-
-Uma experiência de conversação moderna e confortável:
+## Interface de Chat
 
 - **Respostas em tempo real (streaming)** — o texto aparece no ecrã palavra a palavra, à medida que o modelo o gera;
-- **Formatação inteligente** — títulos, listas, tabelas e blocos de código são apresentados de forma limpa e legível;
+- **Formatação** — títulos, listas, tabelas e blocos de código são apresentados de forma limpa e legível;
 - **Histórico de conversas** — guarda e reabre as suas conversas anteriores em qualquer altura;
 - **Novo chat com um clique** — começa uma conversa do zero instantaneamente, libertando os recursos do computador;
 - **Cronómetro integrado** — cada resposta mostra quanto tempo demorou, para monitorizar o desempenho;
-- **Cancelamento a qualquer momento** — interrompa uma resposta com um simples botão;
+- **Cancelamento a qualquer momento** — interromper uma resposta;
 - **Indicador de compatibilidade gráfica** — a aplicação avisa-o se o modelo cabe na memória da sua placa gráfica ou se vai correr mais devagar no processador;
 - **Comportamento ajustado automaticamente** — a aplicação deteta o tipo de pedido (criativo, factual, tradução) e afina automaticamente o modelo para obter o melhor resultado em cada situação.
 

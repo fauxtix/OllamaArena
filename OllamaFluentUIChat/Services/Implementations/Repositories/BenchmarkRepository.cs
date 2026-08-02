@@ -164,23 +164,22 @@ public class BenchmarkRepository : IBenchmarkRepository
     /// <summary>
     /// Procura um único prompt e o feedback dos juizes através do ID.
     /// </summary>
-    public async Task<PromptFeedback> GetBenchmarkJudgesFeedbackByIdAsync(int promptId)
+    public async Task<PromptFeedback> GetBenchmarkJudgesFeedbackByIdAsync(int Id)
     {
         var sql = @"
                 SELECT GeminiFeedback, ChatGptFeedback FROM Respostas 
-                INNER JOIN Prompts ON Respostas.PromptId = Prompts.Id
-                WHERE Prompts.Id = @Id;";
+                WHERE Id = @Id;";
 
         try
         {
             using var connection = _context.CreateConnection();
-            var response = await connection.QueryFirstAsync<PromptFeedback>(sql, new { Id = promptId });
+            var response = await connection.QueryFirstAsync<PromptFeedback>(sql, new { Id });
             return response ?? new();
 
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao buscar feedback dos juízes para o prompt ID {PromptId}", promptId);
+            _logger.LogError(ex, "Erro ao buscar feedback dos juízes para o prompt ID {PromptId}", Id);
             return new();
         }
     }
