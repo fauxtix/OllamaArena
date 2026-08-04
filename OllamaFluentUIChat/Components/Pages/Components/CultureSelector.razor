@@ -1,0 +1,59 @@
+﻿@using System.Globalization
+@using Microsoft.FluentUI.AspNetCore.Components
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<!-- Botões PT/EN estilizados -->
+<div style="display:flex; gap: 1px; justify-content: end; align-items: center;">
+    <FluentButton Appearance="Appearance.Outline"
+                  Disabled="@(SelectedCultureCode == "pt")"
+                  OnClick="@(() => ChangeCulture("pt"))"
+                  Style="padding: 6px 18px; border-radius: 999px; font-weight: 600;">
+        PT
+    </FluentButton>
+
+    <FluentButton Appearance="Appearance.Outline"
+                  Disabled="@(SelectedCultureCode == "en")"
+                  OnClick="@(() => ChangeCulture("en"))"
+                  Style="padding: 6px 18px; border-radius: 999px; font-weight: 600;">
+        EN
+    </FluentButton>
+</div>
+
+@code {
+    private record CultureItem(string Code, string Name);
+
+    private List<CultureItem> Cultures { get; } =
+    [
+        new("pt", "Português"),
+        new("en", "English")
+    ];
+
+    // ✔ getter + setter (necessário para o FluentSelect)
+    private string SelectedCultureCode
+    {
+        get => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+        set => OnCultureChanged(value);
+    }
+
+    private void ChangeCulture(string newCulture)
+    {
+        if (string.IsNullOrWhiteSpace(newCulture) || newCulture == SelectedCultureCode)
+            return;
+
+        var relativeUri = Navigation.ToBaseRelativePath(Navigation.Uri);
+        if (string.IsNullOrEmpty(relativeUri))
+            relativeUri = "/";
+        else if (!relativeUri.StartsWith("/"))
+            relativeUri = "/" + relativeUri;
+
+        var cultureEscaped = Uri.EscapeDataString(newCulture);
+
+        Navigation.NavigateTo(
+            $"Culture/Set?culture={cultureEscaped}&redirectUri={relativeUri}",
+            forceLoad: true);
+    }
+
+    private void OnCultureChanged(string? newCulture)
+        => ChangeCulture(newCulture!);
+}

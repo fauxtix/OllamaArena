@@ -5,6 +5,9 @@
 @using OllamaFluentUIChat.Services.Helpers
 @using OllamaFluentUIChat.Services.Interfaces.Services
 @using static OllamaFluentUIChat.Models.DTO.OllamaModels
+@using OllamaFluentUIChat.Resources
+@inject IStringLocalizer<SharedResources> L
+
 
 @inject IDialogService DialogService
 @rendermode InteractiveServer
@@ -49,7 +52,7 @@
         </FluentStack>
 
         <div>
-            <FluentButton Appearance="Appearance.Outline" OnClick="ShowReadme">Ver README</FluentButton>
+            <FluentButton Appearance="Appearance.Outline" OnClick="ShowReadme">@L["ReadmeViewer"]</FluentButton>
         </div>
 
         @if (showOllamaError)
@@ -94,7 +97,7 @@
         if (!isOllamaRunning)
         {
             showOllamaError = true;
-            ollamaErrorMessage = "O servidor Ollama não está em execução. Por favor, inicie o Ollama.";
+            ollamaErrorMessage = "O servidor Ollama não está em execução. Inicie o Ollama.";
             _logger?.LogError("Ollama server is not running.");
         }
     }
@@ -166,7 +169,7 @@
         var hasInternet = await Internet.HasInternetAsync();
         if (!hasInternet)
         {
-            await DialogService.ShowErrorAsync("Internet indisponível. Verifique, por favor.", "Acesso ao ficheiro");
+            await DialogService.ShowErrorAsync("Internet indisponível. Verifique, por favor.", "Acesso ao ficheiro README.md");
             return;
         }
 

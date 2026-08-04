@@ -1,4 +1,5 @@
-﻿using OllamaFluentUIChat.Models.DTO;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using OllamaFluentUIChat.Models.DTO;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
 using System.Diagnostics;
@@ -9,6 +10,7 @@ namespace OllamaFluentUIChat.Services.Implementations.Services
     public class TranslationService : ITranslationService
     {
         private readonly HttpClient _http;
+        private readonly PromptFilesService promptFilesService;
         private readonly IBenchmarkRepository _benchmarks;
         private readonly ILogger<TranslationService> _logger;
 
@@ -17,7 +19,8 @@ namespace OllamaFluentUIChat.Services.Implementations.Services
         public TranslationService(
             HttpClient http,
             IBenchmarkRepository benchmarks,
-            ILogger<TranslationService> logger)
+            ILogger<TranslationService> logger,
+            PromptFilesService promptFilesService)
         {
             _http = http;
             _benchmarks = benchmarks;
@@ -25,6 +28,7 @@ namespace OllamaFluentUIChat.Services.Implementations.Services
 
             if (_http.BaseAddress == null)
                 _http.BaseAddress = new Uri("http://localhost:11434");
+            this.promptFilesService = promptFilesService;
         }
 
         public Task<TranslationResult> TranslateAsync(string text, string model)
@@ -52,53 +56,68 @@ namespace OllamaFluentUIChat.Services.Implementations.Services
         {
             var sw = Stopwatch.StartNew();
 
-            var prompt = PromptTemplates.TranslatePromptTemplate.TranslationPrompt
-                .Replace("{{TEXT}}", text);
-
-            var body = new
+            try
             {
-                model,
-                messages = new[]
+                var prompt = await promptFilesService.GetPromptFileContentAsync("translation-prompt.txt");
+                prompt = prompt?.Replace("{{TEXT}}", text);
+
+                var body = new
                 {
+                    model,
+                    messages = new[]
+                    {
                     new { role = "user", content = prompt }
                 },
-                stream = false
-            };
+                    stream = false
+                };
 
-            var response = await _http.PostAsJsonAsync("/api/chat", body);
-            response.EnsureSuccessStatusCode();
+                var response = await _http.PostAsJsonAsync("/api/chat", body);
+                response.EnsureSuccessStatusCode();
 
-            var raw = await response.Content.ReadAsStringAsync();
-            _logger.LogDebug("Resposta bruta: {Raw}", raw);
+                var raw = await response.Content.ReadAsStringAsync();
+                _logger.LogDebug("Resposta bruta: {Raw}", raw);
 
-            var envelope = JsonSerializer.Deserialize<OllamaChatResponse>(raw, JsonOptions);
-            var content = envelope?.Message?.Content ?? string.Empty;
+                var envelope = JsonSerializer.Deserialize<OllamaChatResponse>(raw, JsonOptions);
+                var content = envelope?.Message?.Content ?? string.Empty;
 
-            _logger.LogDebug("Conteúdo do modelo: {Content}", content);
+                _logger.LogDebug("Conteúdo do modelo: {Content}", content);
 
-            var cleaned = CleanResponse(content);
+                var cleaned = CleanResponse(content);
 
-            var json = TryExtractJson(cleaned);
+                var json = TryExtractJson(cleaned);
 
-            if (json != null)
-            {
-                var parsed = TryParse(json);
+                if (json != null)
+                {
+                    var parsed = TryParse(json);
 
-                sw.Stop();
-                parsed?.ModelUsed = model;
-                parsed?.TimeSpentMs = sw.ElapsedMilliseconds;
-                if (parsed != null && IsValidTranslation(parsed, text))
-                    return parsed;
+                    sw.Stop();
+                    parsed?.ModelUsed = model;
+                    parsed?.TimeSpentMs = sw.ElapsedMilliseconds;
+                    if (parsed != null && IsValidTranslation(parsed, text))
+                        return parsed;
+                }
+
+
+                return new TranslationResult
+                {
+                    TranslatedText = RemoveJsonIfPresent(cleaned).Trim(),
+                    Confidence = 0.2,
+                    ModelUsed = model,
+                    TimeSpentMs = sw.ElapsedMilliseconds
+                };
             }
-
-
-            return new TranslationResult
+            catch (Exception ex)
             {
-                TranslatedText = RemoveJsonIfPresent(cleaned).Trim(),
-                Confidence = 0.2,
-                ModelUsed = model,
-                TimeSpentMs = sw.ElapsedMilliseconds
-            };
+                _logger.LogError(ex, "Erro na tradução");
+                return new TranslationResult
+                {
+                    TranslatedText = ex.Message,
+                    Confidence = 0.2,
+                    ModelUsed = model,
+                    TimeSpentMs = sw.ElapsedMilliseconds
+                };
+
+            }
         }
 
         private static string RemoveJsonIfPresent(string text)
@@ -186,8 +205,8 @@ namespace OllamaFluentUIChat.Services.Implementations.Services
                 "incomplete"
             };
 
-            if (analysisWords.Any(w => t.Contains(w, StringComparison.OrdinalIgnoreCase)))
-                return false;
+            //if (analysisWords.Any(w => t.Contains(w, StringComparison.OrdinalIgnoreCase)))
+            //    return false;
 
             if (t.Equals(original.Trim(), StringComparison.OrdinalIgnoreCase))
                 return false;

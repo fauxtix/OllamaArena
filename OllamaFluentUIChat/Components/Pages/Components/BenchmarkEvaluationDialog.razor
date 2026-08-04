@@ -19,7 +19,7 @@
                     Avaliação - @Response?.NomeModelo
                 </FluentLabel>
 
-                <blockquote class="prompt-citacao" style="flex: 1; margin: 0;">
+                <blockquote class="prompt-citacao" style="flex: 1; margin: 0; height:5vw; overflow-y: auto;">
                     "@prompt"
                 </blockquote>
             </div>
@@ -38,7 +38,7 @@
                                   Disabled="@isTranslating"
                                   OnClick="TraduzirGemini">
                         <FluentIcon Value="@(new Icons.Regular.Size20.Translate())" />
-                        Traduzir Feedback
+                        Traduzir Feedback (Gemini)
                     </FluentButton>
                 </div>
 
@@ -47,7 +47,7 @@
                                   Disabled="@isTranslating"
                                   OnClick="TraduzirChatGpt">
                         <FluentIcon Value="@(new Icons.Regular.Size20.Translate())" />
-                        Traduzir Feedback
+                        Traduzir Feedback (ChatGPT)
                     </FluentButton>
                 </div>
 
@@ -64,7 +64,7 @@
 
         <FluentSpacer />
 
-        <FluentButton Appearance="Appearance.Accent"
+        <FluentButton Appearance="Appearance.Accent" Disabled="@isTranslating"
                       OnClick="Guardar">
             Guardar avaliação
         </FluentButton>
@@ -79,11 +79,13 @@
 </FluentDialog>
 
 <FluentMenuProvider />
+<FluentDialogProvider />
+
 
 <TranslationPreviewDialog Visible="@showTranslationDialog"
                           VisibleChanged="@(v => showTranslationDialog = v)"
                           TranslatedText="@translatedText"
-                          ModelUsed="@modelUsed"
+                          ModelUsed="@modelUsed" JudgeName="@targetField"
                           TimeSpent="@timeSpent"
                           OnAccept="AplicarTraducao" />
 
@@ -91,6 +93,9 @@
     [Inject] IBenchmarkRepository BenchmarkRepository { get; set; } = default!;
     [Inject] public ITranslationService TranslationService { get; set; } = default!;
     [Inject] public ILogger<App> Logger { get; set; } = default!;
+
+    [Inject] protected IDialogService DialogService { get; set; } = default!;
+
 
     [Parameter, EditorRequired] public BenchmarkResponse? Response { get; set; }
 
@@ -106,6 +111,7 @@
     private string? translatedText;
     private string? targetField;
     private bool isTranslating = false;
+    private bool translationOK = true;
 
     private string? modelUsed;
     private string? timeSpent;
@@ -127,10 +133,22 @@
 
     private async Task Guardar()
     {
-        if (Response is not null)
-            await OnSave.InvokeAsync(Response);
+        try
+        {
+            if (Response is not null)
+            {
+                if (Response is not null)
+                    await OnSave.InvokeAsync(Response);
 
-        await Fechar();
+                await Fechar();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erro ao guardar avaliação do benchmark.");
+            await DialogService.ShowErrorAsync("Erro ao guardar avaliação do benchmark.", "Guardar alterações");
+        }
+
     }
 
     private async Task Fechar()
@@ -157,21 +175,30 @@
         targetField = "chatgpt";
         isTranslating = true;
         StateHasChanged();
+        try
+        {
+            var result = await TranslationService.TranslateAsync(
+                Response.ChatGptFeedback,
+                Response.NomeModelo
+            );
 
-        var result = await TranslationService.TranslateAsync(
-            Response.ChatGptFeedback,
-            Response.NomeModelo
-        );
+            translatedText = result.TranslatedText;
+            modelUsed = result.ModelUsed;
+            timeSpent = result.TimeSpentFormatted;
 
-        translatedText = result.TranslatedText;
-        modelUsed = result.ModelUsed;
-        timeSpent = result.TimeSpentFormatted;
+            showTranslationDialog = true;
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowErrorAsync("Erro ao traduzir feedback do ChatGPT. Verifique os logs, por favor.", "Tradução Gemini");
+            Logger.LogError(ex, "Erro ao traduzir feedback do ChatGPT");
+        }
+        finally
+        {
+            isTranslating = false;
+            StateHasChanged();
+        }
 
-        isTranslating = false;
-
-        StateHasChanged();
-
-        showTranslationDialog = true;
     }
 
     private async Task TraduzirGemini()
@@ -182,21 +209,32 @@
         targetField = "gemini";
         isTranslating = true;
         StateHasChanged();
+        try
+        {
+            var result = await TranslationService.TranslateAsync(
+                Response.GeminiFeedback,
+                Response.NomeModelo
+            );
 
-        var result = await TranslationService.TranslateAsync(
-            Response.GeminiFeedback,
-            Response.NomeModelo
-        );
+            translatedText = result.TranslatedText;
+            modelUsed = result.ModelUsed;
+            timeSpent = result.TimeSpentFormatted;
 
-        translatedText = result.TranslatedText;
-        modelUsed = result.ModelUsed;
-        timeSpent = result.TimeSpentFormatted;
+            showTranslationDialog = true;
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowErrorAsync("Erro ao traduzir feedback do Gemini. Verifique Logs, por favor.", "Tradução Gemini");
 
-        isTranslating = false;
 
-        StateHasChanged(); 
+            Logger.LogError(ex, "Erro ao traduzir feedback do Gemini");
+        }
+        finally
+        {
+            isTranslating = false;
+            StateHasChanged();
+        }
 
-        showTranslationDialog = true;
     }
 
     private async Task AplicarTraducao(string texto)

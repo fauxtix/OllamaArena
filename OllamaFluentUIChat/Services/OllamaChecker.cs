@@ -7,12 +7,14 @@
             Timeout = TimeSpan.FromSeconds(5) // Timeout razoável
         };
 
-        /// <summary>
-        /// Verifica se o serviço do Ollama está rodando.
-        /// </summary>
-        /// <param name="baseUrl">URL base do Ollama (padrão: http://localhost:11434)</param>
-        /// <returns>True se o serviço estiver respondendo, False caso contrário.</returns>
-        public static async Task<bool> IsOllamaRunningAsync(string baseUrl = "http://localhost:11434")
+    /// <summary>
+    /// Checks if the Ollama API is reachable by attempting a request to the /api/version endpoint.
+    /// </summary>
+    /// <param name="baseUrl">
+    /// Ollama base url
+    /// </param>
+    /// <returns>True if the server responds with a success status code; otherwise, false.</returns>
+     public static async Task<bool> IsOllamaRunningAsync(string baseUrl = "http://localhost:11434")
         {
             try
             {

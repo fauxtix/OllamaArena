@@ -1,16 +1,21 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.FluentUI.AspNetCore.Components;
 using OllamaFluentUIChat.Services;
 namespace OllamaFluentUIChat.Components.Pages;
 
-public partial class EditPromptFiles
+public partial class EditPromptFiles : IDisposable
 {
     [Inject] protected ILogger<EditPromptFiles> Logger { get; set; } = default!;
     [Inject] protected IToastService ToastService { get; set; } = default!;
+    [Inject] protected IDialogService DialogService { get; set; } = default!;
     [Inject] protected PromptFilesService PromptFilesService { get; set; } = default!;
     [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
 
     private string _editorContent = string.Empty;
+    private string _loadedContent = string.Empty;
+    private IDisposable? _locationChangingRegistration;
+
     public string EditorContent
     {
         get => _editorContent;
@@ -23,13 +28,25 @@ public partial class EditPromptFiles
         }
     }
 
-    protected string ToastTitle = "Prompt Editor";
-    protected string ToastContent = "";
-    protected string ToastCssClass = "";
-    protected CancellationToken _cancellationToken = CancellationToken.None;
+    public bool HasUnsavedChanges => _editorContent != _loadedContent;
+
     protected List<string> _promptFiles = [];
     protected string _selectedPromptFile = string.Empty;
     private bool _isLoading = true;
+
+    protected override void OnInitialized()
+    {
+        _locationChangingRegistration = NavigationManager.RegisterLocationChangingHandler(OnLocationChanging);
+    }
+
+    private async ValueTask OnLocationChanging(LocationChangingContext context)
+    {
+        if (!HasUnsavedChanges)
+            return;
+
+        if (!await ConfirmDiscardAsync())
+            context.PreventNavigation();
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -37,7 +54,7 @@ public partial class EditPromptFiles
         {
             _isLoading = true;
 
-            _promptFiles = PromptFilesService.GetPromptFilesAsync() ?? [];
+            _promptFiles = PromptFilesService.GetPromptFiles() ?? [];
 
             if (_promptFiles.Any())
             {
@@ -47,7 +64,7 @@ public partial class EditPromptFiles
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading prompt files");
+            Logger.LogError(ex, "Erro ao inicializar a lista de ficheiros de prompt.");
             ToastService.ShowError("Erro ao inicializar a lista de ficheiros.");
         }
         finally
@@ -61,6 +78,9 @@ public partial class EditPromptFiles
         if (string.IsNullOrEmpty(selectedFile) || _selectedPromptFile == selectedFile)
             return;
 
+        if (!await ConfirmDiscardAsync())
+            return;
+
         _selectedPromptFile = selectedFile;
         await LoadPromptFileContent(_selectedPromptFile);
     }
@@ -72,12 +92,13 @@ public partial class EditPromptFiles
             _isLoading = true;
             StateHasChanged();
 
-            var promptContent = await PromptFilesService.GetPromptFileContentAsync(filename, _cancellationToken);
+            var promptContent = await PromptFilesService.GetPromptFileContentAsync(filename);
             EditorContent = promptContent ?? string.Empty;
+            _loadedContent = EditorContent;
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, $"Erro ao obter o prompt: {filename}");
+            Logger.LogError(ex, "Erro ao obter o prompt: {File}", filename);
             ToastService.ShowError("Não foi possível carregar o ficheiro selecionado.");
         }
         finally
@@ -98,20 +119,42 @@ public partial class EditPromptFiles
         try
         {
             await PromptFilesService.SavePromptFileAsync(_selectedPromptFile, EditorContent, CancellationToken.None);
+            _loadedContent = EditorContent;
             ToastService.ShowSuccess($"O ficheiro '{_selectedPromptFile}' foi gravado com sucesso!", timeout: 3000);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, $"Error in saving prompt {_selectedPromptFile}");
+            Logger.LogError(ex, "Erro ao gravar o prompt: {File}", _selectedPromptFile);
             ToastService.ShowError("Não foi possível gravar o prompt.");
         }
     }
 
     private async Task OnCancel()
     {
-        if (!string.IsNullOrEmpty(_selectedPromptFile))
-        {
-            await LoadPromptFileContent(_selectedPromptFile);
-        }
+        if (string.IsNullOrEmpty(_selectedPromptFile))
+            return;
+
+        if (!await ConfirmDiscardAsync())
+            return;
+
+        await LoadPromptFileContent(_selectedPromptFile);
+    }
+
+    private async Task<bool> ConfirmDiscardAsync()
+    {
+        if (!HasUnsavedChanges)
+            return true;
+
+        var dialog = await DialogService.ShowConfirmationAsync(
+            "Existem alterações não gravadas no prompt atual. Deseja descartá-las?",
+            "Descartar", "Cancelar", "Alterações não gravadas");
+
+        var result = await dialog.Result;
+        return !result.Cancelled;
+    }
+
+    public void Dispose()
+    {
+        _locationChangingRegistration?.Dispose();
     }
 }

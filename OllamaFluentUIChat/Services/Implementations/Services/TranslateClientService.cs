@@ -25,6 +25,17 @@ public sealed class TranslateClientService
             if (!resp.IsSuccessStatusCode) return null;
             return await resp.Content.ReadFromJsonAsync<TranslateResponseDto>(cancellationToken: cancellationToken);
         }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, "Error calling translate API");
+            return new TranslateResponseDto()
+            {
+                 Confidence = 0,
+                  ErrorMessage = ex.Message, 
+                TranslatedText = ex.ToString()                  
+            };
+        }
+
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error calling translate API");

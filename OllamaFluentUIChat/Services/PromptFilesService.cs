@@ -6,16 +6,28 @@ public class PromptFilesService
 {
     private readonly ILogger<PromptFilesService> _logger;
     private readonly IPromptTemplateProvider _promptProvider;
+    private readonly IHostEnvironment _environment;
 
-    public PromptFilesService(ILogger<PromptFilesService> logger, IPromptTemplateProvider promptProvider)
+    public PromptFilesService(ILogger<PromptFilesService> logger, IPromptTemplateProvider promptProvider, IHostEnvironment environment)
     {
         _logger = logger;
         _promptProvider = promptProvider;
+        _environment = environment;
     }
 
-    public List<string> GetPromptFilesAsync()
+    private string GetPromptsDirectory()
     {
-        var promptsDir = Path.Combine(AppContext.BaseDirectory, "Prompts");
+        var sourceDir = Path.Combine(_environment.ContentRootPath, "Prompts");
+
+        if (Directory.Exists(sourceDir))
+            return sourceDir;
+
+        return Path.Combine(AppContext.BaseDirectory, "Prompts");
+    }
+
+    public List<string> GetPromptFiles()
+    {
+        var promptsDir = GetPromptsDirectory();
 
         if (!Directory.Exists(promptsDir))
             return new List<string>();
@@ -27,7 +39,6 @@ public class PromptFilesService
             .OfType<string>()];
     }
 
-    // Novo método integrado para carregar o conteúdo do ficheiro selecionado
     public async Task<string?> GetPromptFileContentAsync(string fileName, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(fileName))
@@ -38,11 +49,10 @@ public class PromptFilesService
 
         try
         {
-            var promptsDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "Prompts"));
+            var promptsDir = Path.GetFullPath(GetPromptsDirectory());
             var file = Path.GetFullPath(Path.Combine(promptsDir, fileName));
             string expectedPrefix = promptsDir + Path.DirectorySeparatorChar;
 
-            // Proteção de Path Traversal idêntica à do SavePromptFileAsync
             if (!file.StartsWith(expectedPrefix, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException("Invalid filename path.");
 
@@ -69,9 +79,7 @@ public class PromptFilesService
 
         try
         {
-            string rootDir = AppContext.BaseDirectory;
-
-            var promptsDir = Path.GetFullPath(Path.Combine(rootDir, "Prompts"));
+            var promptsDir = Path.GetFullPath(GetPromptsDirectory());
             Directory.CreateDirectory(promptsDir);
 
             var file = Path.GetFullPath(Path.Combine(promptsDir, fileName));

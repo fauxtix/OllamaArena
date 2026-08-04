@@ -44,11 +44,45 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Resources\QualityAnalysis.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>QualityAnalysis.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\SharedResources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SharedResources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Update="wwwroot\images\OllamaAsAJudge.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Update="wwwroot\images\OllamaWithFluentUI.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\QualityAnalysis.en.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\QualityAnalysis.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>QualityAnalysis.Designer.cs</LastGenOutput>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\SharedResources.en.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\SharedResources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>SharedResources.Designer.cs</LastGenOutput>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

@@ -1,5 +1,7 @@
-﻿@using Microsoft.FluentUI.AspNetCore.Components
-
+﻿@using Microsoft.Extensions.Localization
+@using Microsoft.FluentUI.AspNetCore.Components
+@using OllamaFluentUIChat.Resources
+@inject IStringLocalizer<SharedResources> L
 <div class="navmenu">
     <input type="checkbox" title="Menu expand/collapse toggle" id="navmenu-toggle" class="navmenu-icon" />
     <label for="navmenu-toggle" class="navmenu-icon">
@@ -9,41 +11,41 @@
         <FluentNavMenu Id="main-menu" Collapsible="true" Width="250" Title="Navigation menu" @bind-Expanded="expanded">
             <FluentNavLink Href="/" Match="NavLinkMatch.All"
                            Icon="@(new Icons.Regular.Size20.Home())"
-                           IconColor="Color.Accent">Home</FluentNavLink>
+                           IconColor="Color.Accent">@L["Home"]</FluentNavLink>
 
             <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
 
             <FluentNavLink Href="/chat"
                            Icon="@(new Icons.Regular.Size20.Chat())"
-                           IconColor="Color.Accent">Chat</FluentNavLink>
+                           IconColor="Color.Accent">@L["Chat"]</FluentNavLink>
 
             <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
 
             <FluentNavLink Href="/benchmark-evaluations"
                            Icon="@(new Icons.Regular.Size20.DataBarVertical())"
-                           IconColor="Color.Accent">Benchmarks</FluentNavLink>
+                           IconColor="Color.Accent">@L["Benchmarks"]</FluentNavLink>
 
             <FluentNavLink Href="/benchmarks"
                            Icon="@(new Icons.Regular.Size20.DataBarHorizontal())"
-                           IconColor="Color.Accent">Qualidade e Métricas</FluentNavLink>
+                           IconColor="Color.Accent">@L["QualityAndMetrics"]</FluentNavLink>
 
             <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
 
             <FluentNavLink Href="/modelos-ollama"
                            Icon="@(new Icons.Regular.Size20.Bot())"
-                           IconColor="Color.Accent">Modelos carregados</FluentNavLink>
+                           IconColor="Color.Accent">@L["LoadedModels"]</FluentNavLink>
 
             <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
 
             <FluentNavLink Href="/edit-prompts"
                            Icon="@(new Icons.Regular.Size20.DocumentEdit())"
-                           IconColor="Color.Accent">Prompts</FluentNavLink>
+                           IconColor="Color.Accent">@L["EditPrompts"]</FluentNavLink>
 
             <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
 
             <FluentNavLink Href="/system-logs"
                            Icon="@(new Icons.Regular.Size20.DocumentText())"
-                           IconColor="Color.Accent">Logs</FluentNavLink>
+                           IconColor="Color.Accent">@L["SystemLogs"]</FluentNavLink>
         </FluentNavMenu>
     </nav>
 </div>

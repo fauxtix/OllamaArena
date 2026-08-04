@@ -1,4 +1,6 @@
-﻿using OllamaFluentUIChat.Models.DTO;
+﻿using Microsoft.Extensions.Localization;
+using OllamaFluentUIChat.Models.DTO;
+using OllamaFluentUIChat.Resources;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
 using System.Diagnostics;
@@ -9,10 +11,12 @@ namespace OllamaFluentUIChat.Services.Implementations.Services;
 public class LocalAnalysisService : IAnalysisService
 {
     private readonly ILogger<LocalAnalysisService> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
-    public LocalAnalysisService(HttpClient httpClient, ILogger<LocalAnalysisService> logger)
+    public LocalAnalysisService(HttpClient httpClient, ILogger<LocalAnalysisService> logger, IStringLocalizer<SharedResources> localizer)
     {
         _logger = logger;
+        _localizer = localizer;
     }
 
     public Task<BenchmarkAnalysisResult> AnalisarBenchmarksAsync(

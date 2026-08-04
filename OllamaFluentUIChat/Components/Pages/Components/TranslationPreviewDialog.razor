@@ -1,17 +1,17 @@
-﻿<FluentDialog Hidden="@(!Visible)"
+﻿<FluentDialog Hidden="@(!Visible)" 
               Modal="true"
-              Style="width: 700px;"
+              Style="width: 60%"
               TrapFocus="true">
 
     <FluentDialogHeader Visible="true">
-        <FluentLabel Typo="Typography.Body">
-            Tradução do Feedback
+        <FluentLabel Typo="Typography.Header">
+            Tradução do Feedback (@JudgeName)
         </FluentLabel>
     </FluentDialogHeader>
 
     <FluentDialogBody>
 
-        <FluentLabel Typo="Typography.Body">
+        <FluentLabel Typo="Typography.Subject">
             Modelo usado: @ModelUsed
         </FluentLabel>
 
@@ -20,9 +20,8 @@
         </FluentLabel>
 
         <FluentTextArea Value="@TranslatedText"
-                        ReadOnly="true"
                         Rows="10"
-                        Style="width:100%;" />
+                        Style="margin-top:16px; width:100%;  overflow-y: auto;" />
     </FluentDialogBody>
 
     <FluentDialogFooter>
@@ -40,10 +39,13 @@
     </FluentDialogFooter>
 </FluentDialog>
 
+<FluentDialogProvider />
+
 @code {
     [Parameter] public bool Visible { get; set; }
     [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
 
+    [Parameter, EditorRequired] public string? JudgeName { get; set; }
     [Parameter] public string? TranslatedText { get; set; }
     [Parameter] public string? ModelUsed { get; set; }
     [Parameter] public string? TimeSpent { get; set; }

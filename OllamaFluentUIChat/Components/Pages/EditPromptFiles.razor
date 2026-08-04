@@ -44,6 +44,12 @@
         {
             <FluentProgressRing>A carregar o prompt...</FluentProgressRing>
         }
+        else if (!_promptFiles.Any())
+        {
+            <div class="prompt-empty-state">
+                <span>Não existem ficheiros de prompt na pasta Prompts.</span>
+            </div>
+        }
         else
         {
             <!-- TextArea com altura expandida -->
@@ -65,6 +71,7 @@
     </div>
 </div>
 
+<FluentDialogProvider />
 <FluentToastProvider />
 <FluentMenuProvider />
 
@@ -147,6 +154,16 @@
                do cartão, forçando o scroll a acontecer APENAS dentro dela */
         flex: 1 1 auto;
         min-height: 0;
+    }
+
+    /* Estado vazio: sem ficheiros de prompt */
+    .prompt-empty-state {
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9a9a9a;
+        font-size: 1.1rem;
     }
 
     /* Botão Sair no fundo do card */
