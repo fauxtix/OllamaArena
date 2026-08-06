@@ -110,26 +110,33 @@
         {
             if (_localModels is null || !_localModels.Any())
             {
-                var names = await LoadNamesFromStorageAsync() ?? [];
+                // 1. Tentar carregar a cache completa guardada pela Home (localStorage)
+                _localModels = await LoadFullFromStorageAsync();
 
-                var response = await OllamaGpuService.GetLocalModelsAsync();
-                var allModels = response.Models ?? [];
-
-                // Filtrar só os que estão nos nomes guardados (ou usar todos se a lista de nomes estiver vazia)
-                _localModels = names.Any()
-                    ? allModels.Where(m => names.Contains(m.Model)).ToList()
-                    : allModels;
-
-                // Enriquecer
-                foreach (var model in _localModels)
+                if (_localModels is null || !_localModels.Any())
                 {
-                    var metadata = await OllamaGpuService.GetExtendedModelMetadataAsync(model.Model);
-                    model.ContextLength = metadata.ContextLength;
-                    model.TrainingYear = metadata.TrainingYear;
-                }
+                    // Cache vazia → ir ao Ollama, filtrar, enriquecer e gravar
+                    var names = await LoadNamesFromStorageAsync() ?? [];
 
-                // Guardar a versão completa para próximas visitas
-                await SaveFullToStorageAsync(_localModels);
+                    var response = await OllamaGpuService.GetLocalModelsAsync();
+                    var allModels = response.Models ?? [];
+
+                    // Filtrar só os que estão nos nomes guardados (ou usar todos se a lista de nomes estiver vazia)
+                    _localModels = names.Any()
+                        ? allModels.Where(m => names.Contains(m.Model)).ToList()
+                        : allModels;
+
+                    // Enriquecer
+                    foreach (var model in _localModels)
+                    {
+                        var metadata = await OllamaGpuService.GetExtendedModelMetadataAsync(model.Model);
+                        model.ContextLength = metadata.ContextLength;
+                        model.TrainingYear = metadata.TrainingYear;
+                    }
+
+                    // Guardar a versão completa para próximas visitas
+                    await SaveFullToStorageAsync(_localModels);
+                }
             }
         }
         catch (Exception ex)

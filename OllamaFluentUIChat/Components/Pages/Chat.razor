@@ -111,6 +111,20 @@ else
                 </FluentButton>
             </FluentStack>
 
+            @if (_showContextBar && _contextLength > 0)
+            {
+                <div style="margin-bottom: 12px;">
+                    <FluentProgress Min="0"
+                                    Max="@_contextLength"
+                                    Value="@ContextProgressValue"
+                                    Color="@(ContextNearLimit ? "#f59e0b" : "var(--accent-fill-rest)")" />
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--neutral-foreground-hint); margin-top: 4px;">
+                        <span>Contexto: @_contextUsedTokens.ToString("N0") / @_contextLength.ToString("N0") tokens</span>
+                        <span>@ContextRemaining.ToString("N0") restantes</span>
+                    </div>
+                </div>
+            }
+
             <div @ref="messagesDiv" @onscroll="OnScroll"
                  style="flex-grow: 1; min-height: 0; overflow-y: auto; padding-right: 8px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px;">
                 @if (isLoadingModels)
@@ -188,9 +202,6 @@ else
         <HistoryPanel @ref="historyPanel" />
     </div>
 }
-<FluentDialogProvider />
-
-
 <style>
     .cursor {
         display: inline-block;

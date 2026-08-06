@@ -178,16 +178,12 @@
 <BenchmarkEvaluationDetail Response="@_selectedBenchmarkResponse"
                            Visible="@_isDialogVisible"
                            VisibleChanged="@((v) => _isDialogVisible = v)"
-                           OnClose="@(() => _isDialogVisible = false)" />
-
-
-<FluentDialogProvider />
-<FluentMenuProvider />
+                            OnClose="@(() => _isDialogVisible = false)" />
 
 
 @code {
     private IQueryable<BenchmarkEvaluationModel> _benchmarks = Enumerable.Empty<BenchmarkEvaluationModel>().AsQueryable();
-    private PaginationState _pagination = new() { ItemsPerPage = 12 };
+    private PaginationState _pagination = new() { ItemsPerPage = 10 };
     private string? _search;
     private BenchmarkEvaluationModel? _selectedBenchmarkResponse;
     private bool _isDialogVisible = false;

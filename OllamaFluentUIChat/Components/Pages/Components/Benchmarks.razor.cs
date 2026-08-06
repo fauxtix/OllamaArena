@@ -195,8 +195,9 @@ namespace OllamaFluentUIChat.Components.Pages.Components
 
                 bool guardado = await BenchmarkRepo.UpdateResponseEvaluationAsync(resposta);
 
-                if (guardado && DialogService != null)
+                if (guardado)
                 {
+                    await CloseDialogAsync();
                     await DialogService.ShowInfoAsync($"Avaliação do modelo {resposta.NomeModelo} atualizada com sucesso no SQLite.", "Sucesso");
                     StateHasChanged();
                 }

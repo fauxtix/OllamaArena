@@ -78,9 +78,6 @@
 
 </FluentDialog>
 
-<FluentMenuProvider />
-<FluentDialogProvider />
-
 
 <TranslationPreviewDialog Visible="@showTranslationDialog"
                           VisibleChanged="@(v => showTranslationDialog = v)"
@@ -137,10 +134,7 @@
         {
             if (Response is not null)
             {
-                if (Response is not null)
-                    await OnSave.InvokeAsync(Response);
-
-                await Fechar();
+                await OnSave.InvokeAsync(Response);
             }
         }
         catch (Exception ex)

@@ -44,7 +44,6 @@ public class BenchmarkEvaluationModel
     public int? ChatGptHaloEffectRating { get; set; }
     public int? ChatGptSafetyRating { get; set; }
 
-    // Propriedades Formatadas
     public string TempoPuroFormatado
     {
         get

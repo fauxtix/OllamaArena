@@ -62,7 +62,16 @@ try
     builder.Services.AddHttpClient<ITranslationService, TranslationService>(client =>
     {
         client.BaseAddress = new Uri("http://localhost:11434");
-        client.Timeout = TimeSpan.FromSeconds(120);
+        client.Timeout = TimeSpan.FromMinutes(4);
+        client.DefaultRequestHeaders.Add("Accept", "application/json");
+    });
+
+    // Cliente nomeado para o streaming do chat: timeout alargado porque o Ollama
+    // pode demorar muito tempo antes de devolver o primeiro byte (carregamento + KV cache).
+    builder.Services.AddHttpClient("Ollama", client =>
+    {
+        client.BaseAddress = new Uri("http://localhost:11434");
+        client.Timeout = TimeSpan.FromMinutes(10);
         client.DefaultRequestHeaders.Add("Accept", "application/json");
     });
 

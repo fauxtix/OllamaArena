@@ -78,6 +78,61 @@ public class OllamaGpuService : IOllamaGpuService
     }
 
     /// <summary>
+    /// Lê a VRAM livre em bytes. Tenta nvidia-smi primeiro (Windows + Linux, NVIDIA),
+    /// depois WMI (apenas Windows) como fallback. Devolve 0 se não for possível detetar.
+    /// </summary>
+    private long GetUsableVramBytes()
+    {
+        var nvidia = TryGetVramViaNvidiaSmi();
+        if (nvidia.HasValue) return nvidia.Value.FreeBytes;
+        return GetAvailableVramInBytes();
+    }
+
+    /// <summary>
+    /// Consulta o nvidia-smi (embutido nos drivers NVIDIA) para obter a memória total e livre.
+    /// Unidades devolvidas pelo nvidia-smi: MiB.
+    /// </summary>
+    private static (long TotalBytes, long FreeBytes)? TryGetVramViaNvidiaSmi()
+    {
+        try
+        {
+            using var process = new System.Diagnostics.Process
+            {
+                StartInfo = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "nvidia-smi",
+                    Arguments = "--query-gpu=memory.total,memory.free --format=csv,noheader,nounits",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+
+            if (!process.Start()) return null;
+
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit(5000);
+
+            var line = output.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(line)) return null;
+
+            var parts = line.Split(',');
+            if (parts.Length < 2) return null;
+
+            if (long.TryParse(parts[0].Trim(), out long totalMiB) &&
+                long.TryParse(parts[1].Trim(), out long freeMiB))
+            {
+                return (totalMiB * 1024 * 1024, freeMiB * 1024 * 1024);
+            }
+        }
+        catch
+        {
+        }
+        return null;
+    }
+
+    /// <summary>
     /// Método auxiliar interno para ler a VRAM do Windows via WMI.
     /// </summary>
     private long GetAvailableVramInBytes()
@@ -257,6 +312,140 @@ public class OllamaGpuService : IOllamaGpuService
         }
 
         return (contextLength, trainingYear);
+    }
+
+    /// <summary>
+    /// Calcula automaticamente o tamanho de contexto efetivo (num_ctx) a partir dos recursos
+    /// disponíveis (VRAM detetada) e da arquitetura do modelo. Transparente para o utilizador.
+    /// </summary>
+    public async Task<int> GetRecommendedContextLengthAsync(long modelSizeInBytes, string modelName)
+    {
+        const int safeDefault = 2048;
+
+        try
+        {
+            long usableVram = GetUsableVramBytes();
+
+            int nativeContext = safeDefault;
+            int kvBytesPerToken = 1024;
+
+            try
+            {
+                var payload = new { name = modelName };
+                var response = await _httpClient.PostAsJsonAsync(OllamaShowUrl, payload);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var showData = await response.Content.ReadFromJsonAsync<OllamaShowResponse>();
+                    if (showData?.ModelInfo != null)
+                    {
+                        var ctxKey = showData.ModelInfo.Keys
+                            .FirstOrDefault(k => k.EndsWith(".context_length", StringComparison.OrdinalIgnoreCase));
+
+                        if (ctxKey != null && int.TryParse(showData.ModelInfo[ctxKey].ToString(), out int parsedLength))
+                        {
+                            nativeContext = parsedLength;
+                        }
+
+                        kvBytesPerToken = GetKvBytesPerToken(showData.ModelInfo);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Erro ao obter metadados para o contexto efetivo de {modelName}: {ex.Message}");
+            }
+
+            // Sem deteção de VRAM ou sem tamanho do modelo → default seguro (2048)
+            if (usableVram <= 0 || modelSizeInBytes <= 0)
+                return Math.Min(safeDefault, nativeContext);
+
+            // Footprint real do modelo em VRAM: /api/ps se estiver carregado, senão estimativa
+            long modelFootprint = (long)(modelSizeInBytes * 1.2);
+            try
+            {
+                var running = await GetRunningModelsAsync();
+                var run = running?.Models?.FirstOrDefault(m =>
+                    m.Name.Equals(modelName, StringComparison.OrdinalIgnoreCase) ||
+                    m.Model.Equals(modelName, StringComparison.OrdinalIgnoreCase));
+
+                if (run != null && run.SizeInVramBytes > 0)
+                    modelFootprint = run.SizeInVramBytes;
+            }
+            catch { }
+
+            const long windowsOverheadBytes = 350L * 1024 * 1024;
+            long reserveBytes = (long)(usableVram * 0.10);
+
+            long availableForKv = usableVram - modelFootprint - windowsOverheadBytes - reserveBytes;
+            if (availableForKv <= 0)
+                return Math.Min(safeDefault, nativeContext);
+
+            long tokensByVram = availableForKv / kvBytesPerToken;
+            int maxAllowed = Math.Min(nativeContext, 32768);
+            int recommended = (int)Math.Clamp(tokensByVram, 1024L, (long)maxAllowed);
+
+            _logger.LogInformation(
+                "Contexto efetivo calculado para {ModelName}: {Context} tokens (VRAM livre: {Vram} MB, footprint: {Footprint} MB, KV: {Kv} B/token)",
+                modelName, recommended, usableVram / (1024 * 1024), modelFootprint / (1024 * 1024), kvBytesPerToken);
+
+            return recommended;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Erro a calcular o contexto efetivo para {modelName}: {ex.Message}");
+            return safeDefault;
+        }
+    }
+
+    /// <summary>
+    /// Calcula os bytes de KV cache por token a partir da arquitetura do modelo (cross-platform).
+    /// Fórmula: 4 × layers × kv_heads × head_dim (2 para K+V × 2 bytes fp16).
+    /// </summary>
+    private static int GetKvBytesPerToken(Dictionary<string, object> modelInfo, int fallback = 1024)
+    {
+        try
+        {
+            string archPrefix = "llama";
+            if (modelInfo.TryGetValue("general.architecture", out var archObj))
+            {
+                var arch = archObj?.ToString();
+                if (!string.IsNullOrWhiteSpace(arch))
+                    archPrefix = arch;
+            }
+
+            double GetValue(string key)
+            {
+                var fullKey = modelInfo.Keys
+                    .FirstOrDefault(k => k.Equals($"{archPrefix}.{key}", StringComparison.OrdinalIgnoreCase));
+
+                if (fullKey == null) return 0;
+                return double.TryParse(modelInfo[fullKey].ToString(), out var v) ? v : 0;
+            }
+
+            double layers = GetValue("block_count");
+            if (layers <= 0) layers = GetValue("attention.layer_count");
+            double kvHeads = GetValue("attention.head_count_kv");
+            double headCount = GetValue("attention.head_count");
+            double embedding = GetValue("embedding_length");
+
+            double headDim = GetValue("attention.key_length");
+            if (headDim <= 0) headDim = GetValue("attention.value_length");
+            if (headDim <= 0) headDim = GetValue("attention.head_dim");
+            if (headDim <= 0 && headCount > 0 && embedding > 0)
+                headDim = embedding / headCount;
+
+            if (kvHeads <= 0) kvHeads = headCount;
+
+            if (layers > 0 && kvHeads > 0 && headDim > 0)
+            {
+                double bytesPerToken = 4 * layers * kvHeads * headDim;
+                return (int)Math.Ceiling(bytesPerToken);
+            }
+        }
+        catch { }
+
+        return fallback;
     }
 
 }
