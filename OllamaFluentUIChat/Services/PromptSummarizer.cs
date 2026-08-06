@@ -41,6 +41,11 @@ namespace OllamaFluentUIChat.Services
             "developed","authorized","studied","explain","main","reasons","why","not","for","the","and"
         };
 
+        // União dos dicionários PT + EN + WeakWords: como a app é bilingue (PT/EN),
+        // a deteção de idioma era frágil — o filtro passa a ser agnóstico à língua.
+        private static readonly HashSet<string> AllStopWords =
+            new(PtStopWords.Concat(EnStopWords).Concat(WeakWords), StringComparer.OrdinalIgnoreCase);
+
         public static string ExtractDescriptionPortuguese(string promptText, int maxWords = 3)
             => ExtractKeywords(promptText, PtStopWords, maxWords);
 
@@ -52,17 +57,7 @@ namespace OllamaFluentUIChat.Services
             if (string.IsNullOrWhiteSpace(promptText))
                 return "Prompt sem texto";
 
-            var cleanText = Regex.Replace(promptText.ToLowerInvariant(), @"[^\w\sàáâãäéêíóôõöúçñ\-]", " ");
-            var words = cleanText.Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-
-            int enMatches = words.Count(w => EnStopWords.Contains(w));
-            int ptMatches = words.Count(w => PtStopWords.Contains(w));
-
-            var selectedStopWords = (words.Length < 6)
-                ? (ptMatches >= 1 ? PtStopWords : EnStopWords)
-                : (enMatches > ptMatches ? EnStopWords : PtStopWords);
-
-            return ExtractKeywords(promptText, selectedStopWords, maxWords);
+            return ExtractKeywords(promptText, AllStopWords, maxWords);
         }
 
         private static string ExtractKeywords(string promptText, HashSet<string> stopWords, int maxWords)
@@ -70,14 +65,16 @@ namespace OllamaFluentUIChat.Services
             if (string.IsNullOrWhiteSpace(promptText))
                 return "Empty Prompt";
 
-            string cleanText = Regex.Replace(promptText.ToLowerInvariant(), @"[^\w\sàáâãäéêíóôõöúçñ\-]", " ");
+            // Preserva maiúsculas (acrónimos como "API"/"GPT"), # e + (ex.: "c#", "c++")
+            // e pontos dentro de palavras (ex.: "react.js"); remove a restante pontuação.
+            string noSentenceDots = Regex.Replace(promptText, @"(?<!\w)\.(?!\w)", " ");
+            string cleanText = Regex.Replace(noSentenceDots, @"[^\w\s\-+#.]", " ");
             string[] words = cleanText.Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries);
 
             var filteredWords = words
                 .Select((w, index) => new { Word = w, Index = index })
-                .Where(x => x.Word.Length > 2
-                            && !stopWords.Contains(x.Word)
-                            && !WeakWords.Contains(x.Word))
+                .Where(x => (x.Word.Length > 2 || x.Word.Contains('#') || x.Word.Contains('+'))
+                            && !stopWords.Contains(x.Word))
                 .ToList();
 
             if (!filteredWords.Any())
@@ -106,17 +103,18 @@ namespace OllamaFluentUIChat.Services
 
             // --- Unigramas ---
             var unigrams = filteredWords
-                .GroupBy(x => x.Word)
+                .GroupBy(x => x.Word, StringComparer.OrdinalIgnoreCase)
                 .Select(g =>
                 {
                     int frequency = g.Count();
                     int firstPosition = g.Min(x => x.Index);
                     double positionScore = 1.0 / (1 + firstPosition);
-                    double technicalBonus = GetTechnicalBonus(g.Key);
+                    string word = g.First().Word;
+                    double technicalBonus = GetTechnicalBonus(word);
 
                     double score = (frequency * 1.8) + (positionScore * 3.2) + technicalBonus;
 
-                    return new { Text = g.Key, Score = score, FirstIndex = firstPosition };
+                    return new { Text = word, Score = score, FirstIndex = firstPosition };
                 })
                 .ToList();
 
@@ -170,8 +168,11 @@ namespace OllamaFluentUIChat.Services
             // TODO: Expand bonus for words, which are common in technical terms
             if (word.Contains('-') || word.Any(char.IsDigit)) bonus += 1.8;
 
-            if (word.EndsWith("ine") || word.EndsWith("oid") || word.EndsWith("osis") ||
-                word.EndsWith("itis") || word.EndsWith("emia") || word.EndsWith("vaccine"))
+            if (word.Contains('#') || word.Contains('+')) bonus += 1.8;
+
+            string lower = word.ToLowerInvariant();
+            if (lower.EndsWith("ine") || lower.EndsWith("oid") || lower.EndsWith("osis") ||
+                lower.EndsWith("itis") || lower.EndsWith("emia") || lower.EndsWith("vaccine"))
                 bonus += 1.5;
 
             return bonus;

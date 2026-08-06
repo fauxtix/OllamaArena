@@ -4,13 +4,7 @@ Blazor Server (.NET 10) app — a local Ollama chat + LLM benchmark lab using Fl
 
 ## Build status (important)
 
-The solution does NOT build at HEAD. `dotnet build` fails with ~25 errors, all in the root `Services/` project:
-
-- `Services/Services.csproj` (referenced from `OllamaFluentUIChat.csproj:47`) is a **stale, abandoned refactor** — broken namespaces (`MediaOrganizerApp.WebApi.Services`, references to nonexistent `Services.Models.*`). `Services/Backend.csproj` is an orphan (referenced by nothing).
-- The **live** service layer is `OllamaFluentUIChat/Services/` (namespaces `OllamaFluentUIChat.Services.*`), wired up in `Program.cs`.
-- There are duplicate types in both locations (`DapperContext`, `ConversationRepository`). The in-app ones are the real ones — do not "fix" the root `Services/` project thinking it's active.
-
-If you need a buildable tree, remove the `<ProjectReference>` to `..\Services\Services.csproj` (and consider deleting the root `Services/` folder).
+The solution builds as a **single project**. The root `Services/` folder (a stale, abandoned refactor with broken namespaces `MediaOrganizerApp.WebApi.Services`) was **removed**; the slnx only references `OllamaFluentUIChat/`. If a `Services/Services.csproj` ever reappears, do not "fix" it — the live service layer is `OllamaFluentUIChat/Services/` (namespaces `OllamaFluentUIChat.Services.*`), wired up in `Program.cs`.
 
 ## Commands
 

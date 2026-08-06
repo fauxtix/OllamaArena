@@ -137,6 +137,8 @@ public class OllamaGpuService : IOllamaGpuService
     /// </summary>
     private long GetAvailableVramInBytes()
     {
+        if (!OperatingSystem.IsWindows()) return 0;
+
         try
         {
             using (var searcher = new ManagementObjectSearcher("SELECT AdapterRAM FROM Win32_VideoController"))

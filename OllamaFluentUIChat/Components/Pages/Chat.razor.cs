@@ -62,7 +62,6 @@ namespace OllamaFluentUIChat.Components.Pages
         private int _currentPromptId;
 
         private bool showOllamaError = false;
-        private string ollamaErrorMessage = "";
 
         private string ModelName
         {
@@ -182,31 +181,6 @@ namespace OllamaFluentUIChat.Components.Pages
         }
 
 
-        private async Task ShowGpuInfoDialogAsync()
-        {
-            if (DialogService == null) return;
-
-            string textoInformativo =
-                "O que significa 'CPU Fallback'?\n\n" +
-                "A sua placa gráfica (GPU) não tem memória de vídeo (VRAM) suficiente livre para carregar este modelo de Inteligência Artificial por completo.\n\n" +
-                "O que vai acontecer agora?\n" +
-                "• O Ollama vai dividir o modelo, enviando o processamento para a memória RAM normal e para a CPU.\n" +
-                "• O chat VAI FUNCIONAR e responderá corretamente.\n" +
-                "• No entanto, a velocidade de resposta será bastante mais lenta (as letras aparecem mais devagar), porque a CPU não foi desenhada para a carga matemática dos LLMs.\n\n" +
-                "Dica: Para velocidades máximas, tente usar modelos mais pequenos (como versões '2B' ou 'mini').";
-
-            var parameters = new DialogParameters()
-            {
-                Title = "Informação do Sistema",
-                PrimaryAction = "Fechar",
-                PrimaryActionEnabled = true,
-                SecondaryAction = null,
-                Width = "500px"
-            };
-
-            await DialogService.ShowDialogAsync<MessageBox>(textoInformativo, parameters);
-        }
-
         protected void OpenHistory()
         {
             historyPanel?.Open();
@@ -269,7 +243,6 @@ namespace OllamaFluentUIChat.Components.Pages
             StateHasChanged();
             await ForceScrollToBottomAsync();
 
-            // ========== TIMER DO TEMPO EM TEMPO REAL ==========
             bool firstChunkReceived = false;
 
             var timer = new System.Threading.Timer(_ =>
@@ -284,9 +257,6 @@ namespace OllamaFluentUIChat.Components.Pages
                 aiMessage.ElapsedTime = tempo;
                 _ = InvokeAsync(StateHasChanged);
             }, null, 0, 150);
-
-            // atualiza a cada 150ms
-            // ==================================================
 
             _cts = new CancellationTokenSource();
             long loadDurationNs = 0;
@@ -338,8 +308,6 @@ namespace OllamaFluentUIChat.Components.Pages
                     return;
                 }
 
-                // Apara o histórico enviado ao Ollama para ~60% do contexto efetivo
-                // (apenas o que é enviado; os balões na UI permanecem intactos).
                 if (_contextLength > 0)
                 {
                     int historyBudget = (int)(_contextLength * 0.60);
@@ -444,7 +412,7 @@ namespace OllamaFluentUIChat.Components.Pages
                             {
                                 aiMessage.Text = chunkText;
                                 firstChunk = false;
-                                firstChunkReceived = true;   // ← para o timer
+                                firstChunkReceived = true;
                                 _logger?.LogInformation("Primeiro token recebido após {Seconds:F1}s (modelo {ModelName})", stopwatch.Elapsed.TotalSeconds, ModelName);
                             }
                             else
@@ -497,16 +465,14 @@ namespace OllamaFluentUIChat.Components.Pages
             finally
             {
                 stopwatch.Stop();
-                timer?.Dispose();   // ← limpa o timer
+                timer?.Dispose(); 
 
-                // Garante o valor final correto
                 string tempoFinal = stopwatch.Elapsed.TotalSeconds < 10
                     ? $"{stopwatch.Elapsed.TotalSeconds:F2}s"
                     : $"{stopwatch.Elapsed.TotalSeconds:F1}s";
 
                 aiMessage.ElapsedTime = tempoFinal;
 
-                // Gravação na Base de Dados SQLite
                 if (evalCount > 0 && evalDurationNs > 0)
                 {
                     try
@@ -637,9 +603,7 @@ namespace OllamaFluentUIChat.Components.Pages
         {
             try
             {
-                // Guardar modelo selecionado
                 await SaveModel();
-                // Recalcular GPU compatibility
                 var allModels = await GpuService!.GetLocalModelsAsync();
 
                 var currentModelDetails = allModels?.Models?
@@ -703,7 +667,7 @@ namespace OllamaFluentUIChat.Components.Pages
             _contextUsedTokens = 0;
             _showContextBar = false;
 
-            // --- AÇÃO ESPECIAL PARA O BENCHMARK: Descarregar o modelo da VRAM ---
+            // --- AÇÃO PARA O BENCHMARK: Descarregar o modelo da VRAM ---
             _ = Task.Run(async () =>
             {
                 try
@@ -737,72 +701,6 @@ namespace OllamaFluentUIChat.Components.Pages
         private string FormatMessage(string content)
         {
             return MessageFormatter.FormatMessagePlus(content);
-        }
-
-        private async Task<string> GerarTituloCurtoAsync(string promptUtilizador)
-        {
-            try
-            {
-
-                if (_httpClient == null)
-                {
-                    throw new InvalidOperationException("HttpClient is not initialized.");
-                }
-
-                var payload = new OllamaChatPayload
-                {
-                    Model = ModelName,          // ou um modelo mais leve se quiseres (ex: "phi3:mini")
-                    Stream = false,             // importante: sem streaming
-                    Messages = new List<OllamaChatMessage>
-            {
-                new OllamaChatMessage
-                {
-                    Role = "system",
-                    Content = """
-                        Generate a very short title (maximum 3–4 words) that summarises the main theme of the user’s prompt.
-                        Rules:
-                        - Just the title, without quotation marks, without full stop at the end, without explanations.
-                        - Prefer concrete nouns and adjectives.
-                        - In Portuguese (unless the prompt is clearly in English).
-                        - Examples: ‘Cake Recipe’, ‘Python Pandas Error’, ‘Travel Ideas’, ‘React Hooks Code’
-                        """
-                },
-                new OllamaChatMessage
-                {
-                    Role = "user",
-                    Content = promptUtilizador
-                }
-            },
-                    Options = new Dictionary<string, object>
-            {
-                { "temperature", 0.3 },
-                { "num_predict", 20 }   // título é curto, não precisa de muitos tokens
-            }
-                };
-
-                var json = JsonSerializer.Serialize(payload);
-                using var request = new HttpRequestMessage(HttpMethod.Post, OllamaEndpoint);
-                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                using var response = await _httpClient.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-
-                var responseJson = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(responseJson);
-
-                string? titulo = doc.RootElement
-                                    .GetProperty("message")
-                                    .GetProperty("content")
-                                    .GetString()?
-                                    .Trim();
-
-                return string.IsNullOrWhiteSpace(titulo) ? "Nova conversa" : titulo;
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogWarning(ex, "Falha ao gerar título curto");
-                return "Nova conversa";
-            }
         }
 
         private async Task<string> SearchWebContext_DuckDuckGo_Async(string query)
@@ -961,6 +859,8 @@ namespace OllamaFluentUIChat.Components.Pages
                 return string.Empty;
             }
         }
+
+        // não usada esta biblioteca (Ollama CSharp), mas mantida para referência futura (de momento, o processo parece mais lento do que aquele usado na app)
         private async Task SendMessageWithOllamaSharpAsync()
         {
             if (string.IsNullOrWhiteSpace(_currentMessage) || _isThinking) return;

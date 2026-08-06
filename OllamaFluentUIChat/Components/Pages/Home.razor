@@ -82,8 +82,6 @@
     private List<ModelDetails> _fullModels = new();
 
     private bool showOllamaError = false;
-    private string ollamaErrorMessage = "";
-    private bool _isLoading = true;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -97,7 +95,6 @@
         if (!isOllamaRunning)
         {
             showOllamaError = true;
-            ollamaErrorMessage = "O servidor Ollama não está em execução. Inicie o Ollama.";
             _logger?.LogError("Ollama server is not running.");
         }
     }
@@ -159,7 +156,6 @@
         }
         finally
         {
-            _isLoading = false;
             StateHasChanged();
         }
     }
