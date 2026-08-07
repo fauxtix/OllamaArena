@@ -159,12 +159,12 @@ namespace OllamaFluentUIChat.Components.Pages.Components
                 if (copied)
                 {
                     // TODO: Mostrar toast de sucesso (FluentToast ou similar)
-                    Console.WriteLine("✅ Copiado com sucesso!");
+                    _logger?.LogInformation("Texto copiado para a área de transferência.");
                 }
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Erro ao copiar para o Clipboard.");
+                _logger?.LogError(ex, "Erro ao copiar para o Clipboard.");
             }
             finally
             {

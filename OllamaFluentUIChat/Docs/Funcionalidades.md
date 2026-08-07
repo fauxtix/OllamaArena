@@ -3,7 +3,7 @@
 Aplicação **Blazor Server** (.NET 10) que funciona como um **chat local com Ollama** e como um **laboratório de benchmarks "LLM-as-a-judge"** — responde a prompts, mede o desempenho de modelos abertos gratuitos e permite avaliar a qualidade das respostas usando um "juiz" (modelo Gemini e/ou ChatGPT) e uma análise local em C#.
 
 - **UI:** FluentUI Blazor v4 (FluentDesignTheme, FluentDataGrid, FluentDialog, FluentSplitter, FluentNavMenu, etc.)
-- **Persistência:** SQLite via Dapper (sem migrações; schema criado de forma lazily)
+- **Persistência:** SQLite via Dapper (schema criado de forma lazily + migração de schema idempotente em código no arranque)
 - **Logging:** Serilog (console + sink SQLite)
 - **Ollama:** comunicação direta por HTTP com `http://localhost:11434` (streaming NDJSON em `/api/chat`)
 - **Idiomas de UI:** Português / Inglês (localização via cookie, `CultureSelector`)
@@ -25,7 +25,7 @@ Aplicação **Blazor Server** (.NET 10) que funciona como um **chat local com Ol
 - `Components/Pages/*.razor` — páginas com rota
 - `Components/Pages/Components/*.razor` — componentes reutilizáveis (painéis, diálogos)
 - `Components/Layout/` — `MainLayout`, `NavMenu`, `ReconnectModal`
-- `Services/` — interfaces, implementações, repositórios, helpers (`ChatMeasureTemperature`, `MessageFormatter`, `EvaluationParser`, `PromptFilesService`, `PromptSummarizer`, `OllamaChecker`, `InternetConnectivityService`)
+- `Services/` — interfaces, implementações, repositórios, helpers (`ChatMeasureTemperature`, `MessageFormatter`, `EvaluationParser`, `PromptFilesService`, `PromptSummarizer`, `OllamaChecker`, `InternetConnectivityService`, `DatabaseSchemaInitializer`)
 - `Models/DTO` — shapes da API; `Models/Entities` — mapeamento SQLite (Dapper)
 - `Prompts/*.txt` — ficheiros de prompt editáveis em runtime (Content files)
 - `PromptTemplates/` — construtores de prompt em C# (`EvaluatePromptTemplate`, `TranslatePromptTemplate`, `ChatInstructionsPrompt`)
@@ -142,7 +142,7 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 | `HistoryPanel` | Painel lateral deslizante direito (50vw×80vh, com overlay) com histórico de execuções (`HistoryResponseAsync`; grelha paginada 12/página: Descrição, Modelo, Data, Tempo Eval., Tempo Procº) — ver 4.1 |
 | `GpuInfoDialog` | Diálogo informativo (550px) sobre "CPU Fallback" (VRAM insuficiente, impacto na velocidade, dicas) — ver 4.1 |
 | `CultureSelector` | Comutação PT/EN (cookie de cultura via endpoint `Culture/Set`) |
-| `BenchmarkEvaluation` | Formulário de avaliação por juiz: 11 métricas (Factual, Formatação, Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Efeito Halo, Segurança, Global), escala 1–5; parse automático do output bruto com `EvaluationParser` (tags `*_SCORE:`, `FINAL_SCORE:`, `DESCRIPTION:`/`FEEDBACK:`) |
+| `BenchmarkEvaluation` | Formulário de avaliação por juiz: 11 métricas (Factual, Formatação, Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Efeito Halo, Segurança, Global), escala 1–5; parse automático do output bruto com `EvaluationParser` (tags `*_SCORE:`, `FINAL_SCORE:`, `DESCRIPTION:`/`FEEDBACK:`, `RECOMMENDATION:`); caixa de recomendação do juiz (âmbar) quando o campo `RECOMMENDATION` foi preenchido |
 | `BenchmarkEvaluationDialog` | Envelope do formulário + **tradução automática do feedback** via modelo local (`TranslationService`), com pré-visualização (`TranslationPreviewDialog`) — ver 4.1 |
 | `BenchmarkEvaluationDetail` | Diálogo 900px com tabs **Métricas** (grelha Gemini vs ChatGPT) e **Feedbacks dos Juízes** — ver 4.1 |
 | `BenchmarkChartDialog` | 4 gráficos Chart.js com download de imagem — ver 4.1 |
@@ -155,8 +155,8 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 
 - **`BenchmarkEvaluationDetail`** — o botão **"olho"** (ou duplo clique) na linha da grelha em `/benchmark-evaluations` abre este diálogo modal (900px). Cabeçalho com ícone olho, nome do modelo e o prompt executado em `blockquote` (com scroll). Tem **duas tabs**:
   - **Métricas** — grelha com colunas `Métrica | Google Gemini | Open AI ChatGPT` e linhas Factual, Formatação, **Global** (linha destacada com bordas accent), Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Efeito Halo e Segurança; cada célula é a nota do juiz ou "—" quando ainda não avaliada (nota 0). Os dados vêm da consulta consolidada `BenchmarkResponseEvaluationAsync`.
-  - **Feedbacks dos Juízes** — dois cards lado a lado (Google Gemini / OpenAI ChatGPT) com o texto do feedback; o conteúdo é carregado assincronamente via `BenchmarkRepository.GetBenchmarkJudgesFeedbackByIdAsync(ResponseId)` (progress ring durante a carga) e mostra "Nenhum feedback registado." se vazio.
-- **`BenchmarkEvaluationDialog`** (aberto pelo botão "Avaliação" em `/benchmarks`; 1200px): cabeçalho com ícone `ClipboardCode`, nome do modelo e o prompt em `blockquote`; corpo com o formulário `BenchmarkEvaluation` (11 métricas na escala 1–5, com parse automático do output dos juízes via `EvaluationParser`) e dois botões **Traduzir Feedback (Gemini)** / **Traduzir Feedback (ChatGPT)** que traduzem o feedback para português com o modelo local (`TranslationService`, cliente com timeout de 4 min) e abrem `TranslationPreviewDialog`. Rodapé com **Guardar avaliação** (accent) e **Fechar** (progress ring enquanto traduz).
+  - **Feedbacks dos Juízes** — dois cards lado a lado (Google Gemini / OpenAI ChatGPT) com o texto do feedback; o conteúdo é carregado assincronamente via `BenchmarkRepository.GetBenchmarkJudgesFeedbackByIdAsync(ResponseId)` (progress ring durante a carga) e mostra "Nenhum feedback registado." se vazio. Quando o juiz devolveu `RECOMMENDATION`, cada card mostra ainda uma **caixa "Recomendação do Juiz"** (fundo âmbar) com o texto da recomendação.
+- **`BenchmarkEvaluationDialog`** (aberto pelo botão "Avaliação" em `/benchmarks`; 1200px): cabeçalho com ícone `ClipboardCode`, nome do modelo e o prompt em `blockquote`; corpo com o formulário `BenchmarkEvaluation` (11 métricas na escala 1–5, com parse automático do output dos juízes via `EvaluationParser`) e dois botões **Traduzir Feedback (Gemini)** / **Traduzir Feedback (ChatGPT)** que traduzem o feedback para a **língua da sessão** com o modelo local (`TranslationService`, cliente com timeout de 4 min) e abrem `TranslationPreviewDialog`. Rodapé com **Guardar avaliação** (accent) e **Fechar** (progress ring enquanto traduz).
 - **`TranslationPreviewDialog`**: "Tradução do Feedback (<juiz>)", "Modelo usado", "Tempo gasto" e o texto traduzido num `FluentTextArea` editável; **Aceitar e continuar** aplica o texto ao campo do juiz; **Sair** descarta.
 - **`BenchmarkChartDialog`** (aberto pelo botão "Gráfico" em `/benchmarks`; 50vw×85vh): cabeçalho "Gráficos de Benchmark do Prompt #<id>"; quatro gráficos de barras Chart.js (cor por modelo; labels partidos em `:` ou `-`):
   - Tempo de Execução / Eval (ms) — `graficoEval`;
@@ -195,12 +195,12 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 ## 5. Camada de serviços
 
 - **`OllamaGpuService`** — modelos locais (`/api/tags`), modelos em memória (`/api/ps`), metadados (`/api/show`: contexto nativo + ano de treino), compatibilidade GPU (`CheckGpuCompatibility`), **contexto efetivo automático** (`GetRecommendedContextLengthAsync`) e unload de modelos (`keep_alive=0`).
-- **`TranslationService`** — tradução de feedbacks para português via `/api/chat` (stream=false), usando o modelo melhor avaliado (`GetBestModelAsync`) e o prompt `translation-prompt.txt`. Cliente HTTP tipado com timeout de 4 min.
-- **`LocalAnalysisService`** — análise de benchmarks **100% local em C#** (sem LLM): sumário executivo, métricas rápidas ("Mais Rápido", "Melhor Avaliado") e análise técnica detalhada.
+- **`TranslationService`** — tradução de feedbacks para a **língua da sessão** via `/api/chat` (stream=false), usando o modelo melhor avaliado (`GetBestModelAsync`) e o prompt `translation-prompt.txt` (token `{{TARGET_LANGUAGE}}`, substituído por `GetTargetLanguage()`: `pt` → "European Portuguese (pt-PT)", `en` → "English (en-US)"). Cliente HTTP tipado com timeout de 4 min.
+- **`LocalAnalysisService`** — análise de benchmarks **100% local em C#** (sem LLM): sumário executivo, métricas rápidas ("Mais Rápido", "Melhor Avaliado") e análise técnica detalhada; todas as strings estão localizadas via `IStringLocalizer<SharedResources>` (chaves `Analysis.*`, pt/en).
 - **`PromptFilesService`** — leitura/gravação dos ficheiros `Prompts/*.txt`; **`SystemPromptService`** — o system prompt do chat.
 - **`ChatMeasureTemperature`** — recomendação lexical de temperatura (PT+EN): análise de frases, termos, detecção de código e densidade de perguntas; mapeia o prompt para 0.10–0.90 (detalhe técnico na secção 7).
 - **`MessageFormatter`** / **`CommonService`** — renderização/limpeza de markdown (fechar blocos, corrigir headings, reconstruir tabelas; pipeline Markdig).
-- **`EvaluationParser`** — parse do output estruturado dos juízes.
+- **`EvaluationParser`** — parse do output estruturado dos juízes (linha-a-linha, com secções `DESCRIPTION`/`FEEDBACK` e `RECOMMENDATION` — corrigido para a `DESCRIPTION` não "engolir" a `RECOMMENDATION`; ver secção 8 para a persistência).
 - **`InternetConnectivityService`** — verificação de ligação à internet; **`ReadMeService`** — leitura do README remoto; **`OllamaChecker`** — health check do Ollama.
 - **`ConversationsClientService` / `ConversationRepository`** — persistência de conversas (SQLite). *Nota:* este repositório referencia stored procedures de SQL Server (`usp_Conversation_*`) e **não está registado no DI** — tratado como legado/não usado.
 - **`PromptSummarizer`** — extrai a descrição curta de cada prompt.
@@ -297,12 +297,12 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 
 ## 8. Base de dados (SQLite — `ollama_benchmark.db`)
 
-Sem migrações — tabelas criadas de forma lazily (Dapper / sink Serilog).
+Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Serilog), com **migração idempotente em código** no arranque: `DatabaseSchemaInitializer.EnsureRecommendationColumns(IDapperContext)` (invocado em `Program.cs` após `builder.Build()`) usa `PRAGMA table_info` para verificar e `ALTER TABLE Respostas ADD COLUMN` para adicionar as colunas de recomendação se faltarem.
 
 | Tabela | Conteúdo (colunas principais) |
 |---|---|
 | `Prompts` | `Id`, `Descricao`, `TextoPrompt`, `DataCriacao`, `Temperatura` |
-| `Respostas` | `Id`, `PromptId` (FK), `NomeModelo`, `TextoResposta`, `TokensPorSegundo`, `TempoPuroMs`, `TempoCargaMs`, `TamanhoTokens`, `TempoProcessamento`, ratings/feedbacks Gemini (`GeminiRating`, `GeminiFactualRating`, `GeminiFormattingRating`, `GeminiComplianceRating`, `GeminiRelevanceRating`, `GeminiToneRating`, `GeminiConcisenessRating`, `GeminiClarityRating`, `GeminiReadabilityRating`, `GeminiHaloEffectRating`, `GeminiSafetyRating`, `GeminiFeedback`) e equivalentes ChatGPT |
+| `Respostas` | `Id`, `PromptId` (FK), `NomeModelo`, `TextoResposta`, `TokensPorSegundo`, `TempoPuroMs`, `TempoCargaMs`, `TamanhoTokens`, `TempoProcessamento`, ratings/feedbacks Gemini (`GeminiRating`, `GeminiFactualRating`, `GeminiFormattingRating`, `GeminiComplianceRating`, `GeminiRelevanceRating`, `GeminiToneRating`, `GeminiConcisenessRating`, `GeminiClarityRating`, `GeminiReadabilityRating`, `GeminiHaloEffectRating`, `GeminiSafetyRating`, `GeminiFeedback`, `GeminiRecommendation`) e equivalentes ChatGPT (incluindo `ChatGptRecommendation`); as colunas de recomendação são adicionadas pela migração `DatabaseSchemaInitializer` |
 | `Logs` | criada pelo Serilog sink (`Id`, `Timestamp`, `Level`, `Exception`, `RenderedMessage`, `Properties`) |
 
 - `DeletePromptAndHistoryAsync` / `DeleteAllPromptsAndHistoryAsync` dependem de `ON DELETE CASCADE` (configurado no DB Browser).
@@ -353,7 +353,7 @@ Sem migrações — tabelas criadas de forma lazily (Dapper / sink Serilog).
 - `IDapperContext`, `IOllamaGpuService`, `IBenchmarkRepository`, `ILogRepository` (Scoped/Transient)
 - `PromptFilesService`, `SystemPromptService`, `EvaluatePromptTemplate`, `MarkdownRenderer`, `LocalAnalysisService`, `InternetConnectivityService`, `ReadMeService`
 - Clientes HTTP: `IAnalysisService/LocalAnalysisService`, `InternetConnectivityService`, `ReadMeService`, `ITranslationService/TranslationService` (**timeout 4 min**, base `http://localhost:11434`), e o cliente nomeado **`"Ollama"`** (**timeout 10 min**, base `http://localhost:11434`) usado no streaming do chat.
-- Localização: PT (`pt`) por defeito + `en`; cookie `RequestCultureProvider`.
+- Localização: PT (`pt`) por defeito + `en`; cookie `RequestCultureProvider`. A **tradução de feedbacks** e a **análise local de resultados** seguem a língua da sessão (o system-prompt do chat mantém-se neutro).
 
 **Requisitos de runtime:** `ollama serve` ativo em `http://localhost:11434`; sem testes de unidade; validação = build + execução manual.
 

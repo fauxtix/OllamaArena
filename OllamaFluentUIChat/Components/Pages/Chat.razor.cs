@@ -863,7 +863,7 @@ namespace OllamaFluentUIChat.Components.Pages
             }
         }
 
-        // não usada esta biblioteca (Ollama CSharp), mas mantida para referência futura (de momento, o processo parece mais lento do que aquele usado na app)
+        // não usada esta biblioteca (Ollama CSharp), mas mantida para referência futura (de momento, este processo parece mais lento do que o usado na app)
         private async Task SendMessageWithOllamaSharpAsync()
         {
             if (string.IsNullOrWhiteSpace(_currentMessage) || _isThinking) return;

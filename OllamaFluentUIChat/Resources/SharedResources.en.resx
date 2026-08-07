@@ -504,6 +504,9 @@ Do you want to continue?</value>
   <data name="Evaluation.FeedbackChatGpt" xml:space="preserve">
     <value>Feedback (Paste the raw ChatGPT output here)</value>
   </data>
+  <data name="Evaluation.RecommendationLabel" xml:space="preserve">
+    <value>Recommendation</value>
+  </data>
   <data name="Benchmarks.PageTitle" xml:space="preserve">
     <value>Quality and Metrics Analysis</value>
   </data>
@@ -720,6 +723,66 @@ Do you want to continue?</value>
   <data name="Modelos.ExceedsVram" xml:space="preserve">
     <value>Exceeds VRAM (~{0} GB)</value>
   </data>
+  <data name="Analysis.NoData" xml:space="preserve">
+    <value>There is no data to analyze.</value>
+  </data>
+  <data name="Analysis.SummaryFastest" xml:space="preserve">
+    <value>The {0} model stood out with the highest processing speed, reaching {1} Tokens/s (total time {2}).</value>
+  </data>
+  <data name="Analysis.SummaryAlsoBest" xml:space="preserve">
+    <value>Besides being the fastest, {0} also achieved the best overall average rating ({1}/5).</value>
+  </data>
+  <data name="Analysis.SummaryBestRated" xml:space="preserve">
+    <value>In terms of overall quality, {0} achieved the best average rating with {1}/5.</value>
+  </data>
+  <data name="Analysis.SummarySlowest" xml:space="preserve">
+    <value>The {0} model recorded the lowest speed ({1} Tokens/s in {2}).</value>
+  </data>
+  <data name="Analysis.GeminiTie" xml:space="preserve">
+    <value>The models {0} tied in factual accuracy with {1}/5.</value>
+  </data>
+  <data name="Analysis.GeminiBest" xml:space="preserve">
+    <value>The {0} model stood out in factual accuracy with a score of {1}/5.</value>
+  </data>
+  <data name="Analysis.ChatGptTie" xml:space="preserve">
+    <value>The models {0} share the best factual score with {1}/5.</value>
+  </data>
+  <data name="Analysis.ChatGptBest" xml:space="preserve">
+    <value>The best factual score was awarded to the {0} model with {1}/5.</value>
+  </data>
+  <data name="Analysis.ConsensusHigh" xml:space="preserve">
+    <value>High agreement between Gemini and ChatGPT ({0}/5 on both).</value>
+  </data>
+  <data name="Analysis.ConsensusDivergent" xml:space="preserve">
+    <value>Slight disagreement between judges ({0}/5 Gemini vs {1}/5 ChatGPT).</value>
+  </data>
+  <data name="Analysis.DetailSpeed" xml:space="preserve">
+    <value>• &lt;strong&gt;Speed and Time:&lt;/strong&gt; The {0} model leads token generation ({1} t/s), completing the response in {2}.</value>
+  </data>
+  <data name="Analysis.DetailSpeedComparison" xml:space="preserve">
+    <value> In comparison, the {0} model is {1} t/s slower, taking {2} to run.</value>
+  </data>
+  <data name="Analysis.DetailGemini" xml:space="preserve">
+    <value>• &lt;strong&gt;Gemini Assessment:&lt;/strong&gt; {0}</value>
+  </data>
+  <data name="Analysis.DetailChatGpt" xml:space="preserve">
+    <value>• &lt;strong&gt;ChatGPT Assessment:&lt;/strong&gt; {0}</value>
+  </data>
+  <data name="Analysis.DetailConsensus" xml:space="preserve">
+    <value>• &lt;strong&gt;Factual Consensus:&lt;/strong&gt; {0}</value>
+  </data>
+  <data name="Analysis.DetailAlertLowQuality" xml:space="preserve">
+    <value>• ⚠️ &lt;strong&gt;Performance Alert:&lt;/strong&gt; None of the tested models reached the minimum excellence threshold (&gt;= 4.0/5). The requested task appears to exceed the current capabilities of the local model set under test.</value>
+  </data>
+  <data name="Analysis.DetailRecommendationSplit" xml:space="preserve">
+    <value>• &lt;strong&gt;Prompt Recommendation:&lt;/strong&gt; For &lt;em&gt;simple prompts/interactive chat&lt;/em&gt;, prefer the &lt;strong&gt;{0}&lt;/strong&gt; ({1}x faster). For &lt;em&gt;complex prompts, reasoning or code generation&lt;/em&gt; where accuracy is critical, use the &lt;strong&gt;{2}&lt;/strong&gt;.</value>
+  </data>
+  <data name="Analysis.DetailRecommendationSingle" xml:space="preserve">
+    <value>• &lt;strong&gt;Prompt Recommendation:&lt;/strong&gt; The &lt;strong&gt;{0}&lt;/strong&gt; model is the ideal choice for any type of prompt{1}, leading simultaneously in speed and overall quality.</value>
+  </data>
+  <data name="Analysis.DetailSpeedMultiplier" xml:space="preserve">
+    <value> ({0}x faster)</value>
+  </data>
   <data name="AnalysisViewer.Title" xml:space="preserve">
     <value>Local Model Analytics</value>
   </data>
@@ -914,6 +977,9 @@ Do you want to continue?</value>
   </data>
   <data name="EvalDetail.NoFeedback" xml:space="preserve">
     <value>No feedback registered.</value>
+  </data>
+  <data name="EvalDetail.Recommendation" xml:space="preserve">
+    <value>Judge Recommendation</value>
   </data>
   <data name="Home.ImageAlt" xml:space="preserve">
     <value>AI generated image</value>

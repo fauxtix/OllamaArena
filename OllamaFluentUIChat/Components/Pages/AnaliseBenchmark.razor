@@ -126,6 +126,8 @@
 </div>
 
 @code {
+    [Inject] public ILogger<App> _logger { get; set; } = default!;
+
     private List<BenchmarkPrompt>? _promptsList;
     private BenchmarkPrompt? _selectedPrompt;
     private IQueryable<BenchmarkPrompt>? _promptsQueryable; 
@@ -198,7 +200,7 @@
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[Erro DialogService]: {ex.Message} -> {ex.StackTrace}");
+            _logger?.LogError(ex, $"[Erro DialogService]: {ex.Message} -> {ex.StackTrace}");
         }
     }
 

@@ -504,6 +504,9 @@ Deseja continuar?</value>
   <data name="Evaluation.FeedbackChatGpt" xml:space="preserve">
     <value>Feedback (Cole aqui o output bruto do ChatGPT)</value>
   </data>
+  <data name="Evaluation.RecommendationLabel" xml:space="preserve">
+    <value>Recomendação</value>
+  </data>
   <data name="Benchmarks.PageTitle" xml:space="preserve">
     <value>Análise de Qualidade e Métricas</value>
   </data>
@@ -720,6 +723,66 @@ Deseja continuar?</value>
   <data name="Modelos.ExceedsVram" xml:space="preserve">
     <value>Excede VRAM (~{0} GB)</value>
   </data>
+  <data name="Analysis.NoData" xml:space="preserve">
+    <value>Não existem dados para analisar.</value>
+  </data>
+  <data name="Analysis.SummaryFastest" xml:space="preserve">
+    <value>O modelo {0} destacou-se com a maior velocidade de processamento, atingindo {1} Tokens/s (tempo total de {2}).</value>
+  </data>
+  <data name="Analysis.SummaryAlsoBest" xml:space="preserve">
+    <value>Além de ser o mais rápido, o {0} obteve também a melhor classificação média geral ({1}/5).</value>
+  </data>
+  <data name="Analysis.SummaryBestRated" xml:space="preserve">
+    <value>Em termos de qualidade global, o {0} obteve a melhor avaliação média com {1}/5.</value>
+  </data>
+  <data name="Analysis.SummarySlowest" xml:space="preserve">
+    <value>O modelo {0} registou o menor rendimento em velocidade ({1} Tokens/s em {2}).</value>
+  </data>
+  <data name="Analysis.GeminiTie" xml:space="preserve">
+    <value>Os modelos {0} empataram na precisão factual com {1}/5.</value>
+  </data>
+  <data name="Analysis.GeminiBest" xml:space="preserve">
+    <value>O modelo {0} obteve o destaque em precisão factual com uma nota de {1}/5.</value>
+  </data>
+  <data name="Analysis.ChatGptTie" xml:space="preserve">
+    <value>Os modelos {0} partilham a melhor pontuação factual com {1}/5.</value>
+  </data>
+  <data name="Analysis.ChatGptBest" xml:space="preserve">
+    <value>A melhor pontuação factual foi atribuída ao modelo {0} com {1}/5.</value>
+  </data>
+  <data name="Analysis.ConsensusHigh" xml:space="preserve">
+    <value>Alta concordância entre Gemini e ChatGPT ({0}/5 em ambos).</value>
+  </data>
+  <data name="Analysis.ConsensusDivergent" xml:space="preserve">
+    <value>Divergência ligeira entre avaliadores ({0}/5 Gemini vs {1}/5 ChatGPT).</value>
+  </data>
+  <data name="Analysis.DetailSpeed" xml:space="preserve">
+    <value>• &lt;strong&gt;Velocidade e Tempo:&lt;/strong&gt; O modelo {0} lidera a taxa de geração de tokens ({1} t/s), completando a resposta em {2}.</value>
+  </data>
+  <data name="Analysis.DetailSpeedComparison" xml:space="preserve">
+    <value> Em comparação, o modelo {0} é {1} t/s mais lento, necessitando de {2} de execução.</value>
+  </data>
+  <data name="Analysis.DetailGemini" xml:space="preserve">
+    <value>• &lt;strong&gt;Avaliação Gemini:&lt;/strong&gt; {0}</value>
+  </data>
+  <data name="Analysis.DetailChatGpt" xml:space="preserve">
+    <value>• &lt;strong&gt;Avaliação ChatGPT:&lt;/strong&gt; {0}</value>
+  </data>
+  <data name="Analysis.DetailConsensus" xml:space="preserve">
+    <value>• &lt;strong&gt;Consenso Factual:&lt;/strong&gt; {0}</value>
+  </data>
+  <data name="Analysis.DetailAlertLowQuality" xml:space="preserve">
+    <value>• ⚠️ &lt;strong&gt;Alerta de Desempenho:&lt;/strong&gt; Nenhum dos modelos testados atingiu a classificação mínima de excelência (&gt;= 4,0/5). A tarefa solicitada aparenta exceder a capacidade atual do conjunto de modelos locais em teste.</value>
+  </data>
+  <data name="Analysis.DetailRecommendationSplit" xml:space="preserve">
+    <value>• &lt;strong&gt;Recomendação por Prompt:&lt;/strong&gt; Para &lt;em&gt;prompts simples/chat interativo&lt;/em&gt;, prefira o &lt;strong&gt;{0}&lt;/strong&gt; ({1}x mais rápido). Para &lt;em&gt;prompts complexos, raciocínio ou geração de código&lt;/em&gt; onde a exatidão é crítica, utilize o &lt;strong&gt;{2}&lt;/strong&gt;.</value>
+  </data>
+  <data name="Analysis.DetailRecommendationSingle" xml:space="preserve">
+    <value>• &lt;strong&gt;Recomendação por Prompt:&lt;/strong&gt; O modelo &lt;strong&gt;{0}&lt;/strong&gt; é a escolha ideal para qualquer tipo de prompt{1}, por liderar simultaneamente em velocidade e qualidade global.</value>
+  </data>
+  <data name="Analysis.DetailSpeedMultiplier" xml:space="preserve">
+    <value> ({0}x mais rápido)</value>
+  </data>
   <data name="AnalysisViewer.Title" xml:space="preserve">
     <value>Análise Analítica do Modelo Local</value>
   </data>
@@ -914,6 +977,9 @@ Deseja continuar?</value>
   </data>
   <data name="EvalDetail.NoFeedback" xml:space="preserve">
     <value>Nenhum feedback registado.</value>
+  </data>
+  <data name="EvalDetail.Recommendation" xml:space="preserve">
+    <value>Recomendação do Juiz</value>
   </data>
   <data name="Home.ImageAlt" xml:space="preserve">
     <value>Imagem gerada por IA</value>

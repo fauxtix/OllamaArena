@@ -49,13 +49,13 @@ public class BenchmarkRepository : IBenchmarkRepository
         sb.Append("INSERT INTO Respostas ");
         sb.Append("(PromptId, NomeModelo, TextoResposta, TokensPorSegundo, ");
         sb.Append("TempoPuroMs, TempoCargaMs, TamanhoTokens, TempoProcessamento, ");
-        sb.Append("GeminiFactualRating, GeminiFormattingRating, GeminiRating, GeminiFeedback, ");
-        sb.Append("ChatGptFactualRating, ChatGptFormattingRating, ChatGptRating, ChatGptFeedback) ");
+        sb.Append("GeminiFactualRating, GeminiFormattingRating, GeminiRating, GeminiFeedback, GeminiRecommendation, ");
+        sb.Append("ChatGptFactualRating, ChatGptFormattingRating, ChatGptRating, ChatGptFeedback, ChatGptRecommendation) ");
         sb.Append("VALUES ");
         sb.Append("(@PromptId, @NomeModelo, @TextoResposta, @TokensPorSegundo, ");
         sb.Append("@TempoPuroMs, @TempoCargaMs, @TamanhoTokens, @TempoProcessamento, ");
-        sb.Append("@GeminiFactualRating, @GeminiFormattingRating, @GeminiRating, @GeminiFeedback, ");
-        sb.Append("@ChatGptFactualRating, @ChatGptFormattingRating, @ChatGptRating, @ChatGptFeedback);");
+        sb.Append("@GeminiFactualRating, @GeminiFormattingRating, @GeminiRating, @GeminiFeedback, @GeminiRecommendation, ");
+        sb.Append("@ChatGptFactualRating, @ChatGptFormattingRating, @ChatGptRating, @ChatGptFeedback, @ChatGptRecommendation);");
 
 
 
@@ -94,10 +94,12 @@ public class BenchmarkRepository : IBenchmarkRepository
                     r.GeminiFormattingRating, 
                     r.GeminiRating, 
                     r.GeminiFeedback, 
+                    r.GeminiRecommendation, 
                     r.ChatGptFactualRating, 
                     r.ChatGptFormattingRating, 
                     r.ChatGptRating, 
-                    r.ChatGptFeedback
+                    r.ChatGptFeedback, 
+                    r.ChatGptRecommendation
                 FROM Prompts p
                 LEFT JOIN Respostas r ON p.Id = r.PromptId
                 ORDER BY p.Id DESC, r.TokensPorSegundo DESC;";
@@ -167,7 +169,7 @@ public class BenchmarkRepository : IBenchmarkRepository
     public async Task<PromptFeedback> GetBenchmarkJudgesFeedbackByIdAsync(int Id)
     {
         var sql = @"
-                SELECT GeminiFeedback, ChatGptFeedback FROM Respostas 
+                SELECT GeminiFeedback, ChatGptFeedback, GeminiRecommendation, ChatGptRecommendation FROM Respostas 
                 WHERE Id = @Id;";
 
         try
@@ -332,8 +334,8 @@ public class BenchmarkRepository : IBenchmarkRepository
         sb.Append("UPDATE Respostas ");
         sb.Append("SET ");
         // Avaliações Gerais / Ratings Finais
-        sb.Append("GeminiRating = @GeminiRating, GeminiFeedback = @GeminiFeedback, ");
-        sb.Append("ChatGptRating = @ChatGptRating, ChatGptFeedback = @ChatGptFeedback, ");
+        sb.Append("GeminiRating = @GeminiRating, GeminiFeedback = @GeminiFeedback, GeminiRecommendation = @GeminiRecommendation, ");
+        sb.Append("ChatGptRating = @ChatGptRating, ChatGptFeedback = @ChatGptFeedback, ChatGptRecommendation = @ChatGptRecommendation, ");
 
         // Novas métricas específicas do Gemini
         sb.Append("GeminiFactualRating = @GeminiFactualRating, GeminiFormattingRating = @GeminiFormattingRating, ");

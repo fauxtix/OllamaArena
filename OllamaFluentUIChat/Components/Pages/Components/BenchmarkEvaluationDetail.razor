@@ -175,6 +175,16 @@
                                                     <FluentLabel Typo="Typography.H5" Weight="FontWeight.Bold" Style="color: #7B68EE;">@L["Evaluation.JudgeGemini"]</FluentLabel>
                                                 </div>
                                                 <div class="feedback-card-body">
+                                                    @if (!string.IsNullOrWhiteSpace(Feedback?.GeminiRecommendation))
+                                                    {
+                                                        <div class="recommendation-box">
+                                                            <div class="recommendation-box-header">
+                                                                <FluentIcon Value="@(new Icons.Regular.Size16.Lightbulb())" Color="Color.Accent" />
+                                                                <span>@L["EvalDetail.Recommendation"]</span>
+                                                            </div>
+                                                            <div class="recommendation-box-text">@Feedback.GeminiRecommendation</div>
+                                                        </div>
+                                                    }
                                                     @if (!string.IsNullOrWhiteSpace(Feedback?.GeminiFeedback))
                                                     {
                                                         <div class="feedback-text">@Feedback.GeminiFeedback</div>
@@ -195,6 +205,16 @@
                                                     <FluentLabel Typo="Typography.H5" Weight="FontWeight.Bold" Style="color: #7B68EE;">@L["Evaluation.JudgeChatGpt"]</FluentLabel>
                                                 </div>
                                                 <div class="feedback-card-body">
+                                                    @if (!string.IsNullOrWhiteSpace(Feedback?.ChatGptRecommendation))
+                                                    {
+                                                        <div class="recommendation-box">
+                                                            <div class="recommendation-box-header">
+                                                                <FluentIcon Value="@(new Icons.Regular.Size16.Lightbulb())" Color="Color.Accent" />
+                                                                <span>@L["EvalDetail.Recommendation"]</span>
+                                                            </div>
+                                                            <div class="recommendation-box-text">@Feedback.ChatGptRecommendation</div>
+                                                        </div>
+                                                    }
                                                     @if (!string.IsNullOrWhiteSpace(Feedback?.ChatGptFeedback))
                                                     {
                                                         <div class="feedback-text">@Feedback.ChatGptFeedback</div>
@@ -325,6 +345,34 @@
         overflow-y: auto;
         padding-right: 6px;
     }
+
+    .recommendation-box {
+        background-color: rgba(255, 183, 77, 0.12);
+        border: 1px solid rgba(209, 158, 0, 0.45);
+        border-left: 4px solid #d19e00;
+        border-radius: 4px;
+        padding: 10px 12px;
+        margin-bottom: 12px;
+    }
+
+        .recommendation-box-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #d19e00;
+            margin-bottom: 6px;
+        }
+
+        .recommendation-box-text {
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--neutral-foreground-rest);
+            white-space: pre-wrap;
+        }
 
     .feedback-text {
         white-space: pre-wrap;

@@ -3,6 +3,7 @@ using OllamaFluentUIChat.Models.DTO;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json;
 
 namespace OllamaFluentUIChat.Services.Implementations.Services
@@ -59,7 +60,8 @@ namespace OllamaFluentUIChat.Services.Implementations.Services
             try
             {
                 var prompt = await promptFilesService.GetPromptFileContentAsync("translation-prompt.txt");
-                prompt = prompt?.Replace("{{TEXT}}", text);
+                prompt = prompt?.Replace("{{TEXT}}", text)
+                               .Replace("{{TARGET_LANGUAGE}}", GetTargetLanguage());
 
                 var body = new
                 {
@@ -118,6 +120,16 @@ namespace OllamaFluentUIChat.Services.Implementations.Services
                 };
 
             }
+        }
+
+        private static string GetTargetLanguage()
+        {
+            return CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLowerInvariant() switch
+            {
+                "pt" => "European Portuguese (pt-PT)",
+                "en" => "English (en-US)",
+                _ => "European Portuguese (pt-PT)"
+            };
         }
 
         private static string RemoveJsonIfPresent(string text)

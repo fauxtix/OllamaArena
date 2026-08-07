@@ -28,7 +28,7 @@ public class LocalAnalysisService : IAnalysisService
             _logger.LogWarning("Nenhum benchmark para analisar.");
             return Task.FromResult(new BenchmarkAnalysisResult
             {
-                Sumario = "Não existem dados para analisar."
+                Sumario = _localizer["Analysis.NoData"]
             });
         }
 
@@ -63,53 +63,73 @@ public class LocalAnalysisService : IAnalysisService
 
         // 3. Geração do Sumário Executivo
         var sumarioBuilder = new StringBuilder();
-        sumarioBuilder.Append($"O modelo {modeloMaisRapido.NomeModelo} destacou-se com a maior velocidade de processamento, atingindo {modeloMaisRapido.TokensPorSegundo:F1} Tokens/s (tempo total de {FormatarTempo(modeloMaisRapido.TempoPuroMs)}). ");
+        sumarioBuilder.Append(_localizer["Analysis.SummaryFastest",
+            modeloMaisRapido.NomeModelo,
+            modeloMaisRapido.TokensPorSegundo.ToString("F1"),
+            FormatarTempo(modeloMaisRapido.TempoPuroMs)]);
+        sumarioBuilder.Append(" ");
 
         if (modeloMelhorAvaliado.Benchmark.NomeModelo == modeloMaisRapido.NomeModelo)
         {
-            sumarioBuilder.Append($"Além de ser o mais rápido, o {modeloMelhorAvaliado.Benchmark.NomeModelo} obteve também a melhor classificação média geral ({modeloMelhorAvaliado.AvgRating:F2}/5). ");
+            sumarioBuilder.Append(_localizer["Analysis.SummaryAlsoBest",
+                modeloMelhorAvaliado.Benchmark.NomeModelo,
+                modeloMelhorAvaliado.AvgRating.ToString("F2")]);
         }
         else
         {
-            sumarioBuilder.Append($"Em termos de qualidade global, o {modeloMelhorAvaliado.Benchmark.NomeModelo} obteve a melhor avaliação média com {modeloMelhorAvaliado.AvgRating:F2}/5. ");
+            sumarioBuilder.Append(_localizer["Analysis.SummaryBestRated",
+                modeloMelhorAvaliado.Benchmark.NomeModelo,
+                modeloMelhorAvaliado.AvgRating.ToString("F2")]);
         }
+        sumarioBuilder.Append(" ");
 
-        sumarioBuilder.Append($"O modelo {modeloMaisLento.NomeModelo} registou o menor rendimento em velocidade ({modeloMaisLento.TokensPorSegundo:F1} Tokens/s em {FormatarTempo(modeloMaisLento.TempoPuroMs)}).");
+        sumarioBuilder.Append(_localizer["Analysis.SummarySlowest",
+            modeloMaisLento.NomeModelo,
+            modeloMaisLento.TokensPorSegundo.ToString("F1"),
+            FormatarTempo(modeloMaisLento.TempoPuroMs)]);
 
         // 4. Análise de Empates e Consenso
-        var maxGeminiFactual = benchmarks.Max(b => b.GeminiFactualRating);
+        var maxGeminiFactual = benchmarks.Max(b => b.GeminiFactualRating) ?? 0;
         var melhoresGemini = benchmarks.Where(b => b.GeminiFactualRating == maxGeminiFactual).Select(b => b.NomeModelo).ToList();
         string textoGemini = melhoresGemini.Count > 1
-            ? $"Os modelos {string.Join(" e ", melhoresGemini)} empataram na precisão factual com {maxGeminiFactual}/5."
-            : $"O modelo {melhoresGemini.First()} obteve o destaque em precisão factual com uma nota de {maxGeminiFactual}/5.";
+            ? _localizer["Analysis.GeminiTie", string.Join(" e ", melhoresGemini), maxGeminiFactual]
+            : _localizer["Analysis.GeminiBest", melhoresGemini.First(), maxGeminiFactual];
 
-        var maxChatGptFactual = benchmarks.Max(b => b.ChatGptFactualRating);
+        var maxChatGptFactual = benchmarks.Max(b => b.ChatGptFactualRating) ?? 0;
         var melhoresChatGpt = benchmarks.Where(b => b.ChatGptFactualRating == maxChatGptFactual).Select(b => b.NomeModelo).ToList();
         string textoChatGpt = melhoresChatGpt.Count > 1
-            ? $"Os modelos {string.Join(" e ", melhoresChatGpt)} partilham a melhor pontuação factual com {maxChatGptFactual}/5."
-            : $"A melhor pontuação factual foi atribuída ao modelo {melhoresChatGpt.First()} com {maxChatGptFactual}/5.";
+            ? _localizer["Analysis.ChatGptTie", string.Join(" e ", melhoresChatGpt), maxChatGptFactual]
+            : _localizer["Analysis.ChatGptBest", melhoresChatGpt.First(), maxChatGptFactual];
 
         var modeloConsenso = modelosComAvaliacao.FirstOrDefault(m => m.Benchmark.NomeModelo == modeloMelhorAvaliado.Benchmark.NomeModelo);
         string textoConsenso = (modeloConsenso != null && modeloConsenso.DiferencaFactual == 0)
-            ? $"Alta concordância entre Gemini e ChatGPT ({modeloConsenso.Benchmark.GeminiFactualRating}/5 em ambos)."
-            : $"Divergência ligeira entre avaliadores ({modeloConsenso?.Benchmark.GeminiFactualRating}/5 Gemini vs {modeloConsenso?.Benchmark.ChatGptFactualRating}/5 ChatGPT).";
+            ? _localizer["Analysis.ConsensusHigh", modeloConsenso.Benchmark.GeminiFactualRating ?? 0]
+            : _localizer["Analysis.ConsensusDivergent",
+                modeloConsenso?.Benchmark.GeminiFactualRating ?? 0,
+                modeloConsenso?.Benchmark.ChatGptFactualRating ?? 0];
 
         // 5. Linhas da Análise Detalhada
         var linhasDetalhes = new List<string>();
 
         // a) Velocidade
-        var textoVelocidade = $"• <strong>Velocidade e Tempo:</strong> O modelo {modeloMaisRapido.NomeModelo} lidera a taxa de geração de tokens ({modeloMaisRapido.TokensPorSegundo:F1} t/s), completando a resposta em {FormatarTempo(modeloMaisRapido.TempoPuroMs)}.";
+        string textoVelocidade = _localizer["Analysis.DetailSpeed",
+            modeloMaisRapido.NomeModelo,
+            modeloMaisRapido.TokensPorSegundo.ToString("F1"),
+            FormatarTempo(modeloMaisRapido.TempoPuroMs)];
         if (benchmarks.Count > 1)
         {
             var diferencaVelocidade = modeloMaisRapido.TokensPorSegundo - modeloMaisLento.TokensPorSegundo;
-            textoVelocidade += $" Em comparação, o modelo {modeloMaisLento.NomeModelo} é {diferencaVelocidade:F1} t/s mais lento, necessitando de {FormatarTempo(modeloMaisLento.TempoPuroMs)} de execução.";
+            textoVelocidade += _localizer["Analysis.DetailSpeedComparison",
+                modeloMaisLento.NomeModelo,
+                diferencaVelocidade.ToString("F1"),
+                FormatarTempo(modeloMaisLento.TempoPuroMs)];
         }
         linhasDetalhes.Add(textoVelocidade);
 
         // b) Avaliações e Consenso
-        linhasDetalhes.Add($"• <strong>Avaliação Gemini:</strong> {textoGemini}");
-        linhasDetalhes.Add($"• <strong>Avaliação ChatGPT:</strong> {textoChatGpt}");
-        linhasDetalhes.Add($"• <strong>Consenso Factual:</strong> {textoConsenso}");
+        linhasDetalhes.Add(_localizer["Analysis.DetailGemini", textoGemini]);
+        linhasDetalhes.Add(_localizer["Analysis.DetailChatGpt", textoChatGpt]);
+        linhasDetalhes.Add(_localizer["Analysis.DetailConsensus", textoConsenso]);
 
         // c) Recomendação Dinâmica com Salvaguarda Global de Baixo Desempenho
         bool todosComQualidadeBaixa = modelosComAvaliacao.All(m => m.AvgRating < 4.0);
@@ -117,7 +137,7 @@ public class LocalAnalysisService : IAnalysisService
         if (todosComQualidadeBaixa)
         {
             // Ativa quando nenhum modelo atinge pelo menos 4.0/5 de média
-            linhasDetalhes.Add("• ⚠️ <strong>Alerta de Desempenho:</strong> Nenhum dos modelos testados atingiu a classificação mínima de excelência (>= 4,0/5). A tarefa solicitada aparenta exceder a capacidade atual do conjunto de modelos locais em teste.");
+            linhasDetalhes.Add(_localizer["Analysis.DetailAlertLowQuality"]);
         }
         else
         {
@@ -128,12 +148,19 @@ public class LocalAnalysisService : IAnalysisService
             string recomendacaoPrompt;
             if (modeloMaisRapido.NomeModelo != modeloMelhorAvaliado.Benchmark.NomeModelo)
             {
-                recomendacaoPrompt = $"• <strong>Recomendação por Prompt:</strong> Para <em>prompts simples/chat interativo</em>, prefira o <strong>{modeloMaisRapido.NomeModelo}</strong> ({ganhoVelocidade:F1}x mais rápido). Para <em>prompts complexos, raciocínio ou geração de código</em> onde a exatidão é crítica, utilize o <strong>{modeloMelhorAvaliado.Benchmark.NomeModelo}</strong>.";
+                recomendacaoPrompt = _localizer["Analysis.DetailRecommendationSplit",
+                    modeloMaisRapido.NomeModelo,
+                    ganhoVelocidade.ToString("F1"),
+                    modeloMelhorAvaliado.Benchmark.NomeModelo];
             }
             else
             {
-                string textoVelocidadeGanho = benchmarks.Count > 1 ? $" ({ganhoVelocidade:F1}x mais rápido)" : "";
-                recomendacaoPrompt = $"• <strong>Recomendação por Prompt:</strong> O modelo <strong>{modeloMaisRapido.NomeModelo}</strong> é a escolha ideal para qualquer tipo de prompt{textoVelocidadeGanho}, por liderar simultaneamente em velocidade e qualidade global.";
+                string textoVelocidadeGanho = benchmarks.Count > 1
+                    ? _localizer["Analysis.DetailSpeedMultiplier", ganhoVelocidade.ToString("F1")]
+                    : "";
+                recomendacaoPrompt = _localizer["Analysis.DetailRecommendationSingle",
+                    modeloMaisRapido.NomeModelo,
+                    textoVelocidadeGanho];
             }
 
             linhasDetalhes.Add(recomendacaoPrompt);
@@ -147,7 +174,7 @@ public class LocalAnalysisService : IAnalysisService
             LinhasAnaliseDetalhada = linhasDetalhes,
             ModeloMaisRapido = modeloMaisRapido.NomeModelo,
             MaxTokensSec = Math.Round(modeloMaisRapido.TokensPorSegundo, 2),
-            ModeloMelhorAvaliado = $"{modeloMelhorAvaliado.Benchmark.NomeModelo} ({modeloMelhorAvaliado.AvgRating:F2}/5)",
+            ModeloMelhorAvaliado = $"{modeloMelhorAvaliado.Benchmark.NomeModelo} ({modeloMelhorAvaliado.AvgRating.ToString("F2")}/5)",
             TempoAnaliseFormatado = stopwatch.Elapsed.ToString(@"mm\:ss")
         });
     }

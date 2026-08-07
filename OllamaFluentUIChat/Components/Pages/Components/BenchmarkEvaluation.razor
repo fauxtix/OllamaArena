@@ -68,6 +68,18 @@
                 </div>
             </div>
 
+            <!-- Caixa de Recomendação -->
+            @if (!string.IsNullOrWhiteSpace(Response.GeminiRecommendation))
+            {
+                <div class="recommendation-box">
+                    <div class="recommendation-box-header">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Lightbulb())" Color="Color.Accent" />
+                        <span>@L["Evaluation.RecommendationLabel"]</span>
+                    </div>
+                    <div class="recommendation-box-text">@Response.GeminiRecommendation</div>
+                </div>
+            }
+
             <!-- Caixa de Feedback -->
             <FluentTextArea Value="@Response.GeminiFeedback"
                             ValueChanged="@OnGeminiInputChanged"
@@ -137,6 +149,18 @@
                 </div>
             </div>
 
+            <!-- Caixa de Recomendação -->
+            @if (!string.IsNullOrWhiteSpace(Response.ChatGptRecommendation))
+            {
+                <div class="recommendation-box">
+                    <div class="recommendation-box-header">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Lightbulb())" Color="Color.Accent" />
+                        <span>@L["Evaluation.RecommendationLabel"]</span>
+                    </div>
+                    <div class="recommendation-box-text">@Response.ChatGptRecommendation</div>
+                </div>
+            }
+
             <!-- Caixa de Feedback -->
             <FluentTextArea Value="@Response.ChatGptFeedback"
                             ValueChanged="@OnChatGptInputChanged"
@@ -173,6 +197,7 @@
 
             Response.GeminiRating = parsed.FinalScore;
             Response.GeminiFeedback = parsed.Description;
+            Response.GeminiRecommendation = parsed.Recommendation;
         }
         else
         {
@@ -204,6 +229,7 @@
 
             Response.ChatGptRating = parsed.FinalScore;
             Response.ChatGptFeedback = parsed.Description;
+            Response.ChatGptRecommendation = parsed.Recommendation;
         }
         else
         {
@@ -340,4 +366,32 @@
         color: var(--accent-fill-rest, #0078d4);
         font-weight: bold;
     }
+
+    /* Caixa de Recomendação destacada */
+    .recommendation-box {
+        background-color: rgba(255, 183, 77, 0.12);
+        border: 1px solid rgba(209, 158, 0, 0.45);
+        border-left: 4px solid #d19e00;
+        border-radius: 4px;
+        padding: 10px 12px;
+    }
+
+        .recommendation-box-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #d19e00;
+            margin-bottom: 6px;
+        }
+
+        .recommendation-box-text {
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--neutral-foreground-rest);
+            white-space: pre-wrap;
+        }
 </style>

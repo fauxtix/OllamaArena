@@ -19,6 +19,7 @@
 
         public float? GeminiRating { get; set; }
         public string GeminiFeedback { get; set; } = string.Empty;
+        public string GeminiRecommendation { get; set; } = string.Empty;
         public int? GeminiFactualRating { get; set; }
         public int? GeminiFormattingRating { get; set; }
 
@@ -34,6 +35,7 @@
 
         public float? ChatGptRating { get; set; }
         public string ChatGptFeedback { get; set; } = string.Empty;
+        public string ChatGptRecommendation { get; set; } = string.Empty;
         public int? ChatGptFactualRating { get; set; }
         public int? ChatGptFormattingRating { get; set; }
 

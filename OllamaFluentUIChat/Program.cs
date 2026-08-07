@@ -77,6 +77,12 @@ try
 
     var app = builder.Build();
 
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<IDapperContext>();
+        DatabaseSchemaInitializer.EnsureRecommendationColumns(context);
+    }
+
     if (!app.Environment.IsDevelopment())
     {
         app.UseExceptionHandler("/Error", createScopeForErrors: true);

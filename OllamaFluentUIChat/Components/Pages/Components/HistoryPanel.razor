@@ -5,6 +5,7 @@
 @using OllamaFluentUIChat.Services.Interfaces.Repositories
 @inject IStringLocalizer<SharedResources> L
 @inject IJSRuntime JS
+@inject ILogger<App> _logger
 
 @if (IsOpen)
 {
@@ -61,15 +62,13 @@
 
     public async Task Open()
     {
-        Console.WriteLine("HistoryPanel.Open() chamado");
-
         try
         {
             History = await BenchmarksRepo.HistoryResponseAsync() ?? [];
         }
         catch (Exception ex)
         {
-            Console.WriteLine("ERRO em Open() - HistoryPanel: " + ex.Message);
+            _logger.LogError(ex, "ERRO em Open() - HistoryPanel");
         }
 
         IsOpen = true;
