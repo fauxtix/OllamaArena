@@ -1,19 +1,22 @@
-﻿@using OllamaFluentUIChat.Models.Entities
+﻿@using Microsoft.Extensions.Localization
+@using OllamaFluentUIChat.Models.Entities
+@using OllamaFluentUIChat.Resources
 @using System.Linq
+@inject IStringLocalizer<SharedResources> L
 @inject IJSRuntime JS
 
 <FluentDialog Hidden="@(!Visible)"
               Modal="true"
               Class="dialog-largo"
               TrapFocus="true"
-              AriaLabel="Gráficos de Benchmark">
+              AriaLabel="@L["ChartDialog.AriaLabel"]">
 
     <FluentDialogHeader Visible="true">
         <FluentStack Orientation="Orientation.Horizontal"
                      VerticalAlignment="VerticalAlignment.Center">
             <FluentIcon Value="@(new Icons.Regular.Size24.DataHistogram())" />
             <FluentLabel Typo="Typography.PaneHeader">
-                Gráficos de Benchmark do Prompt #@Prompt?.Id
+                @L["ChartDialog.Title", Prompt?.Id ?? 0]
             </FluentLabel>
         </FluentStack>
     </FluentDialogHeader>
@@ -26,7 +29,7 @@
 
                 <div class="grafico-card">
                     <div class="grafico-header">
-                        <span class="grafico-titulo">Tempo de Execução / Eval (ms)</span>
+                        <span class="grafico-titulo">@L["ChartDialog.EvalChartTitle"]</span>
                         <FluentButton Appearance="Appearance.Stealth"
                                       IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
                                       OnClick="@(() => DownloadImageAsync("graficoEval", $"benchmark_eval_prompt_{Prompt.Id}"))" />
@@ -38,7 +41,7 @@
 
                 <div class="grafico-card">
                     <div class="grafico-header">
-                        <span class="grafico-titulo">Tempo de Carga do Modelo / Load (ms)</span>
+                        <span class="grafico-titulo">@L["ChartDialog.LoadChartTitle"]</span>
                         <FluentButton Appearance="Appearance.Stealth"
                                       IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
                                       OnClick="@(() => DownloadImageAsync("graficoLoad", $"benchmark_load_prompt_{Prompt.Id}"))" />
@@ -50,7 +53,7 @@
 
                 <div class="grafico-card">
                     <div class="grafico-header">
-                        <span class="grafico-titulo">Velocidade de Geração (Tokens/s)</span>
+                        <span class="grafico-titulo">@L["ChartDialog.SpeedChartTitle"]</span>
                         <FluentButton Appearance="Appearance.Stealth"
                                       IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
                                       OnClick="@(() => DownloadImageAsync("graficoVelocidade", $"benchmark_tokens_seg_prompt_{Prompt.Id}"))" />
@@ -62,7 +65,7 @@
 
                 <div class="grafico-card">
                     <div class="grafico-header">
-                        <span class="grafico-titulo">Total de Tokens Gerados</span>
+                        <span class="grafico-titulo">@L["ChartDialog.TotalTokensTitle"]</span>
                         <FluentButton Appearance="Appearance.Stealth"
                                       IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
                                       OnClick="@(() => DownloadImageAsync("graficoTotalTokens", $"benchmark_total_tokens_prompt_{Prompt.Id}"))" />
@@ -76,7 +79,7 @@
         }
         else
         {
-            <p>Nenhum prompt selecionado.</p>
+            <p>@L["ChartDialog.NoPrompt"]</p>
         }
 
     </FluentDialogBody>
@@ -84,7 +87,7 @@
     <FluentDialogFooter>
         <FluentSpacer />
         <FluentButton Appearance="Appearance.Outline" OnClick="Fechar">
-            Fechar
+            @L["Common.Close"]
         </FluentButton>
     </FluentDialogFooter>
 </FluentDialog>

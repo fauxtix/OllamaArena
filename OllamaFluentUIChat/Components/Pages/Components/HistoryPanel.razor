@@ -1,6 +1,9 @@
-﻿@using Microsoft.FluentUI.AspNetCore.Components
+﻿@using Microsoft.Extensions.Localization
+@using Microsoft.FluentUI.AspNetCore.Components
 @using OllamaFluentUIChat.Models.DTO
+@using OllamaFluentUIChat.Resources
 @using OllamaFluentUIChat.Services.Interfaces.Repositories
+@inject IStringLocalizer<SharedResources> L
 @inject IJSRuntime JS
 
 @if (IsOpen)
@@ -10,17 +13,17 @@
 
 <div class="history-aside @(IsOpen ? "open" : "")" @onclick:stopPropagation>
     <div class="header">
-        <h3>Histórico de Execuções</h3>
-        <FluentButton Appearance="Appearance.Stealth" OnClick="@Close">Fechar</FluentButton>
+        <h3>@L["HistoryPanel.Title"]</h3>
+        <FluentButton Appearance="Appearance.Stealth" OnClick="@Close">@L["Common.Close"]</FluentButton>
     </div>
 
     @if (History == null)
     {
-        <p>A carregar...</p>
+        <p>@L["Common.Loading"]</p>
     }
     else if (History.Count() == 0)
     {
-        <p>Sem histórico.</p>
+        <p>@L["HistoryPanel.NoHistory"]</p>
     }
     else
     {
@@ -30,17 +33,17 @@
             <FluentDataGrid Items="@History.AsQueryable()"
                             Pagination="@pagination">
                 <PropertyColumn Property="@(h => h.Descricao)"
-                                Title="Descrição do Prompt"
+                                Title="@L["HistoryPanel.ColPrompt"]"
                                 Width="250px"
                                 Tooltip="true" />
                 <PropertyColumn Property="@(h => h.Modelo)"
-                                Title="Modelo" />
+                                Title="@L["HistoryPanel.ColModel"]" />
                 <PropertyColumn Property="@(h => h.DateDisplay)" Align="Align.Center"
-                                Title="Data" />
+                                Title="@L["HistoryPanel.ColDate"]" />
                 <PropertyColumn Property="@(h => h.DurationDisplay)" Align="Align.Center"
-                                Title="Tempo Eval." />
+                                Title="@L["HistoryPanel.ColEvalTime"]" />
                 <PropertyColumn Property="@(h => h.ProcessDurationDisplay)" Align="Align.Center"
-                                Title="Tempo Procº" />
+                                Title="@L["HistoryPanel.ColProcessTime"]" />
             </FluentDataGrid>
         </div>
     }

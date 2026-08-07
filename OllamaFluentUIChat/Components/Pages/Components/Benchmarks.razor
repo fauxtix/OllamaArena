@@ -1,8 +1,11 @@
 ﻿@page "/benchmarks"
 @rendermode InteractiveServer
 
+@using Microsoft.Extensions.Localization
 @using Microsoft.FluentUI.AspNetCore.Components
+@using OllamaFluentUIChat.Resources
 @using OllamaFluentUIChat.Services.Helpers
+@inject IStringLocalizer<SharedResources> L
 @inject IDialogService DialogService
 @inject ILogger<App> Logger
 @inject IJSRuntime JS
@@ -11,13 +14,13 @@
 <div class="analise-container-horizontal">
 
     <div class="pagina-header">
-        <h2>Análise de Qualidade e Métricas</h2>
+        <h2>@L["Benchmarks.PageTitle"]</h2>
         <!-- Botão de Refrescar aqui -->
         <FluentButton Appearance="Appearance.Outline"
                       IconStart="@(new Icons.Regular.Size24.ArrowClockwise())"
                       OnClick="RefreshPage"
-                      Title="Recarregar página (F5)">
-            Refrescar
+                      Title="@L["Benchmarks.ReloadPageTitle"]">
+            @L["Common.Refresh"]
         </FluentButton>
     </div>
 
@@ -25,13 +28,13 @@
     {
         <div class="loading-state">
             <FluentProgressRing></FluentProgressRing>
-            <p>A carregar o histórico do SQLite...</p>
+            <p>@L["Benchmarks.LoadingHistory"]</p>
         </div>
     }
     else if (_promptsList == null || !_promptsList.Any())
     {
         <div class="empty-state">
-            <p>Nenhum registo de benchmark encontrado na Base de Dados.</p>
+            <p>@L["Benchmarks.EmptyDatabase"]</p>
         </div>
     }
     else
@@ -49,7 +52,7 @@
                     @if (_mostrarGrafico && _promptGrafico != null)
                     {
                         <div class="grafico-container">
-                            <h4>Gráfico do Prompt #@_promptGrafico.Id</h4>
+                            <h4>@L["Benchmarks.ChartPromptTitle", _promptGrafico.Id]</h4>
                             @* <canvas id="graficoModelos"></canvas> *@
                         </div>
                     }
@@ -76,22 +79,22 @@
                                     <div class="card-prompt-footer">
 
                                         <FluentBadge Appearance="Appearance.Neutral">
-                                            @(prompt.Answers?.Count ?? 0) modelos
+                                            @L["Benchmarks.ModelCount", prompt.Answers?.Count ?? 0]
                                         </FluentBadge>
 
                                         <FluentButton Appearance="Appearance.Outline"
                                                       IconStart="@(new Icons.Regular.Size24.LayoutInfographic())"
                                                       OnClick="@(() => OpenChartDialog(prompt))"
-                                                      Title="Mostrar resultados em gráfico"
+                                                      Title="@L["Benchmarks.ShowChartTitle"]"
                                                       StopPropagation="true">
-                                            Gráfico
+                                            @L["Benchmarks.Chart"]
                                         </FluentButton>
 
                                         <FluentButton Appearance="Appearance.Outline"
                                                       Color="Color.Error"
                                                       IconStart="@(new Icons.Regular.Size24.Delete())"
                                                       OnClick="@( async () => await DeletePromptAsync(prompt))"
-                                                      Title="Apagar benchmark"
+                                                      Title="@L["Benchmarks.DeletePromptTitle"]"
                                                       Style="--neutral-stroke-rest: #d32f2f; --neutral-stroke-hover: #c62828; color: #d32f2f;"
                                                       StopPropagation="true">
                                         </FluentButton>
@@ -110,13 +113,13 @@
                     {
                         <div class="placeholder-direito">
                             <FluentIcon Value="@(new Icons.Regular.Size32.DocumentSearch())" Color="Color.Neutral" />
-                            <p>Selecione um prompt na lista da esquerda para analisar as respostas dos modelos.</p>
+                            <p>@L["Benchmarks.SelectPromptPlaceholder"]</p>
                         </div>
                     }
                     else
                     {
                         <div class="detalhe-header">
-                            <h3>Respostas Geradas para o Prompt #@_selectedPrompt.Id</h3>
+                            <h3>@L["Benchmarks.ResponsesTitle", _selectedPrompt.Id]</h3>
 
                             <div style="display: flex; align-items: flex-start; gap: 10px; margin-top: 10px;">
                                 <blockquote class="prompt-citacao" style="flex: 1; margin: 0;">
@@ -128,7 +131,7 @@
                         @if (!_selectedPrompt.Answers.Any())
                         {
                             <FluentMessageBar Intent="MessageIntent.Warning" AllowClose="false">
-                                Este prompt foi guardado, mas não existem respostas associadas na tabela.
+                                @L["Benchmarks.NoAnswersWarning"]
                             </FluentMessageBar>
                         }
                         else
@@ -137,7 +140,7 @@
                             {
                                 <div class="loading-state">
                                     <FluentProgressRing></FluentProgressRing>
-                                    <p>A criar o prompt para para avaliação...</p>
+                                    <p>@L["Benchmarks.CreatingPrompt"]</p>
                                 </div>
                             }
 
@@ -152,18 +155,18 @@
                                                     <h4>@resp.NomeModelo</h4>
                                                 </div>
                                                 <div class="metricas-tags" style="display: flex; justify-content: space-around; align-items: center; gap:16px">
-                                                    <FluentBadge Appearance="Appearance.Accent">@resp.TokensPorSegundo T/s</FluentBadge>
-                                                    <FluentBadge Appearance="Appearance.Accent">Eval: @(resp.TempoPuroFormatado) m:s</FluentBadge>
-                                                    <FluentBadge Appearance="Appearance.Accent">Load: @(resp.TempoCargaFormatado) m:s</FluentBadge>
-                                                    <FluentBadge Appearance="Appearance.Accent">Tokens: @resp.TamanhoTokens</FluentBadge>
+                                                    <FluentBadge Appearance="Appearance.Accent">@L["Benchmarks.TokensPerSecond", resp.TokensPorSegundo]</FluentBadge>
+                                                    <FluentBadge Appearance="Appearance.Accent">@L["Benchmarks.EvalTime", resp.TempoPuroFormatado]</FluentBadge>
+                                                    <FluentBadge Appearance="Appearance.Accent">@L["Benchmarks.LoadTime", resp.TempoCargaFormatado]</FluentBadge>
+                                                    <FluentBadge Appearance="Appearance.Accent">@L["Benchmarks.Tokens", resp.TamanhoTokens]</FluentBadge>
                                                 </div>
                                                 <FluentButton Appearance="Appearance.Accent"
                                                               IconStart="@(new Icons.Regular.Size24.ClipboardCode())"
                                                               OnClick="() => CopyPromptForEvaluationAsync(_selectedPrompt.TextoPrompt, resp.TextoResposta, resp.NomeModelo)"
-                                                              Title="Copiar Prompt Formatado para o Juiz IA"
+                                                              Title="@L["Benchmarks.CopyPromptTitle"]"
                                                               Color="rgba(255,255,255, 0.9)"
                                                               BackgroundColor="rgba(25, 116, 210, 1.0)">
-                                                    Copiar para avaliação
+                                                    @L["Benchmarks.CopyForEvaluation"]
                                                 </FluentButton>
                                             </div>
 
@@ -181,12 +184,12 @@
 
                                                     <div class="rating-box">
                                                         <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())" />
-                                                        <span>Gemini</span>
+                                                        <span>@L["Benchmarks.ColGemini"]</span>
                                                         <strong>@(resp.GeminiRating > 0 ? resp.GeminiRating : 0)</strong>
                                                     </div>
                                                     <div class="rating-box">
                                                         <FluentIcon Value="@(new Icons.Regular.Size16.Chat())" />
-                                                        <span>ChatGPT</span>
+                                                        <span>@L["Benchmarks.ColChatGpt"]</span>
                                                         <strong>@(resp.ChatGptRating > 0 ? resp.ChatGptRating : 0)</strong>
                                                     </div>
                                                     <FluentSpacer />
@@ -194,7 +197,7 @@
                                                         <FluentButton Appearance="Appearance.Accent" Color="Color.Success"
                                                                       IconStart="@(new Icons.Regular.Size16.Edit())"
                                                                       OnClick="@(() => OpenEvaluation(resp.Id))">
-                                                            Avaliação
+                                                            @L["Benchmarks.Evaluate"]
                                                         </FluentButton>
                                                     </div>
                                                 </div>

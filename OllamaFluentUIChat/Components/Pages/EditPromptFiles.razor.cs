@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
+using Microsoft.Extensions.Localization;
 using Microsoft.FluentUI.AspNetCore.Components;
+using OllamaFluentUIChat.Resources;
 using OllamaFluentUIChat.Services;
 namespace OllamaFluentUIChat.Components.Pages;
 
 public partial class EditPromptFiles : IDisposable
 {
     [Inject] protected ILogger<EditPromptFiles> Logger { get; set; } = default!;
+    [Inject] protected IStringLocalizer<SharedResources> L { get; set; } = default!;
     [Inject] protected IToastService ToastService { get; set; } = default!;
     [Inject] protected IDialogService DialogService { get; set; } = default!;
     [Inject] protected PromptFilesService PromptFilesService { get; set; } = default!;
@@ -65,7 +68,7 @@ public partial class EditPromptFiles : IDisposable
         catch (Exception ex)
         {
             Logger.LogError(ex, "Erro ao inicializar a lista de ficheiros de prompt.");
-            ToastService.ShowError("Erro ao inicializar a lista de ficheiros.");
+            ToastService.ShowError(L["EditPrompts.InitError"]);
         }
         finally
         {
@@ -99,7 +102,7 @@ public partial class EditPromptFiles : IDisposable
         catch (Exception ex)
         {
             Logger.LogError(ex, "Erro ao obter o prompt: {File}", filename);
-            ToastService.ShowError("Não foi possível carregar o ficheiro selecionado.");
+            ToastService.ShowError(L["EditPrompts.LoadFileError"]);
         }
         finally
         {
@@ -112,7 +115,7 @@ public partial class EditPromptFiles : IDisposable
     {
         if (string.IsNullOrEmpty(_selectedPromptFile))
         {
-            ToastService.ShowWarning("Nenhum ficheiro selecionado para gravar.");
+            ToastService.ShowWarning(L["EditPrompts.NoFileSelected"]);
             return;
         }
 
@@ -120,12 +123,12 @@ public partial class EditPromptFiles : IDisposable
         {
             await PromptFilesService.SavePromptFileAsync(_selectedPromptFile, EditorContent, CancellationToken.None);
             _loadedContent = EditorContent;
-            ToastService.ShowSuccess($"O ficheiro '{_selectedPromptFile}' foi gravado com sucesso!", timeout: 3000);
+            ToastService.ShowSuccess(string.Format(L["EditPrompts.SaveSuccess"], _selectedPromptFile), timeout: 3000);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Erro ao gravar o prompt: {File}", _selectedPromptFile);
-            ToastService.ShowError("Não foi possível gravar o prompt.");
+            ToastService.ShowError(L["EditPrompts.SaveError"]);
         }
     }
 
@@ -146,8 +149,8 @@ public partial class EditPromptFiles : IDisposable
             return true;
 
         var dialog = await DialogService.ShowConfirmationAsync(
-            "Existem alterações não gravadas no prompt atual. Deseja descartá-las?",
-            "Descartar", "Cancelar", "Alterações não gravadas");
+            L["EditPrompts.DiscardConfirm"],
+            L["EditPrompts.Discard"], L["Common.Cancel"], L["EditPrompts.DiscardTitle"]);
 
         var result = await dialog.Result;
         return !result.Cancelled;

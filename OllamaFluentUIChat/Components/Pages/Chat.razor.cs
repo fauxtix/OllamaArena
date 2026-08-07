@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.Localization;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.JSInterop;
 using OllamaFluentUIChat.Components.Pages.Components;
 using OllamaFluentUIChat.Models.DTO;
 using OllamaFluentUIChat.Models.Entities;
+using OllamaFluentUIChat.Resources;
 using OllamaFluentUIChat.Services;
 using OllamaFluentUIChat.Services.Helpers;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
@@ -28,6 +30,7 @@ namespace OllamaFluentUIChat.Components.Pages
         [Inject] public HttpClient? _httpClient { get; set; }
         [Inject] public IHttpClientFactory? HttpClientFactory { get; set; }
         [Inject] public ILogger<App>? _logger { get; set; }
+        [Inject] public IStringLocalizer<SharedResources> L { get; set; } = default!;
 
         private List<Models.DTO.ChatMessage> _messages = new();
         private string _currentMessage = string.Empty;
@@ -81,7 +84,7 @@ namespace OllamaFluentUIChat.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            _messages.Add(new Models.DTO.ChatMessage { User = "Ollama", Text = "Olá! Como posso ajudar?" });
+            _messages.Add(new Models.DTO.ChatMessage { User = "Ollama", Text = L["Chat.WelcomeMessage"] });
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -211,7 +214,7 @@ namespace OllamaFluentUIChat.Components.Pages
 
             _messages.Add(new Models.DTO.ChatMessage
             {
-                User = "Tu",
+                User = L["Chat.UserDisplayName"],
                 Text = userPrompt,
                 IsCurrentUser = true
             });
@@ -277,7 +280,7 @@ namespace OllamaFluentUIChat.Components.Pages
                 foreach (var msg in _messages)
                 {
                     if (string.IsNullOrWhiteSpace(msg.Text) || msg.Text == "...") continue;
-                    if (msg.Text.StartsWith("Olá!", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (msg.Text.StartsWith(L["Chat.WelcomeMessage"], StringComparison.OrdinalIgnoreCase)) continue;
 
                     string roleAtual = msg.IsCurrentUser ? "user" : "assistant";
 
@@ -446,7 +449,7 @@ namespace OllamaFluentUIChat.Components.Pages
                     }
                     catch (JsonException jex)
                     {
-                        aiMessage.Text += $"\n[Erro ao processar resposta do Ollama: {jex.Message}]";
+                        aiMessage.Text += $"\n{L["Chat.OllamaParseError", jex.Message]}";
                         _logger?.LogWarning("Failed to parse JSON line from Ollama API: {Line}... continuing the process", line);
                         continue;
                     }
@@ -455,12 +458,12 @@ namespace OllamaFluentUIChat.Components.Pages
             catch (OperationCanceledException ocEx)
             {
                 _logger?.LogError(ocEx, "O streaming da resposta foi cancelado.");
-                aiMessage.Text = aiMessage.Text == "..." ? "⏱️ O tempo de resposta expirou." : aiMessage.Text + " *(Cancelado)*";
+                aiMessage.Text = aiMessage.Text == "..." ? L["Chat.ResponseTimeout"] : aiMessage.Text + L["Chat.ResponseCancelled"];
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Erro inesperado durante o streaming da resposta.");
-                aiMessage.Text = $"❌ Erro inesperado: {ex.Message}";
+                aiMessage.Text = L["Chat.UnexpectedError", ex.Message];
             }
             finally
             {
@@ -691,7 +694,7 @@ namespace OllamaFluentUIChat.Components.Pages
             _messages.Add(new Models.DTO.ChatMessage
             {
                 User = "Ollama",
-                Text = "Olá! Como posso ajudar-te hoje?"
+                Text = L["Chat.WelcomeMessage"]
             });
 
             StateHasChanged();
@@ -871,7 +874,7 @@ namespace OllamaFluentUIChat.Components.Pages
             // --- UI: add user message ---
             _messages.Add(new Models.DTO.ChatMessage
             {
-                User = "Tu",
+                User = L["Chat.UserDisplayName"],
                 Text = userPrompt,
                 IsCurrentUser = true
             });
@@ -928,7 +931,7 @@ namespace OllamaFluentUIChat.Components.Pages
                 foreach (var msg in _messages)
                 {
                     if (string.IsNullOrWhiteSpace(msg.Text) || msg.Text == "...") continue;
-                    if (msg.Text.StartsWith("Olá!", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (msg.Text.StartsWith(L["Chat.WelcomeMessage"], StringComparison.OrdinalIgnoreCase)) continue;
 
                     var role = msg.IsCurrentUser
                         ? OllamaSharp.Models.Chat.ChatRole.User
@@ -1023,13 +1026,13 @@ namespace OllamaFluentUIChat.Components.Pages
             catch (OperationCanceledException)
             {
                 aiMessage.Text = aiMessage.Text == "..."
-                    ? "⏱️ O tempo de resposta expirou."
-                    : aiMessage.Text + " *(Cancelado)*";
+                    ? L["Chat.ResponseTimeout"]
+                    : aiMessage.Text + L["Chat.ResponseCancelled"];
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Erro inesperado durante o streaming (OllamaSharp).");
-                aiMessage.Text = $"❌ Erro inesperado: {ex.Message}";
+                aiMessage.Text = L["Chat.UnexpectedError", ex.Message];
             }
             finally
             {
@@ -1097,7 +1100,7 @@ namespace OllamaFluentUIChat.Components.Pages
             // --- UI: add user message ---
             _messages.Add(new Models.DTO.ChatMessage
             {
-                User = "Tu",
+                User = L["Chat.UserDisplayName"],
                 Text = userPrompt,
                 IsCurrentUser = true
             });
@@ -1155,7 +1158,7 @@ namespace OllamaFluentUIChat.Components.Pages
                 foreach (var msg in _messages)
                 {
                     if (string.IsNullOrWhiteSpace(msg.Text) || msg.Text == "...") continue;
-                    if (msg.Text.StartsWith("Olá!", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (msg.Text.StartsWith(L["Chat.WelcomeMessage"], StringComparison.OrdinalIgnoreCase)) continue;
 
                     var role = msg.IsCurrentUser
                         ? OllamaSharp.Models.Chat.ChatRole.User
@@ -1268,13 +1271,13 @@ namespace OllamaFluentUIChat.Components.Pages
             catch (OperationCanceledException)
             {
                 aiMessage.Text = aiMessage.Text == "..."
-                    ? "⏱️ O tempo de resposta expirou."
-                    : aiMessage.Text + " *(Cancelado)*";
+                    ? L["Chat.ResponseTimeout"]
+                    : aiMessage.Text + L["Chat.ResponseCancelled"];
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Erro inesperado durante o streaming (OllamaFast).");
-                aiMessage.Text = $"❌ Erro inesperado: {ex.Message}";
+                aiMessage.Text = L["Chat.UnexpectedError", ex.Message];
             }
             finally
             {

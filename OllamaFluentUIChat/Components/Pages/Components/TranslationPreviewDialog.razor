@@ -1,22 +1,26 @@
-﻿<FluentDialog Hidden="@(!Visible)" 
+﻿@using Microsoft.Extensions.Localization
+@using OllamaFluentUIChat.Resources
+@inject IStringLocalizer<SharedResources> L
+
+<FluentDialog Hidden="@(!Visible)" 
               Modal="true"
               Style="width: 60%"
               TrapFocus="true">
 
     <FluentDialogHeader Visible="true">
         <FluentLabel Typo="Typography.Header">
-            Tradução do Feedback (@JudgeName)
+            @L["TranslationDialog.Title", JudgeName ?? string.Empty]
         </FluentLabel>
     </FluentDialogHeader>
 
     <FluentDialogBody>
 
         <FluentLabel Typo="Typography.Subject">
-            Modelo usado: @ModelUsed
+            @L["TranslationDialog.ModelUsed", ModelUsed ?? string.Empty]
         </FluentLabel>
 
         <FluentLabel Typo="Typography.Body">
-            Tempo gasto: @TimeSpent
+            @L["TranslationDialog.TimeSpent", TimeSpent ?? string.Empty]
         </FluentLabel>
 
         <FluentTextArea Value="@TranslatedText"
@@ -29,12 +33,12 @@
 
         <FluentButton Appearance="Appearance.Accent"
                       OnClick="Aceitar">
-            Aceitar e continuar
+            @L["TranslationDialog.Accept"]
         </FluentButton>
 
         <FluentButton Appearance="Appearance.Stealth"
                       OnClick="Cancelar">
-            Sair
+            @L["TranslationDialog.Exit"]
         </FluentButton>
     </FluentDialogFooter>
 </FluentDialog>

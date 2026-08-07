@@ -1,5 +1,8 @@
-﻿@using OllamaFluentUIChat.Models.Entities
+﻿@using Microsoft.Extensions.Localization
+@using OllamaFluentUIChat.Models.Entities
+@using OllamaFluentUIChat.Resources
 @using OllamaFluentUIChat.Services.Helpers
+@inject IStringLocalizer<SharedResources> L
 @inject IJSRuntime JS
 
 @if (Response is not null)
@@ -10,56 +13,56 @@
             <div class="judge-header">
                 <div class="judge-label-wrapper">
                     <FluentIcon Value="@(new Icons.Regular.Size20.Sparkle())" Color="Color.Accent" />
-                    <div class="judge-label">Google Gemini</div>
+                    <div class="judge-label">@L["Evaluation.JudgeGemini"]</div>
                 </div>
             </div>
 
             <!-- Grupo de Ratings com grelha para as 10 métricas -->
             <div class="ratings-group-container">
-                <div class="ratings-group-header">Métricas de Avaliação (Escala 1-5)</div>
+                <div class="ratings-group-header">@L["Evaluation.MetricsHeader"]</div>
                 <div class="ratings-grid">
                     <div class="rating-cell">
-                        <span class="rating-label">Factual</span>
+                        <span class="rating-label">@L["Evaluation.MetricFactual"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiFactualRating" Disabled="@(Response.GeminiFactualRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Formatação</span>
+                        <span class="rating-label">@L["Evaluation.MetricFormatting"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiFormattingRating" Disabled="@(Response.GeminiFormattingRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Compliance</span>
+                        <span class="rating-label">@L["Evaluation.MetricCompliance"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiComplianceRating" Disabled="@(Response.GeminiComplianceRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Relevância</span>
+                        <span class="rating-label">@L["Evaluation.MetricRelevance"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiRelevanceRating" Disabled="@(Response.GeminiRelevanceRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Tom</span>
+                        <span class="rating-label">@L["Evaluation.MetricTone"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiToneRating" Disabled="@(Response.GeminiToneRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Concisão</span>
+                        <span class="rating-label">@L["Evaluation.MetricConciseness"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiConcisenessRating" Disabled="@(Response.GeminiConcisenessRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Clareza</span>
+                        <span class="rating-label">@L["Evaluation.MetricClarity"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiClarityRating" Disabled="@(Response.GeminiClarityRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Legibilidade</span>
+                        <span class="rating-label">@L["Evaluation.MetricReadability"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiReadabilityRating" Disabled="@(Response.GeminiReadabilityRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Halo Effect</span>
+                        <span class="rating-label">@L["Evaluation.MetricHaloEffect"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiHaloEffectRating" Disabled="@(Response.GeminiHaloEffectRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Segurança</span>
+                        <span class="rating-label">@L["Evaluation.MetricSafety"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiSafetyRating" Disabled="@(Response.GeminiSafetyRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label-bold">Global</span>
+                        <span class="rating-label-bold">@L["Evaluation.MetricOverall"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiRating" Class="final-rating-field" Disabled="@(Response.GeminiRating != null)" />
                     </div>
                 </div>
@@ -68,7 +71,7 @@
             <!-- Caixa de Feedback -->
             <FluentTextArea Value="@Response.GeminiFeedback"
                             ValueChanged="@OnGeminiInputChanged"
-                            Label="Feedback (Cole aqui o output bruto do Gemini)"
+                            Label="@L["Evaluation.FeedbackGemini"]"
                             Style="font-size:14px;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; width: 100%;"
                             Rows="8"
                             Disabled="@(!string.IsNullOrWhiteSpace(Response.GeminiFeedback))" />
@@ -79,56 +82,56 @@
             <div class="judge-header">
                 <div class="judge-label-wrapper">
                     <FluentIcon Value="@(new Icons.Regular.Size20.Sparkle())" Color="Color.Accent" />
-                    <div class="judge-label">Open AI ChatGpt</div>
+                    <div class="judge-label">@L["Evaluation.JudgeChatGpt"]</div>
                 </div>
             </div>
 
             <!-- Grupo de Ratings com grelha para as 10 métricas -->
             <div class="ratings-group-container">
-                <div class="ratings-group-header">Métricas de Avaliação (Escala 1-5)</div>
+                <div class="ratings-group-header">@L["Evaluation.MetricsHeader"]</div>
                 <div class="ratings-grid">
                     <div class="rating-cell">
-                        <span class="rating-label">Factual</span>
+                        <span class="rating-label">@L["Evaluation.MetricFactual"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptFactualRating" Disabled="@(Response.ChatGptFactualRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Formatação</span>
+                        <span class="rating-label">@L["Evaluation.MetricFormatting"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptFormattingRating" Disabled="@(Response.ChatGptFormattingRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Compliance</span>
+                        <span class="rating-label">@L["Evaluation.MetricCompliance"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptComplianceRating" Disabled="@(Response.ChatGptComplianceRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Relevância</span>
+                        <span class="rating-label">@L["Evaluation.MetricRelevance"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptRelevanceRating" Disabled="@(Response.ChatGptRelevanceRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Tom</span>
+                        <span class="rating-label">@L["Evaluation.MetricTone"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptToneRating" Disabled="@(Response.ChatGptToneRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Concisão</span>
+                        <span class="rating-label">@L["Evaluation.MetricConciseness"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptConcisenessRating" Disabled="@(Response.ChatGptConcisenessRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Clareza</span>
+                        <span class="rating-label">@L["Evaluation.MetricClarity"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptClarityRating" Disabled="@(Response.ChatGptClarityRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Legibilidade</span>
+                        <span class="rating-label">@L["Evaluation.MetricReadability"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptReadabilityRating" Disabled="@(Response.ChatGptReadabilityRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Halo Effect</span>
+                        <span class="rating-label">@L["Evaluation.MetricHaloEffect"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptHaloEffectRating" Disabled="@(Response.ChatGptHaloEffectRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label">Segurança</span>
+                        <span class="rating-label">@L["Evaluation.MetricSafety"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptSafetyRating" Disabled="@(Response.ChatGptSafetyRating != null)" />
                     </div>
                     <div class="rating-cell">
-                        <span class="rating-label-bold">Global</span>
+                        <span class="rating-label-bold">@L["Evaluation.MetricOverall"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptRating" Class="final-rating-field" Disabled="@(Response.ChatGptRating != null)" />
                     </div>
                 </div>
@@ -137,7 +140,7 @@
             <!-- Caixa de Feedback -->
             <FluentTextArea Value="@Response.ChatGptFeedback"
                             ValueChanged="@OnChatGptInputChanged"
-                            Label="Feedback (Cole aqui o output bruto do ChatGPT)"
+                            Label="@L["Evaluation.FeedbackChatGpt"]"
                             Style="font-size:14px;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; width: 100%;"
                             Rows="8"
                             Disabled="@(!string.IsNullOrWhiteSpace(Response.ChatGptFeedback))" />

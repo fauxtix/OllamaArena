@@ -82,7 +82,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
 
             var dados = new
             {
-                labels = new List<string> { "Tokens/s", "Eval (ms)", "Load (ms)", "Tokens" },
+                labels = new List<string> { L["Benchmarks.ChartLabelTokensPerSecond"], L["Benchmarks.ChartLabelEval"], L["Benchmarks.ChartLabelLoad"], L["Benchmarks.ChartLabelTokens"] },
                 datasets = new List<object>()
             };
 
@@ -120,11 +120,10 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             {
                 int totalRespostas = prompt.Answers?.Count ?? 0;
                 var confirmacao = await DialogService.ShowConfirmationAsync(
-                    $"Tem a certeza que deseja apagar o Benchmark #{prompt.Id}? " +
-                    $"Se confirmar, irá remover permanentemente todas as {totalRespostas} respostas associadas (Cascading Delete).",
-                    "Sim, Apagar benchmark",
-                    "Cancelar",
-                    "Apagar Benchmark");
+                    L["Benchmarks.DeleteConfirmMessage", prompt.Id, totalRespostas],
+                    L["Benchmarks.DeleteConfirmYes"],
+                    L["Common.Cancel"],
+                    L["Benchmarks.DeleteConfirmTitle"]);
 
                 if (confirmacao == null) return;
                 var resultado = await confirmacao.Result;
@@ -188,7 +187,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
                 {
                     if (DialogService != null)
                     {
-                        await DialogService.ShowErrorAsync("O rating introduzido deve situar-se estritamente entre 1 e 5.", "Erro de Validação");
+                        await DialogService.ShowErrorAsync(L["Benchmarks.ValidationRatingMessage"], L["Benchmarks.ValidationRatingTitle"]);
                     }
                     return;
                 }
@@ -198,7 +197,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
                 if (guardado)
                 {
                     await CloseDialogAsync();
-                    await DialogService.ShowInfoAsync($"Avaliação do modelo {resposta.NomeModelo} atualizada com sucesso no SQLite.", "Sucesso");
+                    await DialogService.ShowInfoAsync(L["Benchmarks.EvaluationSaved", resposta.NomeModelo], L["Common.Success"]);
                     StateHasChanged();
                 }
             }

@@ -150,4 +150,859 @@
   <data name="SystemLogs" xml:space="preserve">
     <value>Logs do sistema</value>
   </data>
+  <data name="Common.Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Common.Close" xml:space="preserve">
+    <value>Fechar</value>
+  </data>
+  <data name="Common.Success" xml:space="preserve">
+    <value>Sucesso</value>
+  </data>
+  <data name="Common.Error" xml:space="preserve">
+    <value>Erro</value>
+  </data>
+  <data name="Common.Save" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
+  <data name="Common.Confirm" xml:space="preserve">
+    <value>Confirmar</value>
+  </data>
+  <data name="Common.Delete" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="Common.Yes" xml:space="preserve">
+    <value>Sim</value>
+  </data>
+  <data name="Common.No" xml:space="preserve">
+    <value>Não</value>
+  </data>
+  <data name="Common.Loading" xml:space="preserve">
+    <value>A carregar...</value>
+  </data>
+  <data name="Common.NoRecords" xml:space="preserve">
+    <value>Sem registos</value>
+  </data>
+  <data name="Common.SearchPlaceholder" xml:space="preserve">
+    <value>Pesquisar...</value>
+  </data>
+  <data name="Common.Refresh" xml:space="preserve">
+    <value>Refrescar</value>
+  </data>
+  <data name="Common.ExportExcel" xml:space="preserve">
+    <value>Exportar para Excel</value>
+  </data>
+  <data name="Chat.PageTitle" xml:space="preserve">
+    <value>Chat - Ollama</value>
+  </data>
+  <data name="Chat.ModelsLoadErrorTitle" xml:space="preserve">
+    <value>Não foi possível carregar os modelos</value>
+  </data>
+  <data name="Chat.OllamaNotRunning" xml:space="preserve">
+    <value>O serviço Ollama não está em execução. Por favor, inicie o Ollama e recarregue a página.</value>
+  </data>
+  <data name="Chat.TemperatureLabel" xml:space="preserve">
+    <value>Temp: {0}</value>
+  </data>
+  <data name="Chat.GpuOk" xml:space="preserve">
+    <value>GPU OK ({0} GB / {1} GB VRAM)</value>
+  </data>
+  <data name="Chat.GpuCpuFallbackTitle" xml:space="preserve">
+    <value>O modelo excede a VRAM da GPU e vai correr dividido com a CPU (Lentidão esperada).</value>
+  </data>
+  <data name="Chat.GpuCpuFallback" xml:space="preserve">
+    <value>CPU Fallback ({0} GB necessários, só tem {1} GB)</value>
+  </data>
+  <data name="Chat.GpuInfoTooltip" xml:space="preserve">
+    <value>Saber mais sobre o desempenho</value>
+  </data>
+  <data name="Chat.NewChat" xml:space="preserve">
+    <value>Novo Chat</value>
+  </data>
+  <data name="Chat.History" xml:space="preserve">
+    <value>Histórico</value>
+  </data>
+  <data name="Chat.ContextTokens" xml:space="preserve">
+    <value>Contexto: {0} / {1} tokens</value>
+  </data>
+  <data name="Chat.ContextRemaining" xml:space="preserve">
+    <value>{0} restantes</value>
+  </data>
+  <data name="Chat.InputPlaceholder" xml:space="preserve">
+    <value>Escreve uma mensagem...</value>
+  </data>
+  <data name="Chat.WelcomeMessage" xml:space="preserve">
+    <value>Olá! Como posso ajudar-te hoje?</value>
+  </data>
+  <data name="Chat.UserDisplayName" xml:space="preserve">
+    <value>Tu</value>
+  </data>
+  <data name="Chat.OllamaParseError" xml:space="preserve">
+    <value>[Erro ao processar resposta do Ollama: {0}]</value>
+  </data>
+  <data name="Chat.ResponseTimeout" xml:space="preserve">
+    <value>⏱️ O tempo de resposta expirou.</value>
+  </data>
+  <data name="Chat.ResponseCancelled" xml:space="preserve">
+    <value> *(Cancelado)*</value>
+  </data>
+  <data name="Chat.UnexpectedError" xml:space="preserve">
+    <value>❌ Erro inesperado: {0}</value>
+  </data>
+  <data name="Benchmarks.SearchPlaceholder" xml:space="preserve">
+    <value>Pesquisa benchmarks (modelo, descrição)</value>
+  </data>
+  <data name="Benchmarks.AnalysisLocal" xml:space="preserve">
+    <value>Análise IA Local</value>
+  </data>
+  <data name="Benchmarks.DeleteAll" xml:space="preserve">
+    <value>Apagar Benchmarks</value>
+  </data>
+  <data name="Benchmarks.FilterAll" xml:space="preserve">
+    <value>Todos</value>
+  </data>
+  <data name="Benchmarks.FilterToEvaluate" xml:space="preserve">
+    <value>Por Avaliar</value>
+  </data>
+  <data name="Benchmarks.FilterEvaluated" xml:space="preserve">
+    <value>Avaliados</value>
+  </data>
+  <data name="Benchmarks.ColModel" xml:space="preserve">
+    <value>Modelo</value>
+  </data>
+  <data name="Benchmarks.ColDescription" xml:space="preserve">
+    <value>Descrição</value>
+  </data>
+  <data name="Benchmarks.ColGemini" xml:space="preserve">
+    <value>Gemini</value>
+  </data>
+  <data name="Benchmarks.ColFactual" xml:space="preserve">
+    <value>Factual</value>
+  </data>
+  <data name="Benchmarks.ColFormatting" xml:space="preserve">
+    <value>Formato</value>
+  </data>
+  <data name="Benchmarks.ColChatGpt" xml:space="preserve">
+    <value>ChatGPT</value>
+  </data>
+  <data name="Benchmarks.ColTokensPerSecond" xml:space="preserve">
+    <value>Tokens/s</value>
+  </data>
+  <data name="Benchmarks.ColTime" xml:space="preserve">
+    <value>Tempo</value>
+  </data>
+  <data name="Benchmarks.ColLoad" xml:space="preserve">
+    <value>Carga</value>
+  </data>
+  <data name="Benchmarks.ColTokens" xml:space="preserve">
+    <value>Tokens</value>
+  </data>
+  <data name="Benchmarks.ColActions" xml:space="preserve">
+    <value>Ações</value>
+  </data>
+  <data name="Benchmarks.ViewDetails" xml:space="preserve">
+    <value>Ver Detalhes</value>
+  </data>
+  <data name="Benchmarks.Delete" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="Benchmarks.AriaLabelDetail" xml:space="preserve">
+    <value>Detalhes da Avaliação Benchmark</value>
+  </data>
+  <data name="Benchmarks.DeleteAllConfirmTitle" xml:space="preserve">
+    <value>Confirme, por favor</value>
+  </data>
+  <data name="Benchmarks.DeleteAllConfirmMessage" xml:space="preserve">
+    <value>Tem a certeza que deseja apagar todos os Prompts e Respostas associadas? Esta operação não pode ser revertida.</value>
+  </data>
+  <data name="Benchmarks.DeleteAllYes" xml:space="preserve">
+    <value>Sim, Apagar</value>
+  </data>
+  <data name="Benchmarks.DeleteAllTitle" xml:space="preserve">
+    <value>Apagar todos os benchmarks</value>
+  </data>
+  <data name="Benchmarks.DeleteOneConfirmMessage" xml:space="preserve">
+    <value>Tem a certeza que deseja apagar o registo? Esta operação não pode ser revertida.</value>
+  </data>
+  <data name="Benchmarks.DeleteOneTitle" xml:space="preserve">
+    <value>Apagar resposta do benchmark</value>
+  </data>
+  <data name="Benchmarks.ExcelIdGroup" xml:space="preserve">
+    <value>ID #{0} ({1})</value>
+  </data>
+  <data name="Benchmarks.MultipleGroupsWarning" xml:space="preserve">
+    <value>⚠️ Atenção - Múltiplos Grupos de Prompts</value>
+  </data>
+  <data name="Benchmarks.MultipleGroupsMessage" xml:space="preserve">
+    <value>Foram detetados &lt;strong&gt;{0}&lt;/strong&gt; grupos de prompts diferentes.&lt;br&gt;&lt;br&gt;A análise IA Local está otimizada para um único prompt/grupo. Recomenda-se filtrar para apenas um prompt antes de prosseguir.</value>
+  </data>
+  <data name="Benchmarks.MultipleGroupsTitle" xml:space="preserve">
+    <value>Múltiplos Prompts Detetados</value>
+  </data>
+  <data name="Benchmarks.AttentionWarning" xml:space="preserve">
+    <value>⚠️ Atenção</value>
+  </data>
+  <data name="Benchmarks.NotEvaluatedMessage" xml:space="preserve">
+    <value>Existem &lt;strong&gt;{0}&lt;/strong&gt; benchmark(s) ainda não avaliados (Gemini ou ChatGPT).&lt;br&gt;&lt;br&gt;Avalie os benchmarks antes de prosseguir com a análise.</value>
+  </data>
+  <data name="Benchmarks.NotEvaluatedTitle" xml:space="preserve">
+    <value>Nem todos os benchmarks estão avaliados</value>
+  </data>
+  <data name="Benchmarks.NoDataForAnalysis" xml:space="preserve">
+    <value>Nenhum dado disponível para análise.</value>
+  </data>
+  <data name="Benchmarks.AnalysisCancelled" xml:space="preserve">
+    <value>Operação cancelada pelo utilizador.</value>
+  </data>
+  <data name="Benchmarks.AnalysisCancelledDetail" xml:space="preserve">
+    <value>❌ &lt;strong&gt;Operação cancelada:&lt;/strong&gt; A análise foi interrompida antes de ser concluída.</value>
+  </data>
+  <data name="Benchmarks.AnalysisError" xml:space="preserve">
+    <value>❌ Erro ao processar os dados.</value>
+  </data>
+  <data name="Benchmarks.AnalysisErrorDetail" xml:space="preserve">
+    <value>Ocorreu um erro ao calcular as métricas de benchmark localmente. Verifique os logs para mais detalhes.</value>
+  </data>
+  <data name="SystemLogs.PageTitle" xml:space="preserve">
+    <value>Logs do Sistema</value>
+  </data>
+  <data name="SystemLogs.ClearLogs" xml:space="preserve">
+    <value>Limpar Logs</value>
+  </data>
+  <data name="SystemLogs.ClearVisible" xml:space="preserve">
+    <value>Visíveis</value>
+  </data>
+  <data name="SystemLogs.ClearFiltered" xml:space="preserve">
+    <value>Filtrados</value>
+  </data>
+  <data name="SystemLogs.FilterInformation" xml:space="preserve">
+    <value>Informações</value>
+  </data>
+  <data name="SystemLogs.FilterWarnings" xml:space="preserve">
+    <value>Alertas</value>
+  </data>
+  <data name="SystemLogs.FilterErrors" xml:space="preserve">
+    <value>Erros</value>
+  </data>
+  <data name="SystemLogs.FilterAll" xml:space="preserve">
+    <value>Todos</value>
+  </data>
+  <data name="SystemLogs.SearchPlaceholder" xml:space="preserve">
+    <value>Texto a pesquisar...</value>
+  </data>
+  <data name="SystemLogs.LoadingRecords" xml:space="preserve">
+    <value>A carregar registos...</value>
+  </data>
+  <data name="SystemLogs.NoRecordsForFilter" xml:space="preserve">
+    <value>Sem registos para o filtro ou pesquisa selecionada.</value>
+  </data>
+  <data name="SystemLogs.ColId" xml:space="preserve">
+    <value>ID</value>
+  </data>
+  <data name="SystemLogs.ColDateTime" xml:space="preserve">
+    <value>Data/Hora</value>
+  </data>
+  <data name="SystemLogs.ColLevel" xml:space="preserve">
+    <value>Nível</value>
+  </data>
+  <data name="SystemLogs.ColMessage" xml:space="preserve">
+    <value>Mensagem</value>
+  </data>
+  <data name="SystemLogs.ColActions" xml:space="preserve">
+    <value>Ações</value>
+  </data>
+  <data name="SystemLogs.ViewDetails" xml:space="preserve">
+    <value>Ver Detalhes</value>
+  </data>
+  <data name="SystemLogs.NoLogsToDeleteTitle" xml:space="preserve">
+    <value>Nenhum registo</value>
+  </data>
+  <data name="SystemLogs.NoLogsToDeleteMessage" xml:space="preserve">
+    <value>Não existem logs para apagar com os filtros atuais.</value>
+  </data>
+  <data name="SystemLogs.DeleteAllTitle" xml:space="preserve">
+    <value>ATENÇÃO - VAI LIMPAR TODOS OS REGISTOS</value>
+  </data>
+  <data name="SystemLogs.DeleteFilteredTitle" xml:space="preserve">
+    <value>Confirme Eliminação</value>
+  </data>
+  <data name="SystemLogs.DeleteAllMessage" xml:space="preserve">
+    <value>Tem a certeza de que deseja eliminar **TODOS** os logs?
+
+Total: {0} registos</value>
+  </data>
+  <data name="SystemLogs.DeleteFilteredMessage" xml:space="preserve">
+    <value>Vai eliminar **{0}** registo(s) filtrados.
+
+Deseja continuar?</value>
+  </data>
+  <data name="SystemLogs.DeleteYes" xml:space="preserve">
+    <value>Sim, Apagar</value>
+  </data>
+  <data name="SystemLogs.DeletedMessage" xml:space="preserve">
+    <value>{0} log(s) foram eliminados com sucesso.</value>
+  </data>
+  <data name="SystemLogs.DeleteErrorTitle" xml:space="preserve">
+    <value>Erro ao eliminar</value>
+  </data>
+  <data name="SystemLogs.DeleteErrorMessage" xml:space="preserve">
+    <value>Ocorreu um erro: {0}</value>
+  </data>
+  <data name="SystemLogs.DeleteOneMessage" xml:space="preserve">
+    <value>Vai apagar o log {0}.
+
+Deseja continuar?</value>
+  </data>
+  <data name="SystemLogs.DeleteOneTitle" xml:space="preserve">
+    <value>Apagar registo</value>
+  </data>
+  <data name="Evaluation.JudgeGemini" xml:space="preserve">
+    <value>Google Gemini</value>
+  </data>
+  <data name="Evaluation.JudgeChatGpt" xml:space="preserve">
+    <value>Open AI ChatGpt</value>
+  </data>
+  <data name="Evaluation.MetricsHeader" xml:space="preserve">
+    <value>Métricas de Avaliação (Escala 1-5)</value>
+  </data>
+  <data name="Evaluation.MetricFactual" xml:space="preserve">
+    <value>Factual</value>
+  </data>
+  <data name="Evaluation.MetricFormatting" xml:space="preserve">
+    <value>Formatação</value>
+  </data>
+  <data name="Evaluation.MetricCompliance" xml:space="preserve">
+    <value>Compliance</value>
+  </data>
+  <data name="Evaluation.MetricRelevance" xml:space="preserve">
+    <value>Relevância</value>
+  </data>
+  <data name="Evaluation.MetricTone" xml:space="preserve">
+    <value>Tom</value>
+  </data>
+  <data name="Evaluation.MetricConciseness" xml:space="preserve">
+    <value>Concisão</value>
+  </data>
+  <data name="Evaluation.MetricClarity" xml:space="preserve">
+    <value>Clareza</value>
+  </data>
+  <data name="Evaluation.MetricReadability" xml:space="preserve">
+    <value>Legibilidade</value>
+  </data>
+  <data name="Evaluation.MetricHaloEffect" xml:space="preserve">
+    <value>Halo Effect</value>
+  </data>
+  <data name="Evaluation.MetricSafety" xml:space="preserve">
+    <value>Segurança</value>
+  </data>
+  <data name="Evaluation.MetricOverall" xml:space="preserve">
+    <value>Global</value>
+  </data>
+  <data name="Evaluation.FeedbackGemini" xml:space="preserve">
+    <value>Feedback (Cole aqui o output bruto do Gemini)</value>
+  </data>
+  <data name="Evaluation.FeedbackChatGpt" xml:space="preserve">
+    <value>Feedback (Cole aqui o output bruto do ChatGPT)</value>
+  </data>
+  <data name="Benchmarks.PageTitle" xml:space="preserve">
+    <value>Análise de Qualidade e Métricas</value>
+  </data>
+  <data name="Benchmarks.ReloadPageTitle" xml:space="preserve">
+    <value>Recarregar página (F5)</value>
+  </data>
+  <data name="Benchmarks.LoadingHistory" xml:space="preserve">
+    <value>A carregar o histórico do SQLite...</value>
+  </data>
+  <data name="Benchmarks.EmptyDatabase" xml:space="preserve">
+    <value>Nenhum registo de benchmark encontrado na Base de Dados.</value>
+  </data>
+  <data name="Benchmarks.ChartPromptTitle" xml:space="preserve">
+    <value>Gráfico do Prompt #{0}</value>
+  </data>
+  <data name="Benchmarks.ModelCount" xml:space="preserve">
+    <value>{0} modelos</value>
+  </data>
+  <data name="Benchmarks.ShowChartTitle" xml:space="preserve">
+    <value>Mostrar resultados em gráfico</value>
+  </data>
+  <data name="Benchmarks.Chart" xml:space="preserve">
+    <value>Gráfico</value>
+  </data>
+  <data name="Benchmarks.DeletePromptTitle" xml:space="preserve">
+    <value>Apagar benchmark</value>
+  </data>
+  <data name="Benchmarks.SelectPromptPlaceholder" xml:space="preserve">
+    <value>Selecione um prompt na lista da esquerda para analisar as respostas dos modelos.</value>
+  </data>
+  <data name="Benchmarks.ResponsesTitle" xml:space="preserve">
+    <value>Respostas Geradas para o Prompt #{0}</value>
+  </data>
+  <data name="Benchmarks.NoAnswersWarning" xml:space="preserve">
+    <value>Este prompt foi guardado, mas não existem respostas associadas na tabela.</value>
+  </data>
+  <data name="Benchmarks.CreatingPrompt" xml:space="preserve">
+    <value>A criar o prompt para para avaliação...</value>
+  </data>
+  <data name="Benchmarks.TokensPerSecond" xml:space="preserve">
+    <value>{0} T/s</value>
+  </data>
+  <data name="Benchmarks.EvalTime" xml:space="preserve">
+    <value>Eval: {0} m:s</value>
+  </data>
+  <data name="Benchmarks.LoadTime" xml:space="preserve">
+    <value>Load: {0} m:s</value>
+  </data>
+  <data name="Benchmarks.Tokens" xml:space="preserve">
+    <value>Tokens: {0}</value>
+  </data>
+  <data name="Benchmarks.CopyPromptTitle" xml:space="preserve">
+    <value>Copiar Prompt Formatado para o Juiz IA</value>
+  </data>
+  <data name="Benchmarks.CopyForEvaluation" xml:space="preserve">
+    <value>Copiar para avaliação</value>
+  </data>
+  <data name="Benchmarks.Evaluate" xml:space="preserve">
+    <value>Avaliação</value>
+  </data>
+  <data name="Benchmarks.DeleteConfirmMessage" xml:space="preserve">
+    <value>Tem a certeza que deseja apagar o Benchmark #{0}? Se confirmar, irá remover permanentemente todas as {1} respostas associadas (Cascading Delete).</value>
+  </data>
+  <data name="Benchmarks.DeleteConfirmYes" xml:space="preserve">
+    <value>Sim, Apagar benchmark</value>
+  </data>
+  <data name="Benchmarks.DeleteConfirmTitle" xml:space="preserve">
+    <value>Apagar Benchmark</value>
+  </data>
+  <data name="Benchmarks.ValidationRatingMessage" xml:space="preserve">
+    <value>O rating introduzido deve situar-se estritamente entre 1 e 5.</value>
+  </data>
+  <data name="Benchmarks.ValidationRatingTitle" xml:space="preserve">
+    <value>Erro de Validação</value>
+  </data>
+  <data name="Benchmarks.EvaluationSaved" xml:space="preserve">
+    <value>Avaliação do modelo {0} atualizada com sucesso no SQLite.</value>
+  </data>
+  <data name="Benchmarks.ChartLabelTokensPerSecond" xml:space="preserve">
+    <value>Tokens/s</value>
+  </data>
+  <data name="Benchmarks.ChartLabelEval" xml:space="preserve">
+    <value>Eval (ms)</value>
+  </data>
+  <data name="Benchmarks.ChartLabelLoad" xml:space="preserve">
+    <value>Load (ms)</value>
+  </data>
+  <data name="Benchmarks.ChartLabelTokens" xml:space="preserve">
+    <value>Tokens</value>
+  </data>
+  <data name="Analise.PageTitle" xml:space="preserve">
+    <value>Análise de Qualidade e Métricas (SQLite)</value>
+  </data>
+  <data name="Analise.RefreshData" xml:space="preserve">
+    <value>Atualizar Dados</value>
+  </data>
+  <data name="Analise.LoadingHistory" xml:space="preserve">
+    <value>A carregar o histórico da base de dados...</value>
+  </data>
+  <data name="Analise.ColPromptExecuted" xml:space="preserve">
+    <value>Prompt Executado</value>
+  </data>
+  <data name="Analise.ColModelsTested" xml:space="preserve">
+    <value>Modelos Testados</value>
+  </data>
+  <data name="Analise.SelectPromptPlaceholder" xml:space="preserve">
+    <value>Selecione um prompt na tabela superior para analisar as respostas dos modelos.</value>
+  </data>
+  <data name="Analise.EvalMs" xml:space="preserve">
+    <value>Eval: {0}ms</value>
+  </data>
+  <data name="Analise.LoadMs" xml:space="preserve">
+    <value>Load: {0}ms</value>
+  </data>
+  <data name="Analise.DeleteConfirmMessage" xml:space="preserve">
+    <value>Tem a certeza que deseja apagar o Prompt #{0}? Isto irá remover permanentemente todas as {1} respostas associadas (Cascading Delete).</value>
+  </data>
+  <data name="Analise.DeleteTitle" xml:space="preserve">
+    <value>Aviso de Eliminação</value>
+  </data>
+  <data name="EditPrompts.PageTitle" xml:space="preserve">
+    <value>Editor de Prompts</value>
+  </data>
+  <data name="EditPrompts.SavedPrompts" xml:space="preserve">
+    <value>Prompts guardados</value>
+  </data>
+  <data name="EditPrompts.Save" xml:space="preserve">
+    <value>Gravar</value>
+  </data>
+  <data name="EditPrompts.CancelEdit" xml:space="preserve">
+    <value>Cancelar edição</value>
+  </data>
+  <data name="EditPrompts.LoadingPrompt" xml:space="preserve">
+    <value>A carregar o prompt...</value>
+  </data>
+  <data name="EditPrompts.EmptyState" xml:space="preserve">
+    <value>Não existem ficheiros de prompt na pasta Prompts.</value>
+  </data>
+  <data name="EditPrompts.Exit" xml:space="preserve">
+    <value>Sair</value>
+  </data>
+  <data name="EditPrompts.InitError" xml:space="preserve">
+    <value>Erro ao inicializar a lista de ficheiros.</value>
+  </data>
+  <data name="EditPrompts.LoadFileError" xml:space="preserve">
+    <value>Não foi possível carregar o ficheiro selecionado.</value>
+  </data>
+  <data name="EditPrompts.NoFileSelected" xml:space="preserve">
+    <value>Nenhum ficheiro selecionado para gravar.</value>
+  </data>
+  <data name="EditPrompts.SaveSuccess" xml:space="preserve">
+    <value>O ficheiro '{0}' foi gravado com sucesso!</value>
+  </data>
+  <data name="EditPrompts.SaveError" xml:space="preserve">
+    <value>Não foi possível gravar o prompt.</value>
+  </data>
+  <data name="EditPrompts.DiscardConfirm" xml:space="preserve">
+    <value>Existem alterações não gravadas no prompt atual. Deseja descartá-las?</value>
+  </data>
+  <data name="EditPrompts.Discard" xml:space="preserve">
+    <value>Descartar</value>
+  </data>
+  <data name="EditPrompts.DiscardTitle" xml:space="preserve">
+    <value>Alterações não gravadas</value>
+  </data>
+  <data name="Modelos.PageTitle" xml:space="preserve">
+    <value>Modelos Disponíveis - Ollama</value>
+  </data>
+  <data name="Modelos.LocalInstalled" xml:space="preserve">
+    <value>Modelos Locais Instalados</value>
+  </data>
+  <data name="Modelos.IntroText" xml:space="preserve">
+    <value>Consulte os modelos guardados no seu disco, a capacidade nativa de contexto do ficheiro e a compatibilidade estimada com a sua placa gráfica.</value>
+  </data>
+  <data name="Modelos.NoLocalModels" xml:space="preserve">
+    <value>Nenhum modelo local detetado ou Ollama inacessível.</value>
+  </data>
+  <data name="Modelos.ColName" xml:space="preserve">
+    <value>Nome</value>
+  </data>
+  <data name="Modelos.ColFamily" xml:space="preserve">
+    <value>Família</value>
+  </data>
+  <data name="Modelos.ColParameters" xml:space="preserve">
+    <value>Parâmetros</value>
+  </data>
+  <data name="Modelos.ColQuantization" xml:space="preserve">
+    <value>Quantização</value>
+  </data>
+  <data name="Modelos.ColTrainingYear" xml:space="preserve">
+    <value>Ano de Treino</value>
+  </data>
+  <data name="Modelos.ColMaxContext" xml:space="preserve">
+    <value>Contexto Máximo</value>
+  </data>
+  <data name="Modelos.ColDiskSize" xml:space="preserve">
+    <value>Tamanho no Disco</value>
+  </data>
+  <data name="Modelos.ColGpuCompat" xml:space="preserve">
+    <value>Compatibilidade GPU</value>
+  </data>
+  <data name="Modelos.ContextTokens" xml:space="preserve">
+    <value>{0} tokens</value>
+  </data>
+  <data name="Modelos.SizeInGB" xml:space="preserve">
+    <value>{0} GB</value>
+  </data>
+  <data name="Modelos.VramUnavailable" xml:space="preserve">
+    <value>Leitura VRAM Indisponível</value>
+  </data>
+  <data name="Modelos.GpuCompatible" xml:space="preserve">
+    <value>Compatível (~{0} GB)</value>
+  </data>
+  <data name="Modelos.ExceedsVram" xml:space="preserve">
+    <value>Excede VRAM (~{0} GB)</value>
+  </data>
+  <data name="AnalysisViewer.Title" xml:space="preserve">
+    <value>Análise Analítica do Modelo Local</value>
+  </data>
+  <data name="AnalysisViewer.Subtitle" xml:space="preserve">
+    <value>Relatório dinâmico gerado através do processamento local da sua tabela de benchmarks.</value>
+  </data>
+  <data name="AnalysisViewer.OfflineBadge" xml:space="preserve">
+    <value>Análise Offline Ativa</value>
+  </data>
+  <data name="AnalysisViewer.ReadyTitle" xml:space="preserve">
+    <value>Pronto para analisar</value>
+  </data>
+  <data name="AnalysisViewer.ReadyHint" xml:space="preserve">
+    <value>Clique em <strong>"Análise IA Local"</strong> para iniciar o processamento dos benchmarks.</value>
+  </data>
+  <data name="AnalysisViewer.ProcessingTitle" xml:space="preserve">
+    <value>A processar resposta...</value>
+  </data>
+  <data name="AnalysisViewer.ProcessingHint" xml:space="preserve">
+    <value>O modelo está a analisar os dados em tempo real</value>
+  </data>
+  <data name="AnalysisViewer.DoneTitle" xml:space="preserve">
+    <value>Análise Concluída</value>
+  </data>
+  <data name="AnalysisViewer.DoneHint" xml:space="preserve">
+    <value>Resultado disponível abaixo</value>
+  </data>
+  <data name="AnalysisViewer.ExecutiveSummary" xml:space="preserve">
+    <value>📊 Sumário Executivo</value>
+  </data>
+  <data name="AnalysisViewer.Fastest" xml:space="preserve">
+    <value>⚡ Mais Rápido</value>
+  </data>
+  <data name="AnalysisViewer.TokensSec" xml:space="preserve">
+    <value>({0} t/s)</value>
+  </data>
+  <data name="AnalysisViewer.BestRated" xml:space="preserve">
+    <value>⭐ Melhor Avaliado</value>
+  </data>
+  <data name="AnalysisViewer.TechnicalAnalysis" xml:space="preserve">
+    <value>🔍 Análise Técnica Detalhada</value>
+  </data>
+  <data name="EvalDialog.AriaLabel" xml:space="preserve">
+    <value>Avaliação Benchmark</value>
+  </data>
+  <data name="EvalDialog.Title" xml:space="preserve">
+    <value>Avaliação - {0}</value>
+  </data>
+  <data name="EvalDialog.TranslateGemini" xml:space="preserve">
+    <value>Traduzir Feedback (Gemini)</value>
+  </data>
+  <data name="EvalDialog.TranslateChatGpt" xml:space="preserve">
+    <value>Traduzir Feedback (ChatGPT)</value>
+  </data>
+  <data name="EvalDialog.SaveEvaluation" xml:space="preserve">
+    <value>Guardar avaliação</value>
+  </data>
+  <data name="EvalDialog.SaveChanges" xml:space="preserve">
+    <value>Guardar alterações</value>
+  </data>
+  <data name="EvalDialog.SaveError" xml:space="preserve">
+    <value>Erro ao guardar avaliação do benchmark.</value>
+  </data>
+  <data name="EvalDialog.TranslateTitle" xml:space="preserve">
+    <value>Tradução Gemini</value>
+  </data>
+  <data name="EvalDialog.TranslateChatGptError" xml:space="preserve">
+    <value>Erro ao traduzir feedback do ChatGPT. Verifique os logs, por favor.</value>
+  </data>
+  <data name="EvalDialog.TranslateGeminiError" xml:space="preserve">
+    <value>Erro ao traduzir feedback do Gemini. Verifique Logs, por favor.</value>
+  </data>
+  <data name="ChartDialog.AriaLabel" xml:space="preserve">
+    <value>Gráficos de Benchmark</value>
+  </data>
+  <data name="ChartDialog.Title" xml:space="preserve">
+    <value>Gráficos de Benchmark do Prompt #{0}</value>
+  </data>
+  <data name="ChartDialog.EvalChartTitle" xml:space="preserve">
+    <value>Tempo de Execução / Eval (ms)</value>
+  </data>
+  <data name="ChartDialog.LoadChartTitle" xml:space="preserve">
+    <value>Tempo de Carga do Modelo / Load (ms)</value>
+  </data>
+  <data name="ChartDialog.SpeedChartTitle" xml:space="preserve">
+    <value>Velocidade de Geração (Tokens/s)</value>
+  </data>
+  <data name="ChartDialog.TotalTokensTitle" xml:space="preserve">
+    <value>Total de Tokens Gerados</value>
+  </data>
+  <data name="ChartDialog.NoPrompt" xml:space="preserve">
+    <value>Nenhum prompt selecionado.</value>
+  </data>
+  <data name="GpuDialog.Title" xml:space="preserve">
+    <value>Informação do Sistema</value>
+  </data>
+  <data name="GpuDialog.CpuFallbackTitle" xml:space="preserve">
+    <value>O que significa "CPU fallback"?</value>
+  </data>
+  <data name="GpuDialog.CpuFallbackBody" xml:space="preserve">
+    <value>Ocorre quando a GPU não tem VRAM suficiente para carregar o modelo. Nesse caso, o processamento passa parcial ou totalmente para a CPU.</value>
+  </data>
+  <data name="GpuDialog.VramTitle" xml:space="preserve">
+    <value>VRAM insuficiente</value>
+  </data>
+  <data name="GpuDialog.VramBody" xml:space="preserve">
+    <value>A tua placa gráfica não possui memória de vídeo livre suficiente para suportar este modelo. Quanto maior o modelo, maior a VRAM necessária.</value>
+  </data>
+  <data name="GpuDialog.SpeedTitle" xml:space="preserve">
+    <value>Impacto na velocidade</value>
+  </data>
+  <data name="GpuDialog.SpeedItem1" xml:space="preserve">
+    <value>O processamento na CPU é significativamente mais lento do que na GPU.</value>
+  </data>
+  <data name="GpuDialog.SpeedItem2" xml:space="preserve">
+    <value>O tempo de resposta aumenta proporcionalmente ao tamanho do modelo.</value>
+  </data>
+  <data name="GpuDialog.SpeedItem3" xml:space="preserve">
+    <value>Modelos pequenos (2B, mini, etc.) continuam utilizáveis mesmo sem GPU.</value>
+  </data>
+  <data name="HistoryPanel.Title" xml:space="preserve">
+    <value>Histórico de Execuções</value>
+  </data>
+  <data name="HistoryPanel.NoHistory" xml:space="preserve">
+    <value>Sem histórico.</value>
+  </data>
+  <data name="HistoryPanel.ColPrompt" xml:space="preserve">
+    <value>Descrição do Prompt</value>
+  </data>
+  <data name="HistoryPanel.ColModel" xml:space="preserve">
+    <value>Modelo</value>
+  </data>
+  <data name="HistoryPanel.ColDate" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="HistoryPanel.ColEvalTime" xml:space="preserve">
+    <value>Tempo Eval.</value>
+  </data>
+  <data name="HistoryPanel.ColProcessTime" xml:space="preserve">
+    <value>Tempo Procº</value>
+  </data>
+  <data name="LogDetail.AriaLabel" xml:space="preserve">
+    <value>Detalhes do Log</value>
+  </data>
+  <data name="LogDetail.Title" xml:space="preserve">
+    <value>Detalhes do Registo #{0}</value>
+  </data>
+  <data name="LogDetail.Message" xml:space="preserve">
+    <value>Mensagem:</value>
+  </data>
+  <data name="LogDetail.Exception" xml:space="preserve">
+    <value>Exceção / Erro:</value>
+  </data>
+  <data name="TranslationDialog.Title" xml:space="preserve">
+    <value>Tradução do Feedback ({0})</value>
+  </data>
+  <data name="TranslationDialog.ModelUsed" xml:space="preserve">
+    <value>Modelo usado: {0}</value>
+  </data>
+  <data name="TranslationDialog.TimeSpent" xml:space="preserve">
+    <value>Tempo gasto: {0}</value>
+  </data>
+  <data name="TranslationDialog.Accept" xml:space="preserve">
+    <value>Aceitar e continuar</value>
+  </data>
+  <data name="TranslationDialog.Exit" xml:space="preserve">
+    <value>Sair</value>
+  </data>
+  <data name="Readme.AriaLabel" xml:space="preserve">
+    <value>README</value>
+  </data>
+  <data name="Readme.Title" xml:space="preserve">
+    <value>Preview README.md</value>
+  </data>
+  <data name="Readme.LoadError" xml:space="preserve">
+    <value>Erro ao carregar o ficheiro.</value>
+  </data>
+  <data name="Readme.LoadErrorHint" xml:space="preserve">
+    <value>Por favor, tente novamente mais tarde (o ficheiro poderá estar num repositório privado).</value>
+  </data>
+  <data name="EvalDetail.AriaLabel" xml:space="preserve">
+    <value>Detalhes da Avaliação Benchmark</value>
+  </data>
+  <data name="EvalDetail.TabMetrics" xml:space="preserve">
+    <value>Métricas</value>
+  </data>
+  <data name="EvalDetail.Metric" xml:space="preserve">
+    <value>Métrica</value>
+  </data>
+  <data name="EvalDetail.TabFeedbacks" xml:space="preserve">
+    <value>Feedbacks dos Juízes</value>
+  </data>
+  <data name="EvalDetail.NoFeedback" xml:space="preserve">
+    <value>Nenhum feedback registado.</value>
+  </data>
+  <data name="Home.ImageAlt" xml:space="preserve">
+    <value>Imagem gerada por IA</value>
+  </data>
+  <data name="Home.NoInternetError" xml:space="preserve">
+    <value>Internet indisponível. Verifique, por favor.</value>
+  </data>
+  <data name="Home.ReadmeTitle" xml:space="preserve">
+    <value>Acesso ao ficheiro README.md</value>
+  </data>
+  <data name="NotFound.Title" xml:space="preserve">
+    <value>Não Encontrado</value>
+  </data>
+  <data name="NotFound.Message" xml:space="preserve">
+    <value>Desculpe, o conteúdo que procura não existe.</value>
+  </data>
+  <data name="ErrorPage.PageTitle" xml:space="preserve">
+    <value>Erro</value>
+  </data>
+  <data name="ErrorPage.Title" xml:space="preserve">
+    <value>Erro.</value>
+  </data>
+  <data name="ErrorPage.Subtitle" xml:space="preserve">
+    <value>Ocorreu um erro ao processar o seu pedido.</value>
+  </data>
+  <data name="ErrorPage.RequestId" xml:space="preserve">
+    <value>ID do Pedido:</value>
+  </data>
+  <data name="ErrorPage.DevModeTitle" xml:space="preserve">
+    <value>Modo de Desenvolvimento</value>
+  </data>
+  <data name="ErrorPage.DevModeBody" xml:space="preserve">
+    <value>Mudar para o ambiente &lt;strong&gt;Development&lt;/strong&gt; mostrará informação mais detalhada sobre o erro que ocorreu.</value>
+  </data>
+  <data name="ErrorPage.DevModeWarning" xml:space="preserve">
+    <value>&lt;strong&gt;O ambiente de desenvolvimento não deve ser ativado em aplicações publicadas.&lt;/strong&gt; Pode resultar na exibição de informação sensível de exceções a utilizadores finais. Para depuração local, ative o ambiente &lt;strong&gt;Development&lt;/strong&gt; definindo a variável de ambiente &lt;strong&gt;ASPNETCORE_ENVIRONMENT&lt;/strong&gt; para &lt;strong&gt;Development&lt;/strong&gt; e reinicie a aplicação.</value>
+  </data>
+  <data name="Settings.ThemeLabel" xml:space="preserve">
+    <value>Tema</value>
+  </data>
+  <data name="Settings.ColorLabel" xml:space="preserve">
+    <value>Cor</value>
+  </data>
+  <data name="Settings.FeelingLucky" xml:space="preserve">
+    <value>Sentir sorte?</value>
+  </data>
+  <data name="Settings.ModelLabel" xml:space="preserve">
+    <value>Modelo Ollama</value>
+  </data>
+  <data name="Settings.SaveModel" xml:space="preserve">
+    <value>Guardar Modelo</value>
+  </data>
+  <data name="Settings.ExampleContent" xml:space="preserve">
+    <value>Exemplo de conteúdo</value>
+  </data>
+  <data name="Settings.OutlineButton" xml:space="preserve">
+    <value>Botão contorno</value>
+  </data>
+  <data name="Settings.AccentButton" xml:space="preserve">
+    <value>Botão acento</value>
+  </data>
+  <data name="Settings2.LoadedModels" xml:space="preserve">
+    <value>Modelos carregados no Ollama</value>
+  </data>
+  <data name="Reconnect.Joining" xml:space="preserve">
+    <value>A religar ao servidor...</value>
+  </data>
+  <data name="Reconnect.Retrying" xml:space="preserve">
+    <value>Falha na religação... a tentar novamente em <span id="components-seconds-to-next-attempt"></span> segundos.</value>
+  </data>
+  <data name="Reconnect.Failed" xml:space="preserve">
+    <value>Falha ao religar.&lt;br /&gt;Por favor, tente novamente ou recarregue a página.</value>
+  </data>
+  <data name="Reconnect.Retry" xml:space="preserve">
+    <value>Tentar novamente</value>
+  </data>
+  <data name="Reconnect.Paused" xml:space="preserve">
+    <value>A sessão foi pausada pelo servidor.</value>
+  </data>
+  <data name="Reconnect.Resume" xml:space="preserve">
+    <value>Retomar</value>
+  </data>
+  <data name="Reconnect.ResumeFailed" xml:space="preserve">
+    <value>Falha ao retomar a sessão.&lt;br /&gt;Por favor, recarregue a página.</value>
+  </data>
+  <data name="Nav.NavigationMenu" xml:space="preserve">
+    <value>Menu de Navegação</value>
+  </data>
+  <data name="Nav.ExpandToggle" xml:space="preserve">
+    <value>Alternar expansão/colapso do menu</value>
+  </data>
 </root>

@@ -1,13 +1,16 @@
-﻿@using OllamaFluentUIChat.Models.Entities
+﻿@using Microsoft.Extensions.Localization
+@using OllamaFluentUIChat.Models.Entities
+@using OllamaFluentUIChat.Resources
 @using OllamaFluentUIChat.Services.Interfaces.Repositories
 @using OllamaFluentUIChat.Services.Interfaces.Services
+@inject IStringLocalizer<SharedResources> L
 
 <FluentDialog Hidden="@(!Visible)"
               Modal="true"
               Class="evaluation-dialogue-benchmark"
               Style="--dialog-width: 1200px; --dialog-height: auto;"
               TrapFocus="true"
-              AriaLabel="Avaliação Benchmark">
+              AriaLabel="@L["EvalDialog.AriaLabel"]">
 
     <FluentDialogHeader Visible="true">
         <FluentStack Orientation="Orientation.Horizontal"
@@ -16,7 +19,7 @@
             <div style="display: flex; align-items: flex-start; gap: 10px; margin-top: 10px;">
                 <FluentIcon Value="@(new Icons.Regular.Size24.ClipboardCode())" />
                 <FluentLabel Typo="Typography.Body">
-                    Avaliação - @Response?.NomeModelo
+                    @L["EvalDialog.Title", Response?.NomeModelo ?? string.Empty]
                 </FluentLabel>
 
                 <blockquote class="prompt-citacao" style="flex: 1; margin: 0; height:5vw; overflow-y: auto;">
@@ -38,7 +41,7 @@
                                   Disabled="@isTranslating"
                                   OnClick="TraduzirGemini">
                         <FluentIcon Value="@(new Icons.Regular.Size20.Translate())" />
-                        Traduzir Feedback (Gemini)
+                        @L["EvalDialog.TranslateGemini"]
                     </FluentButton>
                 </div>
 
@@ -47,7 +50,7 @@
                                   Disabled="@isTranslating"
                                   OnClick="TraduzirChatGpt">
                         <FluentIcon Value="@(new Icons.Regular.Size20.Translate())" />
-                        Traduzir Feedback (ChatGPT)
+                        @L["EvalDialog.TranslateChatGpt"]
                     </FluentButton>
                 </div>
 
@@ -66,12 +69,12 @@
 
         <FluentButton Appearance="Appearance.Accent" Disabled="@isTranslating"
                       OnClick="Guardar">
-            Guardar avaliação
+            @L["EvalDialog.SaveEvaluation"]
         </FluentButton>
 
         <FluentButton Appearance="Appearance.Stealth"
                       OnClick="Fechar">
-            Fechar
+            @L["Common.Close"]
         </FluentButton>
 
     </FluentDialogFooter>
@@ -139,7 +142,7 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Erro ao guardar avaliação do benchmark.");
-            await DialogService.ShowErrorAsync("Erro ao guardar avaliação do benchmark.", "Guardar alterações");
+            await DialogService.ShowErrorAsync(L["EvalDialog.SaveError"], L["EvalDialog.SaveChanges"]);
         }
 
     }
@@ -183,7 +186,7 @@
         }
         catch (Exception ex)
         {
-            await DialogService.ShowErrorAsync("Erro ao traduzir feedback do ChatGPT. Verifique os logs, por favor.", "Tradução Gemini");
+            await DialogService.ShowErrorAsync(L["EvalDialog.TranslateChatGptError"], L["EvalDialog.TranslateTitle"]);
             Logger.LogError(ex, "Erro ao traduzir feedback do ChatGPT");
         }
         finally
@@ -217,7 +220,7 @@
         }
         catch (Exception ex)
         {
-            await DialogService.ShowErrorAsync("Erro ao traduzir feedback do Gemini. Verifique Logs, por favor.", "Tradução Gemini");
+            await DialogService.ShowErrorAsync(L["EvalDialog.TranslateGeminiError"], L["EvalDialog.TranslateTitle"]);
 
 
             Logger.LogError(ex, "Erro ao traduzir feedback do Gemini");

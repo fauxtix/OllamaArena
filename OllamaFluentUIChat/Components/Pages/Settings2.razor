@@ -1,7 +1,10 @@
 ﻿@page "/settings2"
 @using System.Text.Json
+@using Microsoft.Extensions.Localization
+@using OllamaFluentUIChat.Resources
 @using OllamaFluentUIChat.Services.Interfaces.Services
 @using OllamaFluentUIChat.Models.DTO
+@inject IStringLocalizer<SharedResources> L
 @inject IJSRuntime JS
 @rendermode InteractiveServer
 
@@ -24,7 +27,7 @@ else
             <FluentGrid>
                 <FluentGridItem xs="12" Style="margin-top: 30px;">
                     <FluentLabel Style="font-size: 18px; font-weight: bold;">
-                        Modelos carregados no Ollama
+                        @L["Settings2.LoadedModels"]
                     </FluentLabel>
                     <FluentStack Orientation="Orientation.Vertical" Gap="8" Style="margin-top: 20px;">
                         @foreach (var model in OllamaModels)

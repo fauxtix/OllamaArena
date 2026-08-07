@@ -1,4 +1,7 @@
-﻿<script type="module" src="@Assets["Components/Layout/ReconnectModal.razor.js"]"></script>
+﻿@using Microsoft.Extensions.Localization
+@using OllamaFluentUIChat.Resources
+@inject IStringLocalizer<SharedResources> L
+<script type="module" src="@Assets["Components/Layout/ReconnectModal.razor.js"]"></script>
 
 <dialog id="components-reconnect-modal" data-nosnippet>
     <div class="components-reconnect-container">
@@ -7,25 +10,25 @@
             <div></div>
         </div>
         <p class="components-reconnect-first-attempt-visible">
-            Rejoining the server...
+            @((MarkupString)L["Reconnect.Joining"].ToString())
         </p>
         <p class="components-reconnect-repeated-attempt-visible">
-            Rejoin failed... trying again in <span id="components-seconds-to-next-attempt"></span> seconds.
+            @((MarkupString)L["Reconnect.Retrying"].ToString())
         </p>
         <p class="components-reconnect-failed-visible">
-            Failed to rejoin.<br />Please retry or reload the page.
+            @((MarkupString)L["Reconnect.Failed"].ToString())
         </p>
         <button id="components-reconnect-button" class="components-reconnect-failed-visible">
-            Retry
+            @L["Reconnect.Retry"]
         </button>
         <p class="components-pause-visible">
-            The session has been paused by the server.
+            @L["Reconnect.Paused"]
         </p>
         <button id="components-resume-button" class="components-pause-visible">
-            Resume
+            @L["Reconnect.Resume"]
         </button>
         <p class="components-resume-failed-visible">
-            Failed to resume the session.<br />Please reload the page.
+            @((MarkupString)L["Reconnect.ResumeFailed"].ToString())
         </p>
     </div>
 </dialog>

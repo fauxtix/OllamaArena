@@ -7,7 +7,7 @@
 @inject HttpClient Http
 @inject IJSRuntime JS
 
-<PageTitle>Chat - Ollama</PageTitle>
+<PageTitle>@L["Chat.PageTitle"]</PageTitle>
 
 @if (showOllamaError)
 {
@@ -15,12 +15,12 @@
         display: flex; justify-content: center; align-items: center;
         background-color: rgba(0, 0, 0, 0.2); z-index: 9999;">
 
-        <FluentMessageBar Title="Não foi possível carregar os modelos"
+        <FluentMessageBar Title="@L["Chat.ModelsLoadErrorTitle"]"
                           Style="width: 500px; border: 2px solid var(--accent-fill-rest);"
                           Intent="MessageIntent.Error"
                           Type="@MessageType.Notification">
             <hr />
-            O serviço Ollama não está em execução. Por favor, inicie o Ollama e recarregue a página.
+            @L["Chat.OllamaNotRunning"]
         </FluentMessageBar>
     </div>
 }
@@ -55,7 +55,7 @@ else
                     <FluentLabel Style="font-size: 14px; color: var(--neutral-foreground-hint);">
                         @if (temperature > 0)
                         {
-                            <span class="temperature">Temp: @temperature</span>
+                            <span class="temperature">@L["Chat.TemperatureLabel", temperature]</span>
                         }
 
                     </FluentLabel>
@@ -71,21 +71,21 @@ else
                         {
                             <span style="font-size: 0.8rem; background-color: rgba(34, 197, 94, 0.15); border: 1px solid rgb(34, 197, 94); padding: 4px 8px; border-radius: 6px; color: rgb(21, 128, 61); display: flex; align-items: start; gap: 4px;">
                                 <FluentIcon Value="@(new Icons.Regular.Size16.CheckmarkCircle())" Color="Color.Success" />
-                                GPU OK (@_gpuReport.EstimatedRequiredMemoryGB GB / @_gpuReport.AvailableVramGB GB VRAM)
+                                @L["Chat.GpuOk", _gpuReport.EstimatedRequiredMemoryGB, _gpuReport.AvailableVramGB]
                             </span>
                         }
                         else
                         {
                             <span style="font-size: 0.8rem; background-color: rgba(245, 158, 11, 0.15); border: 1px solid rgb(245, 158, 11); padding: 4px 8px; border-radius: 6px; color: rgb(255,255,255); display: flex; justify-content:start; align-items: center; gap: 4px;"
-                                  title="O modelo excede a VRAM da GPU e vai correr dividido com a CPU (Lentidão esperada).">
+                                  title="@L["Chat.GpuCpuFallbackTitle"]">
                                 <FluentIcon Value="@(new Icons.Regular.Size16.Warning())" Color="Color.Warning" />
-                                CPU Fallback (@_gpuReport.EstimatedRequiredMemoryGB GB necessários, só tem @_gpuReport.AvailableVramGB GB)
+                                @L["Chat.GpuCpuFallback", _gpuReport.EstimatedRequiredMemoryGB, _gpuReport.AvailableVramGB]
                             </span>
 
                             <FluentButton Appearance="Appearance.Stealth" @bind-Visible="GPUDialogVisibility"
                                           Style="min-width: 24px; width: 24px; height: 24px; padding: 0; border-radius: 50%;"
                                           OnClick="() => GPUDialogVisibility = true"
-                                          Title="Saber mais sobre o desempenho">
+                                          Title="@L["Chat.GpuInfoTooltip"]">
                                 <FluentIcon Value="@(new Icons.Regular.Size16.QuestionCircle())" Color="Color.Warning" />
                             </FluentButton>
 
@@ -101,13 +101,13 @@ else
                               IconStart="@(new Icons.Regular.Size16.Add())"
                               OnClick="NewChat"
                               Disabled="@_isThinking">
-                    Novo Chat
+                    @L["Chat.NewChat"]
                 </FluentButton>
 
                 <FluentButton Appearance="Appearance.Outline"
                               Disabled="@_isThinking"
                               OnClick="@OpenHistory">
-                    Histórico
+                    @L["Chat.History"]
                 </FluentButton>
             </FluentStack>
 
@@ -119,8 +119,8 @@ else
                                     Value="@ContextProgressValue"
                                     Color="@(ContextNearLimit ? "#f59e0b" : "var(--accent-fill-rest)")" />
                     <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--neutral-foreground-hint); margin-top: 4px;">
-                        <span>Contexto: @_contextUsedTokens.ToString("N0") / @_contextLength.ToString("N0") tokens</span>
-                        <span>@ContextRemaining.ToString("N0") restantes</span>
+                        <span>@L["Chat.ContextTokens", _contextUsedTokens.ToString("N0"), _contextLength.ToString("N0")]</span>
+                        <span>@L["Chat.ContextRemaining", ContextRemaining.ToString("N0")]</span>
                     </div>
                 </div>
             }
@@ -171,7 +171,7 @@ else
                           @bind="_currentMessage"
                           @bind:event="oninput"
                           @ref="chatInputRef"
-                          placeholder="Escreve uma mensagem..."
+                          placeholder="@L["Chat.InputPlaceholder"]"
                           disabled="@_isThinking">
                 </textarea>
 

@@ -1,20 +1,23 @@
 ﻿@page "/modelos-ollama"
 @using System.Text.Json
+@using Microsoft.Extensions.Localization
 @using Microsoft.FluentUI.AspNetCore.Components
+@using OllamaFluentUIChat.Resources
 @using OllamaFluentUIChat.Services.Interfaces.Services
 @using static OllamaFluentUIChat.Models.DTO.OllamaModels
+@inject IStringLocalizer<SharedResources> L
 @inject IOllamaGpuService OllamaGpuService
 @inject IJSRuntime JS
 @inject ILogger<ModelosOllama>? Logger
 @rendermode InteractiveServer
 
-<PageTitle>Modelos Disponíveis - Ollama</PageTitle>
+<PageTitle>@L["Modelos.PageTitle"]</PageTitle>
 
 <FluentDesignTheme StorageName="theme" />
 
-<h2 class="fluent-h2" style="margin-bottom: 4px;">Modelos Locais Instalados</h2>
+<h2 class="fluent-h2" style="margin-bottom: 4px;">@L["Modelos.LocalInstalled"]</h2>
 <p class="fluent-body" style="margin-bottom: 25px; color: var(--neutral-foreground-hint);">
-    Consulte os modelos guardados no seu disco, a capacidade nativa de contexto do ficheiro e a compatibilidade estimada com a sua placa gráfica.
+    @L["Modelos.IntroText"]
 </p>
 
 <div style="margin-top: 15px;">
@@ -25,62 +28,62 @@
     else if (_localModels is null || !_localModels.Any())
     {
         <FluentBadge Appearance="Appearance.Accent">
-            Nenhum modelo local detetado ou Ollama inacessível.
+            @L["Modelos.NoLocalModels"]
         </FluentBadge>
     }
     else
     {
         <FluentDataGrid Items="@_localModels.AsQueryable()" TGridItem="ModelDetails" ResizableColumns="true">
-            <PropertyColumn Property="@(m => m.Name)" Title="Nome" Sortable="true"
+            <PropertyColumn Property="@(m => m.Name)" Title="@L["Modelos.ColName"]" Sortable="true"
                             Style="color:steelblue; font-weight:700; font-size: 1rem;" />
 
-            <TemplateColumn Title="Família" Width="180px">
+            <TemplateColumn Title="@L["Modelos.ColFamily"]" Width="180px">
                 @context.Details?.Family
             </TemplateColumn>
 
-            <TemplateColumn Title="Parâmetros" Align="Align.Center" Width="120px">
+            <TemplateColumn Title="@L["Modelos.ColParameters"]" Align="Align.Center" Width="120px">
                 @context.Details?.ParameterSize
             </TemplateColumn>
 
-            <TemplateColumn Title="Quantização" Width="130px" Align="Align.Center">
+            <TemplateColumn Title="@L["Modelos.ColQuantization"]" Width="130px" Align="Align.Center">
                 @context.Details?.QuantizationLevel
             </TemplateColumn>
 
-            <TemplateColumn Title="Ano de Treino" Align="Align.Center" Width="140px"
+            <TemplateColumn Title="@L["Modelos.ColTrainingYear"]" Align="Align.Center" Width="140px"
                             Style="color:cadetblue; font-weight:500; font-size: 0.9rem;">
                 @context.TrainingYear
             </TemplateColumn>
 
-            <TemplateColumn Title="Contexto Máximo" Width="170px">
+            <TemplateColumn Title="@L["Modelos.ColMaxContext"]" Width="170px">
                 <FluentStack Orientation="Orientation.Horizontal"
                              HorizontalAlignment="HorizontalAlignment.Right"
                              VerticalAlignment="VerticalAlignment.Center"
                              Style="gap: 6px;">
-                    <span>@context.ContextLength.ToString("N0") tokens</span>
+                    <span>@L["Modelos.ContextTokens", context.ContextLength.ToString("N0")]</span>
                 </FluentStack>
             </TemplateColumn>
 
-            <TemplateColumn Title="Tamanho no Disco" Align="Align.Center" Width="170px">
-                @context.SizeInGB GB
+            <TemplateColumn Title="@L["Modelos.ColDiskSize"]" Align="Align.Center" Width="170px">
+                @L["Modelos.SizeInGB", context.SizeInGB]
             </TemplateColumn>
 
-            <TemplateColumn Title="Compatibilidade GPU" Width="180px">
+            <TemplateColumn Title="@L["Modelos.ColGpuCompat"]" Width="180px">
                 @{
                     var gpuCheck = OllamaGpuService.CheckGpuCompatibility(context.SizeInBytes);
                     if (gpuCheck.AvailableVramGB == 0)
                     {
-                        <FluentBadge Appearance="Appearance.Neutral">Leitura VRAM Indisponível</FluentBadge>
+                        <FluentBadge Appearance="Appearance.Neutral">@L["Modelos.VramUnavailable"]</FluentBadge>
                     }
                     else if (gpuCheck.FitsInGpu)
                     {
                         <FluentBadge Appearance="Appearance.Accent" Fill="success">
-                            Compatível (~@gpuCheck.EstimatedRequiredMemoryGB GB)
+                            @L["Modelos.GpuCompatible", gpuCheck.EstimatedRequiredMemoryGB]
                         </FluentBadge>
                     }
                     else
                     {
                         <FluentBadge Fill="warning">
-                            Excede VRAM (~@gpuCheck.EstimatedRequiredMemoryGB GB)
+                            @L["Modelos.ExceedsVram", gpuCheck.EstimatedRequiredMemoryGB]
                         </FluentBadge>
                     }
                 }

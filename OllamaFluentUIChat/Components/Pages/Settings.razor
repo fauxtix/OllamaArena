@@ -1,6 +1,9 @@
 ﻿@page "/settings"
+@using Microsoft.Extensions.Localization
 @using Microsoft.FluentUI.AspNetCore.Components.Extensions
+@using OllamaFluentUIChat.Resources
 @rendermode InteractiveServer
+@inject IStringLocalizer<SharedResources> L
 @inject IJSRuntime JS
 
 <FluentDesignTheme @bind-Mode="@Mode"
@@ -13,7 +16,7 @@
     <FluentGrid>
         @* Configuração do Tema *@
         <FluentGridItem>
-            <FluentSelect Label="Theme"
+            <FluentSelect Label="@L["Settings.ThemeLabel"]"
                           Width="250px"
                           Items="@(Enum.GetValues<DesignThemeModes>())"
                           @bind-SelectedOption="@Mode" />
@@ -21,7 +24,7 @@
 
         @* Configuração da Cor *@
         <FluentGridItem>
-            <FluentSelect Label="Color"
+            <FluentSelect Label="@L["Settings.ColorLabel"]"
                           Items="@(Enum.GetValues<OfficeColor>().Select(i => (OfficeColor?)i))"
                           Height="200px"
                           Width="250px"
@@ -35,19 +38,19 @@
                     </FluentStack>
                 </OptionTemplate>
             </FluentSelect>
-            <FluentButton Appearance="Appearance.Accent" OnClick="PickRandomColor">Feeling lucky?</FluentButton>
+            <FluentButton Appearance="Appearance.Accent" OnClick="PickRandomColor">@L["Settings.FeelingLucky"]</FluentButton>
         </FluentGridItem>
 
         @* NOVO: Configuração do Modelo do Ollama *@
         <FluentGridItem xs="12" Style="margin-top: 20px;">
             <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Bottom" Style="gap: 12px;">
-                <FluentSelect Label="Modelo Ollama"
+                <FluentSelect Label="@L["Settings.ModelLabel"]"
                               Width="250px"
                               Items="@_availableModels"
                               @bind-SelectedOption="@_selectedModel" />
 
                 <FluentButton Appearance="Appearance.Accent" OnClick="SaveModelAsync">
-                    Guardar Modelo
+                    @L["Settings.SaveModel"]
                 </FluentButton>
             </FluentStack>
         </FluentGridItem>
@@ -55,9 +58,9 @@
 
     <FluentStack Style="margin: 30px 0px; padding: 30px; border: 1px solid var(--accent-fill-rest);">
         <FluentIcon Value="@(new Icons.Regular.Size24.Airplane())" />
-        <FluentLabel>Example of content</FluentLabel>
-        <FluentButton Appearance="Appearance.Outline">Outline button</FluentButton>
-        <FluentButton Appearance="Appearance.Accent">Accent button</FluentButton>
+        <FluentLabel>@L["Settings.ExampleContent"]</FluentLabel>
+        <FluentButton Appearance="Appearance.Outline">@L["Settings.OutlineButton"]</FluentButton>
+        <FluentButton Appearance="Appearance.Accent">@L["Settings.AccentButton"]</FluentButton>
     </FluentStack>
 </div>
 

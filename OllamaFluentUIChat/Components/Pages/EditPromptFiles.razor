@@ -1,8 +1,10 @@
 ﻿@page "/edit-prompts"
+@using Microsoft.Extensions.Localization
 @using Microsoft.FluentUI.AspNetCore.Components
+@using OllamaFluentUIChat.Resources
 @rendermode InteractiveServer
 
-<PageTitle>Editor de Prompts</PageTitle>
+<PageTitle>@L["EditPrompts.PageTitle"]</PageTitle>
 
 <div class="edit-prompts-main">
     <div class="prompt-editor-pane prompt-card">
@@ -10,7 +12,7 @@
         <div class="prompt-header-row">
             <div class="prompt-title">
                 <FluentHeader Style="background-color:transparent; color: #2ecc71; font-size:1.5rem; margin: 0; padding: 0;">
-                    Prompts guardados
+                    @L["EditPrompts.SavedPrompts"]
                 </FluentHeader>
             </div>
 
@@ -28,13 +30,13 @@
                               Style="border-radius:10px"
                               IconStart="@(new Icons.Regular.Size16.Save())"
                               OnClick="OnSave">
-                    Gravar
+                    @L["EditPrompts.Save"]
                 </FluentButton>
                 <FluentButton Appearance="Appearance.Outline"
                               Style="border-radius:10px"
                               IconStart="@(new Icons.Regular.Size16.Dismiss())"
                               OnClick="OnCancel">
-                    Cancelar edição
+                    @L["EditPrompts.CancelEdit"]
                 </FluentButton>
             </div>
         </div>
@@ -42,12 +44,12 @@
 
         @if (_isLoading)
         {
-            <FluentProgressRing>A carregar o prompt...</FluentProgressRing>
+            <FluentProgressRing>@L["EditPrompts.LoadingPrompt"]</FluentProgressRing>
         }
         else if (!_promptFiles.Any())
         {
             <div class="prompt-empty-state">
-                <span>Não existem ficheiros de prompt na pasta Prompts.</span>
+                <span>@L["EditPrompts.EmptyState"]</span>
             </div>
         }
         else
@@ -64,7 +66,7 @@
                               Style="border-radius:10px"
                               IconStart="@(new Icons.Regular.Size16.ArrowExit())"
                               OnClick="@(() => NavigationManager.NavigateTo("/"))">
-                    Sair
+                    @L["EditPrompts.Exit"]
                 </FluentButton>
             </div>
         }

@@ -27,7 +27,7 @@
 
             <FluentCard Style="padding: 12px; width: max-content; height: max-content;">
                 <img src="images/OllamaAsAJudge.png"
-                     alt="Imagem gerada por IA"
+                     alt="@L["Home.ImageAlt"]"
                      style="box-shadow: var(--elevation-shadow-card-hover);
                 width: 28vw;
                 height: 36vh;
@@ -39,7 +39,7 @@
 
             <FluentCard Style="padding: 12px; width: max-content; height: max-content;">
                 <img src="images/OllamaWithFluentUI.jpg"
-                     alt="Imagem gerada por IA"
+                     alt="@L["Home.ImageAlt"]"
                      style="box-shadow: var(--elevation-shadow-card-hover);
                 width: 28vw;
                 height: 36vh;
@@ -58,11 +58,11 @@
         @if (showOllamaError)
         {
             <div style="background-color: rgba(0, 0, 0, 0.2); z-index: 9999;">
-                <FluentMessageBar Title="Não foi possível carregar os modelos"
+                <FluentMessageBar Title="@L["Chat.ModelsLoadErrorTitle"]"
                                   Style="width: 500px; border: 2px solid var(--accent-fill-rest);"
                                   Intent="MessageIntent.Error"
                                   Type="@MessageType.Notification">
-                    O serviço Ollama não está em execução. Inicie o serviço e recarregue a página.
+                    @L["Chat.OllamaNotRunning"]
                 </FluentMessageBar>
             </div>
         }
@@ -165,7 +165,7 @@
         var hasInternet = await Internet.HasInternetAsync();
         if (!hasInternet)
         {
-            await DialogService.ShowErrorAsync("Internet indisponível. Verifique, por favor.", "Acesso ao ficheiro README.md");
+            await DialogService.ShowErrorAsync(L["Home.NoInternetError"], L["Home.ReadmeTitle"]);
             return;
         }
 

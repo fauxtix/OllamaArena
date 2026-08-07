@@ -7,6 +7,9 @@
 @using OllamaFluentUIChat.Services.Interfaces.Services
 @using ClosedXML.Excel
 @using System.IO
+@using Microsoft.Extensions.Localization
+@using OllamaFluentUIChat.Resources
+@inject IStringLocalizer<SharedResources> L
 @inject IBenchmarkRepository BenchmarkRepo
 @inject IDialogService DialogService
 @inject ILogger<App> Logger
@@ -21,7 +24,7 @@
 
             <div style="display: flex; gap: 12px; align-items: center; width: 100%; margin:16px;">
                 <FluentSearch @bind-Value="_search"
-                              Placeholder="Pesquisa benchmarks (modelo, descrição)"
+                              Placeholder="@L["Benchmarks.SearchPlaceholder"]"
                               class="search-box" />
 
                 <FluentSpacer />
@@ -30,13 +33,13 @@
                               Disabled="@(_benchmarks.Any() == false)"
                               IconStart="@(new Icons.Regular.Size24.ArrowDownload())"
                               @onclick="ExportarParaExcel">
-                    Exportar para Excel
+                    @L["Common.ExportExcel"]
                 </FluentButton>
                 <FluentButton Appearance="Appearance.Accent"
                               Disabled="@(_benchmarks.Any() == false || _isAnalyzing)"
                               IconStart="@(new Icons.Regular.Size24.BrainCircuit())"
                               @onclick="AnalisarResultadosComModeloLocal">
-                    Análise IA Local
+                    @L["Benchmarks.AnalysisLocal"]
                 </FluentButton>
 
                 <FluentButton Appearance="Appearance.Lightweight"
@@ -44,7 +47,7 @@
                               Color="rgba(255, 255,255, 1)"
                               BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
                               IconStart="@(new Icons.Regular.Size16.Delete())" OnClick="DeleteAllDataAsync">
-                    Apagar Benchmarks
+                    @L["Benchmarks.DeleteAll"]
                 </FluentButton>
 
             </div>
@@ -53,17 +56,17 @@
                 <FluentButton Appearance="@GetAppearance(BenchmarkFilter.Todos)"
                               IconStart="@(new Icons.Regular.Size20.Grid())"
                               @onclick="() => _filtroAtual = BenchmarkFilter.Todos">
-                    Todos
+                    @L["Benchmarks.FilterAll"]
                 </FluentButton>
                 <FluentButton Appearance="@GetAppearance(BenchmarkFilter.PorAvaliar)"
                               IconStart="@(new Icons.Regular.Size20.Warning())"
                               @onclick="() => _filtroAtual = BenchmarkFilter.PorAvaliar">
-                    Por Avaliar
+                    @L["Benchmarks.FilterToEvaluate"]
                 </FluentButton>
                 <FluentButton Appearance="@GetAppearance(BenchmarkFilter.Avaliados)"
                               IconStart="@(new Icons.Regular.Size20.Checkmark())"
                               @onclick="() => _filtroAtual = BenchmarkFilter.Avaliados">
-                    Avaliados
+                    @L["Benchmarks.FilterEvaluated"]
                 </FluentButton>
             </div>
 
@@ -80,63 +83,63 @@
                         class="benchmark-grid">
 
 
-            @* <PropertyColumn Property="@(b => b.DataCriacaoFormatada)" Title="Data de Criação" Width="160px" Align="Align.Center" Sortable="true" /> *@
-            <PropertyColumn Property="@(b => b.NomeModelo)" Title="Modelo" Sortable="true" Width="160px" />
+            @* <PropertyColumn Property="@(b => b.DataCriacaoFormatada)" Title="@L["Benchmarks.ColCreationDate"]" Width="160px" Align="Align.Center" Sortable="true" /> *@
+            <PropertyColumn Property="@(b => b.NomeModelo)" Title="@L["Benchmarks.ColModel"]" Sortable="true" Width="160px" />
 
-            <TemplateColumn Title="Descrição" Tooltip="true" Width="200px">
+            <TemplateColumn Title="@L["Benchmarks.ColDescription"]" Tooltip="true" Width="200px">
                 <div class="prompt-cell">
                     @context.Descricao
                 </div>
             </TemplateColumn>
 
-            <PropertyColumn Property="@(b => b.GeminiRating)" Title="Gemini" Align="Align.Center" Width="100px" Sortable="true">
+            <PropertyColumn Property="@(b => b.GeminiRating)" Title="@L["Benchmarks.ColGemini"]" Align="Align.Center" Width="100px" Sortable="true">
                 <HeaderCellItemTemplate>
-                    <span class="header-blue">Gemini</span>
+                    <span class="header-blue">@L["Benchmarks.ColGemini"]</span>
                 </HeaderCellItemTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="@(b => b.GeminiFactualRating)" Title="Factual" Align="Align.Center" Width="90px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.GeminiFormattingRating)" Title="Formato" Align="Align.Center" Width="90px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.ChatGptRating)" Title="ChatGPT" Align="Align.Center" Width="100px" Sortable="true">
+            <PropertyColumn Property="@(b => b.GeminiFactualRating)" Title="@L["Benchmarks.ColFactual"]" Align="Align.Center" Width="90px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.GeminiFormattingRating)" Title="@L["Benchmarks.ColFormatting"]" Align="Align.Center" Width="90px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.ChatGptRating)" Title="@L["Benchmarks.ColChatGpt"]" Align="Align.Center" Width="100px" Sortable="true">
                 <HeaderCellItemTemplate>
-                    <span class="header-blue">ChatGPT</span>
+                    <span class="header-blue">@L["Benchmarks.ColChatGpt"]</span>
                 </HeaderCellItemTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="@(b => b.ChatGptFactualRating)" Title="Factual" Align="Align.Center" Width="90px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.ChatGptFormattingRating)" Title="Formato" Align="Align.Center" Width="90px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.TokensPorSegundo)" Title="Tokens/s" Align="Align.Center" Width="110px" Format="F2" Sortable="true">
+            <PropertyColumn Property="@(b => b.ChatGptFactualRating)" Title="@L["Benchmarks.ColFactual"]" Align="Align.Center" Width="90px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.ChatGptFormattingRating)" Title="@L["Benchmarks.ColFormatting"]" Align="Align.Center" Width="90px" Sortable="true" />
+            <PropertyColumn Property="@(b => b.TokensPorSegundo)" Title="@L["Benchmarks.ColTokensPerSecond"]" Align="Align.Center" Width="110px" Format="F2" Sortable="true">
                 <HeaderCellItemTemplate>
-                    <span class="header-columns">Tokens/s</span>
+                    <span class="header-columns">@L["Benchmarks.ColTokensPerSecond"]</span>
                 </HeaderCellItemTemplate>
                 </PropertyColumn>
-            <PropertyColumn Property="@(b => b.TempoPuroFormatado)"  Title="Tempo" Align="Align.Center" Width="100px" Sortable="true" >
+            <PropertyColumn Property="@(b => b.TempoPuroFormatado)"  Title="@L["Benchmarks.ColTime"]" Align="Align.Center" Width="100px" Sortable="true" >
                 <HeaderCellItemTemplate>
-                    <span class="header-columns">Tempo</span>
+                    <span class="header-columns">@L["Benchmarks.ColTime"]</span>
                 </HeaderCellItemTemplate>
 
             </PropertyColumn>
-            <PropertyColumn Property="@(b => b.TempoCargaFormatado)" Title="Carga" Align="Align.Center" Width="100px" Sortable="true" >
+            <PropertyColumn Property="@(b => b.TempoCargaFormatado)" Title="@L["Benchmarks.ColLoad"]" Align="Align.Center" Width="100px" Sortable="true" >
                 <HeaderCellItemTemplate>
-                    <span class="header-columns">Carga</span>
+                    <span class="header-columns">@L["Benchmarks.ColLoad"]</span>
                 </HeaderCellItemTemplate>
 
             </PropertyColumn>
-            <PropertyColumn Property="@(b => b.TamanhoTokens)" Title="Tokens" Align="Align.Center" Width="100px" Sortable="true" >
+            <PropertyColumn Property="@(b => b.TamanhoTokens)" Title="@L["Benchmarks.ColTokens"]" Align="Align.Center" Width="100px" Sortable="true" >
                 <HeaderCellItemTemplate>
-                    <span class="header-columns">Tokens</span>
+                    <span class="header-columns">@L["Benchmarks.ColTokens"]</span>
                 </HeaderCellItemTemplate>
             </PropertyColumn>
 
-            <TemplateColumn Title="Ações" Align="Align.Center" Width="100px">
+            <TemplateColumn Title="@L["Benchmarks.ColActions"]" Align="Align.Center" Width="100px">
                 <FluentButton Appearance="Appearance.Outline"
                               IconStart="@(new Icons.Regular.Size24.Eye())"
                               OnClick="@(() => OpenDetailDialog(context))"
-                              Title="Ver Detalhes" />
+                              Title="@L["Benchmarks.ViewDetails"]" />
                 <FluentButton Appearance="Appearance.Outline"
                               Color="rgba(255, 255,255, 1)"
                               BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
                               IconStart="@(new Icons.Regular.Size16.Delete())"
                               OnClick="@(() => DeleteBenchmark(context.ResponseId))"
-                              Title="Eliminar" />
+                              Title="@L["Benchmarks.Delete"]" />
             </TemplateColumn>
 
 
@@ -154,7 +157,7 @@
                       Class="evaluation-detail-benchmark"
                       Style="--dialog-width: 800px; --dialog-height: auto;"
                       TrapFocus="true"
-                      AriaLabel="Detalhes da Avaliação Benchmark">
+                      AriaLabel="@L["Benchmarks.AriaLabelDetail"]">
             <FluentDialogBody>
                 <BenchmarkAnalysisViewer IsAnalyzing="@_isAnalyzing"
                                          IsAnalyzingChanged="@((b) => _isAnalyzing = b)"
@@ -167,7 +170,7 @@
                 <FluentButton Appearance="Appearance.Outline" Color="Color.Neutral"
                               Disabled="@_isAnalyzing"
                               OnClick="@(() => _mostrarPainelAnalise = false)">
-                    Fechar
+                    @L["Common.Close"]
                 </FluentButton>
             </FluentDialogFooter>
         </FluentDialog>
@@ -218,17 +221,17 @@
 
         try
         {
-            string mensagemHtml = @"
+            string mensagemHtml = $@"
                         <div style='padding: 4px; border-left: 4px solid #e73618;'>
-                            <strong style='color: #e73618; font-size: 16px; display: block; margin-bottom: 8px;'>Confirme, por favor</strong>
-                            <span style='color: var(--neutral-foreground-rest);'>Tem a certeza que deseja apagar todos os Prompts e Respostas associadas? Esta operação não pode ser revertida.</span>
+                            <strong style='color: #e73618; font-size: 16px; display: block; margin-bottom: 8px;'>{L["Benchmarks.DeleteAllConfirmTitle"]}</strong>
+                            <span style='color: var(--neutral-foreground-rest);'>{L["Benchmarks.DeleteAllConfirmMessage"]}</span>
                         </div>";
 
             var confirmacao = await DialogService.ShowConfirmationAsync(
                 message: mensagemHtml,
-                "Sim, Apagar",
-                "Cancelar",
-                "Apagar todos os benchmarks");
+                L["Benchmarks.DeleteAllYes"],
+                L["Common.Cancel"],
+                L["Benchmarks.DeleteAllTitle"]);
 
             if (confirmacao == null) return;
             var resultado = await confirmacao.Result;
@@ -261,16 +264,16 @@
         try
         {
 
-            string mensagemHtml = @"
+            string mensagemHtml = $@"
                         <div style='padding: 4px; border-left: 4px solid #e73618;'>
-                            <strong style='color: #e73618; font-size: 16px; display: block; margin-bottom: 8px;'>Confirme, por favor</strong>
-                            <span style='color: var(--neutral-foreground-rest);'>Tem a certeza que deseja apagar o registo? Esta operação não pode ser revertida.</span>
+                            <strong style='color: #e73618; font-size: 16px; display: block; margin-bottom: 8px;'>{L["Benchmarks.DeleteAllConfirmTitle"]}</strong>
+                            <span style='color: var(--neutral-foreground-rest);'>{L["Benchmarks.DeleteOneConfirmMessage"]}</span>
                         </div>";
             var confirmacao = await DialogService.ShowConfirmationAsync(
                 message: mensagemHtml,
-                "Sim, Apagar",
-                "Cancelar",
-                "Apagar resposta do benchmark"
+                L["Benchmarks.DeleteAllYes"],
+                L["Common.Cancel"],
+                L["Benchmarks.DeleteOneTitle"]
             );
 
             await InvokeAsync(StateHasChanged);
@@ -350,7 +353,7 @@
         {
             var primeiroItem = grupo.First();
 
-            worksheet.Cell(currentRow, 1).Value = $"ID #{primeiroItem.PromptId} ({primeiroItem.DataCriacaoFormatada})";
+            worksheet.Cell(currentRow, 1).Value = string.Format(L["Benchmarks.ExcelIdGroup"], $"#{primeiroItem.PromptId}", primeiroItem.DataCriacaoFormatada);
             worksheet.Cell(currentRow, 2).Value = primeiroItem.TextoPrompt;
 
             worksheet.Range(currentRow, 2, currentRow, 7).Merge();
@@ -454,18 +457,17 @@
         {
             string mensagemHtml = $@"
             <div style='padding: 8px; border-left: 5px solid #e73618;'>
-                <strong style='color: #e73618; font-size: 16px;'>⚠️ Atenção - Múltiplos Grupos de Prompts</strong><br><br>
+                <strong style='color: #e73618; font-size: 16px;'>{L["Benchmarks.MultipleGroupsWarning"]}</strong><br><br>
                 <span style='color: var(--neutral-foreground-rest);'>
-                    Foram detetados <strong>{gruposDePrompts.Count}</strong> grupos de prompts diferentes.<br><br>
-                    A análise IA Local está otimizada para um único prompt/grupo. 
-                    Recomenda-se filtrar para apenas um prompt antes de prosseguir.
+                    {L["Benchmarks.MultipleGroupsMessage", gruposDePrompts.Count]}
                 </span>
             </div>";
 
             var confirmacao = await DialogService.ShowConfirmationAsync(
                 message: mensagemHtml,
-                secondaryText: "Cancelar",
-                title: "Múltiplos Prompts Detetados");
+                L["Common.Confirm"],
+                L["Common.Cancel"],
+                L["Benchmarks.MultipleGroupsTitle"]);
 
             if (confirmacao == null) return;
 
@@ -485,17 +487,17 @@
             var naoAvaliados = dadosFiltrados.Count(b => b.GeminiRating == 0 || b.ChatGptRating == 0);
             string mensagemHtml = $@"
         <div style='padding: 8px; border-left: 5px solid #e73618;'>
-            <strong style='color: #e73618; font-size: 16px;'>⚠️ Atenção</strong><br><br>
+            <strong style='color: #e73618; font-size: 16px;'>{L["Benchmarks.AttentionWarning"]}</strong><br><br>
             <span style='color: var(--neutral-foreground-rest);'>
-                Existem <strong>{naoAvaliados}</strong> benchmark(s) ainda não avaliados (Gemini ou ChatGPT).<br><br>
-                Avalie os benchmarks antes de prosseguir com a análise.
+                {L["Benchmarks.NotEvaluatedMessage", naoAvaliados]}
             </span>
         </div>";
 
             var confirmacao = await DialogService.ShowConfirmationAsync(
                 message: mensagemHtml,
-                secondaryText: "Cancelar",
-                title: "Nem todos os benchmarks estão avaliados");
+                L["Common.Confirm"],
+                L["Common.Cancel"],
+                L["Benchmarks.NotEvaluatedTitle"]);
 
             if (confirmacao == null) return;
             var resultado = await confirmacao.Result;
@@ -517,7 +519,7 @@
             {
                 _resultadoLocal = new BenchmarkAnalysisResult
                 {
-                    Sumario = "Nenhum dado disponível para análise."
+                    Sumario = L["Benchmarks.NoDataForAnalysis"]
                 };
                 return;
             }
@@ -534,10 +536,10 @@
             Logger.LogWarning("Análise cancelada pelo utilizador.");
             _resultadoLocal = new BenchmarkAnalysisResult
             {
-                Sumario = "Operação cancelada pelo utilizador.",
+                Sumario = L["Benchmarks.AnalysisCancelled"],
                 LinhasAnaliseDetalhada = new List<string>
                 {
-                    "❌ <strong>Operação cancelada:</strong> A análise foi interrompida antes de ser concluída."
+                    L["Benchmarks.AnalysisCancelledDetail"]
                 }
             };
             StateHasChanged();
@@ -547,10 +549,10 @@
             Logger.LogError(ex, "Erro ao tentar efetuar a análise dos benchmarks.");
             _resultadoLocal = new BenchmarkAnalysisResult
             {
-                Sumario = "❌ Erro ao processar os dados.",
+                Sumario = L["Benchmarks.AnalysisError"],
                 LinhasAnaliseDetalhada = new List<string>
                 {
-                    "Ocorreu um erro ao calcular as métricas de benchmark localmente. Verifique os logs para mais detalhes."
+                    L["Benchmarks.AnalysisErrorDetail"]
                 }
             };
         }

@@ -1,13 +1,16 @@
 ﻿@page "/system-logs"
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.Extensions.Localization
 @using OllamaFluentUIChat.Components.Pages.Components
 @using OllamaFluentUIChat.Models.Entities
+@using OllamaFluentUIChat.Resources
 @using OllamaFluentUIChat.Services.Interfaces.Repositories
+@inject IStringLocalizer<SharedResources> L
 @inject ILogRepository LogRepository
 @inject IDialogService DialogService
 @rendermode InteractiveServer
 
-<PageTitle>Logs do Sistema</PageTitle>
+<PageTitle>@L["SystemLogs.PageTitle"]</PageTitle>
 
 <FluentStack VerticalGap="15" Orientation="Orientation.Vertical">
 
@@ -15,7 +18,7 @@
     <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Right">
         <div style="display: flex; gap: 12px; align-items: center; width: 100%; margin:16px;">
 
-            <FluentLabel Typo="Typography.PageTitle">Logs do Sistema</FluentLabel>
+            <FluentLabel Typo="Typography.PageTitle">@L["SystemLogs.PageTitle"]</FluentLabel>
 
             <FluentSpacer />
 
@@ -23,7 +26,7 @@
                           Color="" BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
                           IconStart="@(new Icons.Regular.Size20.Delete())"
                           OnClick="ConfirmarLimpezaLogs">
-                Limpar Logs @(_filtroAtual == "all" && string.IsNullOrWhiteSpace(_search) ? "Visíveis" : "Filtrados")
+                @L["SystemLogs.ClearLogs"] @(_filtroAtual == "all" && string.IsNullOrWhiteSpace(_search) ? L["SystemLogs.ClearVisible"] : L["SystemLogs.ClearFiltered"])
             </FluentButton>
         </div>
     </FluentStack>
@@ -39,28 +42,28 @@
                           OnClick="@(() => AlterarFiltroNivel("information"))"
                           IconStart="@(new Icons.Regular.Size20.Info())"
                           Style="--neutral-stroke-rest: #0078d4; --neutral-stroke-hover: #106ebe; color: #0078d4;">
-                Informações
+                @L["SystemLogs.FilterInformation"]
             </FluentButton>
 
             <FluentButton Appearance="Appearance.Outline"
                           OnClick="@(() => AlterarFiltroNivel("warnings"))"
                           IconStart="@(new Icons.Regular.Size20.Warning())"
                           Style="--neutral-stroke-rest: #ff9800; --neutral-stroke-hover: #e68a00; color: #ff9800;">
-                Alertas
+                @L["SystemLogs.FilterWarnings"]
             </FluentButton>
 
             <FluentButton Appearance="Appearance.Outline"
                           OnClick="@(() => AlterarFiltroNivel("errors"))"
                           IconStart="@(new Icons.Regular.Size20.ErrorCircle())"
                           Style="--neutral-stroke-rest: #d32f2f; --neutral-stroke-hover: #c62828; color: #d32f2f;">
-                Erros
+                @L["SystemLogs.FilterErrors"]
             </FluentButton>
 
             <FluentButton Appearance="Appearance.Outline"
                           OnClick="@(() => AlterarFiltroNivel("all"))"
                           IconStart="@(new Icons.Regular.Size20.Filter())"
                           Style="--neutral-stroke-rest: #0078d4; --neutral-stroke-hover: #106ebe; color: #0078d4;">
-                Todos
+                @L["SystemLogs.FilterAll"]
             </FluentButton>
 
             <!-- Empurra a barra de pesquisa para a extremidade direita da grelha -->
@@ -68,14 +71,14 @@
 
             <FluentSearch @bind-Value="_search"
                           @bind-Value:after="AplicarFiltros"
-                          Placeholder="Texto a pesquisar..."
+                          Placeholder="@L["SystemLogs.SearchPlaceholder"]"
                           class="search-box"
                           Clearable="true" />
         </FluentStack>
 
         @if (_logsFiltrados == null)
         {
-            <FluentProgressRing>A carregar registos...</FluentProgressRing>
+            <FluentProgressRing>@L["SystemLogs.LoadingRecords"]</FluentProgressRing>
         }
         else if (!_logsFiltrados.Any())
         {
@@ -84,7 +87,7 @@
                          VerticalAlignment="VerticalAlignment.Center"
                          Class="no-logs-box">
                 <FluentLabel Typo="Typography.Body" Style="border-color:white; border-radius:16px;">
-                    Sem registos para o filtro ou pesquisa selecionada.
+                    @L["SystemLogs.NoRecordsForFilter"]
                 </FluentLabel>
             </FluentStack>
         }
@@ -96,15 +99,15 @@
                                 OnRowDoubleClick="OnDoubleClick"
                                 TGridItem="LogEntity" ResizableColumns="true">
 
-                    <PropertyColumn Property="@(p => p.Id)" Title="ID" Sortable="true" Width="100px" />
-                    <TemplateColumn Title="Data/Hora" Width="160px">
+                    <PropertyColumn Property="@(p => p.Id)" Title="@L["SystemLogs.ColId"]" Sortable="true" Width="100px" />
+                    <TemplateColumn Title="@L["SystemLogs.ColDateTime"]" Width="160px">
                         @{
                             <FluentBadge Appearance="Appearance.Neutral">
                                 @FormatHora(context.Timestamp)
                             </FluentBadge>
                         }
                     </TemplateColumn>
-                    <TemplateColumn Title="Nível" Sortable="true" SortBy="@_sortByLevel" Width="120px">
+                    <TemplateColumn Title="@L["SystemLogs.ColLevel"]" Sortable="true" SortBy="@_sortByLevel" Width="120px">
                         @{
                             var level = context.Level ?? "Information";
                             var badgeAppearance = level.Contains("Error") || level.Contains("Fatal") ? Appearance.Accent :
@@ -119,8 +122,8 @@
                             @level
                         </FluentBadge>
                     </TemplateColumn>
-                    <PropertyColumn Property="@(p => p.RenderedMessage)" Title="Mensagem" Sortable="true" />
-                    <TemplateColumn Title="Ações" Align="Align.Center" Width="120px">
+                    <PropertyColumn Property="@(p => p.RenderedMessage)" Title="@L["SystemLogs.ColMessage"]" Sortable="true" />
+                    <TemplateColumn Title="@L["SystemLogs.ColActions"]" Align="Align.Center" Width="120px">
                         <FluentStack Orientation="Orientation.Horizontal"
                                      HorizontalAlignment="HorizontalAlignment.Center"
                                      VerticalAlignment="VerticalAlignment.Center"
@@ -129,7 +132,7 @@
                             <FluentButton Appearance="Appearance.Outline"
                                           IconStart="@(new Icons.Regular.Size20.Eye())"
                                           OnClick="@(() => AbrirDetalhesLog(context))"
-                                          Title="Ver Detalhes" />
+                                          Title="@L["SystemLogs.ViewDetails"]" />
                             <FluentButton Appearance="Appearance.Outline"
                                           OnClick="@(() => ApagarLog(context.Id))"
                                           IconStart="@(new Icons.Regular.Size20.Delete())"
@@ -239,21 +242,21 @@
     {
         if (_logsFiltrados == null || !_logsFiltrados.Any())
         {
-            await DialogService.ShowInfoAsync("Nenhum registo",
-                "Não existem logs para apagar com os filtros atuais.");
+            await DialogService.ShowInfoAsync(L["SystemLogs.NoLogsToDeleteTitle"],
+                L["SystemLogs.NoLogsToDeleteMessage"]);
             return;
         }
 
         int quantidade = _logsFiltrados.Count;
         bool isAll = _filtroAtual == "all" && string.IsNullOrWhiteSpace(_search);
 
-        string titulo = isAll ? "ATENÇÃO - VAI LIMPAR TODOS OS REGISTOS" : "Confirme Eliminação";
+        string titulo = isAll ? L["SystemLogs.DeleteAllTitle"] : L["SystemLogs.DeleteFilteredTitle"];
 
         string mensagem = isAll
-                ? $"Tem a certeza de que deseja eliminar **TODOS** os logs?\n\nTotal: {quantidade} registos"
-                : $"Vai eliminar **{quantidade}** registo(s) filtrados.\n\nDeseja continuar?";
+                ? L["SystemLogs.DeleteAllMessage", quantidade]
+                : L["SystemLogs.DeleteFilteredMessage", quantidade];
 
-        var dialog = await DialogService.ShowConfirmationAsync(mensagem, "Sim, Apagar", "Cancelar", titulo);
+        var dialog = await DialogService.ShowConfirmationAsync(mensagem, L["SystemLogs.DeleteYes"], L["Common.Cancel"], titulo);
 
         var resultado = await dialog.Result;
 
@@ -267,13 +270,13 @@
 
                 await CarregarLogsAsync();
 
-                await DialogService.ShowInfoAsync("Sucesso",
-                    $"{quantidade} log(s) foram eliminados com sucesso.");
+                await DialogService.ShowInfoAsync(L["Common.Success"],
+                    L["SystemLogs.DeletedMessage", quantidade]);
             }
             catch (Exception ex)
             {
-                await DialogService.ShowErrorAsync("Erro ao eliminar",
-                    $"Ocorreu um erro: {ex.Message}");
+                await DialogService.ShowErrorAsync(L["SystemLogs.DeleteErrorTitle"],
+                    L["SystemLogs.DeleteErrorMessage", ex.Message]);
             }
         }
     }
@@ -286,10 +289,10 @@
 
     private async Task ApagarLog(int logId)
     {
-        string mensagem = $"Vai apagar o log {logId}.\n\nDeseja continuar?";
-        string titulo = "Apagar registo";
+        string mensagem = L["SystemLogs.DeleteOneMessage", logId];
+        string titulo = L["SystemLogs.DeleteOneTitle"];
 
-        var dialog = await DialogService.ShowConfirmationAsync(mensagem, "Sim, Apagar", "Cancelar", titulo);
+        var dialog = await DialogService.ShowConfirmationAsync(mensagem, L["SystemLogs.DeleteYes"], L["Common.Cancel"], titulo);
 
         var resultado = await dialog.Result;
 

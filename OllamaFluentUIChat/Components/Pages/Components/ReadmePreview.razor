@@ -1,4 +1,7 @@
-﻿@using OllamaFluentUIChat.Services.Helpers
+﻿@using Microsoft.Extensions.Localization
+@using OllamaFluentUIChat.Resources
+@using OllamaFluentUIChat.Services.Helpers
+@inject IStringLocalizer<SharedResources> L
 @inject ReadMeService readmeService
 @inject ILogger<App> logger
 @rendermode InteractiveServer
@@ -7,13 +10,13 @@
               Modal="true"
               TrapFocus="true"
               Class="dialog-large"
-              AriaLabel="README">
+              AriaLabel="@L["Readme.AriaLabel"]">
     <FluentDialogHeader Visible="true">
         <FluentStack Orientation="Orientation.Horizontal"
                      VerticalAlignment="VerticalAlignment.Center">
             <FluentIcon Value="@(new Icons.Regular.Size24.DataHistogram())" />
             <FluentLabel Typo="Typography.PaneHeader">
-                Preview README.md
+                @L["Readme.Title"]
             </FluentLabel>
         </FluentStack>
     </FluentDialogHeader>
@@ -22,7 +25,7 @@
         <div class="markdown-body" style="max-width:48vw; max-height:65vh; overflow-y:auto;">
             @if (HtmlContent is null)
             {
-                <p>Loading...</p>
+                <p>@L["Common.Loading"]</p>
             }
             else
             {
@@ -32,7 +35,7 @@
     </FluentDialogBody>
     <FluentDialogFooter>
         <div style="width: 100%; display: flex; justify-content: flex-end;">
-            <FluentButton Appearance="Appearance.Neutral" OnClick="@Close">Fechar</FluentButton>
+            <FluentButton Appearance="Appearance.Neutral" OnClick="@Close">@L["Common.Close"]</FluentButton>
         </div>
     </FluentDialogFooter>
 </FluentDialog>

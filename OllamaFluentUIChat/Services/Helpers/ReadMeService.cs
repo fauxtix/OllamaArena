@@ -1,9 +1,11 @@
 ﻿using Markdig;
+using Microsoft.Extensions.Localization;
+using OllamaFluentUIChat.Resources;
 
 namespace OllamaFluentUIChat.Services.Helpers
 {
     // Adicionamos o MarkdownRenderer como dependência aqui
-    public class ReadMeService(ILogger<ReadMeService> logger, HttpClient http, MarkdownRenderer renderer)
+    public class ReadMeService(ILogger<ReadMeService> logger, HttpClient http, MarkdownRenderer renderer, IStringLocalizer<SharedResources> L)
     {
         // Expõe o renderer para que a UI possa usá-lo
         public MarkdownRenderer MarkdownRenderer { get; } = renderer;
@@ -20,8 +22,8 @@ namespace OllamaFluentUIChat.Services.Helpers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Erro ao carregar o README do GitHub.");
-                return "Erro ao carregar o ficheiro." + Environment.NewLine + 
-                    "Por favor, tente novamente mais tarde (o ficheiro poderá estar num repositório privado).";
+                return L["Readme.LoadError"] + Environment.NewLine +
+                    L["Readme.LoadErrorHint"];
             }
         }
     }

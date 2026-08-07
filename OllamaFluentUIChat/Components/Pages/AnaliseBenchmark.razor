@@ -1,9 +1,12 @@
 ﻿@page "/analise-benchmarks"
 @rendermode InteractiveServer
 
+@using Microsoft.Extensions.Localization
 @using Microsoft.FluentUI.AspNetCore.Components
 @using OllamaFluentUIChat.Models.Entities
+@using OllamaFluentUIChat.Resources
 @using OllamaFluentUIChat.Services.Interfaces.Repositories
+@inject IStringLocalizer<SharedResources> L
 @inject IBenchmarkRepository BenchmarkRepo
 @inject IDialogService DialogService
 
@@ -11,9 +14,9 @@
 
     <div class="painel-superior">
         <div class="painel-header">
-            <h2>Análise de Qualidade e Métricas (SQLite)</h2>
+            <h2>@L["Analise.PageTitle"]</h2>
             <FluentButton Appearance="Appearance.Accent" IconEnd="@(new Icons.Regular.Size16.ArrowClockwise())" OnClick="GetDataAsync">
-                Atualizar Dados
+                @L["Analise.RefreshData"]
             </FluentButton>
         </div>
 
@@ -21,13 +24,13 @@
         {
             <div class="loading-state">
                 <FluentProgressRing></FluentProgressRing>
-                <p>A carregar o histórico da base de dados...</p>
+                <p>@L["Analise.LoadingHistory"]</p>
             </div>
         }
         else if (!_promptsList.Any())
         {
             <div class="empty-state">
-                <p>Nenhum registo de benchmark encontrado na Base de Dados.</p>
+                <p>@L["Benchmarks.EmptyDatabase"]</p>
             </div>
         }
         else
@@ -40,17 +43,17 @@
                                 RowClass="@(p => p == _selectedPrompt ? "linha-selecionada" : "")"
                                 Pagination="@_pagination">
 
-                    <PropertyColumn Property="@(p => p.Id)" Title="ID" Width="60px" Sortable="true" />
+                    <PropertyColumn Property="@(p => p.Id)" Title="@L["SystemLogs.ColId"]" Width="60px" Sortable="true" />
 
-                    <PropertyColumn Property="@(p => p.TextoPrompt)" Title="Prompt Executado" Width="1fr" Tooltip="true" />
+                    <PropertyColumn Property="@(p => p.TextoPrompt)" Title="@L["Analise.ColPromptExecuted"]" Width="1fr" Tooltip="true" />
 
-                    <PropertyColumn Property="@(p => p.DataCriacaoFormatada)" Title="Data/Hora" Width="160px" Sortable="true" />
+                    <PropertyColumn Property="@(p => p.DataCriacaoFormatada)" Title="@L["SystemLogs.ColDateTime"]" Width="160px" Sortable="true" />
 
-                    <TemplateColumn Title="Modelos Testados" Width="150px">
-                        <FluentBadge Appearance="Appearance.Neutral">@context.Answers.Count modelos</FluentBadge>
+                    <TemplateColumn Title="@L["Analise.ColModelsTested"]" Width="150px">
+                        <FluentBadge Appearance="Appearance.Neutral">@L["Benchmarks.ModelCount", context.Answers.Count]</FluentBadge>
                     </TemplateColumn>
 
-                    <TemplateColumn Title="Ações" Width="180px" Align="Align.Center">
+                    <TemplateColumn Title="@L["Benchmarks.ColActions"]" Width="180px" Align="Align.Center">
                         <FluentButton Appearance="Appearance.Lightweight"
                                       IconStart="@(new Icons.Regular.Size16.Eye())"
                                       OnClick="@(() => SeleccionarPrompt(context))">
@@ -74,20 +77,20 @@
         {
             <div class="placeholder-inferior">
                 <FluentIcon Value="@(new Icons.Regular.Size32.DocumentSearch())" Color="Color.Neutral" />
-                <p>Selecione um prompt na tabela superior para analisar as respostas dos modelos.</p>
+                <p>@L["Analise.SelectPromptPlaceholder"]</p>
             </div>
         }
         else
         {
             <div class="detalhe-header">
-                <h3>Respostas Geradas para o Prompt #@_selectedPrompt.Id</h3>
+                <h3>@L["Benchmarks.ResponsesTitle", _selectedPrompt.Id]</h3>
                 <blockquote class="prompt-citacao">"@_selectedPrompt.TextoPrompt"</blockquote>
             </div>
 
             @if (!_selectedPrompt.Answers.Any())
             {
                 <FluentMessageBar Intent="MessageIntent.Warning" AllowClose="false">
-                    Este prompt foi guardado, mas não existem respostas associadas na tabela.
+                    @L["Benchmarks.NoAnswersWarning"]
                 </FluentMessageBar>
             }
             else
@@ -103,10 +106,10 @@
                                     <h4>@resp.NomeModelo</h4>
                                 </div>
                                 <div class="metricas-tags">
-                                    <FluentBadge Appearance="Appearance.Accent">@resp.TokensPorSegundo T/s</FluentBadge>
-                                    <FluentBadge Appearance="Appearance.Neutral">Eval: @(resp.TempoPuroMs)ms</FluentBadge>
-                                    <FluentBadge Appearance="Appearance.Neutral">Load: @(resp.TempoCargaMs)ms</FluentBadge>
-                                    <FluentBadge Appearance="Appearance.Neutral">Tokens: @resp.TamanhoTokens</FluentBadge>
+                                    <FluentBadge Appearance="Appearance.Accent">@L["Benchmarks.TokensPerSecond", resp.TokensPorSegundo]</FluentBadge>
+                                    <FluentBadge Appearance="Appearance.Neutral">@L["Analise.EvalMs", resp.TempoPuroMs]</FluentBadge>
+                                    <FluentBadge Appearance="Appearance.Neutral">@L["Analise.LoadMs", resp.TempoCargaMs]</FluentBadge>
+                                    <FluentBadge Appearance="Appearance.Neutral">@L["Benchmarks.Tokens", resp.TamanhoTokens]</FluentBadge>
                                 </div>
                             </div>
                             <div class="cartao-corpo">
@@ -169,11 +172,10 @@
             int totalRespostas = prompt.Answers?.Count ?? 0;
 
             var confirmacao = await DialogService.ShowConfirmationAsync(
-                $"Tem a certeza que deseja apagar o Prompt #{prompt.Id}? " +
-                $"Isto irá remover permanentemente todas as {totalRespostas} respostas associadas (Cascading Delete).",
-                "Sim, Apagar",
-                "Cancelar",
-                "Aviso de Eliminação");
+                string.Format(L["Analise.DeleteConfirmMessage"], prompt.Id, totalRespostas),
+                L["SystemLogs.DeleteYes"],
+                L["Common.Cancel"],
+                L["Analise.DeleteTitle"]);
 
             if (confirmacao == null) return;
 
