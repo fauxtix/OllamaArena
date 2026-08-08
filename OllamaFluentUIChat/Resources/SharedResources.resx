@@ -573,6 +573,15 @@ Deseja continuar?</value>
   <data name="Benchmarks.QuotaLimitTitle" xml:space="preserve">
     <value>Limite de avaliações automáticas</value>
   </data>
+  <data name="Benchmarks.EvaluationAlreadySavedTitle" xml:space="preserve">
+    <value>Avaliação já guardada</value>
+  </data>
+  <data name="Benchmarks.EvaluationAlreadySavedMessage" xml:space="preserve">
+    <value>Esta resposta já tem uma avaliação guardada. Ao continuar, a avaliação atual será substituída pela nova avaliação automática. Quer continuar?</value>
+  </data>
+  <data name="Benchmarks.EvaluationAlreadySavedContinue" xml:space="preserve">
+    <value>Continuar</value>
+  </data>
   <data name="Benchmarks.QuotaLimitMessage" xml:space="preserve">
     <value>Por favor, aguarde {0} segundos antes de executar uma nova avaliação automática.</value>
   </data>

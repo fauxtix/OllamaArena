@@ -231,6 +231,19 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             if (resposta == null || string.IsNullOrEmpty(originalPrompt) || string.IsNullOrEmpty(resposta.TextoResposta))
                 return;
 
+            if (AvaliacaoJaGuardada(resposta))
+            {
+                var confirmacao = await DialogService.ShowConfirmationAsync(
+                    L["Benchmarks.EvaluationAlreadySavedMessage"],
+                    L["Benchmarks.EvaluationAlreadySavedContinue"],
+                    L["Common.Cancel"],
+                    L["Benchmarks.EvaluationAlreadySavedTitle"]);
+
+                if (confirmacao == null) return;
+                var resultado = await confirmacao.Result;
+                if (resultado != null && resultado.Cancelled) return;
+            }
+
             if (!await Internet.HasInternetAsync())
             {
                 if (DialogService != null)
@@ -330,6 +343,15 @@ namespace OllamaFluentUIChat.Components.Pages.Components
                 StateHasChanged();
             }
         }
+
+        /// <summary>
+        /// Indica se a resposta já tem uma avaliação gravada na base de dados.
+        /// </summary>
+        private static bool AvaliacaoJaGuardada(BenchmarkResponse resposta) =>
+            resposta.GeminiRating != null &&
+            resposta.GeminiFeedback != null &&
+            resposta.OpenRouterRating != null &&
+            resposta.OpenRouterFeedback != null;
 
         /// <summary>
         /// Mapeia o resultado estruturado de um juiz para os campos da resposta.

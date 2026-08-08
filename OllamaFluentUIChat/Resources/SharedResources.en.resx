@@ -573,6 +573,15 @@ Do you want to continue?</value>
   <data name="Benchmarks.QuotaLimitTitle" xml:space="preserve">
     <value>Automatic evaluation limit</value>
   </data>
+  <data name="Benchmarks.EvaluationAlreadySavedTitle" xml:space="preserve">
+    <value>Evaluation already saved</value>
+  </data>
+  <data name="Benchmarks.EvaluationAlreadySavedMessage" xml:space="preserve">
+    <value>This response already has a saved evaluation. Continuing will replace the current evaluation with the new automatic evaluation. Do you want to continue?</value>
+  </data>
+  <data name="Benchmarks.EvaluationAlreadySavedContinue" xml:space="preserve">
+    <value>Continue</value>
+  </data>
   <data name="Benchmarks.QuotaLimitMessage" xml:space="preserve">
     <value>Please wait {0} seconds before running a new automatic evaluation.</value>
   </data>
