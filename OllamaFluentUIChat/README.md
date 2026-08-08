@@ -20,7 +20,7 @@ Desenvolvido sob uma filosofia de **soberania digital e engenharia orientada a d
 A aplicação permite cruzar dados e benchmarks para que o utilizador descubra empiricamente qual o modelo local que oferece o melhor equilíbrio para os seus prompts específicos:
 - **Pontuação Isolada:** Ao separar de forma cirúrgica o *Score Factual*, o *Score de Formatação* e o *Score Final* (além de outras métricas), a app revela se um modelo pequeno é brilhante em lógica (mas peca no markdown) ou se apenas gera texto bonito sem substância;
 - **Contexto Justo (`[CRITICAL CONTEXT]`):** Protege a avaliação de modelos antigos ou pequenos, instruindo os juízes externos (ChatGPT/Gemini) a avaliarem as respostas estritamente com base no ano de treino do modelo local;
-- **Arquitetura Híbrida:** O utilizador interage como uma ponte manual, segura e gratuita para recolher feedbacks avançados da nuvem sem gastar um único cêntimo em subscrições ou chaves de API dispendiosas.
+- **Arquitetura Híbrida:** Avaliação automatizada por API — a aplicação recolhe feedbacks avançados da nuvem através de chamadas diretas aos juízes (Gemini e OpenRouter), sem custos de subscrições; se alguma API falhar, o processo manual continua disponível como alternativa.
 
 ### 🛠️ 2. Um Guia Prático de Engenharia Ollama (O Bónus para Devs)
 Para quem faz o *clone* do repositório, este projeto funciona como uma ferramenta pedagógica. O código serve como um guia de como integrar e explorar o ecossistema local:
@@ -41,23 +41,22 @@ Transforme cada conversa num teste científico. Sempre que envia uma mensagem, a
 Com estes dados recolhidos automaticamente, pode:
 
 - Consultar o **histórico completo de todos os testes** numa tabela organizada, com pesquisa e filtros (Todos, Por Avaliar, Avaliados);
-- **Avaliar a qualidade com dois juízes de IA** — atribuir uma nota de 1 a 5 em 11 critérios (factualidade, formatação, clareza, segurança, etc.) às respostas dos seus modelos, através dos juízes **ChatGPT** e **Gemini**, guardando também a **recomendação** de cada juiz;
+- **Avaliar a qualidade com dois juízes de IA** — atribuir uma nota de 1 a 5 em 11 critérios (factualidade, formatação, clareza, segurança, etc.) às respostas dos seus modelos, através dos juízes **Gemini** e **OpenRouter**, guardando também a **recomendação** de cada juiz;
 - **Analisar os resultados de forma 100% local** — a aplicação gera um resumo inteligente com conclusões e recomendações de desempenho (análise em C# puro, sem depender da nuvem);
 - **Exportar os resultados para Excel**, com relatórios agrupados por pergunta, prontos a partilhar;
 - Comparar as respostas de **vários modelos lado a lado** para a mesma pergunta, no painel de Qualidade e Métricas;
 - Gerir os seus registos, apagando testes individuais ou todo o histórico quando pretender.
 
-## ⚖️ Avaliação dos Dois Juízes (ChatGPT & Gemini)
+## ⚖️ Avaliação dos Dois Juízes (Gemini & OpenRouter)
 
-A aplicação integra um processo estruturado de auditoria externa no painel de **Qualidade e Métricas** para avaliar e pontuar as respostas dadas pelos modelos locais do Ollama, utilizando o ChatGPT e o Gemini como juízes de qualidade:
+A aplicação integra um processo estruturado de auditoria externa no painel de **Benchmarks** para avaliar e pontuar as respostas dadas pelos modelos locais do Ollama, utilizando o **Gemini** e o **OpenRouter** (router de modelos gratuitos, ex.: `openrouter/free`) como juízes de qualidade — sem precisar de abrir abas no browser nem copiar/colar manualmente:
 
-1. **Copiar para Avaliação:** O utilizador acede à resposta de um modelo específico e clica no botão **"Copiar para avaliação"**. A aplicação gera internamente o prompt de auditoria e coloca-o no clipboard.
+1. **Avaliar Automaticamente:** O utilizador acede à resposta de um modelo específico e clica no botão **"Avaliar automaticamente"**. A aplicação gera internamente o prompt de auditoria e submete-o aos dois juízes.
 2. **Contexto Crítico Injetado:** O prompt gerado inclui automaticamente metadados inteligentes (como o ano de treino do modelo local) sob a marca `[CRITICAL CONTEXT]`, instruindo o juiz externo a não penalizar o modelo por falta de conhecimento de eventos futuros.
-3. **Processamento nos Browsers:** O utilizador abre manualmente o seu navegador de internet, acede às sessões do ChatGPT e do Gemini, e faz <kbd>Ctrl</kbd>+<kbd>V</kbd> para submeter o prompt a ambos os juízes.
-4. **Abertura do Ecrã de Avaliação:** Após obter as respostas dos juízes no browser, o utilizador regressa à aplicação e clica no botão **"Avaliação"** (situado junto aos contadores dos juízes).
-5. **Colagem do Output Bruto:** No ecrã de avaliação, o utilizador cola o texto copiado do browser diretamente nos campos **"Feedback (Cole aqui o output bruto do Gemini/ChatGPT)"**.
-6. **Extração Automática de Métricas:** O sistema analisa o texto bruto colado e preenche automaticamente as **Métricas de Avaliação (Escala 1-5)**, incluindo critérios como *Factual, Formatação, Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Halo Effect, Segurança* e a nota *Global*; também extrai a **RECOMMENDATION** de cada juiz, que fica guardada na Base de Dados e é apresentada em destaque no formulário de avaliação e no diálogo de feedbacks.
-7. **Tradução e Consolidação:** O utilizador pode utilizar a opção **"Traduzir Feedback"** para passar as análises para a língua ativa na interface (português ou inglês) e, por fim, clica em **"Guardar avaliação"** para persistir todos os dados permanentemente na Base de Dados.
+3. **Chamadas Diretas às APIs:** A aplicação envia o prompt aos dois juízes **em paralelo** — **Gemini** (`gemini-flash-latest`) e **OpenRouter** (`openrouter/free`) — usando as chaves configuradas em `appsettings.Local.json` (secção `ApiKeys`). Um intervalo mínimo entre avaliações (configurável em `AutomatedJudge:MinIntervalSeconds`, 60s por defeito) protege os limites gratuitos das APIs.
+4. **Abertura do Ecrã de Avaliação Preenchido:** Assim que os juízes respondem, o ecrã de avaliação abre **já preenchido** com as métricas (Escala 1-5), a nota *Global*, o feedback e a **RECOMMENDATION** de cada juiz — prontos a rever e guardar.
+5. **Tratamento de Falhas Parciais:** Se um dos juízes falhar (limite de requisições, rede ou chave inválida), um aviso identifica qual falhou e os campos desse juiz ficam editáveis para colagem manual. O botão **"Copiar prompt"** continua disponível para o processo manual.
+6. **Tradução e Consolidação:** O utilizador pode utilizar a opção **"Traduzir Feedback"** para passar as análises para a língua ativa na interface (português ou inglês) e, por fim, clica em **"Guardar avaliação"** para persistir todos os dados permanentemente na Base de Dados.
 
 ## 💬 Interface de Chat
 
@@ -99,7 +98,7 @@ Poupe tempo em tarefas repetitivas:
 A navegação é simples. No menu lateral encontra todas as secções da aplicação: **Chat**, **Benchmarks**, **Qualidade e Métricas**, **Modelos carregados**, **Prompts** e **Logs**.
 
 - **Conversar**: abra o Chat, escreva a sua mensagem na caixa de texto e prima <kbd>Enter</kbd> ou o botão de envio. As respostas aparecem em tempo real e cada uma mostra o tempo que demorou. Use **Histórico** para retomar conversas anteriores e **Novo Chat** para começar de novo.
-- **Processo de Avaliação de Juízes:** Para cada resposta obtida, selecione a opção **"Copia para avaliação"** — o prompt de auditoria fica no clipboard. Após criar duas novas abas no browser (uma para o Gemini, outra para o ChatGPT, abra manualmente cada uma das sessões e faça <kbd>Ctrl</kbd>+<kbd>V</kbd> em cada uma<kbd>Ctrl</kbd>+<kbd>V</kbd>. De seguida, selecione a opção **"Avaliação"** na aplicação. Copie a resposta do primeiro juiz no browser e cole-a no ecrã de avaliação da app. Repita o processo para o segundo juiz para guardar os veredictos na BD.
+- **Avaliação Automática de Juízes:** Para cada resposta obtida, clique em **"Avaliar automaticamente"** — a aplicação submete o prompt de auditoria ao Gemini e ao OpenRouter, abre o ecrã de avaliação já preenchido e, após a sua revisão, guarda os veredictos na BD. Se preferir avaliar manualmente, use **"Copiar prompt"** para colocar o prompt de auditoria no clipboard.
 - **Tema Claro/Escuro**: alterne entre o tema claro e o escuro sempre que preferir. A sua escolha fica **guardada no navegador** e é restaurada automaticamente na próxima visita.
 - **Definições**: aceda à página de Definições para gerir os seus modelos de IA (definir o modelo predefinido e controlar os disponíveis) e personalizar a aparência da aplicação.
 

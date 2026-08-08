@@ -20,7 +20,7 @@ Developed under a philosophy of **digital sovereignty and data-driven engineerin
 The app lets you cross-reference data and benchmarks so that the user can empirically discover which local model offers the best balance for their specific prompts:
 - **Isolated Scoring:** By surgically separating the *Factual Score*, the *Formatting Score* and the *Final Score* (alongside other metrics), the app reveals whether a small model is brilliant at logic (but weak at markdown) or merely produces pretty text without substance;
 - **Fair Context (`[CRITICAL CONTEXT]`):** Protects old or small models from unfair evaluation by instructing the external judges (ChatGPT/Gemini) to rate responses strictly on the basis of the local model's training year;
-- **Hybrid Architecture:** The user acts as a manual, secure and free bridge to gather advanced feedback from the cloud without spending a single cent on subscriptions or expensive API keys.
+- **Hybrid Architecture:** API-driven automated evaluation — the app gathers advanced cloud feedback through direct calls to the judges (Gemini and OpenRouter), with no subscription costs; if any API fails, the manual process remains available as an alternative.
 
 ### 🛠️ 2. A Practical Guide to Ollama Engineering (The Bonus for Devs)
 For anyone cloning the repository, this project also works as a teaching tool. The code serves as a guide to integrating and exploring the local ecosystem:
@@ -41,23 +41,22 @@ Turn every conversation into a scientific test. Every time you send a message, t
 With this data collected automatically, you can:
 
 - Browse the **complete history of all tests** in an organized table, with search and filters (All, Pending Review, Reviewed);
-- **Assess quality with two AI judges** — rate your models' responses from 1 to 5 across 11 criteria (factuality, formatting, clarity, safety, etc.) using the **ChatGPT** and **Gemini** judges, also saving each judge's **recommendation**;
+- **Assess quality with two AI judges** — rate your models' responses from 1 to 5 across 11 criteria (factuality, formatting, clarity, safety, etc.) using the **Gemini** and **OpenRouter** judges, also saving each judge's **recommendation**;
 - **Analyse results 100% locally** — the app produces a smart summary with conclusions and performance recommendations (pure C# analysis, no cloud dependency);
 - **Export results to Excel**, with reports grouped by question, ready to share;
 - Compare the responses of **several models side by side** for the same question, in the Quality and Metrics panel;
 - Manage your records, deleting individual tests or the entire history whenever you want.
 
-## ⚖️ Evaluation by the Two Judges (ChatGPT & Gemini)
+## ⚖️ Evaluation by the Two Judges (Gemini & OpenRouter)
 
-The app integrates a structured external audit process in the **Quality and Metrics** panel to evaluate and score the responses given by the local Ollama models, using ChatGPT and Gemini as quality judges:
+The app integrates a structured external audit process in the **Benchmarks** panel to evaluate and score the responses given by the local Ollama models, using **Gemini** and **OpenRouter** (a router of free models, e.g. `openrouter/free`) as quality judges — no need to open browser tabs or copy/paste manually:
 
-1. **Copy for Evaluation:** The user accesses the response of a specific model and clicks the **"Copy for evaluation"** button. The app internally generates the audit prompt and places it on the clipboard.
+1. **Evaluate Automatically:** The user accesses the response of a specific model and clicks the **"Evaluate automatically"** button. The app internally generates the audit prompt and submits it to both judges.
 2. **Critical Context Injected:** The generated prompt automatically includes smart metadata (such as the local model's training year) under the `[CRITICAL CONTEXT]` marker, instructing the external judge not to penalize the model for lacking knowledge of future events.
-3. **Browser Processing:** The user manually opens their web browser, accesses the ChatGPT and Gemini sessions, and presses <kbd>Ctrl</kbd>+<kbd>V</kbd> to submit the prompt to both judges.
-4. **Opening the Evaluation Screen:** After obtaining the judges' responses in the browser, the user returns to the app and clicks the **"Evaluation"** button (located next to the judges' counters).
-5. **Pasting the Raw Output:** On the evaluation screen, the user pastes the text copied from the browser directly into the **"Feedback (Paste the raw Gemini/ChatGPT output here)"** fields.
-6. **Automatic Metrics Extraction:** The system analyses the pasted raw text and automatically fills in the **Evaluation Metrics (1-5 scale)**, including criteria such as *Factual, Formatting, Compliance, Relevance, Tone, Conciseness, Clarity, Readability, Halo Effect, Safety* and the *Global* score; it also extracts each judge's **RECOMMENDATION**, which is stored in the Database and shown highlighted in the evaluation form and in the feedback dialog.
-7. **Translation and Consolidation:** The user can use the **"Translate Feedback"** option to convert the analyses into the language currently active in the interface (Portuguese or English) and, finally, click **"Save evaluation"** to persist all data permanently in the Database.
+3. **Direct API Calls:** The app sends the prompt to both judges **in parallel** — **Gemini** (`gemini-flash-latest`) and **OpenRouter** (`openrouter/free`) — using the keys configured in `appsettings.Local.json` (section `ApiKeys`). A minimum interval between evaluations (configurable via `AutomatedJudge:MinIntervalSeconds`, 60s by default) protects the free-tier API limits.
+4. **Evaluation Screen Opens Pre-filled:** As soon as the judges reply, the evaluation screen opens **already filled in** with the metrics (1-5 scale), the *Global* score, the feedback and each judge's **RECOMMENDATION** — ready to review and save.
+5. **Partial Failure Handling:** If one of the judges fails (rate limit, network or invalid key), a warning identifies which one failed and that judge's fields remain editable for manual pasting. The **"Copy prompt"** button remains available for the manual process.
+6. **Translation and Consolidation:** The user can use the **"Translate Feedback"** option to convert the analyses into the language currently active in the interface (Portuguese or English) and, finally, click **"Save evaluation"** to persist all data permanently in the Database.
 
 ## 💬 Chat Interface
 
@@ -99,7 +98,7 @@ Save time on repetitive tasks:
 Navigation is simple. The side menu shows every section of the app: **Chat**, **Benchmarks**, **Quality and Metrics**, **Loaded Models**, **Prompts** and **Logs**.
 
 - **Chat**: open the Chat, type your message in the text box and press <kbd>Enter</kbd> or the send button. Responses appear in real time and each one shows how long it took. Use **History** to resume previous conversations and **New Chat** to start over.
-- **Judge Evaluation Process:** For each response obtained, select the **"Copy for evaluation"** option. Manually open the ChatGPT and Gemini session. Select each one and press <kbd>Ctrl</kbd>+<kbd>V</kbd>. Next, select the **"Evaluation"** option in the app. Copy the first judge's response in the browser and paste it into the app's evaluation screen. Repeat the process for the second judge to save the verdicts in the DB.
+- **Automatic Judge Evaluation:** For each response obtained, click **"Evaluate automatically"** — the app submits the audit prompt to Gemini and OpenRouter, opens the evaluation screen already filled in and, after your review, saves the verdicts in the DB. If you prefer to evaluate manually, use **"Copy prompt"** to place the audit prompt on the clipboard.
 - **Light/Dark Theme**: switch between light and dark themes whenever you prefer. Your choice is **saved in the browser** and restored automatically on your next visit.
 - **Settings**: go to the Settings page to manage your AI models (set the default model and control which are available) and customize the app's appearance.
 
