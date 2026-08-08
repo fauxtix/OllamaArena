@@ -282,7 +282,7 @@
   <data name="Benchmarks.ColFormatting" xml:space="preserve">
     <value>Formatting</value>
   </data>
-  <data name="Benchmarks.ColChatGpt" xml:space="preserve">
+  <data name="Benchmarks.ColOpenRouter" xml:space="preserve">
     <value>OpenRouter</value>
   </data>
   <data name="Benchmarks.ColTokensPerSecond" xml:space="preserve">
@@ -459,7 +459,7 @@ Do you want to continue?</value>
   <data name="Evaluation.JudgeGemini" xml:space="preserve">
     <value>Google Gemini</value>
   </data>
-  <data name="Evaluation.JudgeChatGpt" xml:space="preserve">
+  <data name="Evaluation.JudgeOpenRouter" xml:space="preserve">
     <value>OpenRouter</value>
   </data>
   <data name="Evaluation.MetricsHeader" xml:space="preserve">
@@ -501,7 +501,7 @@ Do you want to continue?</value>
   <data name="Evaluation.FeedbackGemini" xml:space="preserve">
     <value>Feedback (Paste the raw Gemini output here)</value>
   </data>
-  <data name="Evaluation.FeedbackChatGpt" xml:space="preserve">
+  <data name="Evaluation.FeedbackOpenRouter" xml:space="preserve">
     <value>Feedback (Paste the raw OpenRouter output here)</value>
   </data>
   <data name="Evaluation.RecommendationLabel" xml:space="preserve">
@@ -581,6 +581,9 @@ Do you want to continue?</value>
   </data>
   <data name="Benchmarks.AutomatedJudgeError" xml:space="preserve">
     <value>An error occurred while running the automatic evaluation. You can use 'Copy prompt' as a manual alternative.</value>
+  </data>
+  <data name="Benchmarks.NoInternetError" xml:space="preserve">
+    <value>No internet connection. Automated evaluation requires access to the cloud judges (Gemini and OpenRouter). Use 'Copy prompt' for manual evaluation.</value>
   </data>
   <data name="Benchmarks.Evaluate" xml:space="preserve">
     <value>Evaluation</value>
@@ -762,10 +765,10 @@ Do you want to continue?</value>
   <data name="Analysis.GeminiBest" xml:space="preserve">
     <value>The {0} model stood out in factual accuracy with a score of {1}/5.</value>
   </data>
-  <data name="Analysis.ChatGptTie" xml:space="preserve">
+  <data name="Analysis.OpenRouterTie" xml:space="preserve">
     <value>The models {0} share the best factual score with {1}/5.</value>
   </data>
-  <data name="Analysis.ChatGptBest" xml:space="preserve">
+  <data name="Analysis.OpenRouterBest" xml:space="preserve">
     <value>The best factual score was awarded to the {0} model with {1}/5.</value>
   </data>
   <data name="Analysis.ConsensusHigh" xml:space="preserve">
@@ -783,7 +786,7 @@ Do you want to continue?</value>
   <data name="Analysis.DetailGemini" xml:space="preserve">
     <value>• &lt;strong&gt;Gemini Assessment:&lt;/strong&gt; {0}</value>
   </data>
-  <data name="Analysis.DetailChatGpt" xml:space="preserve">
+  <data name="Analysis.DetailOpenRouter" xml:space="preserve">
     <value>• &lt;strong&gt;OpenRouter Assessment:&lt;/strong&gt; {0}</value>
   </data>
   <data name="Analysis.DetailConsensus" xml:space="preserve">
@@ -852,7 +855,7 @@ Do you want to continue?</value>
   <data name="EvalDialog.TranslateGemini" xml:space="preserve">
     <value>Translate Feedback (Gemini)</value>
   </data>
-  <data name="EvalDialog.TranslateChatGpt" xml:space="preserve">
+  <data name="EvalDialog.TranslateOpenRouter" xml:space="preserve">
     <value>Translate Feedback (OpenRouter)</value>
   </data>
   <data name="EvalDialog.SaveEvaluation" xml:space="preserve">
@@ -867,7 +870,7 @@ Do you want to continue?</value>
   <data name="EvalDialog.TranslateTitle" xml:space="preserve">
     <value>Gemini Translation</value>
   </data>
-  <data name="EvalDialog.TranslateChatGptError" xml:space="preserve">
+  <data name="EvalDialog.TranslateOpenRouterError" xml:space="preserve">
     <value>Error translating OpenRouter feedback. Please check the logs.</value>
   </data>
   <data name="EvalDialog.TranslateGeminiError" xml:space="preserve">

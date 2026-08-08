@@ -4,6 +4,7 @@ using OllamaFluentUIChat.Models.Entities;
 using OllamaFluentUIChat.PromptTemplates;
 using OllamaFluentUIChat.Services;
 using OllamaFluentUIChat.Services.Exceptions;
+using OllamaFluentUIChat.Services.Helpers;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
 
@@ -15,6 +16,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
         [Inject] public required IOllamaGpuService GpuService { get; set; }
         [Inject] public required EvaluatePromptTemplate EvaluatePromptTemplate { get; set; }
         [Inject] public AutomatedJudgeService _feedbackService { get; set; } = default!;
+        [Inject] public required InternetConnectivityService Internet { get; set; }
         [Inject] public ILogger<App> _logger { get; set; } = default!;
 
         private List<BenchmarkPrompt>? _promptsList;
@@ -227,6 +229,17 @@ namespace OllamaFluentUIChat.Components.Pages.Components
         {
             if (resposta == null || string.IsNullOrEmpty(originalPrompt) || string.IsNullOrEmpty(resposta.TextoResposta))
                 return;
+
+            if (!await Internet.HasInternetAsync())
+            {
+                if (DialogService != null)
+                {
+                    await DialogService.ShowErrorAsync(
+                        L["Benchmarks.NoInternetError"],
+                        L["Benchmarks.AutomatedJudgeErrorTitle"]);
+                }
+                return;
+            }
 
             isCreatingPrompt = true;
             StateHasChanged();
