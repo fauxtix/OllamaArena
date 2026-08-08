@@ -20,6 +20,9 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    // Ficheiro local não versionado para chaves de API (appsettings.Local.json no .gitignore)
+    builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
     // Localização
     builder.Services.AddLocalization(); 
 
@@ -55,7 +58,11 @@ try
 
     builder.Services.AddSingleton<MarkdownRenderer>();
     builder.Services.AddHttpClient<ReadMeService>();
+    builder.Services.AddTransient<JudgesFeedbackService>();
 
+    // Clientes nomeados para os juízes automáticos (Gemini e OpenRouter)
+    builder.Services.AddHttpClient("Gemini", client => client.Timeout = TimeSpan.FromSeconds(30));
+    builder.Services.AddHttpClient("OpenRouter", client => client.Timeout = TimeSpan.FromSeconds(60));
     builder.Services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
     builder.Services.AddScoped<ILogRepository, LogRepository>();
 

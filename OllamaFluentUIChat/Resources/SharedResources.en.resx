@@ -544,7 +544,7 @@ Do you want to continue?</value>
     <value>This prompt was saved, but there are no associated responses in the table.</value>
   </data>
   <data name="Benchmarks.CreatingPrompt" xml:space="preserve">
-    <value>Creating the prompt for evaluation...</value>
+    <value>Processing evaluation with Gemini and OpenRouter...</value>
   </data>
   <data name="Benchmarks.TokensPerSecond" xml:space="preserve">
     <value>{0} T/s</value>
@@ -562,7 +562,25 @@ Do you want to continue?</value>
     <value>Copy Formatted Prompt for the AI Judge</value>
   </data>
   <data name="Benchmarks.CopyForEvaluation" xml:space="preserve">
-    <value>Copy for evaluation</value>
+    <value>Copy prompt</value>
+  </data>
+  <data name="Benchmarks.AutomateEvaluation" xml:space="preserve">
+    <value>Evaluate automatically</value>
+  </data>
+  <data name="Benchmarks.AutomateEvaluationTitle" xml:space="preserve">
+    <value>Evaluate automatically with Gemini and OpenRouter</value>
+  </data>
+  <data name="Benchmarks.QuotaLimitTitle" xml:space="preserve">
+    <value>Automatic evaluation limit</value>
+  </data>
+  <data name="Benchmarks.QuotaLimitMessage" xml:space="preserve">
+    <value>Please wait {0} seconds before running a new automatic evaluation.</value>
+  </data>
+  <data name="Benchmarks.AutomatedJudgeErrorTitle" xml:space="preserve">
+    <value>Automatic evaluation error</value>
+  </data>
+  <data name="Benchmarks.AutomatedJudgeError" xml:space="preserve">
+    <value>An error occurred while running the automatic evaluation. You can use 'Copy prompt' as a manual alternative.</value>
   </data>
   <data name="Benchmarks.Evaluate" xml:space="preserve">
     <value>Evaluation</value>

@@ -66,6 +66,9 @@ artifacts/
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 
+# Chaves de API locais (não versionar)
+appsettings.Local.json
+
 # StyleCop
 StyleCopReport.xml
 

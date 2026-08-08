@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using OllamaFluentUIChat.Models.Entities;
 using OllamaFluentUIChat.PromptTemplates;
+using OllamaFluentUIChat.Services;
+using OllamaFluentUIChat.Services.Exceptions;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
 
@@ -12,6 +14,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
         [Inject] public required IBenchmarkRepository BenchmarkRepo { get; set; }
         [Inject] public required IOllamaGpuService GpuService { get; set; }
         [Inject] public required EvaluatePromptTemplate EvaluatePromptTemplate { get; set; }
+        [Inject] public JudgesFeedbackService _feedbackService { get; set; } = default!;
         [Inject] public ILogger<App> _logger { get; set; } = default!;
 
         private List<BenchmarkPrompt>? _promptsList;
@@ -207,24 +210,100 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             }
         }
 
-        private async Task CopyPromptForEvaluationAsync(string originalPrompt, string modelResponse, string modelName)
+        private async Task<string> BuildPromptDeAvaliacaoAsync(BenchmarkResponse resposta, string originalPrompt, string modelName)
         {
-            if (string.IsNullOrEmpty(originalPrompt) || string.IsNullOrEmpty(modelResponse))
+            var metadata = await GpuService.GetExtendedModelMetadataAsync(modelName);
+
+            return await EvaluatePromptTemplate.EvaluationCopyPromptAsync(
+                originalPrompt, resposta.TextoResposta, metadata.TrainingYear, modelName);
+        }
+
+        /// <summary>
+        /// Fluxo automatizado: gere o prompt, pede a avaliação aos dois juízes (Gemini e OpenRouter)
+        /// e abre o diálogo de avaliação já preenchido. A gravação só acontece quando o utilizador
+        /// confirma no diálogo ("Guardar avaliação").
+        /// </summary>
+        private async Task AvaliarAutomaticamenteAsync(BenchmarkResponse resposta, string originalPrompt, string modelName)
+        {
+            if (resposta == null || string.IsNullOrEmpty(originalPrompt) || string.IsNullOrEmpty(resposta.TextoResposta))
                 return;
 
             isCreatingPrompt = true;
+            StateHasChanged();
 
             try
             {
-                var metadata = await GpuService.GetExtendedModelMetadataAsync(modelName);
+                string formattedPrompt = await BuildPromptDeAvaliacaoAsync(resposta, originalPrompt, modelName);
 
-                var trainingYear = metadata.TrainingYear;
+                AutomatedJudgeResult resultado;
+                try
+                {
+                    resultado = await _feedbackService.GetFeedbacksAutomatizadosAsync(formattedPrompt);
+                }
+                catch (QuotaLimitException quotaEx)
+                {
+                    if (DialogService != null)
+                    {
+                        await DialogService.ShowWarningAsync(
+                            L["Benchmarks.QuotaLimitMessage", quotaEx.SegundosRestantes],
+                            L["Benchmarks.QuotaLimitTitle"]);
+                    }
+                    return;
+                }
 
-                var formattedPrompt = await EvaluatePromptTemplate.EvaluationCopyPromptAsync(
-                    originalPrompt, modelResponse, trainingYear, modelName);
+                PreencherAvaliacao(resposta, resultado.Gemini, juizGemini: true);
+                PreencherAvaliacao(resposta, resultado.OpenRouter, juizGemini: false);
 
+                if (resultado.HasErrors)
+                {
+                    var erros = new List<string>();
+                    if (!resultado.Gemini.Success) erros.Add(resultado.Gemini.ErrorMessage);
+                    if (!resultado.OpenRouter.Success) erros.Add(resultado.OpenRouter.ErrorMessage);
+
+                    _logger?.LogWarning("Avaliação automática com erros parciais: {Erros}", string.Join(" | ", erros));
+
+                    if (DialogService != null)
+                    {
+                        await DialogService.ShowWarningAsync(
+                            string.Join(Environment.NewLine, erros),
+                            L["Benchmarks.AutomatedJudgeErrorTitle"]);
+                    }
+                }
+
+                _selectedEvaluation = resposta;
+                _evaluationDialogVisible = true;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Erro ao executar avaliação automática.");
+                if (DialogService != null)
+                {
+                    await DialogService.ShowErrorAsync(L["Benchmarks.AutomatedJudgeError"], L["Benchmarks.AutomatedJudgeErrorTitle"]);
+                }
+            }
+            finally
+            {
+                isCreatingPrompt = false;
+                StateHasChanged();
+            }
+        }
+
+        /// <summary>
+        /// Fallback manual: copia apenas o prompt formatado para a área de transferência,
+        /// para quando as APIs dos juízes não estiverem disponíveis.
+        /// </summary>
+        private async Task CopiarPromptAvaliacaoAsync(BenchmarkResponse resposta, string originalPrompt, string modelName)
+        {
+            if (resposta == null || string.IsNullOrEmpty(originalPrompt) || string.IsNullOrEmpty(resposta.TextoResposta))
+                return;
+
+            isCreatingPrompt = true;
+            StateHasChanged();
+
+            try
+            {
+                string formattedPrompt = await BuildPromptDeAvaliacaoAsync(resposta, originalPrompt, modelName);
                 await CopyToClipboardAsync(formattedPrompt);
-
             }
             catch (Exception ex)
             {
@@ -233,6 +312,51 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             finally
             {
                 isCreatingPrompt = false;
+                StateHasChanged();
+            }
+        }
+
+        /// <summary>
+        /// Mapeia o resultado estruturado de um juiz para os campos da resposta.
+        /// Se o juiz falhou, os campos ficam vazios/ editáveis para o utilizador colar manualmente.
+        /// </summary>
+        private static void PreencherAvaliacao(BenchmarkResponse resposta, JudgeFeedbackResult resultado, bool juizGemini)
+        {
+            if (!resultado.Success) return;
+
+            var parsed = resultado.Parsed;
+
+            if (juizGemini)
+            {
+                resposta.GeminiFactualRating = parsed.FactualScore;
+                resposta.GeminiFormattingRating = parsed.FormattingScore;
+                resposta.GeminiComplianceRating = parsed.ComplianceScore;
+                resposta.GeminiRelevanceRating = parsed.RelevanceScore;
+                resposta.GeminiToneRating = parsed.ToneScore;
+                resposta.GeminiConcisenessRating = parsed.ConcisenessScore;
+                resposta.GeminiClarityRating = parsed.ClarityScore;
+                resposta.GeminiReadabilityRating = parsed.ReadabilityScore;
+                resposta.GeminiHaloEffectRating = parsed.HaloEffectScore;
+                resposta.GeminiSafetyRating = parsed.SafetyScore;
+                resposta.GeminiRating = parsed.FinalScore;
+                resposta.GeminiFeedback = string.IsNullOrWhiteSpace(parsed.Description) ? resultado.RawText : parsed.Description;
+                resposta.GeminiRecommendation = parsed.Recommendation;
+            }
+            else
+            {
+                resposta.ChatGptFactualRating = parsed.FactualScore;
+                resposta.ChatGptFormattingRating = parsed.FormattingScore;
+                resposta.ChatGptComplianceRating = parsed.ComplianceScore;
+                resposta.ChatGptRelevanceRating = parsed.RelevanceScore;
+                resposta.ChatGptToneRating = parsed.ToneScore;
+                resposta.ChatGptConcisenessRating = parsed.ConcisenessScore;
+                resposta.ChatGptClarityRating = parsed.ClarityScore;
+                resposta.ChatGptReadabilityRating = parsed.ReadabilityScore;
+                resposta.ChatGptHaloEffectRating = parsed.HaloEffectScore;
+                resposta.ChatGptSafetyRating = parsed.SafetyScore;
+                resposta.ChatGptRating = parsed.FinalScore;
+                resposta.ChatGptFeedback = string.IsNullOrWhiteSpace(parsed.Description) ? resultado.RawText : parsed.Description;
+                resposta.ChatGptRecommendation = parsed.Recommendation;
             }
         }
         private async Task OpenEvaluation(int id)

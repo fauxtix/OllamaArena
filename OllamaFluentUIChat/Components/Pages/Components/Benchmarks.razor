@@ -160,14 +160,25 @@
                                                     <FluentBadge Appearance="Appearance.Accent">@L["Benchmarks.LoadTime", resp.TempoCargaFormatado]</FluentBadge>
                                                     <FluentBadge Appearance="Appearance.Accent">@L["Benchmarks.Tokens", resp.TamanhoTokens]</FluentBadge>
                                                 </div>
-                                                <FluentButton Appearance="Appearance.Accent"
-                                                              IconStart="@(new Icons.Regular.Size24.ClipboardCode())"
-                                                              OnClick="() => CopyPromptForEvaluationAsync(_selectedPrompt.TextoPrompt, resp.TextoResposta, resp.NomeModelo)"
-                                                              Title="@L["Benchmarks.CopyPromptTitle"]"
-                                                              Color="rgba(255,255,255, 0.9)"
-                                                              BackgroundColor="rgba(25, 116, 210, 1.0)">
-                                                    @L["Benchmarks.CopyForEvaluation"]
-                                                </FluentButton>
+                                                <div style="display: flex; gap: 8px; align-items: center;">
+                                                    <FluentButton Appearance="Appearance.Accent"
+                                                                  Disabled="@isCreatingPrompt"
+                                                                  IconStart="@(new Icons.Regular.Size20.Sparkle())"
+                                                                  OnClick="() => AvaliarAutomaticamenteAsync(resp, _selectedPrompt.TextoPrompt, resp.NomeModelo)"
+                                                                  Title="@L["Benchmarks.AutomateEvaluationTitle"]"
+                                                                  Color="rgba(255,255,255, 0.9)"
+                                                                  BackgroundColor="rgba(25, 116, 210, 1.0)">
+                                                        @L["Benchmarks.AutomateEvaluation"]
+                                                    </FluentButton>
+
+                                                    <FluentButton Appearance="Appearance.Stealth"
+                                                                  Disabled="@isCreatingPrompt"
+                                                                  IconStart="@(new Icons.Regular.Size20.ClipboardCode())"
+                                                                  OnClick="() => CopiarPromptAvaliacaoAsync(resp, _selectedPrompt.TextoPrompt, resp.NomeModelo)"
+                                                                  Title="@L["Benchmarks.CopyPromptTitle"]">
+                                                        @L["Benchmarks.CopyForEvaluation"]
+                                                    </FluentButton>
+                                                </div>
                                             </div>
 
                                             <div class="cartao-corpo">

@@ -544,7 +544,7 @@ Deseja continuar?</value>
     <value>Este prompt foi guardado, mas não existem respostas associadas na tabela.</value>
   </data>
   <data name="Benchmarks.CreatingPrompt" xml:space="preserve">
-    <value>A criar o prompt para para avaliação...</value>
+    <value>A processar avaliação com Gemini e OpenRouter...</value>
   </data>
   <data name="Benchmarks.TokensPerSecond" xml:space="preserve">
     <value>{0} T/s</value>
@@ -562,7 +562,25 @@ Deseja continuar?</value>
     <value>Copiar Prompt Formatado para o Juiz IA</value>
   </data>
   <data name="Benchmarks.CopyForEvaluation" xml:space="preserve">
-    <value>Copiar para avaliação</value>
+    <value>Copiar prompt</value>
+  </data>
+  <data name="Benchmarks.AutomateEvaluation" xml:space="preserve">
+    <value>Avaliar automaticamente</value>
+  </data>
+  <data name="Benchmarks.AutomateEvaluationTitle" xml:space="preserve">
+    <value>Avaliar automaticamente com Gemini e OpenRouter</value>
+  </data>
+  <data name="Benchmarks.QuotaLimitTitle" xml:space="preserve">
+    <value>Limite de avaliações automáticas</value>
+  </data>
+  <data name="Benchmarks.QuotaLimitMessage" xml:space="preserve">
+    <value>Por favor, aguarde {0} segundos antes de executar uma nova avaliação automática.</value>
+  </data>
+  <data name="Benchmarks.AutomatedJudgeErrorTitle" xml:space="preserve">
+    <value>Erro na avaliação automática</value>
+  </data>
+  <data name="Benchmarks.AutomatedJudgeError" xml:space="preserve">
+    <value>Ocorreu um erro ao executar a avaliação automática. Pode usar 'Copiar prompt' como alternativa manual.</value>
   </data>
   <data name="Benchmarks.Evaluate" xml:space="preserve">
     <value>Avaliação</value>
