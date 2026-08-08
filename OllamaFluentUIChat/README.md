@@ -51,12 +51,12 @@ Com estes dados recolhidos automaticamente, pode:
 
 A aplicação integra um processo estruturado de auditoria externa no painel de **Benchmarks** para avaliar e pontuar as respostas dadas pelos modelos locais do Ollama, utilizando o **Gemini** e o **OpenRouter** (router de modelos gratuitos, ex.: `openrouter/free`) como juízes de qualidade — sem precisar de abrir abas no browser nem copiar/colar manualmente:
 
-1. **Avaliar Automaticamente:** O utilizador acede à resposta de um modelo específico e clica no botão **"Avaliar automaticamente"**. A aplicação gera internamente o prompt de auditoria e submete-o aos dois juízes.
+1. **Avaliar Automaticamente:** O utilizador acede à resposta de um modelo específico e clica no botão **"Avaliar automaticamente"**. A aplicação verifica primeiro a ligação à internet (os juízes são serviços em nuvem) e, de seguida, gera internamente o prompt de auditoria e submete-o aos dois juízes; sem internet, avisa o utilizador e sugere o processo manual com **"Copiar prompt"**.
 2. **Contexto Crítico Injetado:** O prompt gerado inclui automaticamente metadados inteligentes (como o ano de treino do modelo local) sob a marca `[CRITICAL CONTEXT]`, instruindo o juiz externo a não penalizar o modelo por falta de conhecimento de eventos futuros.
 3. **Chamadas Diretas às APIs:** A aplicação envia o prompt aos dois juízes **em paralelo** — **Gemini** (`gemini-flash-latest`) e **OpenRouter** (`openrouter/free`) — usando as chaves configuradas em `appsettings.Local.json` (secção `ApiKeys`). Um intervalo mínimo entre avaliações (configurável em `AutomatedJudge:MinIntervalSeconds`, 60s por defeito) protege os limites gratuitos das APIs.
 4. **Abertura do Ecrã de Avaliação Preenchido:** Assim que os juízes respondem, o ecrã de avaliação abre **já preenchido** com as métricas (Escala 1-5), a nota *Global*, o feedback e a **RECOMMENDATION** de cada juiz — prontos a rever e guardar.
 5. **Tratamento de Falhas Parciais:** Se um dos juízes falhar (limite de requisições, rede ou chave inválida), um aviso identifica qual falhou e os campos desse juiz ficam editáveis para colagem manual. O botão **"Copiar prompt"** continua disponível para o processo manual.
-6. **Tradução e Consolidação:** O utilizador pode utilizar a opção **"Traduzir Feedback"** para passar as análises para a língua ativa na interface (português ou inglês) e, por fim, clica em **"Guardar avaliação"** para persistir todos os dados permanentemente na Base de Dados.
+6. **Tradução e Consolidação:** O utilizador pode utilizar a opção **"Traduzir Feedback"** para ver uma pré-visualização só-leitura da tradução das análises para a língua ativa na interface (português ou inglês) — o texto traduzido é apenas informativo e não altera o campo de feedback. Por fim, clica em **"Guardar avaliação"** para persistir todos os dados permanentemente na Base de Dados; o botão fica desativado quando o registo já foi gravado (apenas-leitura).
 
 ## 💬 Interface de Chat
 
