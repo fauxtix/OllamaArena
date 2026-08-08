@@ -23,18 +23,13 @@
             @L["TranslationDialog.TimeSpent", TimeSpent ?? string.Empty]
         </FluentLabel>
 
-        <FluentTextArea Value="@TranslatedText"
-                        Rows="10"
-                        Style="margin-top:16px; width:100%;  overflow-y: auto;" />
+        <div class="translation-preview">
+            @TranslatedText
+        </div>
     </FluentDialogBody>
 
     <FluentDialogFooter>
         <FluentSpacer />
-
-        <FluentButton Appearance="Appearance.Accent"
-                      OnClick="Aceitar">
-            @L["TranslationDialog.Accept"]
-        </FluentButton>
 
         <FluentButton Appearance="Appearance.Stealth"
                       OnClick="Cancelar">
@@ -51,18 +46,28 @@
     [Parameter] public string? TranslatedText { get; set; }
     [Parameter] public string? ModelUsed { get; set; }
     [Parameter] public string? TimeSpent { get; set; }
-    [Parameter] public EventCallback<string> OnAccept { get; set; }
-
-    private async Task Aceitar()
-    {
-        if (TranslatedText is not null)
-            await OnAccept.InvokeAsync(TranslatedText);
-
-        await VisibleChanged.InvokeAsync(false);
-    }
 
     private async Task Cancelar()
     {
         await VisibleChanged.InvokeAsync(false);
     }
 }
+
+<style>
+    .translation-preview {
+        margin-top: 16px;
+        padding: 12px;
+        width: 100%;
+        max-height: 400px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 14px;
+        line-height: 1.5;
+        background-color: var(--neutral-layer-2);
+        border: 1px solid var(--neutral-stroke-rest);
+        border-radius: 4px;
+        color: var(--neutral-foreground-rest);
+    }
+</style>

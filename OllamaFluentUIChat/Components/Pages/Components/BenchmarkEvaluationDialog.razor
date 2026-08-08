@@ -67,7 +67,7 @@
 
         <FluentSpacer />
 
-        <FluentButton Appearance="Appearance.Accent" Disabled="@isTranslating"
+        <FluentButton Appearance="Appearance.Accent" Disabled="@(isTranslating || IsAlreadySaved)"
                       OnClick="Guardar">
             @L["EvalDialog.SaveEvaluation"]
         </FluentButton>
@@ -86,8 +86,7 @@
                           VisibleChanged="@(v => showTranslationDialog = v)"
                           TranslatedText="@translatedText"
                           ModelUsed="@modelUsed" JudgeName="@targetField"
-                          TimeSpent="@timeSpent"
-                          OnAccept="AplicarTraducao" />
+                          TimeSpent="@timeSpent" />
 
 @code {
     [Inject] IBenchmarkRepository BenchmarkRepository { get; set; } = default!;
@@ -104,6 +103,8 @@
 
     [Parameter] public EventCallback<BenchmarkResponse> OnSave { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
+
+    [Parameter] public bool IsAlreadySaved { get; set; }
 
     private string? prompt;
 
@@ -151,15 +152,6 @@
     {
         await OnClose.InvokeAsync();
         await VisibleChanged.InvokeAsync(false);
-    }
-
-    private bool IsDisabled()
-    {
-        return
-            Response?.GeminiRating != null &&
-            Response?.OpenRouterRating != null &&
-            Response?.GeminiFeedback != null &&
-            Response?.OpenRouterFeedback != null;
     }
 
 
@@ -231,20 +223,6 @@
             StateHasChanged();
         }
 
-    }
-
-    private async Task AplicarTraducao(string texto)
-    {
-        if (Response is null)
-            return;
-
-        if (targetField == "openrouter")
-            Response.OpenRouterFeedback = texto;
-
-        if (targetField == "gemini")
-            Response.GeminiFeedback = texto;
-
-        StateHasChanged();
     }
 }
 

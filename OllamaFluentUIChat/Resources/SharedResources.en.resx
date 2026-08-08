@@ -966,9 +966,6 @@ Do you want to continue?</value>
   <data name="TranslationDialog.TimeSpent" xml:space="preserve">
     <value>Time spent: {0}</value>
   </data>
-  <data name="TranslationDialog.Accept" xml:space="preserve">
-    <value>Accept and continue</value>
-  </data>
   <data name="TranslationDialog.Exit" xml:space="preserve">
     <value>Exit</value>
   </data>

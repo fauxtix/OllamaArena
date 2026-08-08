@@ -234,6 +234,7 @@
 <BenchmarkEvaluationDialog Response="@_selectedEvaluation"
                            Visible="@_evaluationDialogVisible"
                            VisibleChanged="@((v) => _evaluationDialogVisible = v)"
+                           IsAlreadySaved="@_evaluationIsSaved"
                            OnSave="SaveEvaluationAsync"
                            OnClose="CloseDialogAsync" />
 

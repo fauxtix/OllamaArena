@@ -30,6 +30,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
         private bool isLoading = false;
         private bool isCreatingPrompt = false;
         private bool _evaluationDialogVisible;
+        private bool _evaluationIsSaved;
 
         protected override async Task OnInitializedAsync() => await GetDataAsync();
 
@@ -284,6 +285,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
                 }
 
                 _selectedEvaluation = resposta;
+                _evaluationIsSaved = false;
                 _evaluationDialogVisible = true;
             }
             catch (Exception ex)
@@ -376,6 +378,11 @@ namespace OllamaFluentUIChat.Components.Pages.Components
         {
             var benchmarkEvaluation = await BenchmarkRepo.GetBenchmarkAnswersByIdAsync(id);
             _selectedEvaluation = benchmarkEvaluation;
+            _evaluationIsSaved =
+                benchmarkEvaluation?.GeminiRating != null &&
+                benchmarkEvaluation.GeminiFeedback != null &&
+                benchmarkEvaluation.OpenRouterRating != null &&
+                benchmarkEvaluation.OpenRouterFeedback != null;
             _evaluationDialogVisible = true;
         }
         private Task CloseDialogAsync()
