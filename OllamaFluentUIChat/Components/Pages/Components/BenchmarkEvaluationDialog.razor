@@ -48,9 +48,9 @@
                 <div>
                     <FluentButton Appearance="Appearance.Stealth"
                                   Disabled="@isTranslating"
-                                  OnClick="TraduzirChatGpt">
+                                  OnClick="TraduzirOpenRouter">
                         <FluentIcon Value="@(new Icons.Regular.Size20.Translate())" />
-                        @L["EvalDialog.TranslateChatGpt"]
+                        @L["EvalDialog.TranslateOpenRouter"]
                     </FluentButton>
                 </div>
 
@@ -157,24 +157,24 @@
     {
         return
             Response?.GeminiRating != null &&
-            Response?.ChatGptRating != null &&
+            Response?.OpenRouterRating != null &&
             Response?.GeminiFeedback != null &&
-            Response?.ChatGptFeedback != null;
+            Response?.OpenRouterFeedback != null;
     }
 
 
-    private async Task TraduzirChatGpt()
+    private async Task TraduzirOpenRouter()
     {
-        if (Response?.ChatGptFeedback is null)
+        if (Response?.OpenRouterFeedback is null)
             return;
 
-        targetField = "chatgpt";
+        targetField = "openrouter";
         isTranslating = true;
         StateHasChanged();
         try
         {
             var result = await TranslationService.TranslateAsync(
-                Response.ChatGptFeedback,
+                Response.OpenRouterFeedback,
                 Response.NomeModelo
             );
 
@@ -186,8 +186,8 @@
         }
         catch (Exception ex)
         {
-            await DialogService.ShowErrorAsync(L["EvalDialog.TranslateChatGptError"], L["EvalDialog.TranslateTitle"]);
-            Logger.LogError(ex, "Erro ao traduzir feedback do ChatGPT");
+            await DialogService.ShowErrorAsync(L["EvalDialog.TranslateOpenRouterError"], L["EvalDialog.TranslateTitle"]);
+            Logger.LogError(ex, "Erro ao traduzir feedback do OpenRouter");
         }
         finally
         {
@@ -238,8 +238,8 @@
         if (Response is null)
             return;
 
-        if (targetField == "chatgpt")
-            Response.ChatGptFeedback = texto;
+        if (targetField == "openrouter")
+            Response.OpenRouterFeedback = texto;
 
         if (targetField == "gemini")
             Response.GeminiFeedback = texto;

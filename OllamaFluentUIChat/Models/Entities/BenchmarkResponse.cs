@@ -33,21 +33,21 @@
         public int? GeminiHaloEffectRating { get; set; }
         public int? GeminiSafetyRating { get; set; }
 
-        public float? ChatGptRating { get; set; }
-        public string ChatGptFeedback { get; set; } = string.Empty;
-        public string ChatGptRecommendation { get; set; } = string.Empty;
-        public int? ChatGptFactualRating { get; set; }
-        public int? ChatGptFormattingRating { get; set; }
+        public float? OpenRouterRating { get; set; }
+        public string OpenRouterFeedback { get; set; } = string.Empty;
+        public string OpenRouterRecommendation { get; set; } = string.Empty;
+        public int? OpenRouterFactualRating { get; set; }
+        public int? OpenRouterFormattingRating { get; set; }
 
-        // NOVAS PROPRIEDADES CHATGPT
-        public int? ChatGptComplianceRating { get; set; }
-        public int? ChatGptRelevanceRating { get; set; }
-        public int? ChatGptToneRating { get; set; }
-        public int? ChatGptConcisenessRating { get; set; }
-        public int? ChatGptClarityRating { get; set; }
-        public int? ChatGptReadabilityRating { get; set; }
-        public int? ChatGptHaloEffectRating { get; set; }
-        public int? ChatGptSafetyRating { get; set; }
+        // NOVAS PROPRIEDADES OPENROUTER
+        public int? OpenRouterComplianceRating { get; set; }
+        public int? OpenRouterRelevanceRating { get; set; }
+        public int? OpenRouterToneRating { get; set; }
+        public int? OpenRouterConcisenessRating { get; set; }
+        public int? OpenRouterClarityRating { get; set; }
+        public int? OpenRouterReadabilityRating { get; set; }
+        public int? OpenRouterHaloEffectRating { get; set; }
+        public int? OpenRouterSafetyRating { get; set; }
 
         // PROPRIEDADES DE FORMATAÇÃO PARA A UI
 

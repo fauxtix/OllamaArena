@@ -19,7 +19,7 @@ Developed under a philosophy of **digital sovereignty and data-driven engineerin
 ### 🔬 1. Scientific Selection of the Ideal Model (The Core of the App)
 The app lets you cross-reference data and benchmarks so that the user can empirically discover which local model offers the best balance for their specific prompts:
 - **Isolated Scoring:** By surgically separating the *Factual Score*, the *Formatting Score* and the *Final Score* (alongside other metrics), the app reveals whether a small model is brilliant at logic (but weak at markdown) or merely produces pretty text without substance;
-- **Fair Context (`[CRITICAL CONTEXT]`):** Protects old or small models from unfair evaluation by instructing the external judges (ChatGPT/Gemini) to rate responses strictly on the basis of the local model's training year;
+- **Fair Context (`[CRITICAL CONTEXT]`):** Protects old or small models from unfair evaluation by instructing the external judges (Gemini/OpenRouter) to rate responses strictly on the basis of the local model's training year;
 - **Hybrid Architecture:** API-driven automated evaluation — the app gathers advanced cloud feedback through direct calls to the judges (Gemini and OpenRouter), with no subscription costs; if any API fails, the manual process remains available as an alternative.
 
 ### 🛠️ 2. A Practical Guide to Ollama Engineering (The Bonus for Devs)

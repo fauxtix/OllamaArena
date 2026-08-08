@@ -30,11 +30,11 @@
         public bool HasErrors => !Gemini.Success || !OpenRouter.Success;
     }
 
-    public class JudgesFeedbackService
+    public class AutomatedJudgeService
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
-        private readonly ILogger<JudgesFeedbackService> _logger;
+        private readonly ILogger<AutomatedJudgeService> _logger;
 
         // URLs oficiais das APIs
         private const string GeminiModel = "gemini-flash-latest";
@@ -56,7 +56,7 @@
             }
         }
 
-        public JudgesFeedbackService(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<JudgesFeedbackService> logger)
+        public AutomatedJudgeService(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<AutomatedJudgeService> logger)
         {
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;

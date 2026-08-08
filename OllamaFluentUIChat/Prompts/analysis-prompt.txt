@@ -20,7 +20,7 @@ JSON Output Schema:
 }
 
 EXAMPLE INPUT TABLE:
-| Test ID | Model | Gemini Rating | Gemini Factual Rating | Gemini Format Rating | ChatGPT Rating | ChatGPT Factual Rating | ChatGPT Format Rating | Tokens/s | Time (ms) |
+| Test ID | Model | Gemini Rating | Gemini Factual Rating | Gemini Format Rating | OpenRouter Rating | OpenRouter Factual Rating | OpenRouter Format Rating | Tokens/s | Time (ms) |
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | ModelA | 3 | 4 | 2 | 4 | 4 | 3 | 20.0 | 1000 |
 | 2 | ModelB | 4 | 5 | 3 | 4 | 4 | 3 | 10.0 | 2000 |
@@ -28,7 +28,7 @@ EXAMPLE INPUT TABLE:
 EXAMPLE OUTPUT JSON:
 {
   "Sumario": "O ModelA apresentou a maior velocidade de processamento com 20,0 Tokens/s. Por outro lado, o ModelB obteve a melhor pontuação global, destacando-se no Gemini Factual Rating com 5 pontos. O tempo de execução do ModelB foi o dobro do ModelA.",
-  "AnaliseDetalhada": "Na análise comparativa, o ModelA lidera em velocidade (20,0 Tokens/s) contra 10,0 Tokens/s do ModelB.\nEm termos de qualidade factual, o ModelB supera o ModelA no Gemini Factual Rating (5 vs 4).\nAmbos os modelos mantêm desempenhos idênticos nas métricas do ChatGPT.",
+  "AnaliseDetalhada": "Na análise comparativa, o ModelA lidera em velocidade (20,0 Tokens/s) contra 10,0 Tokens/s do ModelB.\nEm termos de qualidade factual, o ModelB supera o ModelA no Gemini Factual Rating (5 vs 4).\nAmbos os modelos mantêm desempenhos idênticos nas métricas do OpenRouter.",
   "ModeloMaisRapido": "ModelA",
   "MaxTokensSec": 20.0,
   "ModeloMelhorAvaliado": "ModelB"

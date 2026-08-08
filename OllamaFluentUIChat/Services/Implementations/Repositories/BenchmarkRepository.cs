@@ -50,12 +50,12 @@ public class BenchmarkRepository : IBenchmarkRepository
         sb.Append("(PromptId, NomeModelo, TextoResposta, TokensPorSegundo, ");
         sb.Append("TempoPuroMs, TempoCargaMs, TamanhoTokens, TempoProcessamento, ");
         sb.Append("GeminiFactualRating, GeminiFormattingRating, GeminiRating, GeminiFeedback, GeminiRecommendation, ");
-        sb.Append("ChatGptFactualRating, ChatGptFormattingRating, ChatGptRating, ChatGptFeedback, ChatGptRecommendation) ");
+        sb.Append("OpenRouterFactualRating, OpenRouterFormattingRating, OpenRouterRating, OpenRouterFeedback, OpenRouterRecommendation) ");
         sb.Append("VALUES ");
         sb.Append("(@PromptId, @NomeModelo, @TextoResposta, @TokensPorSegundo, ");
         sb.Append("@TempoPuroMs, @TempoCargaMs, @TamanhoTokens, @TempoProcessamento, ");
         sb.Append("@GeminiFactualRating, @GeminiFormattingRating, @GeminiRating, @GeminiFeedback, @GeminiRecommendation, ");
-        sb.Append("@ChatGptFactualRating, @ChatGptFormattingRating, @ChatGptRating, @ChatGptFeedback, @ChatGptRecommendation);");
+        sb.Append("@OpenRouterFactualRating, @OpenRouterFormattingRating, @OpenRouterRating, @OpenRouterFeedback, @OpenRouterRecommendation);");
 
 
 
@@ -95,11 +95,11 @@ public class BenchmarkRepository : IBenchmarkRepository
                     r.GeminiRating, 
                     r.GeminiFeedback, 
                     r.GeminiRecommendation, 
-                    r.ChatGptFactualRating, 
-                    r.ChatGptFormattingRating, 
-                    r.ChatGptRating, 
-                    r.ChatGptFeedback, 
-                    r.ChatGptRecommendation
+                    r.OpenRouterFactualRating, 
+                    r.OpenRouterFormattingRating, 
+                    r.OpenRouterRating, 
+                    r.OpenRouterFeedback, 
+                    r.OpenRouterRecommendation
                 FROM Prompts p
                 LEFT JOIN Respostas r ON p.Id = r.PromptId
                 ORDER BY p.Id DESC, r.TokensPorSegundo DESC;";
@@ -169,7 +169,7 @@ public class BenchmarkRepository : IBenchmarkRepository
     public async Task<PromptFeedback> GetBenchmarkJudgesFeedbackByIdAsync(int Id)
     {
         var sql = @"
-                SELECT GeminiFeedback, ChatGptFeedback, GeminiRecommendation, ChatGptRecommendation FROM Respostas 
+                SELECT GeminiFeedback, OpenRouterFeedback, GeminiRecommendation, OpenRouterRecommendation FROM Respostas 
                 WHERE Id = @Id;";
 
         try
@@ -335,7 +335,7 @@ public class BenchmarkRepository : IBenchmarkRepository
         sb.Append("SET ");
         // Avaliações Gerais / Ratings Finais
         sb.Append("GeminiRating = @GeminiRating, GeminiFeedback = @GeminiFeedback, GeminiRecommendation = @GeminiRecommendation, ");
-        sb.Append("ChatGptRating = @ChatGptRating, ChatGptFeedback = @ChatGptFeedback, ChatGptRecommendation = @ChatGptRecommendation, ");
+        sb.Append("OpenRouterRating = @OpenRouterRating, OpenRouterFeedback = @OpenRouterFeedback, OpenRouterRecommendation = @OpenRouterRecommendation, ");
 
         // Novas métricas específicas do Gemini
         sb.Append("GeminiFactualRating = @GeminiFactualRating, GeminiFormattingRating = @GeminiFormattingRating, ");
@@ -344,12 +344,12 @@ public class BenchmarkRepository : IBenchmarkRepository
         sb.Append("GeminiClarityRating = @GeminiClarityRating, GeminiReadabilityRating = @GeminiReadabilityRating, ");
         sb.Append("GeminiHaloEffectRating = @GeminiHaloEffectRating, GeminiSafetyRating = @GeminiSafetyRating, ");
 
-        // Novas métricas específicas do ChatGPT
-        sb.Append("ChatGptFactualRating = @ChatGptFactualRating, ChatGptFormattingRating = @ChatGptFormattingRating, ");
-        sb.Append("ChatGptComplianceRating = @ChatGptComplianceRating, ChatGptRelevanceRating = @ChatGptRelevanceRating, ");
-        sb.Append("ChatGptToneRating = @ChatGptToneRating, ChatGptConcisenessRating = @ChatGptConcisenessRating, ");
-        sb.Append("ChatGptClarityRating = @ChatGptClarityRating, ChatGptReadabilityRating = @ChatGptReadabilityRating, ");
-        sb.Append("ChatGptHaloEffectRating = @ChatGptHaloEffectRating, ChatGptSafetyRating = @ChatGptSafetyRating ");
+        // Novas métricas específicas do OpenRouter
+        sb.Append("OpenRouterFactualRating = @OpenRouterFactualRating, OpenRouterFormattingRating = @OpenRouterFormattingRating, ");
+        sb.Append("OpenRouterComplianceRating = @OpenRouterComplianceRating, OpenRouterRelevanceRating = @OpenRouterRelevanceRating, ");
+        sb.Append("OpenRouterToneRating = @OpenRouterToneRating, OpenRouterConcisenessRating = @OpenRouterConcisenessRating, ");
+        sb.Append("OpenRouterClarityRating = @OpenRouterClarityRating, OpenRouterReadabilityRating = @OpenRouterReadabilityRating, ");
+        sb.Append("OpenRouterHaloEffectRating = @OpenRouterHaloEffectRating, OpenRouterSafetyRating = @OpenRouterSafetyRating ");
 
         sb.Append("WHERE Id = @Id;");
 
@@ -359,7 +359,7 @@ public class BenchmarkRepository : IBenchmarkRepository
         return affectedLines > 0;
     }
     /// <summary>
-    /// Obtém uma lista de avaliações de benchmark, incluindo as classificações dos modelos Gemini e ChatGPT, para cada prompt.
+    /// Obtém uma lista de avaliações de benchmark, incluindo as classificações dos modelos Gemini e OpenRouter, para cada prompt.
     /// </summary>
     /// <returns></returns>
     public async Task<IEnumerable<BenchmarkEvaluationModel>> BenchmarkResponseEvaluationAsync()
@@ -373,11 +373,11 @@ public class BenchmarkRepository : IBenchmarkRepository
         sb.Append("R.GeminiConcisenessRating, R.GeminiClarityRating, R.GeminiReadabilityRating, ");
         sb.Append("R.GeminiHaloEffectRating, R.GeminiSafetyRating, ");
 
-        // Métricas ChatGPT
-        sb.Append("R.ChatGptRating, R.ChatGptFactualRating, R.ChatGptFormattingRating, ");
-        sb.Append("R.ChatGptComplianceRating, R.ChatGptRelevanceRating, R.ChatGptToneRating, ");
-        sb.Append("R.ChatGptConcisenessRating, R.ChatGptClarityRating, R.ChatGptReadabilityRating, ");
-        sb.Append("R.ChatGptHaloEffectRating, R.ChatGptSafetyRating, ");
+        // Métricas OpenRouter
+        sb.Append("R.OpenRouterRating, R.OpenRouterFactualRating, R.OpenRouterFormattingRating, ");
+        sb.Append("R.OpenRouterComplianceRating, R.OpenRouterRelevanceRating, R.OpenRouterToneRating, ");
+        sb.Append("R.OpenRouterConcisenessRating, R.OpenRouterClarityRating, R.OpenRouterReadabilityRating, ");
+        sb.Append("R.OpenRouterHaloEffectRating, R.OpenRouterSafetyRating, ");
 
         // Métricas de Performance e Datas
         sb.Append("P.DataCriacao, P.Descricao, R.TokensPorSegundo, R.TempoPuroMs, R.TempoCargaMs, R.TamanhoTokens ");
@@ -417,7 +417,7 @@ public class BenchmarkRepository : IBenchmarkRepository
         FROM (
             SELECT  
                 NomeModelo,
-                AVG((COALESCE(GeminiFactualRating, GeminiRating) + COALESCE(ChatGptFactualRating, ChatGptRating)) * 10.0) AS ScoreFinal
+                AVG((COALESCE(GeminiFactualRating, GeminiRating) + COALESCE(OpenRouterFactualRating, OpenRouterRating)) * 10.0) AS ScoreFinal
             FROM Respostas
             GROUP BY NomeModelo
         )

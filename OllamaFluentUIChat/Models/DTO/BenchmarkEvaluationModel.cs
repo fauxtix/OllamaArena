@@ -18,7 +18,7 @@ public class BenchmarkEvaluationModel
 
     // Ratings Antigos
     public int GeminiRating { get; set; }
-    public int ChatGptRating { get; set; }
+    public int OpenRouterRating { get; set; }
 
     // Ratings Gemini (1-5)
     public int? GeminiFactualRating { get; set; }
@@ -32,17 +32,17 @@ public class BenchmarkEvaluationModel
     public int? GeminiHaloEffectRating { get; set; }
     public int? GeminiSafetyRating { get; set; }
 
-    // Ratings ChatGPT (1-5)
-    public int? ChatGptFactualRating { get; set; }
-    public int? ChatGptFormattingRating { get; set; }
-    public int? ChatGptComplianceRating { get; set; }
-    public int? ChatGptRelevanceRating { get; set; }
-    public int? ChatGptToneRating { get; set; }
-    public int? ChatGptConcisenessRating { get; set; }
-    public int? ChatGptClarityRating { get; set; }
-    public int? ChatGptReadabilityRating { get; set; }
-    public int? ChatGptHaloEffectRating { get; set; }
-    public int? ChatGptSafetyRating { get; set; }
+    // Ratings OpenRouter (1-5)
+    public int? OpenRouterFactualRating { get; set; }
+    public int? OpenRouterFormattingRating { get; set; }
+    public int? OpenRouterComplianceRating { get; set; }
+    public int? OpenRouterRelevanceRating { get; set; }
+    public int? OpenRouterToneRating { get; set; }
+    public int? OpenRouterConcisenessRating { get; set; }
+    public int? OpenRouterClarityRating { get; set; }
+    public int? OpenRouterReadabilityRating { get; set; }
+    public int? OpenRouterHaloEffectRating { get; set; }
+    public int? OpenRouterSafetyRating { get; set; }
 
     public string TempoPuroFormatado
     {

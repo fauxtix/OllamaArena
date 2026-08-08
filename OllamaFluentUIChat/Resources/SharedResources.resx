@@ -283,7 +283,7 @@
     <value>Formato</value>
   </data>
   <data name="Benchmarks.ColChatGpt" xml:space="preserve">
-    <value>ChatGPT</value>
+    <value>OpenRouter</value>
   </data>
   <data name="Benchmarks.ColTokensPerSecond" xml:space="preserve">
     <value>Tokens/s</value>
@@ -343,7 +343,7 @@
     <value>⚠️ Atenção</value>
   </data>
   <data name="Benchmarks.NotEvaluatedMessage" xml:space="preserve">
-    <value>Existem &lt;strong&gt;{0}&lt;/strong&gt; benchmark(s) ainda não avaliados (Gemini ou ChatGPT).&lt;br&gt;&lt;br&gt;Avalie os benchmarks antes de prosseguir com a análise.</value>
+    <value>Existem &lt;strong&gt;{0}&lt;/strong&gt; benchmark(s) ainda não avaliados (Gemini ou OpenRouter).&lt;br&gt;&lt;br&gt;Avalie os benchmarks antes de prosseguir com a análise.</value>
   </data>
   <data name="Benchmarks.NotEvaluatedTitle" xml:space="preserve">
     <value>Nem todos os benchmarks estão avaliados</value>
@@ -460,7 +460,7 @@ Deseja continuar?</value>
     <value>Google Gemini</value>
   </data>
   <data name="Evaluation.JudgeChatGpt" xml:space="preserve">
-    <value>Open AI ChatGpt</value>
+    <value>OpenRouter</value>
   </data>
   <data name="Evaluation.MetricsHeader" xml:space="preserve">
     <value>Métricas de Avaliação (Escala 1-5)</value>
@@ -502,7 +502,7 @@ Deseja continuar?</value>
     <value>Feedback (Cole aqui o output bruto do Gemini)</value>
   </data>
   <data name="Evaluation.FeedbackChatGpt" xml:space="preserve">
-    <value>Feedback (Cole aqui o output bruto do ChatGPT)</value>
+    <value>Feedback (Cole aqui o output bruto do OpenRouter)</value>
   </data>
   <data name="Evaluation.RecommendationLabel" xml:space="preserve">
     <value>Recomendação</value>
@@ -769,10 +769,10 @@ Deseja continuar?</value>
     <value>A melhor pontuação factual foi atribuída ao modelo {0} com {1}/5.</value>
   </data>
   <data name="Analysis.ConsensusHigh" xml:space="preserve">
-    <value>Alta concordância entre Gemini e ChatGPT ({0}/5 em ambos).</value>
+    <value>Alta concordância entre Gemini e OpenRouter ({0}/5 em ambos).</value>
   </data>
   <data name="Analysis.ConsensusDivergent" xml:space="preserve">
-    <value>Divergência ligeira entre avaliadores ({0}/5 Gemini vs {1}/5 ChatGPT).</value>
+    <value>Divergência ligeira entre avaliadores ({0}/5 Gemini vs {1}/5 OpenRouter).</value>
   </data>
   <data name="Analysis.DetailSpeed" xml:space="preserve">
     <value>• &lt;strong&gt;Velocidade e Tempo:&lt;/strong&gt; O modelo {0} lidera a taxa de geração de tokens ({1} t/s), completando a resposta em {2}.</value>
@@ -784,7 +784,7 @@ Deseja continuar?</value>
     <value>• &lt;strong&gt;Avaliação Gemini:&lt;/strong&gt; {0}</value>
   </data>
   <data name="Analysis.DetailChatGpt" xml:space="preserve">
-    <value>• &lt;strong&gt;Avaliação ChatGPT:&lt;/strong&gt; {0}</value>
+    <value>• &lt;strong&gt;Avaliação OpenRouter:&lt;/strong&gt; {0}</value>
   </data>
   <data name="Analysis.DetailConsensus" xml:space="preserve">
     <value>• &lt;strong&gt;Consenso Factual:&lt;/strong&gt; {0}</value>
@@ -853,7 +853,7 @@ Deseja continuar?</value>
     <value>Traduzir Feedback (Gemini)</value>
   </data>
   <data name="EvalDialog.TranslateChatGpt" xml:space="preserve">
-    <value>Traduzir Feedback (ChatGPT)</value>
+    <value>Traduzir Feedback (OpenRouter)</value>
   </data>
   <data name="EvalDialog.SaveEvaluation" xml:space="preserve">
     <value>Guardar avaliação</value>
@@ -868,7 +868,7 @@ Deseja continuar?</value>
     <value>Tradução Gemini</value>
   </data>
   <data name="EvalDialog.TranslateChatGptError" xml:space="preserve">
-    <value>Erro ao traduzir feedback do ChatGPT. Verifique os logs, por favor.</value>
+    <value>Erro ao traduzir feedback do OpenRouter. Verifique os logs, por favor.</value>
   </data>
   <data name="EvalDialog.TranslateGeminiError" xml:space="preserve">
     <value>Erro ao traduzir feedback do Gemini. Verifique Logs, por favor.</value>

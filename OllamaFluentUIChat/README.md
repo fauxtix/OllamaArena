@@ -19,7 +19,7 @@ Desenvolvido sob uma filosofia de **soberania digital e engenharia orientada a d
 ### 🔬 1. Seleção Científica do Modelo Ideal (O Core da App)
 A aplicação permite cruzar dados e benchmarks para que o utilizador descubra empiricamente qual o modelo local que oferece o melhor equilíbrio para os seus prompts específicos:
 - **Pontuação Isolada:** Ao separar de forma cirúrgica o *Score Factual*, o *Score de Formatação* e o *Score Final* (além de outras métricas), a app revela se um modelo pequeno é brilhante em lógica (mas peca no markdown) ou se apenas gera texto bonito sem substância;
-- **Contexto Justo (`[CRITICAL CONTEXT]`):** Protege a avaliação de modelos antigos ou pequenos, instruindo os juízes externos (ChatGPT/Gemini) a avaliarem as respostas estritamente com base no ano de treino do modelo local;
+- **Contexto Justo (`[CRITICAL CONTEXT]`):** Protege a avaliação de modelos antigos ou pequenos, instruindo os juízes externos (Gemini/OpenRouter) a avaliarem as respostas estritamente com base no ano de treino do modelo local;
 - **Arquitetura Híbrida:** Avaliação automatizada por API — a aplicação recolhe feedbacks avançados da nuvem através de chamadas diretas aos juízes (Gemini e OpenRouter), sem custos de subscrições; se alguma API falhar, o processo manual continua disponível como alternativa.
 
 ### 🛠️ 2. Um Guia Prático de Engenharia Ollama (O Bónus para Devs)

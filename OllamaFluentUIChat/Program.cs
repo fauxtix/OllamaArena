@@ -58,7 +58,7 @@ try
 
     builder.Services.AddSingleton<MarkdownRenderer>();
     builder.Services.AddHttpClient<ReadMeService>();
-    builder.Services.AddTransient<JudgesFeedbackService>();
+    builder.Services.AddTransient<AutomatedJudgeService>();
 
     // Clientes nomeados para os juízes automáticos (Gemini e OpenRouter)
     builder.Services.AddHttpClient("Gemini", client => client.Timeout = TimeSpan.FromSeconds(30));

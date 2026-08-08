@@ -53,7 +53,7 @@
                                         </div>
                                         <div class="rating-cell header-cell">
                                             <FluentIcon Value="@(new Icons.Regular.Size16.Chat())" Color="Color.Accent" />
-                                            <span>@L["Evaluation.JudgeChatGpt"]</span>
+                                            <span>@L["Evaluation.JudgeOpenRouter"]</span>
                                         </div>
                                     </div>
 
@@ -61,14 +61,14 @@
                                     <div class="ratings-row">
                                         <div class="metric-cell">@L["Evaluation.MetricFactual"]</div>
                                         <div class="rating-cell">@RenderRating(Response.GeminiFactualRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.ChatGptFactualRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterFactualRating)</div>
                                     </div>
 
                                     @* 2. FORMATAÇÃO *@
                                     <div class="ratings-row">
                                         <div class="metric-cell">@L["Evaluation.MetricFormatting"]</div>
                                         <div class="rating-cell">@RenderRating(Response.GeminiFormattingRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.ChatGptFormattingRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterFormattingRating)</div>
                                     </div>
 
                                     @* PONTUAÇÃO GLOBAL *@
@@ -85,9 +85,9 @@
                                             }
                                         </div>
                                         <div class="rating-cell">
-                                            @if (Response.ChatGptRating > 0)
+                                            @if (Response.OpenRouterRating > 0)
                                             {
-                                                <span class="rating-value global-value">@Response.ChatGptRating</span>
+                                                <span class="rating-value global-value">@Response.OpenRouterRating</span>
                                             }
                                             else
                                             {
@@ -99,49 +99,49 @@
                                     <div class="ratings-row">
                                         <div class="metric-cell">@L["Evaluation.MetricCompliance"]</div>
                                         <div class="rating-cell">@RenderRating(Response.GeminiComplianceRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.ChatGptComplianceRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterComplianceRating)</div>
                                     </div>
 
                                     <div class="ratings-row">
                                         <div class="metric-cell">@L["Evaluation.MetricRelevance"]</div>
                                         <div class="rating-cell">@RenderRating(Response.GeminiRelevanceRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.ChatGptRelevanceRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterRelevanceRating)</div>
                                     </div>
 
                                     <div class="ratings-row">
                                         <div class="metric-cell">@L["Evaluation.MetricTone"]</div>
                                         <div class="rating-cell">@RenderRating(Response.GeminiToneRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.ChatGptToneRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterToneRating)</div>
                                     </div>
 
                                     <div class="ratings-row">
                                         <div class="metric-cell">@L["Evaluation.MetricConciseness"]</div>
                                         <div class="rating-cell">@RenderRating(Response.GeminiConcisenessRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.ChatGptConcisenessRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterConcisenessRating)</div>
                                     </div>
 
                                     <div class="ratings-row">
                                         <div class="metric-cell">@L["Evaluation.MetricClarity"]</div>
                                         <div class="rating-cell">@RenderRating(Response.GeminiClarityRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.ChatGptClarityRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterClarityRating)</div>
                                     </div>
 
                                     <div class="ratings-row">
                                         <div class="metric-cell">@L["Evaluation.MetricReadability"]</div>
                                         <div class="rating-cell">@RenderRating(Response.GeminiReadabilityRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.ChatGptReadabilityRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterReadabilityRating)</div>
                                     </div>
 
                                     <div class="ratings-row">
                                         <div class="metric-cell">@L["Evaluation.MetricHaloEffect"]</div>
                                         <div class="rating-cell">@RenderRating(Response.GeminiHaloEffectRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.ChatGptHaloEffectRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterHaloEffectRating)</div>
                                     </div>
 
                                     <div class="ratings-row">
                                         <div class="metric-cell">@L["Evaluation.MetricSafety"]</div>
                                         <div class="rating-cell">@RenderRating(Response.GeminiSafetyRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.ChatGptSafetyRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterSafetyRating)</div>
                                     </div>
 
                                 </div>
@@ -197,27 +197,27 @@
                                             </FluentCard>
                                         </FluentGridItem>
 
-                                        @* CARD CHATGPT *@
+                                        @* CARD OPENROUTER *@
                                         <FluentGridItem xs="12" sm="6">
                                             <FluentCard Class="feedback-card">
                                                 <div class="feedback-card-header">
                                                     <FluentIcon Value="@(new Icons.Regular.Size20.Chat())" Color="Color.Accent" />
-                                                    <FluentLabel Typo="Typography.H5" Weight="FontWeight.Bold" Style="color: #7B68EE;">@L["Evaluation.JudgeChatGpt"]</FluentLabel>
+                                                    <FluentLabel Typo="Typography.H5" Weight="FontWeight.Bold" Style="color: #7B68EE;">@L["Evaluation.JudgeOpenRouter"]</FluentLabel>
                                                 </div>
                                                 <div class="feedback-card-body">
-                                                    @if (!string.IsNullOrWhiteSpace(Feedback?.ChatGptRecommendation))
+                                                    @if (!string.IsNullOrWhiteSpace(Feedback?.OpenRouterRecommendation))
                                                     {
                                                         <div class="recommendation-box">
                                                             <div class="recommendation-box-header">
                                                                 <FluentIcon Value="@(new Icons.Regular.Size16.Lightbulb())" Color="Color.Accent" />
                                                                 <span>@L["EvalDetail.Recommendation"]</span>
                                                             </div>
-                                                            <div class="recommendation-box-text">@Feedback.ChatGptRecommendation</div>
+                                                            <div class="recommendation-box-text">@Feedback.OpenRouterRecommendation</div>
                                                         </div>
                                                     }
-                                                    @if (!string.IsNullOrWhiteSpace(Feedback?.ChatGptFeedback))
+                                                    @if (!string.IsNullOrWhiteSpace(Feedback?.OpenRouterFeedback))
                                                     {
-                                                        <div class="feedback-text">@Feedback.ChatGptFeedback</div>
+                                                        <div class="feedback-text">@Feedback.OpenRouterFeedback</div>
                                                     }
                                                     else
                                                     {

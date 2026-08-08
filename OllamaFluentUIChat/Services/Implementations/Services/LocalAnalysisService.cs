@@ -47,15 +47,15 @@ public class LocalAnalysisService : IAnalysisService
         var modelosComAvaliacao = benchmarks.Select(b =>
         {
             double geminiFactual = Convert.ToDouble(b.GeminiFactualRating);
-            double chatGptFactual = Convert.ToDouble(b.ChatGptFactualRating);
+            double openRouterFactual = Convert.ToDouble(b.OpenRouterFactualRating);
             double geminiRating = Convert.ToDouble(b.GeminiRating);
-            double chatGptRating = Convert.ToDouble(b.ChatGptRating);
+            double openRouterRating = Convert.ToDouble(b.OpenRouterRating);
 
             return new
             {
                 Benchmark = b,
-                AvgRating = (geminiRating + geminiFactual + chatGptRating + chatGptFactual) / 4.0,
-                DiferencaFactual = Math.Abs(geminiFactual - chatGptFactual)
+                AvgRating = (geminiRating + geminiFactual + openRouterRating + openRouterFactual) / 4.0,
+                DiferencaFactual = Math.Abs(geminiFactual - openRouterFactual)
             };
         }).OrderByDescending(x => x.AvgRating).ToList();
 
@@ -95,18 +95,18 @@ public class LocalAnalysisService : IAnalysisService
             ? _localizer["Analysis.GeminiTie", string.Join(" e ", melhoresGemini), maxGeminiFactual]
             : _localizer["Analysis.GeminiBest", melhoresGemini.First(), maxGeminiFactual];
 
-        var maxChatGptFactual = benchmarks.Max(b => b.ChatGptFactualRating) ?? 0;
-        var melhoresChatGpt = benchmarks.Where(b => b.ChatGptFactualRating == maxChatGptFactual).Select(b => b.NomeModelo).ToList();
-        string textoChatGpt = melhoresChatGpt.Count > 1
-            ? _localizer["Analysis.ChatGptTie", string.Join(" e ", melhoresChatGpt), maxChatGptFactual]
-            : _localizer["Analysis.ChatGptBest", melhoresChatGpt.First(), maxChatGptFactual];
+        var maxOpenRouterFactual = benchmarks.Max(b => b.OpenRouterFactualRating) ?? 0;
+        var melhoresOpenRouter = benchmarks.Where(b => b.OpenRouterFactualRating == maxOpenRouterFactual).Select(b => b.NomeModelo).ToList();
+        string textoOpenRouter = melhoresOpenRouter.Count > 1
+            ? _localizer["Analysis.OpenRouterTie", string.Join(" e ", melhoresOpenRouter), maxOpenRouterFactual]
+            : _localizer["Analysis.OpenRouterBest", melhoresOpenRouter.First(), maxOpenRouterFactual];
 
         var modeloConsenso = modelosComAvaliacao.FirstOrDefault(m => m.Benchmark.NomeModelo == modeloMelhorAvaliado.Benchmark.NomeModelo);
         string textoConsenso = (modeloConsenso != null && modeloConsenso.DiferencaFactual == 0)
             ? _localizer["Analysis.ConsensusHigh", modeloConsenso.Benchmark.GeminiFactualRating ?? 0]
             : _localizer["Analysis.ConsensusDivergent",
                 modeloConsenso?.Benchmark.GeminiFactualRating ?? 0,
-                modeloConsenso?.Benchmark.ChatGptFactualRating ?? 0];
+                modeloConsenso?.Benchmark.OpenRouterFactualRating ?? 0];
 
         // 5. Linhas da Análise Detalhada
         var linhasDetalhes = new List<string>();
@@ -128,7 +128,7 @@ public class LocalAnalysisService : IAnalysisService
 
         // b) Avaliações e Consenso
         linhasDetalhes.Add(_localizer["Analysis.DetailGemini", textoGemini]);
-        linhasDetalhes.Add(_localizer["Analysis.DetailChatGpt", textoChatGpt]);
+        linhasDetalhes.Add(_localizer["Analysis.DetailOpenRouter", textoOpenRouter]);
         linhasDetalhes.Add(_localizer["Analysis.DetailConsensus", textoConsenso]);
 
         // c) Recomendação Dinâmica com Salvaguarda Global de Baixo Desempenho

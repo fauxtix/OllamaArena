@@ -89,12 +89,12 @@
                             Disabled="@(!string.IsNullOrWhiteSpace(Response.GeminiFeedback))" />
         </div>
 
-        <!-- COLUNA OPENAI CHATGPT -->
+        <!-- COLUNA OPENROUTER -->
         <div class="judge-column judge-column-style">
             <div class="judge-header">
                 <div class="judge-label-wrapper">
                     <FluentIcon Value="@(new Icons.Regular.Size20.Sparkle())" Color="Color.Accent" />
-                    <div class="judge-label">@L["Evaluation.JudgeChatGpt"]</div>
+                    <div class="judge-label">@L["Evaluation.JudgeOpenRouter"]</div>
                 </div>
             </div>
 
@@ -104,70 +104,70 @@
                 <div class="ratings-grid">
                     <div class="rating-cell">
                         <span class="rating-label">@L["Evaluation.MetricFactual"]</span>
-                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptFactualRating" Disabled="@(Response.ChatGptFactualRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterFactualRating" Disabled="@(Response.OpenRouterFactualRating != null)" />
                     </div>
                     <div class="rating-cell">
                         <span class="rating-label">@L["Evaluation.MetricFormatting"]</span>
-                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptFormattingRating" Disabled="@(Response.ChatGptFormattingRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterFormattingRating" Disabled="@(Response.OpenRouterFormattingRating != null)" />
                     </div>
                     <div class="rating-cell">
                         <span class="rating-label">@L["Evaluation.MetricCompliance"]</span>
-                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptComplianceRating" Disabled="@(Response.ChatGptComplianceRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterComplianceRating" Disabled="@(Response.OpenRouterComplianceRating != null)" />
                     </div>
                     <div class="rating-cell">
                         <span class="rating-label">@L["Evaluation.MetricRelevance"]</span>
-                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptRelevanceRating" Disabled="@(Response.ChatGptRelevanceRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterRelevanceRating" Disabled="@(Response.OpenRouterRelevanceRating != null)" />
                     </div>
                     <div class="rating-cell">
                         <span class="rating-label">@L["Evaluation.MetricTone"]</span>
-                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptToneRating" Disabled="@(Response.ChatGptToneRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterToneRating" Disabled="@(Response.OpenRouterToneRating != null)" />
                     </div>
                     <div class="rating-cell">
                         <span class="rating-label">@L["Evaluation.MetricConciseness"]</span>
-                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptConcisenessRating" Disabled="@(Response.ChatGptConcisenessRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterConcisenessRating" Disabled="@(Response.OpenRouterConcisenessRating != null)" />
                     </div>
                     <div class="rating-cell">
                         <span class="rating-label">@L["Evaluation.MetricClarity"]</span>
-                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptClarityRating" Disabled="@(Response.ChatGptClarityRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterClarityRating" Disabled="@(Response.OpenRouterClarityRating != null)" />
                     </div>
                     <div class="rating-cell">
                         <span class="rating-label">@L["Evaluation.MetricReadability"]</span>
-                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptReadabilityRating" Disabled="@(Response.ChatGptReadabilityRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterReadabilityRating" Disabled="@(Response.OpenRouterReadabilityRating != null)" />
                     </div>
                     <div class="rating-cell">
                         <span class="rating-label">@L["Evaluation.MetricHaloEffect"]</span>
-                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptHaloEffectRating" Disabled="@(Response.ChatGptHaloEffectRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterHaloEffectRating" Disabled="@(Response.OpenRouterHaloEffectRating != null)" />
                     </div>
                     <div class="rating-cell">
                         <span class="rating-label">@L["Evaluation.MetricSafety"]</span>
-                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptSafetyRating" Disabled="@(Response.ChatGptSafetyRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterSafetyRating" Disabled="@(Response.OpenRouterSafetyRating != null)" />
                     </div>
                     <div class="rating-cell">
                         <span class="rating-label-bold">@L["Evaluation.MetricOverall"]</span>
-                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.ChatGptRating" Class="final-rating-field" Disabled="@(Response.ChatGptRating != null)" />
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterRating" Class="final-rating-field" Disabled="@(Response.OpenRouterRating != null)" />
                     </div>
                 </div>
             </div>
 
             <!-- Caixa de Recomendação -->
-            @if (!string.IsNullOrWhiteSpace(Response.ChatGptRecommendation))
+            @if (!string.IsNullOrWhiteSpace(Response.OpenRouterRecommendation))
             {
                 <div class="recommendation-box">
                     <div class="recommendation-box-header">
                         <FluentIcon Value="@(new Icons.Regular.Size16.Lightbulb())" Color="Color.Accent" />
                         <span>@L["Evaluation.RecommendationLabel"]</span>
                     </div>
-                    <div class="recommendation-box-text">@Response.ChatGptRecommendation</div>
+                    <div class="recommendation-box-text">@Response.OpenRouterRecommendation</div>
                 </div>
             }
 
             <!-- Caixa de Feedback -->
-            <FluentTextArea Value="@Response.ChatGptFeedback"
-                            ValueChanged="@OnChatGptInputChanged"
-                            Label="@L["Evaluation.FeedbackChatGpt"]"
+            <FluentTextArea Value="@Response.OpenRouterFeedback"
+                            ValueChanged="@OnOpenRouterInputChanged"
+                            Label="@L["Evaluation.FeedbackOpenRouter"]"
                             Style="font-size:14px;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; width: 100%;"
                             Rows="8"
-                            Disabled="@(!string.IsNullOrWhiteSpace(Response.ChatGptFeedback))" />
+                            Disabled="@(!string.IsNullOrWhiteSpace(Response.OpenRouterFeedback))" />
         </div>
     </div>
 }
@@ -208,7 +208,7 @@
         await OnEvaluationChanged.InvokeAsync();
     }
 
-    private async Task OnChatGptInputChanged(string value)
+    private async Task OnOpenRouterInputChanged(string value)
     {
         if (Response is null) return;
 
@@ -216,24 +216,24 @@
         {
             var parsed = EvaluationParser.ParseEvaluation(value);
 
-            Response.ChatGptFactualRating = parsed.FactualScore;
-            Response.ChatGptFormattingRating = parsed.FormattingScore;
-            Response.ChatGptComplianceRating = parsed.ComplianceScore;
-            Response.ChatGptRelevanceRating = parsed.RelevanceScore;
-            Response.ChatGptToneRating = parsed.ToneScore;
-            Response.ChatGptConcisenessRating = parsed.ConcisenessScore;
-            Response.ChatGptClarityRating = parsed.ClarityScore;
-            Response.ChatGptReadabilityRating = parsed.ReadabilityScore;
-            Response.ChatGptHaloEffectRating = parsed.HaloEffectScore;
-            Response.ChatGptSafetyRating = parsed.SafetyScore;
+            Response.OpenRouterFactualRating = parsed.FactualScore;
+            Response.OpenRouterFormattingRating = parsed.FormattingScore;
+            Response.OpenRouterComplianceRating = parsed.ComplianceScore;
+            Response.OpenRouterRelevanceRating = parsed.RelevanceScore;
+            Response.OpenRouterToneRating = parsed.ToneScore;
+            Response.OpenRouterConcisenessRating = parsed.ConcisenessScore;
+            Response.OpenRouterClarityRating = parsed.ClarityScore;
+            Response.OpenRouterReadabilityRating = parsed.ReadabilityScore;
+            Response.OpenRouterHaloEffectRating = parsed.HaloEffectScore;
+            Response.OpenRouterSafetyRating = parsed.SafetyScore;
 
-            Response.ChatGptRating = parsed.FinalScore;
-            Response.ChatGptFeedback = parsed.Description;
-            Response.ChatGptRecommendation = parsed.Recommendation;
+            Response.OpenRouterRating = parsed.FinalScore;
+            Response.OpenRouterFeedback = parsed.Description;
+            Response.OpenRouterRecommendation = parsed.Recommendation;
         }
         else
         {
-            Response.ChatGptFeedback = value;
+            Response.OpenRouterFeedback = value;
         }
 
         StateHasChanged();

@@ -24,14 +24,44 @@ public static class DatabaseSchemaInitializer
             .Select(c => c.Name)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+        // Renomeações ChatGpt* → OpenRouter* (a avaliação passou a ser feita via OpenRouter).
+        // Devem correr antes de qualquer ADD COLUMN com o nome de destino, senão o RENAME falha.
+        string[] renomeacoesChatGpt =
+        [
+            "ChatGptRating",
+            "ChatGptFeedback",
+            "ChatGptFactualRating",
+            "ChatGptFormattingRating",
+            "ChatGptComplianceRating",
+            "ChatGptRelevanceRating",
+            "ChatGptToneRating",
+            "ChatGptConcisenessRating",
+            "ChatGptClarityRating",
+            "ChatGptReadabilityRating",
+            "ChatGptHaloEffectRating",
+            "ChatGptSafetyRating",
+            "ChatGptRecommendation"
+        ];
+
+        foreach (var coluna in renomeacoesChatGpt)
+        {
+            var destino = coluna.Replace("ChatGpt", "OpenRouter");
+            if (columns.Contains(coluna) && !columns.Contains(destino))
+            {
+                connection.Execute($"ALTER TABLE Respostas RENAME COLUMN {coluna} TO {destino};");
+                columns.Add(destino);
+                columns.Remove(coluna);
+            }
+        }
+
         if (!columns.Contains("GeminiRecommendation"))
         {
             connection.Execute("ALTER TABLE Respostas ADD COLUMN GeminiRecommendation TEXT;");
         }
 
-        if (!columns.Contains("ChatGptRecommendation"))
+        if (!columns.Contains("OpenRouterRecommendation"))
         {
-            connection.Execute("ALTER TABLE Respostas ADD COLUMN ChatGptRecommendation TEXT;");
+            connection.Execute("ALTER TABLE Respostas ADD COLUMN OpenRouterRecommendation TEXT;");
         }
     }
 }

@@ -14,7 +14,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
         [Inject] public required IBenchmarkRepository BenchmarkRepo { get; set; }
         [Inject] public required IOllamaGpuService GpuService { get; set; }
         [Inject] public required EvaluatePromptTemplate EvaluatePromptTemplate { get; set; }
-        [Inject] public JudgesFeedbackService _feedbackService { get; set; } = default!;
+        [Inject] public AutomatedJudgeService _feedbackService { get; set; } = default!;
         [Inject] public ILogger<App> _logger { get; set; } = default!;
 
         private List<BenchmarkPrompt>? _promptsList;
@@ -186,7 +186,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
 
             try
             {
-                if (resposta.GeminiRating is < 1 or > 5 || resposta.ChatGptRating is < 1 or > 5)
+                if (resposta.GeminiRating is < 1 or > 5 || resposta.OpenRouterRating is < 1 or > 5)
                 {
                     if (DialogService != null)
                     {
@@ -344,19 +344,19 @@ namespace OllamaFluentUIChat.Components.Pages.Components
             }
             else
             {
-                resposta.ChatGptFactualRating = parsed.FactualScore;
-                resposta.ChatGptFormattingRating = parsed.FormattingScore;
-                resposta.ChatGptComplianceRating = parsed.ComplianceScore;
-                resposta.ChatGptRelevanceRating = parsed.RelevanceScore;
-                resposta.ChatGptToneRating = parsed.ToneScore;
-                resposta.ChatGptConcisenessRating = parsed.ConcisenessScore;
-                resposta.ChatGptClarityRating = parsed.ClarityScore;
-                resposta.ChatGptReadabilityRating = parsed.ReadabilityScore;
-                resposta.ChatGptHaloEffectRating = parsed.HaloEffectScore;
-                resposta.ChatGptSafetyRating = parsed.SafetyScore;
-                resposta.ChatGptRating = parsed.FinalScore;
-                resposta.ChatGptFeedback = string.IsNullOrWhiteSpace(parsed.Description) ? resultado.RawText : parsed.Description;
-                resposta.ChatGptRecommendation = parsed.Recommendation;
+                resposta.OpenRouterFactualRating = parsed.FactualScore;
+                resposta.OpenRouterFormattingRating = parsed.FormattingScore;
+                resposta.OpenRouterComplianceRating = parsed.ComplianceScore;
+                resposta.OpenRouterRelevanceRating = parsed.RelevanceScore;
+                resposta.OpenRouterToneRating = parsed.ToneScore;
+                resposta.OpenRouterConcisenessRating = parsed.ConcisenessScore;
+                resposta.OpenRouterClarityRating = parsed.ClarityScore;
+                resposta.OpenRouterReadabilityRating = parsed.ReadabilityScore;
+                resposta.OpenRouterHaloEffectRating = parsed.HaloEffectScore;
+                resposta.OpenRouterSafetyRating = parsed.SafetyScore;
+                resposta.OpenRouterRating = parsed.FinalScore;
+                resposta.OpenRouterFeedback = string.IsNullOrWhiteSpace(parsed.Description) ? resultado.RawText : parsed.Description;
+                resposta.OpenRouterRecommendation = parsed.Recommendation;
             }
         }
         private async Task OpenEvaluation(int id)

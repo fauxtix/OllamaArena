@@ -1,6 +1,6 @@
 # OllamaFluentUIChat — Funcionalidades (Documentação Técnica)
 
-Aplicação **Blazor Server** (.NET 10) que funciona como um **chat local com Ollama** e como um **laboratório de benchmarks "LLM-as-a-judge"** — responde a prompts, mede o desempenho de modelos abertos gratuitos e permite avaliar a qualidade das respostas usando um "juiz" (modelo Gemini e/ou ChatGPT) e uma análise local em C#.
+Aplicação **Blazor Server** (.NET 10) que funciona como um **chat local com Ollama** e como um **laboratório de benchmarks "LLM-as-a-judge"** — responde a prompts, mede o desempenho de modelos abertos gratuitos e permite avaliar a qualidade das respostas usando um "juiz" (modelo Gemini e/ou OpenRouter) e uma análise local em C#.
 
 - **UI:** FluentUI Blazor v4 (FluentDesignTheme, FluentDataGrid, FluentDialog, FluentSplitter, FluentNavMenu, etc.)
 - **Persistência:** SQLite via Dapper (schema criado de forma lazily + migração de schema idempotente em código no arranque)
@@ -89,7 +89,7 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 
 ### 3.3 Benchmarks — Avaliações (`/benchmark-evaluations`)
 
-- **Propósito:** visão consolidada de todas as respostas de benchmark com as avaliações dos juízes (Gemini/ChatGPT) e métricas de desempenho.
+- **Propósito:** visão consolidada de todas as respostas de benchmark com as avaliações dos juízes (Gemini/OpenRouter) e métricas de desempenho.
 - **Fluxo:**
   1. `GetAllBenchmarks()` → `BenchmarkRepository.BenchmarkResponseEvaluationAsync()`.
   2. Pesquisa livre (`FluentSearch`) e filtros **Todos / Por Avaliar / Avaliados**.
@@ -97,7 +97,7 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
   4. **Exportar para Excel** → `ExportarParaExcel()` (ClosedXML): agrupa por `PromptId`, cabeçalho de prompt a azul, linhas por modelo; download via JS `downloadFileFromBase64`.
   5. **Análise IA Local** → `FluentDialog` (800px) com `BenchmarkAnalysisViewer`; valida com confirmações o nº de grupos de prompts (>1) e benchmarks ainda não avaliados; executa `LocalAnalysisService.AnalisarBenchmarksAsync` (100% local em C#, cancelável) e apresenta sumário executivo, métricas rápidas e análise técnica (ver 4.1).
   6. **Apagar Benchmarks** (tudo) e apagar linha individual (apaga também o prompt se for a única resposta) — com confirmações via `IDialogService` (ver 4.2).
-- **Outputs:** `FluentDataGrid` (Modelo, Descrição, Gemini [Factual/Formato/Global], ChatGPT [Factual/Formato/Global], Tokens/s, Tempo, Carga, Tokens, Ações) + paginação (10/página); ficheiro Excel; diálogo de detalhe com tabs; painel de análise local com streaming de log.
+- **Outputs:** `FluentDataGrid` (Modelo, Descrição, Gemini [Factual/Formato/Global], OpenRouter [Factual/Formato/Global], Tokens/s, Tempo, Carga, Tokens, Ações) + paginação (10/página); ficheiro Excel; diálogo de detalhe com tabs; painel de análise local com streaming de log.
 
 ### 3.4 Qualidade e Métricas (`/benchmarks`)
 
@@ -105,7 +105,7 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 - **Fluxo:**
   1. `GetDataAsync()` → `BenchmarkRepository.GetAllBenchmarksAsync()` (prompts + respostas).
   2. Esquerda: cards de prompt com badge `#id`, data e nº de modelos; botões **Gráfico** (`BenchmarkChartDialog` — 4 gráficos Chart.js com download de imagem, ver 4.1) e apagar (cascade, com confirmação "Apagar Benchmark", ver 4.2).
-  3. Direita: card por resposta com badges `Tokens/s`, `Eval`, `Load`, `Tokens`; ratings Gemini/ChatGPT; botões **Avaliação** (`BenchmarkEvaluationDialog` — formulário 11 métricas 1–5 + tradução de feedback, ver 4.1) e **Avaliar automaticamente** (`AvaliarAutomaticamenteAsync` — gera o prompt do juiz com `EvaluatePromptTemplate` + metadados do modelo via `/api/show`, submete-o aos juízes Gemini (`gemini-flash-latest`) e OpenRouter (`openrouter/free`) via `JudgesFeedbackService`, preenche as métricas com `EvaluationParser` e abre o diálogo já preenchido). O botão **Copiar prompt** (`CopiarPromptAvaliacaoAsync`) mantém o fallback manual (só copia o prompt gerado).
+  3. Direita: card por resposta com badges `Tokens/s`, `Eval`, `Load`, `Tokens`; ratings Gemini/OpenRouter; botões **Avaliação** (`BenchmarkEvaluationDialog` — formulário 11 métricas 1–5 + tradução de feedback, ver 4.1) e **Avaliar automaticamente** (`AvaliarAutomaticamenteAsync` — gera o prompt do juiz com `EvaluatePromptTemplate` + metadados do modelo via `/api/show`, submete-o aos juízes Gemini (`gemini-flash-latest`) e OpenRouter (`openrouter/free`) via `AutomatedJudgeService`, preenche as métricas com `EvaluationParser` e abre o diálogo já preenchido). O botão **Copiar prompt** (`CopiarPromptAvaliacaoAsync`) mantém o fallback manual (só copia o prompt gerado).
   4. `SaveEvaluationAsync` valida ratings 1–5 (diálogo "Erro de Validação" se fora do intervalo, ver 4.2) e grava com `UpdateResponseEvaluationAsync` (diálogo "Sucesso").
 - **Outputs:** cards de prompt; cards de resposta com markdown formatado; diálogo de avaliação com o formulário dos juízes e tradução; 4 gráficos Chart.js por prompt (`BenchmarkChartDialog`): Tempo de Execução/Eval, Tempo de Carga/Load, Velocidade (Tokens/s), Total de Tokens — com download de imagem (conteúdo detalhado na secção 4.1).
 
@@ -144,7 +144,7 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 | `CultureSelector` | Comutação PT/EN (cookie de cultura via endpoint `Culture/Set`) |
 | `BenchmarkEvaluation` | Formulário de avaliação por juiz: 11 métricas (Factual, Formatação, Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Efeito Halo, Segurança, Global), escala 1–5; parse automático do output bruto com `EvaluationParser` (tags `*_SCORE:`, `FINAL_SCORE:`, `DESCRIPTION:`/`FEEDBACK:`, `RECOMMENDATION:`); caixa de recomendação do juiz (âmbar) quando o campo `RECOMMENDATION` foi preenchido |
 | `BenchmarkEvaluationDialog` | Envelope do formulário + **tradução automática do feedback** via modelo local (`TranslationService`), com pré-visualização (`TranslationPreviewDialog`) — ver 4.1 |
-| `BenchmarkEvaluationDetail` | Diálogo 900px com tabs **Métricas** (grelha Gemini vs ChatGPT) e **Feedbacks dos Juízes** — ver 4.1 |
+| `BenchmarkEvaluationDetail` | Diálogo 900px com tabs **Métricas** (grelha Gemini vs OpenRouter) e **Feedbacks dos Juízes** — ver 4.1 |
 | `BenchmarkChartDialog` | 4 gráficos Chart.js com download de imagem — ver 4.1 |
 | `BenchmarkAnalysisViewer` | Painel de resultado da análise local (estados: vazio / streaming com log / concluído com sumário executivo) — ver 4.1 |
 | `TranslationPreviewDialog` | Pré-visualização de tradução (modelo usado + tempo gasto) — ver 4.1 |
@@ -154,9 +154,9 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 ### 4.1 Conteúdo dos diálogos (detalhe)
 
 - **`BenchmarkEvaluationDetail`** — o botão **"olho"** (ou duplo clique) na linha da grelha em `/benchmark-evaluations` abre este diálogo modal (900px). Cabeçalho com ícone olho, nome do modelo e o prompt executado em `blockquote` (com scroll). Tem **duas tabs**:
-  - **Métricas** — grelha com colunas `Métrica | Google Gemini | Open AI ChatGPT` e linhas Factual, Formatação, **Global** (linha destacada com bordas accent), Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Efeito Halo e Segurança; cada célula é a nota do juiz ou "—" quando ainda não avaliada (nota 0). Os dados vêm da consulta consolidada `BenchmarkResponseEvaluationAsync`.
-  - **Feedbacks dos Juízes** — dois cards lado a lado (Google Gemini / OpenAI ChatGPT) com o texto do feedback; o conteúdo é carregado assincronamente via `BenchmarkRepository.GetBenchmarkJudgesFeedbackByIdAsync(ResponseId)` (progress ring durante a carga) e mostra "Nenhum feedback registado." se vazio. Quando o juiz devolveu `RECOMMENDATION`, cada card mostra ainda uma **caixa "Recomendação do Juiz"** (fundo âmbar) com o texto da recomendação.
-- **`BenchmarkEvaluationDialog`** (aberto pelo botão "Avaliação" em `/benchmarks`; 1200px): cabeçalho com ícone `ClipboardCode`, nome do modelo e o prompt em `blockquote`; corpo com o formulário `BenchmarkEvaluation` (11 métricas na escala 1–5, com parse automático do output dos juízes via `EvaluationParser`) e dois botões **Traduzir Feedback (Gemini)** / **Traduzir Feedback (ChatGPT)** que traduzem o feedback para a **língua da sessão** com o modelo local (`TranslationService`, cliente com timeout de 4 min) e abrem `TranslationPreviewDialog`. Rodapé com **Guardar avaliação** (accent) e **Fechar** (progress ring enquanto traduz).
+  - **Métricas** — grelha com colunas `Métrica | Google Gemini | OpenRouter` e linhas Factual, Formatação, **Global** (linha destacada com bordas accent), Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Efeito Halo e Segurança; cada célula é a nota do juiz ou "—" quando ainda não avaliada (nota 0). Os dados vêm da consulta consolidada `BenchmarkResponseEvaluationAsync`.
+  - **Feedbacks dos Juízes** — dois cards lado a lado (Google Gemini / OpenRouter) com o texto do feedback; o conteúdo é carregado assincronamente via `BenchmarkRepository.GetBenchmarkJudgesFeedbackByIdAsync(ResponseId)` (progress ring durante a carga) e mostra "Nenhum feedback registado." se vazio. Quando o juiz devolveu `RECOMMENDATION`, cada card mostra ainda uma **caixa "Recomendação do Juiz"** (fundo âmbar) com o texto da recomendação.
+- **`BenchmarkEvaluationDialog`** (aberto pelo botão "Avaliação" em `/benchmarks`; 1200px): cabeçalho com ícone `ClipboardCode`, nome do modelo e o prompt em `blockquote`; corpo com o formulário `BenchmarkEvaluation` (11 métricas na escala 1–5, com parse automático do output dos juízes via `EvaluationParser`) e dois botões **Traduzir Feedback (Gemini)** / **Traduzir Feedback (OpenRouter)** que traduzem o feedback para a **língua da sessão** com o modelo local (`TranslationService`, cliente com timeout de 4 min) e abrem `TranslationPreviewDialog`. Rodapé com **Guardar avaliação** (accent) e **Fechar** (progress ring enquanto traduz).
 - **`TranslationPreviewDialog`**: "Tradução do Feedback (<juiz>)", "Modelo usado", "Tempo gasto" e o texto traduzido num `FluentTextArea` editável; **Aceitar e continuar** aplica o texto ao campo do juiz; **Sair** descarta.
 - **`BenchmarkChartDialog`** (aberto pelo botão "Gráfico" em `/benchmarks`; 50vw×85vh): cabeçalho "Gráficos de Benchmark do Prompt #<id>"; quatro gráficos de barras Chart.js (cor por modelo; labels partidos em `:` ou `-`):
   - Tempo de Execução / Eval (ms) — `graficoEval`;
@@ -188,7 +188,7 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
   - `/system-logs`: **"Nenhum registo"** (apagar sem logs filtrados), **"Sucesso"** (n registos eliminados) e **"Erro ao eliminar"**.
   - `/benchmarks`: **"Erro de Validação"** (rating fora do intervalo 1–5) e **"Sucesso"** (avaliação gravada no SQLite).
   - Home: **"Internet indisponível"** quando o botão Readme é clicado sem ligação.
-  - `BenchmarkEvaluationDialog`: erros ao guardar a avaliação e ao traduzir feedback (Gemini/ChatGPT).
+  - `BenchmarkEvaluationDialog`: erros ao guardar a avaliação e ao traduzir feedback (Gemini/OpenRouter).
 
 ---
 
@@ -297,12 +297,12 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 
 ## 8. Base de dados (SQLite — `ollama_benchmark.db`)
 
-Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Serilog), com **migração idempotente em código** no arranque: `DatabaseSchemaInitializer.EnsureRecommendationColumns(IDapperContext)` (invocado em `Program.cs` após `builder.Build()`) usa `PRAGMA table_info` para verificar e `ALTER TABLE Respostas ADD COLUMN` para adicionar as colunas de recomendação se faltarem.
+Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Serilog), com **migração idempotente em código** no arranque: `DatabaseSchemaInitializer.EnsureRecommendationColumns(IDapperContext)` (invocado em `Program.cs` após `builder.Build()`) usa `PRAGMA table_info` para verificar e executa `ALTER TABLE Respostas ADD COLUMN` para adicionar as colunas de recomendação se faltarem, e `ALTER TABLE Respostas RENAME COLUMN` para renomear as colunas `ChatGpt*` → `OpenRouter*` (a avaliação passou a ser feita via OpenRouter).
 
 | Tabela | Conteúdo (colunas principais) |
 |---|---|
 | `Prompts` | `Id`, `Descricao`, `TextoPrompt`, `DataCriacao`, `Temperatura` |
-| `Respostas` | `Id`, `PromptId` (FK), `NomeModelo`, `TextoResposta`, `TokensPorSegundo`, `TempoPuroMs`, `TempoCargaMs`, `TamanhoTokens`, `TempoProcessamento`, ratings/feedbacks Gemini (`GeminiRating`, `GeminiFactualRating`, `GeminiFormattingRating`, `GeminiComplianceRating`, `GeminiRelevanceRating`, `GeminiToneRating`, `GeminiConcisenessRating`, `GeminiClarityRating`, `GeminiReadabilityRating`, `GeminiHaloEffectRating`, `GeminiSafetyRating`, `GeminiFeedback`, `GeminiRecommendation`) e equivalentes ChatGPT (incluindo `ChatGptRecommendation`); as colunas de recomendação são adicionadas pela migração `DatabaseSchemaInitializer` |
+| `Respostas` | `Id`, `PromptId` (FK), `NomeModelo`, `TextoResposta`, `TokensPorSegundo`, `TempoPuroMs`, `TempoCargaMs`, `TamanhoTokens`, `TempoProcessamento`, ratings/feedbacks Gemini (`GeminiRating`, `GeminiFactualRating`, `GeminiFormattingRating`, `GeminiComplianceRating`, `GeminiRelevanceRating`, `GeminiToneRating`, `GeminiConcisenessRating`, `GeminiClarityRating`, `GeminiReadabilityRating`, `GeminiHaloEffectRating`, `GeminiSafetyRating`, `GeminiFeedback`, `GeminiRecommendation`) e equivalentes OpenRouter (incluindo `OpenRouterRecommendation`); as colunas de recomendação são adicionadas pela migração `DatabaseSchemaInitializer` |
 | `Logs` | criada pelo Serilog sink (`Id`, `Timestamp`, `Level`, `Exception`, `RenderedMessage`, `Properties`) |
 
 - `DeletePromptAndHistoryAsync` / `DeleteAllPromptsAndHistoryAsync` dependem de `ON DELETE CASCADE` (configurado no DB Browser).
