@@ -308,6 +308,7 @@ Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Se
 - `DeletePromptAndHistoryAsync` / `DeleteAllPromptsAndHistoryAsync` dependem de `ON DELETE CASCADE` (configurado no DB Browser).
 - `DeleteSpecificResponseAsync` apaga a resposta e, se for a última do prompt, também o prompt (transação).
 - Path: `OllamaFluentUIChat/ollama_benchmark.db` (connection string `SqliteConnection`, resolvida contra `ContentRootPath`).
+- DDL completo das três tabelas (`Prompts`, `Respostas`, `Logs`) disponível em `Docs/schema.sql` — executável numa nova base de dados antes da primeira utilização.
 
 ---
 
