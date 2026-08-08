@@ -1,12 +1,10 @@
-# 🦙 Ollama FluentUI Chat & Benchmark Laboratory
-
-![Ollama FluentUI Chat & Benchmark Laboratory](../assets/readme-banner.svg)
+# 🦙 Ollama Chat & Benchmark Laboratory
 
 ![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white) ![Blazor Server](https://img.shields.io/badge/Blazor-Server-512BD4?logo=blazor&logoColor=white) ![FluentUI Blazor v4](https://img.shields.io/badge/FluentUI_Blazor-v4.14.2-0078D4?logo=fluentui&logoColor=white) ![SQLite + Dapper](https://img.shields.io/badge/SQLite-Dapper-003B57?logo=sqlite&logoColor=white) ![Ollama](https://img.shields.io/badge/Ollama-Local_LLMs-7499FF?logo=ollama&logoColor=white) ![PT | EN](https://img.shields.io/badge/Lang-PT%20%7C%20EN-00897B) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-2ea44f)
 
 > **EN:** [Read this document in English](README.en.md)
 
-A sua central pessoal de inteligência artificial **100% local**. Converse com modelos de IA que correm no seu próprio computador, teste o desempenho de cada um e descubra qual responde mais depressa e com melhor qualidade — tudo através de uma interface moderna e fluida, disponível em português e inglês.
+A sua central pessoal de inteligência artificial **100% local**. Converse com modelos de IA que correm no seu próprio computador, teste o desempenho de cada um e descubra qual responde mais depressa e com melhor qualidade — tudo através de uma interface fluida, disponível em português e inglês.
 
 A aplicação é mais do que um simples chat: é um **laboratório de experimentação** que o ajuda a escolher, comparar e aperfeiçoar os modelos de IA que já tem instalados no seu equipamento, sem depender de serviços externos nem de ligação à internet.
 
@@ -101,7 +99,7 @@ Poupe tempo em tarefas repetitivas:
 A navegação é simples. No menu lateral encontra todas as secções da aplicação: **Chat**, **Benchmarks**, **Qualidade e Métricas**, **Modelos carregados**, **Prompts** e **Logs**.
 
 - **Conversar**: abra o Chat, escreva a sua mensagem na caixa de texto e prima <kbd>Enter</kbd> ou o botão de envio. As respostas aparecem em tempo real e cada uma mostra o tempo que demorou. Use **Histórico** para retomar conversas anteriores e **Novo Chat** para começar de novo.
-- **Processo de Avaliação de Juízes:** Para cada resposta obtida, selecione a opção **"Copia para avaliação"**. Serão abertas duas novas abas no browser. Aceda a cada uma e faça <kbd>Ctrl</kbd>+<kbd>V</kbd>. De seguida, selecione a opção **"Avaliação"** na aplicação. Copie a resposta do primeiro juiz no browser e cole-a no ecrã de avaliação da app. Repita o processo para o segundo juiz para guardar os veredictos na BD.
+- **Processo de Avaliação de Juízes:** Para cada resposta obtida, selecione a opção **"Copia para avaliação"** — o prompt de auditoria fica no clipboard. Após criar duas novas abas no browser (uma para o Gemini, outra para o ChatGPT, abra manualmente cada uma das sessões e faça <kbd>Ctrl</kbd>+<kbd>V</kbd> em cada uma<kbd>Ctrl</kbd>+<kbd>V</kbd>. De seguida, selecione a opção **"Avaliação"** na aplicação. Copie a resposta do primeiro juiz no browser e cole-a no ecrã de avaliação da app. Repita o processo para o segundo juiz para guardar os veredictos na BD.
 - **Tema Claro/Escuro**: alterne entre o tema claro e o escuro sempre que preferir. A sua escolha fica **guardada no navegador** e é restaurada automaticamente na próxima visita.
 - **Definições**: aceda à página de Definições para gerir os seus modelos de IA (definir o modelo predefinido e controlar os disponíveis) e personalizar a aparência da aplicação.
 

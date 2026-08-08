@@ -1,6 +1,4 @@
-# 🦙 Ollama FluentUI Chat & Benchmark Laboratory
-
-![Ollama FluentUI Chat & Benchmark Laboratory](../assets/readme-banner-en.svg)
+# 🦙 Ollama Chat & Benchmark Laboratory
 
 ![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white) ![Blazor Server](https://img.shields.io/badge/Blazor-Server-512BD4?logo=blazor&logoColor=white) ![FluentUI Blazor v4](https://img.shields.io/badge/FluentUI_Blazor-v4.14.2-0078D4?logo=fluentui&logoColor=white) ![SQLite + Dapper](https://img.shields.io/badge/SQLite-Dapper-003B57?logo=sqlite&logoColor=white) ![Ollama](https://img.shields.io/badge/Ollama-Local_LLMs-7499FF?logo=ollama&logoColor=white) ![PT | EN](https://img.shields.io/badge/Lang-PT%20%7C%20EN-00897B) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-2ea44f)
 
@@ -101,7 +99,7 @@ Save time on repetitive tasks:
 Navigation is simple. The side menu shows every section of the app: **Chat**, **Benchmarks**, **Quality and Metrics**, **Loaded Models**, **Prompts** and **Logs**.
 
 - **Chat**: open the Chat, type your message in the text box and press <kbd>Enter</kbd> or the send button. Responses appear in real time and each one shows how long it took. Use **History** to resume previous conversations and **New Chat** to start over.
-- **Judge Evaluation Process:** For each response obtained, select the **"Copy for evaluation"** option. Two new tabs will open in the browser. Open each one and press <kbd>Ctrl</kbd>+<kbd>V</kbd>. Next, select the **"Evaluation"** option in the app. Copy the first judge's response in the browser and paste it into the app's evaluation screen. Repeat the process for the second judge to save the verdicts in the DB.
+- **Judge Evaluation Process:** For each response obtained, select the **"Copy for evaluation"** option. Manually open the ChatGPT and Gemini session. Select each one and press <kbd>Ctrl</kbd>+<kbd>V</kbd>. Next, select the **"Evaluation"** option in the app. Copy the first judge's response in the browser and paste it into the app's evaluation screen. Repeat the process for the second judge to save the verdicts in the DB.
 - **Light/Dark Theme**: switch between light and dark themes whenever you prefer. Your choice is **saved in the browser** and restored automatically on your next visit.
 - **Settings**: go to the Settings page to manage your AI models (set the default model and control which are available) and customize the app's appearance.
 
