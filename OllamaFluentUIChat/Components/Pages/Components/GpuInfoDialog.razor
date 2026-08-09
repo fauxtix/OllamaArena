@@ -4,7 +4,8 @@
 
 <FluentDialog Hidden="@(!Visible)"
               Modal="true"
-              Width="550px">
+              Width="550px"
+              Class="gpu-info-dialog">
 
     <FluentDialogHeader Visible="true">
         <FluentStack VerticalAlignment="VerticalAlignment.Center" Gap="10">
@@ -100,4 +101,9 @@
             background-color: var(--neutral-layer-3);
             border-color: var(--neutral-stroke-strong);
         }
+
+    fluent-dialog.gpu-info-dialog::part(control) {
+        max-width: 95vw !important;
+        width: min(550px, 95vw) !important;
+    }
 </style>

@@ -215,7 +215,7 @@
     .analise-container {
         display: flex;
         flex-direction: column;
-        height: calc(100vh - 60px); 
+        height: calc(100dvh - 120px); 
         padding: 16px;
         box-sizing: border-box;
         gap: 8px;
@@ -237,8 +237,12 @@
 
     .grid-wrapper {
         flex: 1;
-        overflow-y: auto;
+        overflow: auto;
     }
+
+        .grid-wrapper fluent-data-grid {
+            min-width: 640px;
+        }
 
     .divisor-painel {
         border: 0;

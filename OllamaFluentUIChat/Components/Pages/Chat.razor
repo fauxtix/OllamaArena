@@ -16,7 +16,7 @@
         background-color: rgba(0, 0, 0, 0.2); z-index: 9999;">
 
         <FluentMessageBar Title="@L["Chat.ModelsLoadErrorTitle"]"
-                          Style="width: 500px; border: 2px solid var(--accent-fill-rest);"
+                          Class="chat-error-bar"
                           Intent="MessageIntent.Error"
                           Type="@MessageType.Notification">
             <hr />
@@ -27,18 +27,13 @@
 else
 {
 
-    <div class="container" style="display: flex; justify-content: start; margin-left:10px;padding: 20px;">
-        <FluentCard Style="
-            width: 75vw;
-            height: 80vh;
-            display: flex;
-            flex-direction: column;
-            padding: 16px;
-            border-radius: 12px;">
+    <div class="chat-container">
+        <FluentCard Class="chat-card">
 
             <FluentStack Orientation="Orientation.Horizontal"
                          HorizontalAlignment="HorizontalAlignment.Stretch"
                          VerticalAlignment="VerticalAlignment.Center"
+                         Class="chat-header-bar"
                          Style="border-bottom: 1px solid var(--neutral-stroke-layer-rest);
                 padding-bottom: 12px;
                 margin-bottom: 12px;
@@ -52,14 +47,7 @@ else
 
                 <FluentStack Orientation="Orientation.Horizontal"
                              HorizontalAlignment="HorizontalAlignment.Center">
-                    <FluentLabel Style="font-size: 14px; color: var(--neutral-foreground-hint);">
-                        @if (temperature > 0)
-                        {
-                            <span class="temperature">@L["Chat.TemperatureLabel", temperature]</span>
-                        }
-
-                    </FluentLabel>
-                    <FluentSelect Style="width: 220px;"
+                    <FluentSelect Class="chat-model-select"
                                   Items="@_models"
                                   @bind-SelectedOption="@ModelName" />
                 </FluentStack>
@@ -69,14 +57,14 @@ else
                     {
                         @if (_gpuReport.FitsInGpu)
                         {
-                            <span style="font-size: 0.8rem; background-color: rgba(34, 197, 94, 0.15); border: 1px solid rgb(34, 197, 94); padding: 4px 8px; border-radius: 6px; color: rgb(21, 128, 61); display: flex; align-items: start; gap: 4px;">
+                            <span class="gpu-badge" style="font-size: 0.8rem; background-color: rgba(34, 197, 94, 0.15); border: 1px solid rgb(34, 197, 94); padding: 4px 8px; border-radius: 6px; color: rgb(21, 128, 61); display: flex; align-items: start; gap: 4px;">
                                 <FluentIcon Value="@(new Icons.Regular.Size16.CheckmarkCircle())" Color="Color.Success" />
                                 @L["Chat.GpuOk", _gpuReport.EstimatedRequiredMemoryGB, _gpuReport.AvailableVramGB]
                             </span>
                         }
                         else
                         {
-                            <span style="font-size: 0.8rem; background-color: rgba(245, 158, 11, 0.15); border: 1px solid rgb(245, 158, 11); padding: 4px 8px; border-radius: 6px; color: var(--neutral-foreground-rest); display: flex; justify-content:start; align-items: center; gap: 4px;"
+                            <span class="gpu-badge" style="font-size: 0.8rem; background-color: rgba(245, 158, 11, 0.15); border: 1px solid rgb(245, 158, 11); padding: 4px 8px; border-radius: 6px; color: var(--neutral-foreground-rest); display: flex; justify-content:start; align-items: center; gap: 4px;"
                                   title="@L["Chat.GpuCpuFallbackTitle"]">
                                 <FluentIcon Value="@(new Icons.Regular.Size16.Warning())" Color="Color.Warning" />
                                 @L["Chat.GpuCpuFallback", _gpuReport.EstimatedRequiredMemoryGB, _gpuReport.AvailableVramGB]
@@ -194,8 +182,8 @@ else
                     <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="@CancelRequest"
                                   Title="@L["Chat.CancelRequest"]"
-                                  Style="min-width: 40px; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                        <FluentIcon Value="@(new Icons.Regular.Size20.Square())" Color="Color.Custom" CustomColor="#dc2626" />
+                                  Style="min-width: 40px; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; background-color: #dc2626; border-radius: 50%;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Square())" Color="Color.Custom" CustomColor="#ffffff" />
                     </FluentButton>
                 }
             </FluentStack>
@@ -368,5 +356,63 @@ else
         color: #8b9cb3;
         font-size: 0.85em;
         margin-left: 4px;
+    }
+
+    .chat-container {
+        display: flex;
+        justify-content: start;
+        margin-left: 10px;
+        padding: 20px;
+        min-width: 0;
+    }
+
+    .chat-card {
+        width: 75vw;
+        height: 80vh;
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        border-radius: 12px;
+        box-sizing: border-box;
+        min-width: 0;
+    }
+
+    .chat-header-bar {
+        flex-wrap: wrap;
+    }
+
+    .chat-model-select {
+        width: 220px;
+    }
+
+    .chat-error-bar {
+        width: min(500px, 90vw);
+        border: 2px solid var(--accent-fill-rest);
+    }
+
+    .gpu-badge {
+        max-width: 100%;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    @@media (max-width: 768px) {
+        .chat-container {
+            margin-left: 0;
+            padding: 8px;
+        }
+
+        .chat-card {
+            width: 100%;
+            height: calc(100dvh - 120px);
+        }
+
+        .chat-model-select {
+            width: 100%;
+        }
+
+        .chat-header-bar {
+            row-gap: 8px;
+        }
     }
 </style>

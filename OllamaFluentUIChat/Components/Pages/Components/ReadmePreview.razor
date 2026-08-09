@@ -103,4 +103,14 @@
         height: 1px;
         background: rgba(255,255,255,0.6);
     }
+
+    @@media (max-width: 768px) {
+        fluent-dialog.dialog-large::part(control) {
+            --dialog-width: 94vw !important;
+        }
+
+        .markdown-body {
+            max-width: 94vw !important;
+        }
+    }
 </style>

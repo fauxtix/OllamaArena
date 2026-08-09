@@ -230,4 +230,14 @@
         width: 100%;
         height: 320px;
     }
+
+    @@media (max-width: 768px) {
+        fluent-dialog.dialog-largo::part(control) {
+            --dialog-width: 94vw !important;
+        }
+
+        .canvas-container {
+            height: 240px;
+        }
+    }
 </style>

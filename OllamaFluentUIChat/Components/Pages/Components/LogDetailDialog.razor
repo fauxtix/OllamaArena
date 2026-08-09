@@ -89,4 +89,10 @@
         --log-danger-bg: #541d1d;
         --log-danger-text: #ff9b9b;
     }
+
+    @@media (max-width: 768px) {
+        fluent-dialog.dialog-size::part(control) {
+            --dialog-width: 94vw !important;
+        }
+    }
 </style>

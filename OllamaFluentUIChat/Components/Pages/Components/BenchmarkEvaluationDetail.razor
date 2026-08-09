@@ -499,4 +499,23 @@
         font-size: 14px;
         line-height: 1.5;
     }
+
+    fluent-dialog.evaluation-detail-benchmark::part(control) {
+        max-width: 95vw !important;
+    }
+
+    @@media (max-width: 768px) {
+        fluent-dialog.evaluation-detail-benchmark::part(control) {
+            --dialog-width: 95vw !important;
+        }
+
+        .ratings-header,
+        .ratings-row {
+            grid-template-columns: 110px 1fr 1fr;
+        }
+
+        .feedback-card {
+            min-height: 0;
+        }
+    }
 </style>

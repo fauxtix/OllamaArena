@@ -441,4 +441,11 @@
             color: var(--neutral-foreground-rest);
             white-space: pre-wrap;
         }
+
+    @@media (max-width: 768px) {
+        .assessment-grid {
+            grid-template-columns: 1fr;
+            min-height: 0;
+        }
+    }
 </style>

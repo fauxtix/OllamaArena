@@ -22,12 +22,12 @@
 
         <div class="toolbar-content">
 
-            <div style="display: flex; gap: 12px; align-items: center; width: 100%; margin:16px;">
+            <div class="toolbar-row" style="display: flex; gap: 12px; align-items: center; width: 100%; margin:16px; flex-wrap: wrap;">
                 <FluentSearch @bind-Value="_search"
                               Placeholder="@L["Benchmarks.SearchPlaceholder"]"
                               class="search-box" />
 
-                <FluentSpacer />
+                    <FluentSpacer />
 
                 <FluentButton Appearance="Appearance.Outline"
                               Disabled="@(_benchmarks.Any() == false)"
@@ -583,7 +583,7 @@
     .page {
         display: flex;
         flex-direction: column;
-        height: 100vh;
+        height: 100%;
         background: var(--fill-color);
     }
 
@@ -606,7 +606,7 @@
         margin-top: 1rem;
         flex: 1 1 auto;
         min-height: 0;
-        overflow: hidden;
+        overflow: auto;
         display: flex;
     }
 
@@ -683,6 +683,22 @@
             .filter-bar fluent-button {
                 min-width: auto;
             }
+
+        .toolbar-row {
+            margin: 12px 8px !important;
+            gap: 8px !important;
+        }
+
+        .search-box {
+            max-width: 100%;
+            flex: 1 1 100%;
+        }
+
+        .toolbar-row fluent-spacer,
+        .toolbar-row div.spacer {
+            flex: 0 0 100%;
+            height: 0;
+        }
     }
 
     .header-blue {

@@ -17,6 +17,7 @@
         @* Configuração do Tema *@
         <FluentGridItem>
             <FluentSelect Label="@L["Settings.ThemeLabel"]"
+                          Class="settings-select"
                           Width="250px"
                           Items="@(Enum.GetValues<DesignThemeModes>())"
                           @bind-SelectedOption="@Mode" />
@@ -25,6 +26,7 @@
         @* Configuração da Cor *@
         <FluentGridItem>
             <FluentSelect Label="@L["Settings.ColorLabel"]"
+                          Class="settings-select"
                           Items="@(Enum.GetValues<OfficeColor>().Select(i => (OfficeColor?)i))"
                           Height="200px"
                           Width="250px"
@@ -43,8 +45,9 @@
 
         @* NOVO: Configuração do Modelo do Ollama *@
         <FluentGridItem xs="12" Style="margin-top: 20px;">
-            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Bottom" Style="gap: 12px;">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Bottom" Style="gap: 12px; flex-wrap: wrap;">
                 <FluentSelect Label="@L["Settings.ModelLabel"]"
+                              Class="settings-select"
                               Width="250px"
                               Items="@_availableModels"
                               @bind-SelectedOption="@_selectedModel" />
@@ -68,7 +71,6 @@
 {
     public DesignThemeModes Mode { get; set; }
     public OfficeColor? OfficeColor { get; set; }
-
     // Variáveis para os Modelos
     private List<string> _availableModels = new() { "phi4-mini:latest", "mistral:latest", "qwen3.5:latest" };
     private string _selectedModel = "phi4-mini:latest";
@@ -105,3 +107,14 @@
     void OnLuminanceChanged(LuminanceChangedEventArgs e) { Mode = e.Mode; }
     void PickRandomColor() { OfficeColor = OfficeColorUtilities.GetRandom(); }
 }
+<style>
+    .settings-select {
+        width: 250px;
+    }
+
+    @@media (max-width: 768px) {
+        .settings-select {
+            width: 100%;
+        }
+    }
+</style>

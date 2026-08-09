@@ -33,7 +33,8 @@
     }
     else
     {
-        <FluentDataGrid Items="@_localModels.AsQueryable()" TGridItem="ModelDetails" ResizableColumns="true">
+        <div class="table-scroll">
+            <FluentDataGrid Items="@_localModels.AsQueryable()" TGridItem="ModelDetails" ResizableColumns="true">
             <PropertyColumn Property="@(m => m.Name)" Title="@L["Modelos.ColName"]" Sortable="true"
                             Style="color:steelblue; font-weight:700; font-size: 1rem;" />
 
@@ -89,6 +90,7 @@
                 }
             </TemplateColumn>
         </FluentDataGrid>
+        </div>
     }
 </div>
 
@@ -203,5 +205,14 @@
         --badge-fill-success: green;
         --badge-color-success: #fff;
     }
+
+    .table-scroll {
+        overflow-x: auto;
+        min-width: 0;
+    }
+
+        .table-scroll fluent-data-grid {
+            min-width: 720px;
+        }
 
 </style>

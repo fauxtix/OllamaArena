@@ -32,7 +32,8 @@ else
                     <FluentStack Orientation="Orientation.Vertical" Gap="8" Style="margin-top: 20px;">
                         @foreach (var model in OllamaModels)
                         {
-                            <FluentCard Style="width:400px;padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <FluentCard Class="model-card"
+                                        Style="padding: 10px; display: flex; justify-content: space-between; align-items: center;">
                                 <FluentLabel>@model</FluentLabel>
                             </FluentCard>
                         }
@@ -157,6 +158,11 @@ Instruções de Resposta: Dá-me estritamente uma nota de 1 a 5 (onde 1 é péss
         justify-content: center;
         padding: 40px;
         text-align: center;
+    }
+
+    .model-card {
+        width: min(400px, 100%);
+        box-sizing: border-box;
     }
 
 </style>

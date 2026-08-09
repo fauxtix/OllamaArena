@@ -212,17 +212,17 @@ namespace OllamaFluentUIChat.Components.Pages
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var userPrompt = _currentMessage;
 
-            _messages.Add(new Models.DTO.ChatMessage
+            var userMessage = new Models.DTO.ChatMessage
             {
                 User = L["Chat.UserDisplayName"],
                 Text = userPrompt,
                 IsCurrentUser = true
-            });
+            };
+            _messages.Add(userMessage);
 
             _currentMessage = string.Empty;
             _inputKey++;
             _isThinking = true;
-
             if (_contextLength == 0)
                 _contextLength = await GetContextLengthAsync(ModelName);
 
@@ -325,7 +325,7 @@ namespace OllamaFluentUIChat.Components.Pages
                 }
 
                 temperature = ChatMeasureTemperature.ObterTemperaturaRecomendada(userPrompt);
-                aiMessage.Temperature = Math.Round(temperature, 2);
+                userMessage.Temperature = Math.Round(temperature, 2);
                 int baseTokens = _gpuReport?.FitsInGpu == true ? 1800 : 1200;
                 int maxTokens = temperature switch
                 {

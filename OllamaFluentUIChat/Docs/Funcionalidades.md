@@ -48,6 +48,8 @@ O menu lateral (`Components/Layout/NavMenu.razor`) expõe as funcionalidades pri
 | Editar Prompts | `/edit-prompts` | Editor runtime dos ficheiros `Prompts/*.txt` |
 | Logs do Sistema | `/system-logs` | Visualização/filtro/apagamento dos logs Serilog |
 
+> **Responsividade:** em ecrãs **≤768px** o `NavMenu` deixa de ocupar o lado esquerdo e passa a ser um **drawer deslizante** (`min(80vw, 280px)`) com overlay escurecido, aberto/fechado pelo ícone de hambúrguer no cabeçalho (`MainLayout`); os links fecham o drawer após a navegação.
+
 Existem ainda páginas auxiliares fora do menu: `/settings` (tema/cor + modelo), `/settings2` (experimental), `/analise-benchmarks` (master-detail de prompts/respostas).
 
 ---
@@ -87,6 +89,8 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 - **Outputs:** mensagens markdown formatadas (`MessageFormatter.FormatMessagePlus`), tempo decorrido em tempo real (timer de 150 ms até ao 1.º token), badge de temperatura.
 - **Logs técnicos:** tempo até o Ollama começar a responder (time-to-first-byte) e tempo até ao 1.º token.
 
+> **Responsividade:** em mobile o card do chat ocupa a largura total (`100%` / `calc(100dvh - 120px)`), o cabeçalho com o seletor de modelo e os badges de GPU fazem *wrap* e a barra de erro limita-se a `min(500px, 90vw)`.
+
 ### 3.3 Benchmarks — Avaliações (`/benchmark-evaluations`)
 
 - **Propósito:** visão consolidada de todas as respostas de benchmark com as avaliações dos juízes (Gemini/OpenRouter) e métricas de desempenho.
@@ -99,6 +103,8 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
   6. **Apagar Benchmarks** (tudo) e apagar linha individual (apaga também o prompt se for a única resposta) — com confirmações via `IDialogService` (ver 4.2).
 - **Outputs:** `FluentDataGrid` (Modelo, Descrição, Gemini [Factual/Formato/Global], OpenRouter [Factual/Formato/Global], Tokens/s, Tempo, Carga, Tokens, Ações) + paginação (10/página); ficheiro Excel; diálogo de detalhe com tabs; painel de análise local com streaming de log.
 
+> **Responsividade:** a barra de ferramentas faz *wrap* (pesquisa a largura total em mobile) e a grelha fica num contentor com `overflow-x: auto` para deslocamento horizontal. O mesmo padrão (`overflow-x: auto` + larguras mínimas) aplica-se às grelhas de Modelos, Qualidade e Métricas e Logs.
+
 ### 3.4 Qualidade e Métricas (`/benchmarks`)
 
 - **Propósito:** análise **split-view** por prompt (cards à esquerda) com as respostas de cada modelo avaliadas (à direita), gráficos e edição de avaliações.
@@ -107,6 +113,9 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
   2. Esquerda: cards de prompt com badge `#id`, data e nº de modelos; botões **Gráfico** (`BenchmarkChartDialog` — 4 gráficos Chart.js com download de imagem, ver 4.1) e apagar (cascade, com confirmação "Apagar Benchmark", ver 4.2).
   3. Direita: card por resposta com badges `Tokens/s`, `Eval`, `Load`, `Tokens`; ratings Gemini/OpenRouter; botões **Avaliação** (`BenchmarkEvaluationDialog` — formulário 11 métricas 1–5 + tradução de feedback, ver 4.1) e **Avaliar automaticamente** (`AvaliarAutomaticamenteAsync` — gera o prompt do juiz com `EvaluatePromptTemplate` + metadados do modelo via `/api/show`, submete-o aos juízes Gemini (`gemini-flash-latest`) e OpenRouter (`openrouter/free`) via `AutomatedJudgeService`, preenche as métricas com `EvaluationParser` e abre o diálogo já preenchido). Antes de submeter, `AvaliarAutomaticamenteAsync` verifica a ligação à internet via `InternetConnectivityService.HasInternetAsync()` e mostra o erro `Benchmarks.NoInternetError` se não houver (os juízes são serviços em nuvem). O botão **Copiar prompt** (`CopiarPromptAvaliacaoAsync`) mantém o fallback manual (só copia o prompt gerado, sem precisar de internet).
   4. `SaveEvaluationAsync` valida ratings 1–5 (diálogo "Erro de Validação" se fora do intervalo, ver 4.2) e grava com `UpdateResponseEvaluationAsync` (diálogo "Sucesso").
+
+> **Responsividade:** o `FluentSplitter` deteta a largura do viewport via **JS interop** (`appViewport.getWidth` + `subscribeResize` no primeiro render; `unsubscribeResize` em `DisposeAsync`) e aplica `AplicarLayoutCompacto` — em ecrãs **≤768px** a orientação passa a **vertical** (painéis empilhados, `_panel1MinSize` 120px / `_panel2MinSize` 200px), acima disso mantém-se **horizontal** (250px/400px). Se o JS falhar, mantém o estado predefinido (horizontal).
+
 - **Outputs:** cards de prompt; cards de resposta com markdown formatado; diálogo de avaliação com o formulário dos juízes e tradução; 4 gráficos Chart.js por prompt (`BenchmarkChartDialog`): Tempo de Execução/Eval, Tempo de Carga/Load, Velocidade (Tokens/s), Total de Tokens — com download de imagem (conteúdo detalhado na secção 4.1).
 
 ### 3.5 Modelos Ollama (`/modelos-ollama`)
@@ -139,12 +148,12 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 
 | Componente | Uso |
 |---|---|
-| `HistoryPanel` | Painel lateral deslizante direito (50vw×80vh, com overlay) com histórico de execuções (`HistoryResponseAsync`; grelha paginada 12/página: Descrição, Modelo, Data, Tempo Eval., Tempo Procº) — ver 4.1 |
-| `GpuInfoDialog` | Diálogo informativo (550px) sobre "CPU Fallback" (VRAM insuficiente, impacto na velocidade, dicas) — ver 4.1 |
+| `HistoryPanel` | Painel lateral deslizante direito (50vw×80vh, com overlay; em mobile `min(92vw, 560px)`×`100dvh`) com histórico de execuções (`HistoryResponseAsync`; grelha paginada 12/página: Descrição, Modelo, Data, Tempo Eval., Tempo Procº) — ver 4.1 |
+| `GpuInfoDialog` | Diálogo informativo (550px; **95vw em mobile**) sobre "CPU Fallback" (VRAM insuficiente, impacto na velocidade, dicas) — ver 4.1 |
 | `CultureSelector` | Comutação PT/EN (cookie de cultura via endpoint `Culture/Set`) |
 | `BenchmarkEvaluation` | Formulário de avaliação por juiz: 11 métricas (Factual, Formatação, Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Efeito Halo, Segurança, Global), escala 1–5; parse automático do output bruto com `EvaluationParser` (tags `*_SCORE:`, `FINAL_SCORE:`, `DESCRIPTION:`/`FEEDBACK:`, `RECOMMENDATION:`); caixa de recomendação do juiz (âmbar) quando o campo `RECOMMENDATION` foi preenchido |
 | `BenchmarkEvaluationDialog` | Envelope do formulário + **tradução automática do feedback** via modelo local (`TranslationService`), com pré-visualização (`TranslationPreviewDialog`) — ver 4.1 |
-| `BenchmarkEvaluationDetail` | Diálogo 900px com tabs **Métricas** (grelha Gemini vs OpenRouter) e **Feedbacks dos Juízes** — ver 4.1 |
+| `BenchmarkEvaluationDetail` | Diálogo 900px (**95vw em mobile**) com tabs **Métricas** (grelha Gemini vs OpenRouter) e **Feedbacks dos Juízes** — ver 4.1 |
 | `BenchmarkChartDialog` | 4 gráficos Chart.js com download de imagem — ver 4.1 |
 | `BenchmarkAnalysisViewer` | Painel de resultado da análise local (estados: vazio / streaming com log / concluído com sumário executivo) — ver 4.1 |
 | `TranslationPreviewDialog` | Pré-visualização de tradução (modelo usado + tempo gasto) — ver 4.1 |
@@ -153,22 +162,22 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 
 ### 4.1 Conteúdo dos diálogos (detalhe)
 
-- **`BenchmarkEvaluationDetail`** — o botão **"olho"** (ou duplo clique) na linha da grelha em `/benchmark-evaluations` abre este diálogo modal (900px). Cabeçalho com ícone olho, nome do modelo e o prompt executado em `blockquote` (com scroll). Tem **duas tabs**:
+- **`BenchmarkEvaluationDetail`** — o botão **"olho"** (ou duplo clique) na linha da grelha em `/benchmark-evaluations` abre este diálogo modal (900px; **95vw em mobile**). Cabeçalho com ícone olho, nome do modelo e o prompt executado em `blockquote` (com scroll). Tem **duas tabs**:
   - **Métricas** — grelha com colunas `Métrica | Google Gemini | OpenRouter` e linhas Factual, Formatação, **Global** (linha destacada com bordas accent), Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Efeito Halo e Segurança; cada célula é a nota do juiz ou "—" quando ainda não avaliada (nota 0). Os dados vêm da consulta consolidada `BenchmarkResponseEvaluationAsync`.
   - **Feedbacks dos Juízes** — dois cards lado a lado (Google Gemini / OpenRouter) com o texto do feedback; o conteúdo é carregado assincronamente via `BenchmarkRepository.GetBenchmarkJudgesFeedbackByIdAsync(ResponseId)` (progress ring durante a carga) e mostra "Nenhum feedback registado." se vazio. Quando o juiz devolveu `RECOMMENDATION`, cada card mostra ainda uma **caixa "Recomendação do Juiz"** (fundo âmbar) com o texto da recomendação.
-- **`BenchmarkEvaluationDialog`** (aberto pelo botão "Avaliação" em `/benchmarks`; 1200px): cabeçalho com ícone `ClipboardCode` e nome do modelo (o prompt não é repetido, pois já é mostrado na página); corpo com o formulário `BenchmarkEvaluation` (11 métricas na escala 1–5, com parse automático do output dos juízes via `EvaluationParser`) e dois botões **Traduzir Feedback (Gemini)** / **Traduzir Feedback (OpenRouter)** que traduzem o feedback para a **língua da sessão** com o modelo local (`TranslationService`, cliente com timeout de 4 min) e abrem `TranslationPreviewDialog`. Rodapé com **Guardar avaliação** (accent; oculto quando a avaliação já está gravada) e **Fechar** (progress ring enquanto traduz).
+- **`BenchmarkEvaluationDialog`** (aberto pelo botão "Avaliação" em `/benchmarks`; 1200px, **95vw em mobile**): cabeçalho com ícone `ClipboardCode` e nome do modelo (o prompt não é repetido, pois já é mostrado na página); corpo com o formulário `BenchmarkEvaluation` (11 métricas na escala 1–5, com parse automático do output dos juízes via `EvaluationParser`) e dois botões **Traduzir Feedback (Gemini)** / **Traduzir Feedback (OpenRouter)** que traduzem o feedback para a **língua da sessão** com o modelo local (`TranslationService`, cliente com timeout de 4 min) e abrem `TranslationPreviewDialog`. Rodapé com **Guardar avaliação** (accent; oculto quando a avaliação já está gravada) e **Fechar** (progress ring enquanto traduz).
 - **`TranslationPreviewDialog`**: "Tradução do Feedback (<juiz>)", "Modelo usado", "Tempo gasto" e o texto traduzido num `FluentTextArea` editável; **Aceitar e continuar** aplica o texto ao campo do juiz; **Sair** descarta.
-- **`BenchmarkChartDialog`** (aberto pelo botão "Gráfico" em `/benchmarks`; 50vw×85vh): cabeçalho "Gráficos de Benchmark do Prompt #<id>"; quatro gráficos de barras Chart.js (cor por modelo; labels partidos em `:` ou `-`):
+- **`BenchmarkChartDialog`** (aberto pelo botão "Gráfico" em `/benchmarks`; 50vw×85vh, **94vw em mobile**): cabeçalho "Gráficos de Benchmark do Prompt #<id>"; quatro gráficos de barras Chart.js (cor por modelo; labels partidos em `:` ou `-`):
   - Tempo de Execução / Eval (ms) — `graficoEval`;
   - Tempo de Carga do Modelo / Load (ms) — `graficoLoad`;
   - Velocidade de Geração (Tokens/s) — `graficoVelocidade`;
   - Total de Tokens Gerados — `graficoTotalTokens`.
   Cada gráfico tem botão de download da imagem (JS `benchmarkCharts.downloadGrafico`, ficheiro `benchmark_<métrica>_prompt_<id>`).
-- **`LogDetailDialog`** (aberto pelo "olho" em `/system-logs`; 40vw×65vh): "Detalhes do Registo #<id>" com a caixa **Mensagem** (texto formatado, word-break) e, apenas quando existe, a caixa **Exceção / Erro** (fundo avermelhado, monospace, scroll até 250px).
-- **`GpuInfoDialog`** (aberto pelo "?" de GPU no Chat; 550px): "Informação do Sistema" com três blocos explicativos — "O que significa 'CPU fallback'?", "VRAM insuficiente" e "Impacto na velocidade" (lista de consequências na performance).
-- **`HistoryPanel`** (aberto pelo botão "Histórico" no Chat): painel deslizante do lado direito (50vw×80vh) com overlay e animação; "Histórico de Execuções"; grelha paginada (12/página) com Descrição do Prompt (tooltip), Modelo, Data, Tempo Eval. e Tempo Procº; estados "A carregar..." e "Sem histórico."; dados de `BenchmarkRepository.HistoryResponseAsync()`.
-- **`ReadmePreview`** (aberto pelo botão "Readme" na Home; 50vw×85vh): "Preview README.md" com o markdown do README do GitHub renderizado via Markdig (`ReadMeService.LoadReadmeAsync`); "Loading..." enquanto carrega.
-- **Diálogo "Análise IA Local"** — o botão **"Análise IA Local"** em `/benchmark-evaluations` abre um `FluentDialog` (800px) cujo corpo é o `BenchmarkAnalysisViewer`, com o cabeçalho **"Análise Analítica do Modelo Local"** e badge **Análise Offline Ativa** (sem tabs; o resultado é apresentado em secções empilhadas):
+- **`LogDetailDialog`** (aberto pelo "olho" em `/system-logs`; 40vw×65vh, **94vw em mobile**): "Detalhes do Registo #<id>" com a caixa **Mensagem** (texto formatado, word-break) e, apenas quando existe, a caixa **Exceção / Erro** (fundo avermelhado, monospace, scroll até 250px).
+- **`GpuInfoDialog`** (aberto pelo "?" de GPU no Chat; 550px, **95vw em mobile** — `width: min(550px, 95vw)`): "Informação do Sistema" com três blocos explicativos — "O que significa 'CPU fallback'?", "VRAM insuficiente" e "Impacto na velocidade" (lista de consequências na performance).
+- **`HistoryPanel`** (aberto pelo botão "Histórico" no Chat): painel deslizante do lado direito (50vw×80vh; em mobile `min(92vw, 560px)`×`100dvh`) com overlay e animação; "Histórico de Execuções"; grelha paginada (12/página) com Descrição do Prompt (tooltip), Modelo, Data, Tempo Eval. e Tempo Procº; estados "A carregar..." e "Sem histórico."; dados de `BenchmarkRepository.HistoryResponseAsync()`.
+- **`ReadmePreview`** (aberto pelo botão "Readme" na Home; 50vw×85vh, **94vw em mobile**): "Preview README.md" com o markdown do README do GitHub renderizado via Markdig (`ReadMeService.LoadReadmeAsync`); "Loading..." enquanto carrega.
+- **Diálogo "Análise IA Local"** — o botão **"Análise IA Local"** em `/benchmark-evaluations` abre um `FluentDialog` (800px; **95vw em mobile** — mesma classe CSS `evaluation-detail-benchmark` do `BenchmarkEvaluationDetail`) cujo corpo é o `BenchmarkAnalysisViewer`, com o cabeçalho **"Análise Analítica do Modelo Local"** e badge **Análise Offline Ativa** (sem tabs; o resultado é apresentado em secções empilhadas):
   - Estado vazio: "Pronto para analisar";
   - Durante o processamento: progress ring "A processar resposta..." + botão **Cancelar** e caixa de **streaming do log** (monospace, formatada por `MessageFormatter`);
   - Concluído: "Análise Concluída" e o resultado com **Sumário Executivo**, cards **⚡ Mais Rápido** (modelo + tokens/s) e **⭐ Melhor Avaliado**, e **🔍 Análise Técnica Detalhada** (linhas HTML);
@@ -335,6 +344,7 @@ Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Se
 | `graficos.js` | `window.benchmarkCharts` — `renderGrafico` (cores do tema via CSS vars `--colorNeutralForeground1`/`--colorNeutralStroke2` com fallbacks, `Chart.defaults`, **destrói o gráfico anterior** em `window["_"+canvasId]`, tooltip `Valor: X <unidade>`, eixo Y com sufixo) e `downloadGrafico` (`canvas.toDataURL("image/png")` + link) | 4 gráficos do `BenchmarkChartDialog` e `Benchmarks` |
 | `excel.js` | `window.downloadFileFromBase64` (data URI base64 `.xlsx`) | Export Excel (`BenchmarkEvaluations.ExportarParaExcel`) |
 | `clipboard.js` | `window.copyToClipboard` (`navigator.clipboard` com fallback para textarea + `execCommand('copy')`) | Botão de copiar avaliação (`Benchmarks.razor.cs`) |
+| `viewport.js` | `window.appViewport` — `getWidth` (largura do viewport) / `subscribeResize` (listener `resize` que chama `invokeMethodAsync('OnViewportResized')`) / `unsubscribeResize` (remove o listener) | Splitter responsivo de `/benchmarks` (`AplicarLayoutCompacto`: vertical ≤768px) |
 
 > Nota: o ficheiro `ollama_benchmark.db` está **tracked no git** (com churn de `-shm`/`-wal`). Reverter/no-commit antes de publicar; a BD não deve ser um artefacto de release.
 

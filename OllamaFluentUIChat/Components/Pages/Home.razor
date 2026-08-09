@@ -23,14 +23,14 @@
         <FluentStack Orientation="Orientation.Horizontal"
                      HorizontalAlignment="HorizontalAlignment.Center"
                      VerticalAlignment="VerticalAlignment.Center"
+                     Class="home-images"
                      Style="gap: 50px;">
 
             <FluentCard Style="padding: 12px; width: max-content; height: max-content;">
                 <img src="images/OllamaAsAJudge.png"
                      alt="@L["Home.ImageAlt"]"
+                     class="home-img"
                      style="box-shadow: var(--elevation-shadow-card-hover);
-                width: 28vw;
-                height: 36vh;
                 object-fit: cover;
                 display: block;
                 overflow: hidden;
@@ -40,9 +40,8 @@
             <FluentCard Style="padding: 12px; width: max-content; height: max-content;">
                 <img src="images/OllamaWithFluentUI.jpg"
                      alt="@L["Home.ImageAlt"]"
+                     class="home-img"
                      style="box-shadow: var(--elevation-shadow-card-hover);
-                width: 28vw;
-                height: 36vh;
                 object-fit: cover;
                 display: block;
                 overflow: hidden;
@@ -184,5 +183,27 @@
         min-height: 0;
         height: 100%;
         width: 100%;
+    }
+
+    .home-img {
+        width: 28vw;
+        height: 36vh;
+        min-width: 260px;
+        min-height: 220px;
+    }
+
+    @@media (max-width: 768px) {
+        fluent-stack.home-images {
+            flex-direction: column !important;
+            gap: 24px !important;
+        }
+
+        .home-img {
+            width: min(84vw, 460px);
+            height: auto;
+            min-width: 0;
+            min-height: 0;
+            aspect-ratio: 16 / 10;
+        }
     }
 </style>

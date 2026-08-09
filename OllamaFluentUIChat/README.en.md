@@ -97,6 +97,7 @@ Save time on repetitive tasks:
 
 Navigation is simple. The side menu shows every section of the app: **Chat**, **Benchmarks**, **Quality and Metrics**, **Loaded Models**, **Prompts** and **Logs**.
 
+- **Fully responsive**: the interface adapts automatically to any screen size. On phones (≤768px), the side menu becomes a slide-in drawer opened from the hamburger icon in the header; dialogs, data tables, the chat and the benchmark panel splitter adjust to ensure a great experience on any device.
 - **Chat**: open the Chat, type your message in the text box and press <kbd>Enter</kbd> or the send button. Responses appear in real time and each one shows how long it took. Use **History** to resume previous conversations and **New Chat** to start over.
 - **Automatic Judge Evaluation:** For each response obtained, click **"Evaluate automatically"** — the app submits the audit prompt to Gemini and OpenRouter, opens the evaluation screen already filled in and, after your review, saves the verdicts in the DB. If you prefer to evaluate manually, use **"Copy prompt"** to place the audit prompt on the clipboard.
 - **Light/Dark Theme**: switch between light and dark themes whenever you prefer. Your choice is **saved in the browser** and restored automatically on your next visit.

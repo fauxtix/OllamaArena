@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.JSInterop;
 using OllamaFluentUIChat.Models.Entities;
 using OllamaFluentUIChat.PromptTemplates;
@@ -10,7 +11,7 @@ using OllamaFluentUIChat.Services.Interfaces.Services;
 
 namespace OllamaFluentUIChat.Components.Pages.Components
 {
-    public partial class Benchmarks
+    public partial class Benchmarks : IAsyncDisposable
     {
         [Inject] public required IBenchmarkRepository BenchmarkRepo { get; set; }
         [Inject] public required IOllamaGpuService GpuService { get; set; }
@@ -18,6 +19,12 @@ namespace OllamaFluentUIChat.Components.Pages.Components
         [Inject] public AutomatedJudgeService _feedbackService { get; set; } = default!;
         [Inject] public required InternetConnectivityService Internet { get; set; }
         [Inject] public ILogger<App> _logger { get; set; } = default!;
+
+        private Orientation _splitterOrientation = Orientation.Horizontal;
+        private string _panel1Size = "33.3%";
+        private string _panel1MinSize = "250px";
+        private string _panel2MinSize = "400px";
+        private const int CompactBreakpoint = 768;
 
         private List<BenchmarkPrompt>? _promptsList;
         private BenchmarkPrompt? _selectedPrompt;
@@ -31,8 +38,71 @@ namespace OllamaFluentUIChat.Components.Pages.Components
         private bool isCreatingPrompt = false;
         private bool _evaluationDialogVisible;
         private bool _evaluationIsSaved;
+        private DotNetObjectReference<Benchmarks>? _viewportDotNetRef;
 
         protected override async Task OnInitializedAsync() => await GetDataAsync();
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender)
+            {
+                try
+                {
+                    var largura = await JS.InvokeAsync<int>("appViewport.getWidth");
+                    AplicarLayoutCompacto(largura);
+                    _viewportDotNetRef = DotNetObjectReference.Create(this);
+                    await JS.InvokeVoidAsync("appViewport.subscribeResize", _viewportDotNetRef);
+                    StateHasChanged();
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogWarning(ex, "Não foi possível subscrever o tamanho do viewport no Benchmarks.");
+                }
+            }
+        }
+
+        [JSInvokable]
+        public Task OnViewportResized(int largura)
+        {
+            AplicarLayoutCompacto(largura);
+            StateHasChanged();
+            return Task.CompletedTask;
+        }
+
+        private void AplicarLayoutCompacto(int largura)
+        {
+            if (largura <= CompactBreakpoint)
+            {
+                _splitterOrientation = Orientation.Vertical;
+                _panel1Size = "40%";
+                _panel1MinSize = "120px";
+                _panel2MinSize = "200px";
+            }
+            else
+            {
+                _splitterOrientation = Orientation.Horizontal;
+                _panel1Size = "33.3%";
+                _panel1MinSize = "250px";
+                _panel2MinSize = "400px";
+            }
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            try
+            {
+                if (_viewportDotNetRef != null)
+                {
+                    await JS.InvokeVoidAsync("appViewport.unsubscribeResize");
+                    _viewportDotNetRef.Dispose();
+                    _viewportDotNetRef = null;
+                }
+            }
+            catch
+            {
+                // Ignora falhas de cleanup (ex.: navegação intermédia)
+            }
+        }
 
         protected void RefreshPage()
         {

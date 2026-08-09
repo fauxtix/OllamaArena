@@ -9,7 +9,13 @@
 
         <FluentHeader Style="background-color: var(--neutral-layer-2); color: var(--neutral-foreground-rest);">
             <div class="header-content">
-                <div class="app-title">🤖 @L["AppTitle"]</div>
+                <div class="header-left">
+                    <input type="checkbox" id="navmenu-toggle" class="navmenu-toggle" aria-label="@L["Nav.ExpandToggle"]" />
+                    <label for="navmenu-toggle" class="navmenu-icon" title="@L["Nav.ExpandToggle"]">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Navigation())" Color="Color.Fill" />
+                    </label>
+                    <div class="app-title">🤖 @L["AppTitle"]</div>
+                </div>
 
                 <div class="header-actions">
                     <FluentButton Appearance="Appearance.Stealth"
@@ -22,6 +28,8 @@
                 </div>
             </div>
         </FluentHeader>
+
+        <label for="navmenu-toggle" class="nav-overlay" aria-hidden="true"></label>
 
         <FluentStack Class="main" Orientation="Orientation.Horizontal" Width="100%">
             <NavMenu />
@@ -74,12 +82,36 @@
         align-items: center;
         justify-content: space-between;
         width: 100%;
+        gap: 12px;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .app-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .header-actions {
         display: flex;
         align-items: center;
         gap: 8px;
+        flex: 0 0 auto;
+    }
+
+    .navmenu-toggle,
+    .navmenu-icon {
+        display: none;
+    }
+
+    .nav-overlay {
+        display: none;
     }
 </style>
 

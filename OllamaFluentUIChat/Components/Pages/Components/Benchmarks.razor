@@ -39,12 +39,12 @@
     }
     else
     {
-        <FluentSplitter Orientation="Orientation.Horizontal"
+        <FluentSplitter Orientation="@_splitterOrientation"
                         BarSize="6"
-                        Panel1Size="33.3%"
-                        Panel1MinSize="250px"
-                        Panel2MinSize="400px"
-                        Style="height: calc(100vh - 120px); width: 100%;">
+                        Panel1Size="@_panel1Size"
+                        Panel1MinSize="@_panel1MinSize"
+                        Panel2MinSize="@_panel2MinSize"
+                        Class="benchmarks-splitter">
 
             <Panel1>
                 <div class="painel-esquerdo-scroll">
@@ -510,4 +510,32 @@
         text-align: center;
     }
 
+    .benchmarks-splitter {
+        height: calc(100vh - 120px);
+        width: 100%;
+    }
+
+    @@media (max-width: 768px) {
+        .benchmarks-splitter {
+            height: calc(100dvh - 130px);
+        }
+
+        .cartao-header {
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .metricas-tags {
+            flex-wrap: wrap;
+            justify-content: flex-start;
+        }
+
+        .avaliacao-footer {
+            flex-wrap: wrap;
+        }
+
+        .card-prompt-footer {
+            gap: 8px;
+        }
+    }
 </style>
