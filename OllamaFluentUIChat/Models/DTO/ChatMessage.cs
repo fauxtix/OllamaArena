@@ -8,5 +8,6 @@
         public DateTime Timestamp { get; set; } = DateTime.Now;
         public bool IsCurrentUser { get; set; }
         public string? ElapsedTime { get; set; }
+        public double Temperature { get; set; }
     }
 }

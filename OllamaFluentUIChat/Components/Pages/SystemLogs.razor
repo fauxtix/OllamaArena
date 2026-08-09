@@ -110,15 +110,11 @@
                     <TemplateColumn Title="@L["SystemLogs.ColLevel"]" Sortable="true" SortBy="@_sortByLevel" Width="120px">
                         @{
                             var level = context.Level ?? "Information";
-                            var badgeAppearance = level.Contains("Error") || level.Contains("Fatal") ? Appearance.Accent :
-                                                  level.Contains("Warning") ? Appearance.Neutral :
-                                                  Appearance.Lightweight;
-
-                            var customStyle = level.Contains("Error") || level.Contains("Fatal") ? "background-color: var(--fluent-color-status-danger); color: white;" :
-                                              level.Contains("Warning") ? "background-color: var(--fluent-color-status-warning); color: black;" :
-                                              "background-color: var(--fluent-color-status-success); color: white;";
+                            var badgeFill = level.Contains("Error") || level.Contains("Fatal") ? "danger" :
+                                            level.Contains("Warning") ? "warning" :
+                                            "info";
                         }
-                        <FluentBadge Appearance="@badgeAppearance" Style="@customStyle">
+                        <FluentBadge Fill="@badgeFill">
                             @level
                         </FluentBadge>
                     </TemplateColumn>
@@ -315,6 +311,26 @@
 }
 
 <style>
+    /* Pills de nível: cores destacadas que respeitam o tema (Light/Dark).
+       O FluentBadge usa var(--badge-fill-{fill}) / var(--badge-color-{fill}). */
+    body[data-theme="light"] fluent-badge {
+        --badge-fill-info: #d8ebff;
+        --badge-color-info: #0b4a8f;
+        --badge-fill-warning: #fff0c2;
+        --badge-color-warning: #7a5b00;
+        --badge-fill-danger: #ffdcdc;
+        --badge-color-danger: #b00020;
+    }
+
+    body[data-theme="dark"] fluent-badge {
+        --badge-fill-info: #123c63;
+        --badge-color-info: #9ccbff;
+        --badge-fill-warning: #4d3d00;
+        --badge-color-warning: #ffcf6b;
+        --badge-fill-danger: #541d1d;
+        --badge-color-danger: #ff9b9b;
+    }
+
     .log-action-delete-button {
         width: 42px;
         height: 42px;

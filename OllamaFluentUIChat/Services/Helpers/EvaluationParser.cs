@@ -103,7 +103,15 @@
 
                 else if (line.StartsWith("FINAL_SCORE:", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (float.TryParse(ExtractValue(line, "FINAL_SCORE:"), out float val))
+                    string rawValue = ExtractValue(line, "FINAL_SCORE:")
+                        .Replace("[", "").Replace("]", "").Trim();
+
+                    // Responde "4/5" em vez de "4"
+                    int slash = rawValue.IndexOf('/');
+                    if (slash >= 0)
+                        rawValue = rawValue.Substring(0, slash).Trim();
+
+                    if (float.TryParse(rawValue, out float val))
                         result.FinalScore = val;
                     section = Section.None;
                 }
@@ -158,6 +166,11 @@
 
                 // Remove colchetes extras se a IA responder "FACTUAL_SCORE: [5]" em vez de "FACTUAL_SCORE: 5"
                 rawValue = rawValue.Replace("[", "").Replace("]", "").Trim();
+
+                // Responde "3/5" em vez de "3"
+                int slash = rawValue.IndexOf('/');
+                if (slash >= 0)
+                    rawValue = rawValue.Substring(0, slash).Trim();
 
                 return int.TryParse(rawValue, out score);
             }

@@ -76,7 +76,7 @@ else
                         }
                         else
                         {
-                            <span style="font-size: 0.8rem; background-color: rgba(245, 158, 11, 0.15); border: 1px solid rgb(245, 158, 11); padding: 4px 8px; border-radius: 6px; color: rgb(255,255,255); display: flex; justify-content:start; align-items: center; gap: 4px;"
+                            <span style="font-size: 0.8rem; background-color: rgba(245, 158, 11, 0.15); border: 1px solid rgb(245, 158, 11); padding: 4px 8px; border-radius: 6px; color: var(--neutral-foreground-rest); display: flex; justify-content:start; align-items: center; gap: 4px;"
                                   title="@L["Chat.GpuCpuFallbackTitle"]">
                                 <FluentIcon Value="@(new Icons.Regular.Size16.Warning())" Color="Color.Warning" />
                                 @L["Chat.GpuCpuFallback", _gpuReport.EstimatedRequiredMemoryGB, _gpuReport.AvailableVramGB]
@@ -143,6 +143,10 @@ else
 
                                 <span>@msg.User</span>
                                 <span class="timestamp">• @msg.Timestamp.ToString("HH:mm")</span>
+                                @if (msg.Temperature > 0)
+                                {
+                                    <span class="elapsed-time">• @L["Chat.TemperatureLabel", msg.Temperature]</span>
+                                }
                                 @if (!string.IsNullOrEmpty(msg.ElapsedTime))
                                 {
                                     <span class="elapsed-time">• @msg.ElapsedTime</span>
@@ -177,24 +181,21 @@ else
 
                 @if (!_isThinking)
                 {
-                    <FluentButton Appearance="Appearance.Accent"
+                    <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="@SendMessage"
                                   Disabled="@(string.IsNullOrWhiteSpace(_currentMessage))"
-                                  Style="border-radius: 50%; min-width: 40px; width: 40px; height: 40px; padding: 2px; display: flex; align-items: center; justify-content: center;">
-                        <div style="transform: rotate(-45deg); display: flex; margin-left: 2px; margin-top: -2px; margin-bottom:2px">
-                            <FluentIcon Value="@(new Icons.Regular.Size20.Send())" Color="Color.Lightweight" />
-                        </div>
+                                  Title="@L["Chat.SendPrompt"]"
+                                  Style="min-width: 40px; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Send())" Color="Color.Custom" CustomColor="var(--neutral-foreground-rest)" />
                     </FluentButton>
                 }
                 else
                 {
                     <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="@CancelRequest"
-                                  Style="border-radius: 50%; min-width: 40px; width: 40px; height: 40px; padding: 0;
-                        background-color: var(--status-error-background, rgba(220, 38, 38, 0.15));
-                        color: var(--status-error-foreground, #dc2626);
-                        display: flex; align-items: center; justify-content: center;">
-                        <FluentIcon Value="@(new Icons.Regular.Size20.Square())" Color="Color.Custom" CustomColor="currentColor" />
+                                  Title="@L["Chat.CancelRequest"]"
+                                  Style="min-width: 40px; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Square())" Color="Color.Custom" CustomColor="#dc2626" />
                     </FluentButton>
                 }
             </FluentStack>

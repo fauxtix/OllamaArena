@@ -1,14 +1,13 @@
 ﻿@using Microsoft.Extensions.Localization
 @using OllamaFluentUIChat.Models.Entities
 @using OllamaFluentUIChat.Resources
-@using OllamaFluentUIChat.Services.Interfaces.Repositories
 @using OllamaFluentUIChat.Services.Interfaces.Services
 @inject IStringLocalizer<SharedResources> L
 
 <FluentDialog Hidden="@(!Visible)"
               Modal="true"
               Class="evaluation-dialogue-benchmark"
-              Style="--dialog-width: 1200px; --dialog-height: auto;"
+              Style="--dialog-width: 1200px; --dialog-height: min(calc(100vh - 64px), 760px);"
               TrapFocus="true"
               AriaLabel="@L["EvalDialog.AriaLabel"]">
 
@@ -16,15 +15,11 @@
         <FluentStack Orientation="Orientation.Horizontal"
                      VerticalAlignment="VerticalAlignment.Center">
 
-            <div style="display: flex; align-items: flex-start; gap: 10px; margin-top: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
                 <FluentIcon Value="@(new Icons.Regular.Size24.ClipboardCode())" />
                 <FluentLabel Typo="Typography.Body">
                     @L["EvalDialog.Title", Response?.NomeModelo ?? string.Empty]
                 </FluentLabel>
-
-                <blockquote class="prompt-citacao" style="flex: 1; margin: 0; height:5vw; overflow-y: auto;">
-                    "@prompt"
-                </blockquote>
             </div>
         </FluentStack>
     </FluentDialogHeader>
@@ -67,10 +62,13 @@
 
         <FluentSpacer />
 
-        <FluentButton Appearance="Appearance.Accent" Disabled="@(isTranslating || IsAlreadySaved)"
-                      OnClick="Guardar">
-            @L["EvalDialog.SaveEvaluation"]
-        </FluentButton>
+        @if (!IsAlreadySaved)
+        {
+            <FluentButton Appearance="Appearance.Accent" Disabled="@isTranslating"
+                          OnClick="Guardar">
+                @L["EvalDialog.SaveEvaluation"]
+            </FluentButton>
+        }
 
         <FluentButton Appearance="Appearance.Stealth"
                       OnClick="Fechar">
@@ -89,7 +87,6 @@
                           TimeSpent="@timeSpent" />
 
 @code {
-    [Inject] IBenchmarkRepository BenchmarkRepository { get; set; } = default!;
     [Inject] public ITranslationService TranslationService { get; set; } = default!;
     [Inject] public ILogger<App> Logger { get; set; } = default!;
 
@@ -106,8 +103,6 @@
 
     [Parameter] public bool IsAlreadySaved { get; set; }
 
-    private string? prompt;
-
     private bool showTranslationDialog;
     private string? translatedText;
     private string? targetField;
@@ -115,21 +110,6 @@
 
     private string? modelUsed;
     private string? timeSpent;
-
-    protected override void OnParametersSet()
-    {
-        if (Response is not null)
-        {
-            _ = CarregarPromptAsync(Response.PromptId);
-        }
-    }
-
-    private async Task CarregarPromptAsync(int promptId)
-    {
-        var resp = await BenchmarkRepository.GetBenchmarkByIdAsync(promptId);
-        prompt = resp?.TextoPrompt;
-        StateHasChanged();
-    }
 
     private async Task Guardar()
     {
@@ -236,16 +216,10 @@
 
         .evaluation-dialogue-benchmark .fluent-dialog-body {
             padding: 16px;
+            min-height: 0;
             overflow-y: auto;
+            scrollbar-gutter: stable;
         }
-
-    .prompt-citacao {
-        margin: 8px 0 16px 0;
-        padding-left: 12px;
-        border-left: 3px solid var(--neutral-stroke-rest);
-        font-style: italic;
-        color: var(--neutral-foreground-hint);
-    }
 
     .detalhe-header {
         flex: 0 0 auto;

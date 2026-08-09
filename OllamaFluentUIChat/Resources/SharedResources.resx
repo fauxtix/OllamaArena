@@ -231,6 +231,12 @@
   <data name="Chat.InputPlaceholder" xml:space="preserve">
     <value>Escreve uma mensagem...</value>
   </data>
+  <data name="Chat.SendPrompt" xml:space="preserve">
+    <value>Enviar mensagem</value>
+  </data>
+  <data name="Chat.CancelRequest" xml:space="preserve">
+    <value>Parar geração</value>
+  </data>
   <data name="Chat.WelcomeMessage" xml:space="preserve">
     <value>Olá! Como posso ajudar-te hoje?</value>
   </data>
@@ -1046,6 +1052,12 @@ Deseja continuar?</value>
   </data>
   <data name="Settings.ThemeLabel" xml:space="preserve">
     <value>Tema</value>
+  </data>
+  <data name="Theme.ToDark" xml:space="preserve">
+    <value>Mudar para tema escuro</value>
+  </data>
+  <data name="Theme.ToLight" xml:space="preserve">
+    <value>Mudar para tema claro</value>
   </data>
   <data name="Settings.ColorLabel" xml:space="preserve">
     <value>Cor</value>

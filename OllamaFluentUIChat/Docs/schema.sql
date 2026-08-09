@@ -1,11 +1,11 @@
 -- Schema SQLite da aplicacao OllamaFluentUIChat
--- Reune as tres tabelas usadas pela app: Prompts, Respostas e Logs.
+-- Reune as 3 tabelas usadas pela app: Prompts, Respostas e Logs.
 -- Executar num novo ficheiro de base de dados antes da primeira utilizacao.
 
 PRAGMA foreign_keys = ON;
 
 -- ---------------------------------------------------------------------------
--- Prompts: prompts de benchmark criados na pagina de benchmarks.
+-- Prompts: prompts de benchmark criados na página de benchmarks.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS "Prompts" (
     "Id"          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS "Prompts" (
 );
 
 -- ---------------------------------------------------------------------------
--- Respostas: respostas de cada modelo por prompt, com metricas e avaliacoes
--- (ratings 1-5) dos dois juizes: Gemini e OpenRouter.
+-- Respostas: respostas de cada modelo por prompt, com métricas e avaliações
+-- (ratings 1-5) dos dois juízes: Gemini e OpenRouter.
 -- ON DELETE CASCADE: apagar um prompt remove as respostas associadas.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS "Respostas" (

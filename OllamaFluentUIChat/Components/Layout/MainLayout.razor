@@ -5,19 +5,22 @@
 @inherits LayoutComponentBase
 
 <CascadingValue Value="this">
-    <FluentLayout Style="background-color: var(--neutral-layer-1);
-        color: var(--neutral-foreground-rest);">
+    <FluentLayout Style="background-color: var(--neutral-fill-layer-rest);">
 
         <FluentHeader Style="background-color: var(--neutral-layer-2); color: var(--neutral-foreground-rest);">
-            <FluentStack Orientation="Orientation.Horizontal" 
-                         VerticalAlignment="VerticalAlignment.Center"
-                         HorizontalAlignment="HorizontalAlignment.SpaceBetween"
-                         Style="width: 100%;">
-                
-                <div>@L["AppTitle"]</div>
+            <div class="header-content">
+                <div class="app-title">🤖 @L["AppTitle"]</div>
 
-                <CultureSelector />
-            </FluentStack>
+                <div class="header-actions">
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  OnClick="ToggleTheme"
+                                  Title="@(Mode == DesignThemeModes.Light ? L["Theme.ToDark"] : L["Theme.ToLight"])"
+                                  Style="font-size: 1.1rem; padding: 4px 8px;">
+                        @(Mode == DesignThemeModes.Light ? "🌙" : "☀️")
+                    </FluentButton>
+                    <CultureSelector />
+                </div>
+            </div>
         </FluentHeader>
 
         <FluentStack Class="main" Orientation="Orientation.Horizontal" Width="100%">
@@ -41,6 +44,51 @@
 
 <FluentToastProvider />
 <FluentDialogProvider />
-<FluentDesignTheme StorageName="theme" />
+<FluentDesignTheme @bind-Mode="@Mode"
+                   OnLoaded="@OnLoaded"
+                   OnLuminanceChanged="@OnLuminanceChanged"
+                   StorageName="theme" />
 <FluentTooltipProvider />
 <FluentMenuProvider />
+
+<style>
+    /* --- TEMA CLARO: canvas ardósia + superfícies brancas ---
+       O FluentDesignTheme define document.body.dataset.theme ("light"/"dark").
+       Fazemos override dos design-tokens, que todos os componentes FluentUI usam,
+       para que o modo claro não fique "preto e branco" puro. */
+    body[data-theme="light"] {
+        --neutral-fill-layer-rest: #F8FAFC;   /* canvas geral */
+        --neutral-layer-1: #FFFFFF;           /* cards, tabelas, bubbles */
+        --neutral-layer-2: #F1F5F9;           /* header/footer */
+        --neutral-layer-3: #E2E8F0;
+        --neutral-layer-4: #E2E8F0;
+        --neutral-foreground-rest: #0F172A;   /* texto */
+        --neutral-foreground-hint: #475569;
+        --neutral-stroke-layer-rest: #E2E8F0; /* bordas */
+        --neutral-stroke-rest: #CBD5E1;
+    }
+
+    /* --- ESTILOS COMPLEMENTARES --- */
+    .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+</style>
+
+@code {
+    public DesignThemeModes Mode { get; set; }
+
+    void OnLoaded(LoadedEventArgs e) => Mode = e.Mode;
+    void OnLuminanceChanged(LuminanceChangedEventArgs e) => Mode = e.Mode;
+
+    void ToggleTheme() =>
+        Mode = Mode == DesignThemeModes.Light ? DesignThemeModes.Dark : DesignThemeModes.Light;
+}

@@ -325,6 +325,7 @@ namespace OllamaFluentUIChat.Components.Pages
                 }
 
                 temperature = ChatMeasureTemperature.ObterTemperaturaRecomendada(userPrompt);
+                aiMessage.Temperature = Math.Round(temperature, 2);
                 int baseTokens = _gpuReport?.FitsInGpu == true ? 1800 : 1200;
                 int maxTokens = temperature switch
                 {

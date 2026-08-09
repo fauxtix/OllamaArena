@@ -31,7 +31,7 @@
                 {
                     <div>
                         <FluentLabel Weight="FontWeight.Bold" Color="Color.Error">@L["LogDetail.Exception"]</FluentLabel>
-                        <pre style="background: #ff000010; color: var(--fluent-color-status-danger); padding: 12px; border-radius: 4px; max-height: 250px; overflow-y: auto; font-family: monospace; font-size: 11px; margin: 6px 0 0 0; white-space: pre-wrap; word-break: break-all;">@Log.Exception</pre>
+                        <pre style="background: var(--log-danger-bg); color: var(--log-danger-text); padding: 12px; border-radius: 4px; max-height: 250px; overflow-y: auto; font-family: monospace; font-size: 11px; margin: 6px 0 0 0; white-space: pre-wrap; word-break: break-all;">@Log.Exception</pre>
                     </div>
                 }
             </FluentStack>
@@ -78,5 +78,15 @@
         --dialog-width: 40vw !important;
         --dialog-height: 65vh !important;
         max-width: 100% !important;
+    }
+
+    body[data-theme="light"] {
+        --log-danger-bg: #ffdcdc;
+        --log-danger-text: #b00020;
+    }
+
+    body[data-theme="dark"] {
+        --log-danger-bg: #541d1d;
+        --log-danger-text: #ff9b9b;
     }
 </style>
