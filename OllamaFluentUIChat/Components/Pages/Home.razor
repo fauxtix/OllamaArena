@@ -193,17 +193,22 @@
     }
 
     @@media (max-width: 768px) {
-        fluent-stack.home-images {
+        .home-images {
             flex-direction: column !important;
             gap: 24px !important;
+            width: 100% !important;
+        }
+
+        .home-images fluent-card {
+            width: 100% !important;
+            height: auto !important;
         }
 
         .home-img {
-            width: min(84vw, 460px);
+            width: 100%;
             height: auto;
             min-width: 0;
             min-height: 0;
-            aspect-ratio: 16 / 10;
         }
     }
 </style>

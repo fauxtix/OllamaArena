@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.FluentUI.AspNetCore.Components;
+using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons;
 using Microsoft.JSInterop;
 using OllamaFluentUIChat.Models.Entities;
 using OllamaFluentUIChat.PromptTemplates;
@@ -38,6 +40,7 @@ namespace OllamaFluentUIChat.Components.Pages.Components
         private bool isCreatingPrompt = false;
         private bool _evaluationDialogVisible;
         private bool _evaluationIsSaved;
+        private bool _promptOpen;
         private DotNetObjectReference<Benchmarks>? _viewportDotNetRef;
 
         protected override async Task OnInitializedAsync() => await GetDataAsync();
@@ -138,7 +141,19 @@ namespace OllamaFluentUIChat.Components.Pages.Components
         {
             _mostrarGrafico = false;
             _selectedPrompt = prompt;
+            _promptOpen = false;
             StateHasChanged();
+        }
+
+        private static Icon GetPromptChevron(bool open)
+            => open ? new Icons.Regular.Size12.ChevronUp() : new Icons.Regular.Size12.ChevronDown();
+
+        private static void TogglePromptTecla(KeyboardEventArgs e, Action toggle)
+        {
+            if (e.Key == " " || e.Key == "Enter")
+            {
+                toggle();
+            }
         }
 
         private async Task MostrarGraficoPrompt(BenchmarkPrompt prompt)

@@ -84,49 +84,58 @@
 
 
             @* <PropertyColumn Property="@(b => b.DataCriacaoFormatada)" Title="@L["Benchmarks.ColCreationDate"]" Width="160px" Align="Align.Center" Sortable="true" /> *@
-            <PropertyColumn Property="@(b => b.NomeModelo)" Title="@L["Benchmarks.ColModel"]" Sortable="true" Width="160px" />
+            <PropertyColumn Property="@(b => b.NomeModelo)" Title="@L["Benchmarks.ColModel"]" Sortable="true" Width="160px">
+                <HeaderCellTitleTemplate>
+                    <span class="header-columns">@L["Benchmarks.ColModel"]</span>
+                </HeaderCellTitleTemplate>
+            </PropertyColumn>
 
             <TemplateColumn Title="@L["Benchmarks.ColDescription"]" Tooltip="true" Width="200px">
-                <div class="prompt-cell">
-                    @context.Descricao
-                </div>
+                <HeaderCellItemTemplate>
+                    <span class="header-columns">@L["Benchmarks.ColDescription"]</span>
+                </HeaderCellItemTemplate>
+                <ChildContent Context="context">
+                    <div class="prompt-cell">
+                        @context.Descricao
+                    </div>
+                </ChildContent>
             </TemplateColumn>
 
             <PropertyColumn Property="@(b => b.GeminiRating)" Title="@L["Benchmarks.ColGemini"]" Align="Align.Center" Width="100px" Sortable="true">
-                <HeaderCellItemTemplate>
+                <HeaderCellTitleTemplate>
                     <span class="header-blue">@L["Benchmarks.ColGemini"]</span>
-                </HeaderCellItemTemplate>
+                </HeaderCellTitleTemplate>
             </PropertyColumn>
             <PropertyColumn Property="@(b => b.GeminiFactualRating)" Title="@L["Benchmarks.ColFactual"]" Align="Align.Center" Width="90px" Sortable="true" />
             <PropertyColumn Property="@(b => b.GeminiFormattingRating)" Title="@L["Benchmarks.ColFormatting"]" Align="Align.Center" Width="90px" Sortable="true" />
             <PropertyColumn Property="@(b => b.OpenRouterRating)" Title="@L["Benchmarks.ColOpenRouter"]" Align="Align.Center" Width="100px" Sortable="true">
-                <HeaderCellItemTemplate>
+                <HeaderCellTitleTemplate>
                     <span class="header-blue">@L["Benchmarks.ColOpenRouter"]</span>
-                </HeaderCellItemTemplate>
+                </HeaderCellTitleTemplate>
             </PropertyColumn>
             <PropertyColumn Property="@(b => b.OpenRouterFactualRating)" Title="@L["Benchmarks.ColFactual"]" Align="Align.Center" Width="90px" Sortable="true" />
             <PropertyColumn Property="@(b => b.OpenRouterFormattingRating)" Title="@L["Benchmarks.ColFormatting"]" Align="Align.Center" Width="90px" Sortable="true" />
             <PropertyColumn Property="@(b => b.TokensPorSegundo)" Title="@L["Benchmarks.ColTokensPerSecond"]" Align="Align.Center" Width="110px" Format="F2" Sortable="true">
-                <HeaderCellItemTemplate>
+                <HeaderCellTitleTemplate>
                     <span class="header-columns">@L["Benchmarks.ColTokensPerSecond"]</span>
-                </HeaderCellItemTemplate>
+                </HeaderCellTitleTemplate>
                 </PropertyColumn>
             <PropertyColumn Property="@(b => b.TempoPuroFormatado)"  Title="@L["Benchmarks.ColTime"]" Align="Align.Center" Width="100px" Sortable="true" >
-                <HeaderCellItemTemplate>
+                <HeaderCellTitleTemplate>
                     <span class="header-columns">@L["Benchmarks.ColTime"]</span>
-                </HeaderCellItemTemplate>
+                </HeaderCellTitleTemplate>
 
             </PropertyColumn>
             <PropertyColumn Property="@(b => b.TempoCargaFormatado)" Title="@L["Benchmarks.ColLoad"]" Align="Align.Center" Width="100px" Sortable="true" >
-                <HeaderCellItemTemplate>
+                <HeaderCellTitleTemplate>
                     <span class="header-columns">@L["Benchmarks.ColLoad"]</span>
-                </HeaderCellItemTemplate>
+                </HeaderCellTitleTemplate>
 
             </PropertyColumn>
             <PropertyColumn Property="@(b => b.TamanhoTokens)" Title="@L["Benchmarks.ColTokens"]" Align="Align.Center" Width="100px" Sortable="true" >
-                <HeaderCellItemTemplate>
+                <HeaderCellTitleTemplate>
                     <span class="header-columns">@L["Benchmarks.ColTokens"]</span>
-                </HeaderCellItemTemplate>
+                </HeaderCellTitleTemplate>
             </PropertyColumn>
 
             <TemplateColumn Title="@L["Benchmarks.ColActions"]" Align="Align.Center" Width="100px">

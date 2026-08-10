@@ -39,20 +39,20 @@ else
                 margin-bottom: 12px;
                 justify-content: space-between;">
 
-                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
+                <FluentStack Orientation="Orientation.Horizontal" Width="auto" Style="gap: 8px; flex-shrink: 0;">
                     <FluentPersona Name="Ollama Streaming AI"
                                    Status="@(_isThinking ? PresenceStatus.Busy : PresenceStatus.Available)"
                                    Initials="AI" />
                 </FluentStack>
 
-                <FluentStack Orientation="Orientation.Horizontal"
+                <FluentStack Orientation="Orientation.Horizontal" Width="auto"
                              HorizontalAlignment="HorizontalAlignment.Center">
                     <FluentSelect Class="chat-model-select"
                                   Items="@_models"
                                   @bind-SelectedOption="@ModelName" />
                 </FluentStack>
 
-                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 4px;">
+                <FluentStack Orientation="Orientation.Horizontal" Width="auto" Style="gap: 4px; min-width: 0;">
                     @if (_gpuReport != null)
                     {
                         @if (_gpuReport.FitsInGpu)
@@ -378,7 +378,8 @@ else
     }
 
     .chat-header-bar {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        min-width: 0;
     }
 
     .chat-model-select {
@@ -412,7 +413,13 @@ else
         }
 
         .chat-header-bar {
+            flex-wrap: wrap;
             row-gap: 8px;
+        }
+
+        .chat-header-bar > .stack-horizontal {
+            width: 100%;
+            flex-shrink: 0;
         }
     }
 </style>

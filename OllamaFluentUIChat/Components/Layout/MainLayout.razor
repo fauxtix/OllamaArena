@@ -12,7 +12,7 @@
                 <div class="header-left">
                     <input type="checkbox" id="navmenu-toggle" class="navmenu-toggle" aria-label="@L["Nav.ExpandToggle"]" />
                     <label for="navmenu-toggle" class="navmenu-icon" title="@L["Nav.ExpandToggle"]">
-                        <FluentIcon Value="@(new Icons.Regular.Size20.Navigation())" Color="Color.Fill" />
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Navigation())" Color="Color.Neutral" />
                     </label>
                     <div class="app-title">🤖 @L["AppTitle"]</div>
                 </div>
@@ -105,14 +105,6 @@
         flex: 0 0 auto;
     }
 
-    .navmenu-toggle,
-    .navmenu-icon {
-        display: none;
-    }
-
-    .nav-overlay {
-        display: none;
-    }
 </style>
 
 @code {

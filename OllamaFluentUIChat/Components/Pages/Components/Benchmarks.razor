@@ -122,9 +122,18 @@
                             <h3>@L["Benchmarks.ResponsesTitle", _selectedPrompt.Id]</h3>
 
                             <div style="display: flex; align-items: flex-start; gap: 10px; margin-top: 10px;">
-                                <blockquote class="prompt-citacao" style="flex: 1; margin: 0;">
-                                    "@_selectedPrompt.TextoPrompt"
-                                </blockquote>
+                                <div class="recommendation-box prompt-collapse-box @(_promptOpen ? "open" : string.Empty)" style="flex: 1; margin: 0;">
+                                    <div class="recommendation-box-header" role="button" tabindex="0"
+                                         aria-expanded="@_promptOpen"
+                                         @onclick="() => _promptOpen = !_promptOpen"
+                                         @onkeydown="(e) => TogglePromptTecla(e, () => _promptOpen = !_promptOpen)">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.DocumentText())" Color="Color.Accent" />
+                                        <span>@L["Benchmarks.ShowPromptLabel"]</span>
+                                        <FluentIcon Class="recommendation-box-chevron"
+                                                    Value="@(GetPromptChevron(_promptOpen))" />
+                                    </div>
+                                    <div class="recommendation-box-text">"@_selectedPrompt.TextoPrompt"</div>
+                                </div>
                             </div>
                         </div>
 
@@ -154,13 +163,13 @@
                                                     <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" Color="Color.Neutral" />
                                                     <h4>@resp.NomeModelo</h4>
                                                 </div>
-                                                <div class="metricas-tags" style="display: flex; justify-content: space-around; align-items: center; gap:16px">
+                                                <div class="metricas-tags" style="display: flex; justify-content: space-around; align-items: center; gap:8px">
                                                     <FluentBadge Appearance="Appearance.Accent">@L["Benchmarks.TokensPerSecond", resp.TokensPorSegundo]</FluentBadge>
                                                     <FluentBadge Appearance="Appearance.Accent">@L["Benchmarks.EvalTime", resp.TempoPuroFormatado]</FluentBadge>
                                                     <FluentBadge Appearance="Appearance.Accent">@L["Benchmarks.LoadTime", resp.TempoCargaFormatado]</FluentBadge>
                                                     <FluentBadge Appearance="Appearance.Accent">@L["Benchmarks.Tokens", resp.TamanhoTokens]</FluentBadge>
                                                 </div>
-                                                <div style="display: flex; gap: 8px; align-items: center;">
+                                                <div style="display: flex; gap: 4px; align-items: center;padding:2px;">
                                                     <FluentButton Appearance="Appearance.Accent"
                                                                   Disabled="@isCreatingPrompt"
                                                                   IconStart="@(new Icons.Regular.Size20.Sparkle())"
@@ -408,12 +417,15 @@
         margin-top: 0;
     }
 
-    .prompt-citacao {
-        margin: 8px 0 16px 0;
-        padding-left: 12px;
-        border-left: 3px solid var(--neutral-stroke-rest);
-        font-style: italic;
-        color: var(--neutral-foreground-hint);
+    .prompt-collapse-box .recommendation-box-text {
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    @@media (min-width: 769px) {
+        .prompt-collapse-box .recommendation-box-header {
+            display: none;
+        }
     }
 
     .cartao-corpo {
@@ -536,6 +548,14 @@
 
         .card-prompt-footer {
             gap: 8px;
+        }
+
+        .prompt-collapse-box .recommendation-box-text {
+            display: none;
+        }
+
+        .prompt-collapse-box.open .recommendation-box-text {
+            display: block;
         }
     }
 </style>

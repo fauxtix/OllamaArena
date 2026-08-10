@@ -546,6 +546,9 @@ Do you want to continue?</value>
   <data name="Benchmarks.ResponsesTitle" xml:space="preserve">
     <value>Generated Responses for Prompt #{0}</value>
   </data>
+  <data name="Benchmarks.ShowPromptLabel" xml:space="preserve">
+    <value>View prompt</value>
+  </data>
   <data name="Benchmarks.NoAnswersWarning" xml:space="preserve">
     <value>This prompt was saved, but there are no associated responses in the table.</value>
   </data>

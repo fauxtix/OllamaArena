@@ -16,6 +16,11 @@ body {
     display: none;
 }
 
+.navmenu-toggle,
+.nav-overlay {
+    display: none;
+}
+
 .main {
     min-height: calc(100dvh - 86px);
     color: var(--neutral-foreground-rest);
@@ -230,6 +235,25 @@ code {
 
     .content {
         padding: 0.5rem 1rem;
+    }
+
+    /* Cabeçalho responsivo: título legível em ecrãs pequenos */
+    .header-left {
+        flex: 1 1 auto;
+    }
+
+    .app-title {
+        font-size: 0.95rem;
+        line-height: 1.2;
+        white-space: normal !important;
+    }
+
+    .header-actions {
+        gap: 4px !important;
+    }
+
+    .header-actions fluent-button {
+        padding: 4px 10px !important;
     }
 }
 
