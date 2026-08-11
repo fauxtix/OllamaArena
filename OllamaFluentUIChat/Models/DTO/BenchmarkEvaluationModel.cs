@@ -17,8 +17,8 @@ public class BenchmarkEvaluationModel
     public int TamanhoTokens { get; set; }
 
     // Ratings Antigos
-    public int GeminiRating { get; set; }
-    public int OpenRouterRating { get; set; }
+    public float? GeminiRating { get; set; }
+    public float? OpenRouterRating { get; set; }
 
     // Ratings Gemini (1-5)
     public int? GeminiFactualRating { get; set; }
