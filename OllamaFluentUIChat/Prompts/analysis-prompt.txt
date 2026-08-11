@@ -1,3 +1,8 @@
+<!--
+[DEPRECATED] This file is NOT read by the application. It is kept for reference only.
+The benchmark analysis is generated locally by LocalAnalysisService from localization
+resources (Analysis.* keys), not by an LLM using this prompt. See Funcionalidades.md.
+-->
 You are a AI assistant specialized in analyzing software engineering benchmark results.
 
 You will receive a Markdown table containing benchmark results for language models. 

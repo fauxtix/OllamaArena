@@ -243,6 +243,7 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 - `GetPromptsDirectory` — `ContentRootPath/Prompts` (dev) com fallback para `AppContext.BaseDirectory/Prompts` (publish).
 - `GetPromptFiles` — lista `.txt` e `.md`; `GetPromptFileContentAsync` — leitura com validação anti-**path traversal** (`Path.GetFullPath` + prefixo do diretório) e `IsValidPromptFilename` (sem carateres inválidos, sem `..`).
 - `SavePromptFileAsync` — limite de **200.000 chars**, cria o diretório se faltar e grava o ficheiro (as alterações ficam imediatamente ativas no chat/`SystemPromptService` na próxima leitura).
+- **`analysis-prompt.txt` está DESCONTINUADO (mantido por compatibilidade):** nenhum código o lê (`GetPromptFileContentAsync`/`GetTemplateAsync` nunca o referenciam). É um vestígio de um desenho antigo em que a análise de resultados era gerada por LLM; hoje a análise é feita localmente pelo `LocalAnalysisService` a partir de recursos de localização (`Analysis.*`). Continua incluído no build e editável na página `EditPromptFiles`, mas sem efeito em runtime.
 
 ---
 
