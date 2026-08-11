@@ -74,6 +74,7 @@
             @if (!string.IsNullOrEmpty(StreamingLog) && AnaliseResultado == null)
             {
                 <div class="streaming-output"
+                     @ref="_streamingOutputRef"
                      style="padding: 14px; background: var(--neutral-layer-2); border-radius: 6px; border-left: 4px solid var(--accent-fill-rest); font-family: 'Courier New', monospace; font-size: 12.5px; line-height: 1.5; max-height: 420px; overflow-y: auto; white-space: pre-wrap;">
                     @MessageFormatter.FormatMessagePlus(StreamingLog);
                 </div>
@@ -137,11 +138,13 @@
 
     public string StreamingLog { get; set; } = string.Empty;
 
+    private ElementReference _streamingOutputRef;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (IsAnalyzing && !string.IsNullOrEmpty(StreamingLog))
         {
-            try { await JS.InvokeVoidAsync("scrollToBottom", "streaming-output"); } catch { }
+            try { await JS.InvokeVoidAsync("chatScroll.scrollToBottom", _streamingOutputRef); } catch { }
         }
     }
 

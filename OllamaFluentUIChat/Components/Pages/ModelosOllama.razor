@@ -70,8 +70,7 @@
 
             <TemplateColumn Title="@L["Modelos.ColGpuCompat"]" Width="180px">
                 @{
-                    var gpuCheck = OllamaGpuService.CheckGpuCompatibility(context.SizeInBytes);
-                    if (gpuCheck.AvailableVramGB == 0)
+                    if (!_gpuChecks.TryGetValue(context.Name, out var gpuCheck) || gpuCheck.AvailableVramGB == 0)
                     {
                         <FluentBadge Appearance="Appearance.Neutral">@L["Modelos.VramUnavailable"]</FluentBadge>
                     }
@@ -96,6 +95,7 @@
 
 @code {
     private List<ModelDetails>? _localModels;
+    private Dictionary<string, GpuStatus> _gpuChecks = new(StringComparer.OrdinalIgnoreCase);
     private bool _isLoading = true;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -141,6 +141,16 @@
 
                     // Guardar a versão completa para próximas visitas
                     await SaveFullToStorageAsync(_localModels);
+                }
+            }
+
+            // Compatibilidade GPU calculada de forma assíncrona para todas as linhas
+            _gpuChecks = new Dictionary<string, GpuStatus>(StringComparer.OrdinalIgnoreCase);
+            if (_localModels is not null)
+            {
+                foreach (var model in _localModels)
+                {
+                    _gpuChecks[model.Name] = await OllamaGpuService.CheckGpuCompatibility(model.SizeInBytes);
                 }
             }
         }

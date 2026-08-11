@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -122,6 +122,9 @@
   </data>
   <data name="Benchmarks" xml:space="preserve">
     <value>Benchmarks</value>
+  </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
   </data>
   <data name="Chat" xml:space="preserve">
     <value>Chat</value>
@@ -254,6 +257,12 @@
   </data>
   <data name="Chat.UnexpectedError" xml:space="preserve">
     <value>❌ Unexpected error: {0}</value>
+  </data>
+  <data name="Chat.ReasoningLabel" xml:space="preserve">
+    <value>Model reasoning</value>
+  </data>
+  <data name="Chat.WebSearchLabel" xml:space="preserve">
+    <value>Web search</value>
   </data>
   <data name="Benchmarks.SearchPlaceholder" xml:space="preserve">
     <value>Search benchmarks (model, description)</value>
@@ -500,6 +509,12 @@ Do you want to continue?</value>
   </data>
   <data name="Evaluation.MetricSafety" xml:space="preserve">
     <value>Safety</value>
+  </data>
+  <data name="Evaluation.MetricLanguageConsistency" xml:space="preserve">
+    <value>Language consistency</value>
+  </data>
+  <data name="Evaluation.MetricLoopDetection" xml:space="preserve">
+    <value>Repetition</value>
   </data>
   <data name="Evaluation.MetricOverall" xml:space="preserve">
     <value>Overall</value>
@@ -762,8 +777,14 @@ Do you want to continue?</value>
   <data name="Modelos.ExceedsVram" xml:space="preserve">
     <value>Exceeds VRAM (~{0} GB)</value>
   </data>
+  <data name="Analysis.NoBestRated" xml:space="preserve">
+    <value>No response has been rated by the judges yet to determine the best model.</value>
+  </data>
   <data name="Analysis.NoData" xml:space="preserve">
     <value>There is no data to analyze.</value>
+  </data>
+  <data name="Analysis.NoFactualRatings" xml:space="preserve">
+    <value>No factual ratings are available to analyze yet.</value>
   </data>
   <data name="Analysis.SummaryFastest" xml:space="preserve">
     <value>The {0} model stood out with the highest processing speed, reaching {1} Tokens/s (total time {2}).</value>
@@ -963,6 +984,24 @@ Do you want to continue?</value>
   <data name="HistoryPanel.ColProcessTime" xml:space="preserve">
     <value>Proc. Time</value>
   </data>
+  <data name="HistoryPanel.TabBenchmarks" xml:space="preserve">
+    <value>Benchmarks</value>
+  </data>
+  <data name="HistoryPanel.TabConversations" xml:space="preserve">
+    <value>Conversations</value>
+  </data>
+  <data name="HistoryPanel.NoConversations" xml:space="preserve">
+    <value>No saved conversations.</value>
+  </data>
+  <data name="HistoryPanel.LoadConversation" xml:space="preserve">
+    <value>Open conversation</value>
+  </data>
+  <data name="HistoryPanel.Export" xml:space="preserve">
+    <value>Export JSON</value>
+  </data>
+  <data name="HistoryPanel.Import" xml:space="preserve">
+    <value>Import JSON</value>
+  </data>
   <data name="LogDetail.AriaLabel" xml:space="preserve">
     <value>Log Details</value>
   </data>
@@ -1074,6 +1113,9 @@ Do you want to continue?</value>
   <data name="Settings.SaveModel" xml:space="preserve">
     <value>Save Model</value>
   </data>
+  <data name="Settings.NoModels" xml:space="preserve">
+    <value>No models available. Install a model in Ollama (ollama pull) and reload this page.</value>
+  </data>
   <data name="Settings.ExampleContent" xml:space="preserve">
     <value>Example of content</value>
   </data>
@@ -1082,9 +1124,6 @@ Do you want to continue?</value>
   </data>
   <data name="Settings.AccentButton" xml:space="preserve">
     <value>Accent button</value>
-  </data>
-  <data name="Settings2.LoadedModels" xml:space="preserve">
-    <value>Models loaded in Ollama</value>
   </data>
   <data name="Reconnect.Joining" xml:space="preserve">
     <value>Rejoining the server...</value>
@@ -1113,4 +1152,47 @@ Do you want to continue?</value>
   <data name="Nav.ExpandToggle" xml:space="preserve">
     <value>Menu expand/collapse toggle</value>
   </data>
+  <data name="Dashboard.PageTitle" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="Dashboard.Title" xml:space="preserve">
+    <value>Model Ranking</value>
+  </data>
+  <data name="Dashboard.Intro" xml:space="preserve">
+    <value>Ranking of evaluated models, using the weighted average of the 12 judge metrics.</value>
+  </data>
+  <data name="Dashboard.BestModel" xml:space="preserve">
+    <value>Best model</value>
+  </data>
+  <data name="Dashboard.Score" xml:space="preserve">
+    <value>Score {0} / 5</value>
+  </data>
+  <data name="Dashboard.NoEvaluations" xml:space="preserve">
+    <value>No evaluations yet. Run benchmarks and evaluate the responses to see the ranking.</value>
+  </data>
+  <data name="Dashboard.ModelsCount" xml:space="preserve">
+    <value>Evaluated models</value>
+  </data>
+  <data name="Dashboard.EvaluationsCount" xml:space="preserve">
+    <value>Evaluations (judge)</value>
+  </data>
+  <data name="Dashboard.ColModel" xml:space="preserve">
+    <value>Model</value>
+  </data>
+  <data name="Dashboard.ColScore" xml:space="preserve">
+    <value>Overall score</value>
+  </data>
+  <data name="Dashboard.ColGemini" xml:space="preserve">
+    <value>Gemini</value>
+  </data>
+  <data name="Dashboard.ColOpenRouter" xml:space="preserve">
+    <value>OpenRouter</value>
+  </data>
+  <data name="Dashboard.ColResponses" xml:space="preserve">
+    <value>Responses</value>
+  </data>
+  <data name="Dashboard.ColJudged" xml:space="preserve">
+    <value>Judged</value>
+  </data>
+
 </root>

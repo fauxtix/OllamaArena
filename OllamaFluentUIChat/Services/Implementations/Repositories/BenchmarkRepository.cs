@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using OllamaFluentUIChat.Models.DTO;
 using OllamaFluentUIChat.Models.Entities;
+using OllamaFluentUIChat.Services.Helpers;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
 using System.Text;
@@ -240,7 +241,7 @@ public class BenchmarkRepository : IBenchmarkRepository
     /// </summary>
     public async Task<bool> DeletePromptAndHistoryAsync(int promptId)
     {
-        var sql = "DELETE FROM Prompts WHERE Id = @Id; VACUUM;";
+        var sql = "DELETE FROM Prompts WHERE Id = @Id; PRAGMA optimize;";
         using var connection = _context.CreateConnection();
         int AffectedLines = await connection.ExecuteAsync(sql, new { Id = promptId });
         return AffectedLines > 0;
@@ -249,7 +250,7 @@ public class BenchmarkRepository : IBenchmarkRepository
 
     public async Task<bool> DeleteResponseByIdAsync(int responseId)
     {
-        var sql = "DELETE FROM Respostas WHERE Id = @Id; VACUUM;";
+        var sql = "DELETE FROM Respostas WHERE Id = @Id; PRAGMA optimize;";
         using var connection = _context.CreateConnection();
         int AffectedLines = await connection.ExecuteAsync(sql, new { Id = responseId });
         return AffectedLines > 0;
@@ -263,7 +264,7 @@ public class BenchmarkRepository : IBenchmarkRepository
     /// </summary>
     public async Task<bool> DeleteAllPromptsAndHistoryAsync()
     {
-        var sql = "DELETE FROM Prompts; VACUUM;";
+        var sql = "DELETE FROM Prompts; PRAGMA optimize;";
         using var connection = _context.CreateConnection();
         int AffectedLines = await connection.ExecuteAsync(sql);
         return AffectedLines > 0;
@@ -343,13 +344,15 @@ public class BenchmarkRepository : IBenchmarkRepository
         sb.Append("GeminiToneRating = @GeminiToneRating, GeminiConcisenessRating = @GeminiConcisenessRating, ");
         sb.Append("GeminiClarityRating = @GeminiClarityRating, GeminiReadabilityRating = @GeminiReadabilityRating, ");
         sb.Append("GeminiHaloEffectRating = @GeminiHaloEffectRating, GeminiSafetyRating = @GeminiSafetyRating, ");
+        sb.Append("GeminiLanguageConsistencyRating = @GeminiLanguageConsistencyRating, GeminiLoopDetectionRating = @GeminiLoopDetectionRating, ");
 
         // Novas métricas específicas do OpenRouter
         sb.Append("OpenRouterFactualRating = @OpenRouterFactualRating, OpenRouterFormattingRating = @OpenRouterFormattingRating, ");
         sb.Append("OpenRouterComplianceRating = @OpenRouterComplianceRating, OpenRouterRelevanceRating = @OpenRouterRelevanceRating, ");
         sb.Append("OpenRouterToneRating = @OpenRouterToneRating, OpenRouterConcisenessRating = @OpenRouterConcisenessRating, ");
         sb.Append("OpenRouterClarityRating = @OpenRouterClarityRating, OpenRouterReadabilityRating = @OpenRouterReadabilityRating, ");
-        sb.Append("OpenRouterHaloEffectRating = @OpenRouterHaloEffectRating, OpenRouterSafetyRating = @OpenRouterSafetyRating ");
+        sb.Append("OpenRouterHaloEffectRating = @OpenRouterHaloEffectRating, OpenRouterSafetyRating = @OpenRouterSafetyRating, ");
+        sb.Append("OpenRouterLanguageConsistencyRating = @OpenRouterLanguageConsistencyRating, OpenRouterLoopDetectionRating = @OpenRouterLoopDetectionRating ");
 
         sb.Append("WHERE Id = @Id;");
 
@@ -365,19 +368,21 @@ public class BenchmarkRepository : IBenchmarkRepository
     public async Task<IEnumerable<BenchmarkEvaluationModel>> BenchmarkResponseEvaluationAsync()
     {
         StringBuilder sb = new();
-        sb.Append("SELECT P.Id, R.Id AS ResponseId, P.TextoPrompt, R.NomeModelo, ");
+        sb.Append("SELECT P.Id, R.Id AS ResponseId, R.PromptId, P.TextoPrompt, R.NomeModelo, ");
 
         // Métricas Gemini
         sb.Append("R.GeminiRating, R.GeminiFactualRating, R.GeminiFormattingRating, ");
         sb.Append("R.GeminiComplianceRating, R.GeminiRelevanceRating, R.GeminiToneRating, ");
         sb.Append("R.GeminiConcisenessRating, R.GeminiClarityRating, R.GeminiReadabilityRating, ");
         sb.Append("R.GeminiHaloEffectRating, R.GeminiSafetyRating, ");
+        sb.Append("R.GeminiLanguageConsistencyRating, R.GeminiLoopDetectionRating, ");
 
         // Métricas OpenRouter
         sb.Append("R.OpenRouterRating, R.OpenRouterFactualRating, R.OpenRouterFormattingRating, ");
         sb.Append("R.OpenRouterComplianceRating, R.OpenRouterRelevanceRating, R.OpenRouterToneRating, ");
         sb.Append("R.OpenRouterConcisenessRating, R.OpenRouterClarityRating, R.OpenRouterReadabilityRating, ");
         sb.Append("R.OpenRouterHaloEffectRating, R.OpenRouterSafetyRating, ");
+        sb.Append("R.OpenRouterLanguageConsistencyRating, R.OpenRouterLoopDetectionRating, ");
 
         // Métricas de Performance e Datas
         sb.Append("P.DataCriacao, P.Descricao, R.TokensPorSegundo, R.TempoPuroMs, R.TempoCargaMs, R.TamanhoTokens ");
@@ -412,20 +417,91 @@ public class BenchmarkRepository : IBenchmarkRepository
     }
     public async Task<string?> GetBestModelAsync()
     {
-        var sql = @"
-        SELECT NomeModelo
-        FROM (
-            SELECT  
-                NomeModelo,
-                AVG((COALESCE(GeminiFactualRating, GeminiRating) + COALESCE(OpenRouterFactualRating, OpenRouterRating)) * 10.0) AS ScoreFinal
-            FROM Respostas
-            GROUP BY NomeModelo
-        )
-        ORDER BY ScoreFinal DESC
-        LIMIT 1;";
+        var ranking = await GetModelRankingAsync();
+        return ranking.FirstOrDefault()?.Model;
+    }
+
+    /// <summary>
+    /// Ranking agregado por modelo, com score calculado pelo ScoreCalculator
+    /// (média ponderada das 12 métricas por juiz). Quando uma resposta não tem
+    /// métricas suficientes para o cálculo ponderado, usa o FINAL_SCORE declarado
+    /// pelo próprio juiz como fallback.
+    /// </summary>
+    public async Task<List<ModelRanking>> GetModelRankingAsync()
+    {
+        var sql = @"SELECT NomeModelo,
+            GeminiFactualRating, GeminiFormattingRating, GeminiComplianceRating, GeminiRelevanceRating,
+            GeminiToneRating, GeminiConcisenessRating, GeminiClarityRating, GeminiReadabilityRating,
+            GeminiHaloEffectRating, GeminiSafetyRating, GeminiLanguageConsistencyRating, GeminiLoopDetectionRating,
+            GeminiRating,
+            OpenRouterFactualRating, OpenRouterFormattingRating, OpenRouterComplianceRating, OpenRouterRelevanceRating,
+            OpenRouterToneRating, OpenRouterConcisenessRating, OpenRouterClarityRating, OpenRouterReadabilityRating,
+            OpenRouterHaloEffectRating, OpenRouterSafetyRating, OpenRouterLanguageConsistencyRating, OpenRouterLoopDetectionRating,
+            OpenRouterRating
+            FROM Respostas;";
 
         using var connection = _context.CreateConnection();
-        return await connection.ExecuteScalarAsync<string?>(sql);
+        var rows = (await connection.QueryAsync<BenchmarkResponse>(sql)).ToList();
+
+        var pesos = new JudgeScoreWeights();
+        var ranking = new List<ModelRanking>();
+
+        foreach (var grupo in rows.GroupBy(r => r.NomeModelo))
+        {
+            double somaGemini = 0, somaOpenRouter = 0;
+            int contagemGemini = 0, contagemOpenRouter = 0;
+
+            foreach (var resposta in grupo)
+            {
+                var geminiScore = ScoreCalculator.CalcularScoreFinal(ToInput(resposta, juizGemini: true), pesos)
+                                  ?? resposta.GeminiRating;
+                if (geminiScore.HasValue)
+                {
+                    somaGemini += geminiScore.Value;
+                    contagemGemini++;
+                }
+
+                var openRouterScore = ScoreCalculator.CalcularScoreFinal(ToInput(resposta, juizGemini: false), pesos)
+                                      ?? resposta.OpenRouterRating;
+                if (openRouterScore.HasValue)
+                {
+                    somaOpenRouter += openRouterScore.Value;
+                    contagemOpenRouter++;
+                }
+            }
+
+            int totalAvaliadas = contagemGemini + contagemOpenRouter;
+            if (totalAvaliadas == 0)
+                continue;
+
+            ranking.Add(new ModelRanking
+            {
+                Model = grupo.Key,
+                Score = Math.Round((somaGemini + somaOpenRouter) / totalAvaliadas, 2),
+                GeminiScore = contagemGemini > 0 ? Math.Round(somaGemini / contagemGemini, 2) : 0,
+                OpenRouterScore = contagemOpenRouter > 0 ? Math.Round(somaOpenRouter / contagemOpenRouter, 2) : 0,
+                TotalResponses = grupo.Count(),
+                JudgedResponses = totalAvaliadas
+            });
+        }
+
+        return ranking.OrderByDescending(r => r.Score).ToList();
+    }
+
+    private static JudgeScoreInput ToInput(BenchmarkResponse r, bool juizGemini)
+    {
+        if (juizGemini)
+        {
+            return new JudgeScoreInput(
+                r.GeminiFactualRating, r.GeminiFormattingRating, r.GeminiComplianceRating, r.GeminiRelevanceRating,
+                r.GeminiToneRating, r.GeminiConcisenessRating, r.GeminiClarityRating, r.GeminiReadabilityRating,
+                r.GeminiHaloEffectRating, r.GeminiSafetyRating, r.GeminiLanguageConsistencyRating, r.GeminiLoopDetectionRating);
+        }
+
+        return new JudgeScoreInput(
+            r.OpenRouterFactualRating, r.OpenRouterFormattingRating, r.OpenRouterComplianceRating, r.OpenRouterRelevanceRating,
+            r.OpenRouterToneRating, r.OpenRouterConcisenessRating, r.OpenRouterClarityRating, r.OpenRouterReadabilityRating,
+            r.OpenRouterHaloEffectRating, r.OpenRouterSafetyRating, r.OpenRouterLanguageConsistencyRating, r.OpenRouterLoopDetectionRating);
     }
 
 }

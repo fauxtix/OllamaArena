@@ -35,7 +35,7 @@ public class LogRepository : ILogRepository
     {
         try
         {
-            var sql = "DELETE FROM Logs; VACUUM;"; // VACUUM liberta o espaço em disco do SQLite imediatamente
+            var sql = "DELETE FROM Logs; PRAGMA optimize;"; // PRAGMA optimize refina os índices sem bloquear a BD
             using var connection = _context.CreateConnection();
             int affectedLines = await connection.ExecuteAsync(sql);
             return true;
@@ -53,7 +53,7 @@ public class LogRepository : ILogRepository
         if (id < 1)
             return;
 
-        var sql = "DELETE FROM Logs WHERE Id  = @Id; VACUUM;";
+        var sql = "DELETE FROM Logs WHERE Id  = @Id; PRAGMA optimize;";
 
         try
         {
@@ -71,7 +71,7 @@ public class LogRepository : ILogRepository
         if (ids == null || !ids.Any())
             return;
 
-        var sql = "DELETE FROM Logs WHERE Id IN @Ids; VACUUM;";
+        var sql = "DELETE FROM Logs WHERE Id IN @Ids; PRAGMA optimize;";
 
         try
         {

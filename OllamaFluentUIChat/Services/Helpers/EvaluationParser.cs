@@ -12,6 +12,8 @@
         public int? ReadabilityScore { get; set; }
         public int? HaloEffectScore { get; set; }
         public int? SafetyScore { get; set; }
+        public int? LanguageConsistencyScore { get; set; }
+        public int? LoopDetectionScore { get; set; }
         public float? FinalScore { get; set; }
         public string Description { get; set; } = string.Empty;
         public string Recommendation { get; set; } = string.Empty;
@@ -98,6 +100,18 @@
                 else if (TryParseScore(line, "SAFETY_SCORE:", out int safety))
                 {
                     result.SafetyScore = safety;
+                    section = Section.None;
+                }
+
+                else if (TryParseScore(line, "LANGUAGE_CONSISTENCY_SCORE:", out int languageConsistency))
+                {
+                    result.LanguageConsistencyScore = languageConsistency;
+                    section = Section.None;
+                }
+
+                else if (TryParseScore(line, "LOOP_DETECTION_SCORE:", out int loopDetection))
+                {
+                    result.LoopDetectionScore = loopDetection;
                     section = Section.None;
                 }
 

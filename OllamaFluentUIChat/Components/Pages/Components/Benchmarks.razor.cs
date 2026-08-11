@@ -460,6 +460,8 @@ namespace OllamaFluentUIChat.Components.Pages.Components
                 resposta.GeminiReadabilityRating = parsed.ReadabilityScore;
                 resposta.GeminiHaloEffectRating = parsed.HaloEffectScore;
                 resposta.GeminiSafetyRating = parsed.SafetyScore;
+                resposta.GeminiLanguageConsistencyRating = parsed.LanguageConsistencyScore;
+                resposta.GeminiLoopDetectionRating = parsed.LoopDetectionScore;
                 resposta.GeminiRating = parsed.FinalScore;
                 resposta.GeminiFeedback = string.IsNullOrWhiteSpace(parsed.Description) ? resultado.RawText : parsed.Description;
                 resposta.GeminiRecommendation = parsed.Recommendation;
@@ -476,6 +478,8 @@ namespace OllamaFluentUIChat.Components.Pages.Components
                 resposta.OpenRouterReadabilityRating = parsed.ReadabilityScore;
                 resposta.OpenRouterHaloEffectRating = parsed.HaloEffectScore;
                 resposta.OpenRouterSafetyRating = parsed.SafetyScore;
+                resposta.OpenRouterLanguageConsistencyRating = parsed.LanguageConsistencyScore;
+                resposta.OpenRouterLoopDetectionRating = parsed.LoopDetectionScore;
                 resposta.OpenRouterRating = parsed.FinalScore;
                 resposta.OpenRouterFeedback = string.IsNullOrWhiteSpace(parsed.Description) ? resultado.RawText : parsed.Description;
                 resposta.OpenRouterRecommendation = parsed.Recommendation;

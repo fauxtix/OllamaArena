@@ -22,6 +22,20 @@ namespace OllamaFluentUIChat.Services.Implementations.Services
                 @event(connection);
             }
         }
-        public IDbConnection CreateConnection() => new SqliteConnection(_connectionString);
+        public IDbConnection CreateConnection()
+        {
+            var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            // PRAGMAs são por-ligação no SQLite: ativam o ON DELETE CASCADE
+            // (definido no esquema) e evitam erros "database is locked" sob concorrência.
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;";
+                command.ExecuteNonQuery();
+            }
+
+            return connection;
+        }
     }
 }

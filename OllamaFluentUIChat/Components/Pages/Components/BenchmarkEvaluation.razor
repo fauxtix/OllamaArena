@@ -62,6 +62,14 @@
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiSafetyRating" ReadOnly="@(Response.GeminiSafetyRating != null)" />
                     </div>
                     <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricLanguageConsistency"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiLanguageConsistencyRating" ReadOnly="@(Response.GeminiLanguageConsistencyRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricLoopDetection"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiLoopDetectionRating" ReadOnly="@(Response.GeminiLoopDetectionRating != null)" />
+                    </div>
+                    <div class="rating-cell">
                         <span class="rating-label-bold">@L["Evaluation.MetricOverall"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiRating" Class="final-rating-field" ReadOnly="@(Response.GeminiRating != null)" />
                     </div>
@@ -151,6 +159,14 @@
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterSafetyRating" ReadOnly="@(Response.OpenRouterSafetyRating != null)" />
                     </div>
                     <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricLanguageConsistency"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterLanguageConsistencyRating" ReadOnly="@(Response.OpenRouterLanguageConsistencyRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricLoopDetection"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterLoopDetectionRating" ReadOnly="@(Response.OpenRouterLoopDetectionRating != null)" />
+                    </div>
+                    <div class="rating-cell">
                         <span class="rating-label-bold">@L["Evaluation.MetricOverall"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterRating" Class="final-rating-field" ReadOnly="@(Response.OpenRouterRating != null)" />
                     </div>
@@ -224,6 +240,8 @@
             Response.GeminiReadabilityRating = parsed.ReadabilityScore;
             Response.GeminiHaloEffectRating = parsed.HaloEffectScore;
             Response.GeminiSafetyRating = parsed.SafetyScore;
+            Response.GeminiLanguageConsistencyRating = parsed.LanguageConsistencyScore;
+            Response.GeminiLoopDetectionRating = parsed.LoopDetectionScore;
 
             Response.GeminiRating = parsed.FinalScore;
             Response.GeminiFeedback = parsed.Description;
@@ -256,6 +274,8 @@
             Response.OpenRouterReadabilityRating = parsed.ReadabilityScore;
             Response.OpenRouterHaloEffectRating = parsed.HaloEffectScore;
             Response.OpenRouterSafetyRating = parsed.SafetyScore;
+            Response.OpenRouterLanguageConsistencyRating = parsed.LanguageConsistencyScore;
+            Response.OpenRouterLoopDetectionRating = parsed.LoopDetectionScore;
 
             Response.OpenRouterRating = parsed.FinalScore;
             Response.OpenRouterFeedback = parsed.Description;

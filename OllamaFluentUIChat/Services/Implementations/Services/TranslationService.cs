@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.Options;
 using OllamaFluentUIChat.Models.DTO;
 using OllamaFluentUIChat.Services.Interfaces.Repositories;
 using OllamaFluentUIChat.Services.Interfaces.Services;
@@ -21,14 +22,15 @@ namespace OllamaFluentUIChat.Services.Implementations.Services
             HttpClient http,
             IBenchmarkRepository benchmarks,
             ILogger<TranslationService> logger,
-            PromptFilesService promptFilesService)
+            PromptFilesService promptFilesService,
+            IOptions<OllamaOptions> options)
         {
             _http = http;
             _benchmarks = benchmarks;
             _logger = logger;
 
             if (_http.BaseAddress == null)
-                _http.BaseAddress = new Uri("http://localhost:11434");
+                _http.BaseAddress = new Uri(options.Value.BaseUrl);
             this.promptFilesService = promptFilesService;
         }
 
@@ -49,7 +51,9 @@ namespace OllamaFluentUIChat.Services.Implementations.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Modelo falhou. Fallback.");
-                throw new InvalidOperationException("Sem informação de modelos para testar.");
+                throw new InvalidOperationException(
+                    $"Falha ao traduzir com o modelo selecionado ({model}).",
+                    ex);
             }
         }
 

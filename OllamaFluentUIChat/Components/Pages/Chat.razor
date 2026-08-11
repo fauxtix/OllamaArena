@@ -97,6 +97,11 @@ else
                               OnClick="@OpenHistory">
                     @L["Chat.History"]
                 </FluentButton>
+
+                <FluentSwitch @bind-Value="_webSearchEnabled"
+                              Disabled="@_isThinking"
+                              Label="@L["Chat.WebSearchLabel"]"
+                              Style="font-size: 0.8rem;" />
             </FluentStack>
 
             @if (_showContextBar && _contextLength > 0)
@@ -146,6 +151,17 @@ else
                                 background-color: @(msg.IsCurrentUser ? "var(--accent-fill-rest)" : "var(--neutral-layer-2)");
                                 color: @(msg.IsCurrentUser ? "var(--foreground-on-accent-rest)" : "var(--neutral-foreground-rest)");">
 
+                                @if (!msg.IsCurrentUser && !string.IsNullOrWhiteSpace(msg.Reasoning))
+                                {
+                                    <details class="reasoning-block">
+                                        <summary>
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())" Color="Color.Accent" />
+                                            @L["Chat.ReasoningLabel"]
+                                        </summary>
+                                        <div class="reasoning-content">@msg.Reasoning</div>
+                                    </details>
+                                }
+
                                 @((MarkupString)FormatMessage(msg.Text))
 
                             </div>
@@ -188,7 +204,7 @@ else
                 }
             </FluentStack>
         </FluentCard>
-        <HistoryPanel @ref="historyPanel" />
+        <HistoryPanel @ref="historyPanel" OnLoadConversation="@LoadConversationAsync" />
     </div>
 }
 <style>
@@ -356,6 +372,39 @@ else
         color: #8b9cb3;
         font-size: 0.85em;
         margin-left: 4px;
+    }
+
+    .reasoning-block {
+        border: 1px solid var(--neutral-stroke-layer-rest);
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-bottom: 8px;
+        background-color: var(--neutral-layer-1);
+    }
+
+    .reasoning-block summary {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--neutral-foreground-rest);
+        user-select: none;
+    }
+
+    .reasoning-content {
+        margin-top: 8px;
+        font-size: 0.8rem;
+        line-height: 1.4;
+        color: var(--neutral-foreground-hint);
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .chat-content[style*="var(--accent-fill-rest)"] .reasoning-block,
+    .chat-content[style*="var(--accent-fill-rest)"] .reasoning-content {
+        color: var(--foreground-on-accent-rest);
     }
 
     .chat-container {

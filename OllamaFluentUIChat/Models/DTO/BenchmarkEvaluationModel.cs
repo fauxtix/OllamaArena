@@ -31,6 +31,8 @@ public class BenchmarkEvaluationModel
     public int? GeminiReadabilityRating { get; set; }
     public int? GeminiHaloEffectRating { get; set; }
     public int? GeminiSafetyRating { get; set; }
+    public int? GeminiLanguageConsistencyRating { get; set; }
+    public int? GeminiLoopDetectionRating { get; set; }
 
     // Ratings OpenRouter (1-5)
     public int? OpenRouterFactualRating { get; set; }
@@ -43,6 +45,8 @@ public class BenchmarkEvaluationModel
     public int? OpenRouterReadabilityRating { get; set; }
     public int? OpenRouterHaloEffectRating { get; set; }
     public int? OpenRouterSafetyRating { get; set; }
+    public int? OpenRouterLanguageConsistencyRating { get; set; }
+    public int? OpenRouterLoopDetectionRating { get; set; }
 
     public string TempoPuroFormatado
     {

@@ -69,6 +69,16 @@ ScaffoldingReadMe.txt
 # Chaves de API locais (não versionar)
 appsettings.Local.json
 
+# Base de dados local (gerada no arranque, schema lazy) e ferramentas
+ollama_benchmark.db
+ollama_benchmark.db-shm
+ollama_benchmark.db-wal
+ollama_benchmark.db-journal
+*.sqbpro
+
+# Ficheiros de rascunho / testes rápidos
+TesteDuckDuckGo.html
+
 # StyleCop
 StyleCopReport.xml
 

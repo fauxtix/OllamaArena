@@ -1,0 +1,109 @@
+@page "/dashboard"
+@using Microsoft.Extensions.Localization
+@using Microsoft.FluentUI.AspNetCore.Components
+@using OllamaFluentUIChat.Models.DTO
+@using OllamaFluentUIChat.Resources
+@using OllamaFluentUIChat.Services.Interfaces.Repositories
+@rendermode InteractiveServer
+@inject IStringLocalizer<SharedResources> L
+@inject IBenchmarkRepository BenchmarkRepo
+
+<PageTitle>@L["Dashboard.PageTitle"]</PageTitle>
+
+<h2 class="fluent-h2" style="margin-bottom: 4px;">@L["Dashboard.Title"]</h2>
+<p class="fluent-body" style="margin-bottom: 20px; color: var(--neutral-foreground-hint);">
+    @L["Dashboard.Intro"]
+</p>
+
+@if (_isLoading)
+{
+    <FluentProgressRing />
+}
+else
+{
+    <FluentStack Orientation="Orientation.Horizontal" Style="gap: 16px; flex-wrap: wrap; margin-bottom: 20px;">
+        <FluentCard Style="min-width: 260px; padding: 16px;">
+            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--neutral-foreground-hint);">@L["Dashboard.BestModel"]</div>
+            <div style="font-size: 20px; font-weight: 700; margin-top: 6px;">@(BestModel?.Model ?? L["Dashboard.NoEvaluations"])</div>
+            @if (BestModel is not null)
+            {
+                <div style="color: var(--accent-fill-rest); font-weight: 600; margin-top: 4px;">@L["Dashboard.Score", BestModel.Score.ToString("F1")]</div>
+            }
+        </FluentCard>
+
+        <FluentCard Style="min-width: 200px; padding: 16px;">
+            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--neutral-foreground-hint);">@L["Dashboard.ModelsCount"]</div>
+            <div style="font-size: 32px; font-weight: 700; margin-top: 6px;">@_ranking.Count</div>
+        </FluentCard>
+
+        <FluentCard Style="min-width: 200px; padding: 16px;">
+            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--neutral-foreground-hint);">@L["Dashboard.EvaluationsCount"]</div>
+            <div style="font-size: 32px; font-weight: 700; margin-top: 6px;">@_ranking.Sum(r => r.JudgedResponses)</div>
+        </FluentCard>
+    </FluentStack>
+
+    @if (_ranking.Count == 0)
+    {
+        <FluentBadge Appearance="Appearance.Accent">@L["Dashboard.NoEvaluations"]</FluentBadge>
+    }
+    else
+    {
+        <div class="table-scroll">
+            <FluentDataGrid Items="@_ranking.AsQueryable()" TGridItem="ModelRanking" ResizableColumns="true" GenerateHeader="GenerateHeaderOption.Sticky">
+                <TemplateColumn Title="#" Align="Align.Center" Width="60px">
+                    @(_ranking.IndexOf(context) + 1)
+                </TemplateColumn>
+
+                <PropertyColumn Property="@(r => r.Model)" Title="@L["Dashboard.ColModel"]" Sortable="true" Style="font-weight:600;" />
+
+                <TemplateColumn Title="@L["Dashboard.ColScore"]" Width="280px" SortBy="@(SortScore)">
+                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px; width: 100%;">
+                        <FluentProgress Min="0" Max="5" Value="@((int)context.Score)" Width="100%" />
+                        <span style="min-width: 44px; font-weight: 600;">@context.Score.ToString("F1")</span>
+                    </FluentStack>
+                </TemplateColumn>
+
+                <PropertyColumn Property="@(r => r.GeminiScore)" Title="@L["Dashboard.ColGemini"]" Align="Align.Center" Width="110px" Sortable="true" />
+                <PropertyColumn Property="@(r => r.OpenRouterScore)" Title="@L["Dashboard.ColOpenRouter"]" Align="Align.Center" Width="130px" Sortable="true" />
+                <PropertyColumn Property="@(r => r.TotalResponses)" Title="@L["Dashboard.ColResponses"]" Align="Align.Center" Width="120px" Sortable="true" />
+                <PropertyColumn Property="@(r => r.JudgedResponses)" Title="@L["Dashboard.ColJudged"]" Align="Align.Center" Width="130px" Sortable="true" />
+            </FluentDataGrid>
+        </div>
+    }
+}
+
+@code {
+    private List<ModelRanking> _ranking = new();
+    private ModelRanking? BestModel => _ranking.FirstOrDefault();
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _ranking = await BenchmarkRepo.GetModelRankingAsync();
+        }
+        catch
+        {
+            _ranking = new();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private GridSort<ModelRanking> SortScore => GridSort<ModelRanking>
+        .ByDescending(r => r.Score);
+}
+
+<style>
+    .table-scroll {
+        overflow-x: auto;
+        min-width: 0;
+    }
+
+        .table-scroll fluent-data-grid {
+            min-width: 760px;
+        }
+</style>

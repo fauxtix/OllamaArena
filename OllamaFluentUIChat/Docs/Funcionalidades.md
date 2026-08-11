@@ -5,7 +5,7 @@ Aplicação **Blazor Server** (.NET 10) que funciona como um **chat local com Ol
 - **UI:** FluentUI Blazor v4 (FluentDesignTheme, FluentDataGrid, FluentDialog, FluentSplitter, FluentNavMenu, etc.)
 - **Persistência:** SQLite via Dapper (schema criado de forma lazily + migração de schema idempotente em código no arranque)
 - **Logging:** Serilog (console + sink SQLite)
-- **Ollama:** comunicação direta por HTTP com `http://localhost:11434` (streaming NDJSON em `/api/chat`)
+- **Ollama:** comunicação direta por HTTP com a base configurada em `appsettings.json` (`Ollama:BaseUrl`, default `http://localhost:11434`) (streaming NDJSON em `/api/chat`)
 - **Idiomas de UI:** Português / Inglês (localização via cookie, `CultureSelector`)
 
 ---
@@ -18,19 +18,19 @@ Aplicação **Blazor Server** (.NET 10) que funciona como um **chat local com Ol
 | UI | Microsoft FluentUI.AspNetCore.Components v4.14.2 |
 | Dados | Dapper + Microsoft.Data.Sqlite (`ollama_benchmark.db`) |
 | Logging | Serilog (Console + Serilog.Sinks.SQLite, tabela `Logs`) |
-| LLM | Ollama local (`http://localhost:11434`) — `/api/chat`, `/api/tags`, `/api/show`, `/api/ps` |
-| Outros | HtmlAgilityPack (RAG DuckDuckGo — desativado), ClosedXML (export Excel), Markdig (markdown), Chart.js via JS interop, OllamaSharp |
+| LLM | Ollama local (base `Ollama:BaseUrl` em `appsettings.json`, default `http://localhost:11434`) — `/api/chat`, `/api/tags`, `/api/show`, `/api/ps` |
+| Outros | HtmlAgilityPack (RAG web no chat — Wikipedia + DuckDuckGo, com toggle), ClosedXML (export Excel), Markdig (markdown), Chart.js via JS interop |
 
 **Organização do projeto:**
 - `Components/Pages/*.razor` — páginas com rota
 - `Components/Pages/Components/*.razor` — componentes reutilizáveis (painéis, diálogos)
 - `Components/Layout/` — `MainLayout`, `NavMenu`, `ReconnectModal`
-- `Services/` — interfaces, implementações, repositórios, helpers (`ChatMeasureTemperature`, `MessageFormatter`, `EvaluationParser`, `PromptFilesService`, `PromptSummarizer`, `OllamaChecker`, `InternetConnectivityService`, `DatabaseSchemaInitializer`)
+- `Services/` — interfaces, implementações, repositórios, helpers (`ChatComposerService`, `ChatMeasureTemperature`, `MessageFormatter`, `EvaluationParser`, `ScoreCalculator`, `PromptFilesService`, `PromptSummarizer`, `AutomatedJudgeService`, `OllamaChecker`, `InternetConnectivityService`, `ConversationRepository`, `DatabaseSchemaInitializer`, `OllamaOptions`)
 - `Models/DTO` — shapes da API; `Models/Entities` — mapeamento SQLite (Dapper)
 - `Prompts/*.txt` — ficheiros de prompt editáveis em runtime (Content files)
 - `PromptTemplates/` — construtores de prompt em C# (`EvaluatePromptTemplate`, `TranslatePromptTemplate`, `ChatInstructionsPrompt`)
 
-> **Nota de build:** a solução é de **projeto único** (`OllamaFluentUIChat/`). Um antigo `Services/Services.csproj` na raiz (refactor abandonado que não compilava) foi **removido**; o build limpo faz-se com `dotnet build OllamaFluentUIChat.slnx`.
+> **Nota de build:** a solução (`OllamaFluentUIChat.slnx`) é de **projeto único** (`OllamaFluentUIChat/`) + projeto de **testes** (`OllamaFluentUIChat.Tests/`, 45 testes de unidade). Um antigo `Services/Services.csproj` na raiz (refactor abandonado que não compilava) foi **removido**; o build limpo faz-se com `dotnet build OllamaFluentUIChat.slnx`.
 
 ---
 
@@ -44,13 +44,14 @@ O menu lateral (`Components/Layout/NavMenu.razor`) expõe as funcionalidades pri
 | Chat | `/chat` | Chat com streaming, barra de contexto e benchmark automático |
 | Benchmarks | `/benchmark-evaluations` | Tabela consolidada de avaliações + export Excel + análise local |
 | Qualidade e Métricas | `/benchmarks` | Split-view por prompt: métricas, gráficos, avaliação por juiz |
+| Dashboard | `/dashboard` | Ranking agregado por modelo (score ponderado de 12 métricas) |
 | Modelos Ollama | `/modelos-ollama` | Grelha de modelos locais com compatibilidade GPU |
 | Editar Prompts | `/edit-prompts` | Editor runtime dos ficheiros `Prompts/*.txt` |
 | Logs do Sistema | `/system-logs` | Visualização/filtro/apagamento dos logs Serilog |
 
 > **Responsividade:** em ecrãs **≤768px** o `NavMenu` deixa de ocupar o lado esquerdo e passa a ser um **drawer deslizante** (`min(80vw, 280px)`) com overlay escurecido, aberto/fechado pelo ícone de hambúrguer no cabeçalho (`MainLayout`); os links fecham o drawer após a navegação.
 
-Existem ainda páginas auxiliares fora do menu: `/settings` (tema/cor + modelo), `/settings2` (experimental), `/analise-benchmarks` (master-detail de prompts/respostas).
+Existe ainda uma página auxiliar fora do menu: `/settings` (tema/cor + modelo).
 
 ---
 
@@ -60,7 +61,7 @@ Existem ainda páginas auxiliares fora do menu: `/settings` (tema/cor + modelo),
 
 - **Propósito:** página de entrada; verifica se o Ollama está ativo e pré-carrega a cache de modelos.
 - **Fluxo:**
-  1. `OllamaChecker.IsOllamaRunningAsync()` → se o Ollama não responde em `http://localhost:11434`, mostra `FluentMessageBar` de erro.
+  1. `OllamaChecker.IsOllamaRunningAsync()` → se o Ollama não responde na base configurada (`Ollama:BaseUrl`), mostra `FluentMessageBar` de erro.
   2. `OnAfterRenderAsync` limpa a cache de modelos (`localStorage`) uma vez por sessão (`sessionStorage "ollamaCacheCleared"`) e, se vazia, popula `ollamaModels` e `ollamaModelsFull` a partir de `GET /api/tags` + `POST /api/show` (metadados: contexto nativo, ano de treino).
   3. Botão **Readme** → `ReadmePreview` (descarrega o README do GitHub e renderiza markdown); sem internet, mostra o diálogo de erro "Internet indisponível" (ver 4.2).
 - **Componentes:** `FluentStack`, `FluentCard`, `FluentButton`, `FluentMessageBar`.
@@ -68,24 +69,25 @@ Existem ainda páginas auxiliares fora do menu: `/settings` (tema/cor + modelo),
 
 ### 3.2 Chat (`/chat`)
 
-Chat com streaming em tempo real e recolha automática de métricas de benchmark. Detalhe técnico na secção 8.
+Chat com streaming em tempo real e recolha automática de métricas de benchmark. Detalhe técnico na secção 7.
 
 - **Propósito:** conversar com o modelo local selecionado e, simultaneamente, registar cada troca como resposta de benchmark.
 - **Fluxo principal (`SendMessage` em `Chat.razor.cs`):**
-  1. Constrói o histórico (`historyPayload`) com o system prompt (`Prompts/system-prompt.txt`) + mensagens da sessão (omite vazios, `...` e o saudação "Olá!").
-  2. **Apara o histórico** enviado ao Ollama para ~60% do contexto efetivo (apenas o payload; os balões na UI ficam intactos).
-  3. Determina a **temperatura** via `ChatMeasureTemperature.ObterTemperaturaRecomendada` (análise lexical PT+EN, 0.10–0.90) e o `num_predict` base (1800 tokens se `FitsInGpu`, senão 1200; ajustado a ×1.15 a temp ≤0.25 / ×0.90 a ≥0.75) — detalhe técnico na secção 7.
-  4. **Limita `num_predict`** para caber no contexto (reserva de 25%).
-  5. Envia o payload para `/api/chat` com `num_ctx` efetivo, `temperature`, `num_predict`, `repeat_penalty`, `top_k`, `top_p`.
-  6. **Streaming NDJSON** com `StreamReader.ReadLineAsync` (1 linha = 1 token), concatena em `aiMessage.Text`, atualiza a **barra de contexto** por estimativa (`text.Length/4`) e faz auto-scroll.
-  7. No `done`, desserializa `OllamaMetrics` (`PromptEvalCount` + `EvalCount`) e grava na BD (benchmark).
+  1. **Persiste a mensagem do utilizador** (`PersistUserMessageAsync`): cria a conversa na BD (`Conversas`, título = primeiros 60 chars do prompt) se ainda não existir e grava a mensagem (`ConversaMensagens`).
+  2. Calcula o contexto efetivo se necessário (`GetContextLengthAsync`, secção 7) e estima os tokens do novo prompt.
+  3. **`ChatComposerService.Prepare`** constrói o payload: lê o system prompt (`Prompts/system-prompt.txt`), monta o histórico (omite vazios, `...` e a saudação "Olá!", funde mensagens consecutivas do mesmo papel, remove a mensagem final de "assistant"), **apara a ~60%** do contexto (`HistoryBudgetFraction`), determina a **temperatura** via `ChatMeasureTemperature` (0.10–0.90), o `num_predict` base (1800 se `FitsInGpu`, senão 1200; ×1.15 a temp ≤0.25 / ×0.90 a ≥0.75) **limitado** para caber no contexto (reserva de 25%, mínimo 32) e os parâmetros (`num_ctx`, `repeat_penalty` 1.1, `top_k`, `top_p`) — todos os defaults vêm de `OllamaOptions` (configuráveis em `appsettings.json`).
+  4. **Web search (toggle)**: se `_webSearchEnabled` estiver ligado, injeta no índice 1 uma mensagem de sistema com o contexto pesquisado (`BuscarContextoWebAsync` → Wikipedia + DuckDuckGo).
+  5. Envia o payload para `/api/chat` (cliente nomeado `"Ollama"`) — inclui `think` (reasoning) quando `OllamaOptions.EnableReasoning` está ativo.
+  6. **Streaming NDJSON** com `StreamReader.ReadLineAsync` (1 linha = 1 token): concatena `message.content` em `aiMessage.Text` e captura `message.reasoning_content` para `aiMessage.Reasoning` (também lido da mensagem final `done` — modelos tipo qwq/deepseek-r1); atualiza a **barra de contexto** por estimativa (`text.Length/4`) e faz auto-scroll.
+  7. No `done`, desserializa `OllamaMetrics` (`PromptEvalCount` + `EvalCount`); no `finally` grava o benchmark na BD (se `evalCount > 0 && evalDurationNs > 0`) e persiste a resposta do assistente com o reasoning e o tempo decorrido (`PersistAssistantMessageAsync`).
 - **UI extra do Chat:**
   - Seleção de modelo (`FluentSelect`), badge de GPU ("GPU OK" verde vs "CPU Fallback" âmbar, via `GpuInfoDialog`).
+  - **Toggle "Pesquisa web"** (`FluentSwitch`, `_webSearchEnabled`) — ativa a pesquisa web (Wikipedia funciona; o DuckDuckGo passou a usar um mecanismo **anti-bot** e pode devolver resultados vazios).
+  - **Bloco de reasoning** (`<details class="reasoning-block">`, colapsado por defeito, com label "Pensamento") quando o modelo devolveu `reasoning_content`; o reasoning também é gravado na BD (`ConversaMensagens.Reasoning`).
   - **Barra de contexto**: `FluentProgress` com `Contexto: X / Y tokens` e "Z restantes" (fica âmbar a ≥90%).
-  - Botões **Novo Chat** (descarta sessão e descarrega o modelo com `keep_alive=0`) e **Histórico** (`HistoryPanel`).
+  - Botões **Novo Chat** (descarta a sessão, fecha a conversa ativa e descarrega o modelo com `keep_alive=0`) e **Histórico** (`HistoryPanel` — histórico de execuções + conversas, ver secção 4.1).
   - **Cancelar** durante o streaming (token de cancelamento; mensagem termina com `*(Cancelado)*`).
    - **Título curto** de cada prompt: gerado automaticamente por `PromptSummarizer.ExtractDescription` (**C# puro, sem chamadas LLM**) no momento em que o prompt é gravado (`CreatePromptAsync`/`UpdatePromptAsync`), e guardado na coluna `Prompts.Descricao` (ver secção 5).
-   - **RAG/web search (desativado)**: os helpers `SearchWebContext_DuckDuckGo_Async` (Chat.razor.cs:707) e `SearchWebContext_Wikipedia_Async` (Chat.razor.cs:826) existem no código mas **não estão ligados** ao fluxo do chat — o DuckDuckGo passou a usar um mecanismo **anti-bot** e deixou de devolver informação, pelo que a pesquisa web está desativada da app.
 - **Outputs:** mensagens markdown formatadas (`MessageFormatter.FormatMessagePlus`), tempo decorrido em tempo real (timer de 150 ms até ao 1.º token), badge de temperatura.
 - **Logs técnicos:** tempo até o Ollama começar a responder (time-to-first-byte) e tempo até ao 1.º token.
 
@@ -111,7 +113,7 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 - **Fluxo:**
   1. `GetDataAsync()` → `BenchmarkRepository.GetAllBenchmarksAsync()` (prompts + respostas).
   2. Esquerda: cards de prompt com badge `#id`, data e nº de modelos; botões **Gráfico** (`BenchmarkChartDialog` — 4 gráficos Chart.js com download de imagem, ver 4.1) e apagar (cascade, com confirmação "Apagar Benchmark", ver 4.2).
-  3. Direita: card por resposta com badges `Tokens/s`, `Eval`, `Load`, `Tokens`; ratings Gemini/OpenRouter; botões **Avaliação** (`BenchmarkEvaluationDialog` — formulário 11 métricas 1–5 + tradução de feedback, ver 4.1) e **Avaliar automaticamente** (`AvaliarAutomaticamenteAsync` — gera o prompt do juiz com `EvaluatePromptTemplate` + metadados do modelo via `/api/show`, submete-o aos juízes Gemini (`gemini-flash-latest`) e OpenRouter (`openrouter/free`) via `AutomatedJudgeService`, preenche as métricas com `EvaluationParser` e abre o diálogo já preenchido). Antes de submeter, `AvaliarAutomaticamenteAsync` verifica a ligação à internet via `InternetConnectivityService.HasInternetAsync()` e mostra o erro `Benchmarks.NoInternetError` se não houver (os juízes são serviços em nuvem). O botão **Copiar prompt** (`CopiarPromptAvaliacaoAsync`) mantém o fallback manual (só copia o prompt gerado, sem precisar de internet).
+   3. Direita: card por resposta com badges `Tokens/s`, `Eval`, `Load`, `Tokens`; ratings Gemini/OpenRouter; botões **Avaliação** (`BenchmarkEvaluationDialog` — formulário 12 métricas 1–5 + tradução de feedback, ver 4.1) e **Avaliar automaticamente** (`AvaliarAutomaticamenteAsync` — gera o prompt do juiz com `EvaluatePromptTemplate` + metadados do modelo via `/api/show`, submete-o aos juízes Gemini (`gemini-flash-latest`) e OpenRouter (`openrouter/free`) via `AutomatedJudgeService`, preenche as métricas com `EvaluationParser` e abre o diálogo já preenchido). As chaves de API dos juízes vêm de **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`); o serviço impõe um **intervalo mínimo entre avaliações** (`AutomatedJudge:MinIntervalSeconds`, default 60 s) marcado **apenas após sucesso** (falhas não bloqueiam novas tentativas) e mostra o diálogo `Benchmarks.QuotaLimitMessage` quando o limite é atingido. Antes de submeter, `AvaliarAutomaticamenteAsync` verifica a ligação à internet via `InternetConnectivityService.HasInternetAsync()` e mostra o erro `Benchmarks.NoInternetError` se não houver (os juízes são serviços em nuvem). O botão **Copiar prompt** (`CopiarPromptAvaliacaoAsync`) mantém o fallback manual (só copia o prompt gerado, sem precisar de internet).
   4. `SaveEvaluationAsync` valida ratings 1–5 (diálogo "Erro de Validação" se fora do intervalo, ver 4.2) e grava com `UpdateResponseEvaluationAsync` (diálogo "Sucesso").
 
 > **Responsividade:** o `FluentSplitter` deteta a largura do viewport via **JS interop** (`appViewport.getWidth` + `subscribeResize` no primeiro render; `unsubscribeResize` em `DisposeAsync`) e aplica `AplicarLayoutCompacto` — em ecrãs **≤768px** a orientação passa a **vertical** (painéis empilhados, `_panel1MinSize` 120px / `_panel2MinSize` 200px), acima disso mantém-se **horizontal** (250px/400px). Se o JS falhar, mantém o estado predefinido (horizontal).
@@ -136,11 +138,15 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 - **Fluxo:** `LogRepository.GetAllLogsAsync()`; filtros por nível (Informações/Alertas/Erros/Todos) e pesquisa de texto; duplo clique → `LogDetailDialog` (mensagem + exceção); limpar visíveis/filtrados e apagar por linha (com confirmações e diálogos info/erro via `IDialogService`, ver 4.2).
 - **Outputs:** `FluentDataGrid` (ID, Data/Hora em badge, Nível em badge colorido por severidade, Mensagem, Ações) com `FluentPaginator` (10/página).
 
-### 3.8 Páginas auxiliares (fora do menu)
+### 3.8 Dashboard (`/dashboard`)
+
+- **Propósito:** ranking agregado por modelo — o melhor modelo geral e a posição relativa de cada um, calculados a partir das avaliações dos juízes.
+- **Fluxo:** `OnInitializedAsync` → `BenchmarkRepository.GetModelRankingAsync()` (agrega por `NomeModelo` e calcula o score com `ScoreCalculator`, ver secção 5); erros silenciados (ranking vazio).
+- **Outputs:** cards de estatística — **Melhor Modelo** (nome + score), **Modelos avaliados** (contagem) e **Avaliações** (total de respostas com juiz) — e `FluentDataGrid` (Posição, Modelo, Score com `FluentProgress` 0–5, Gemini, OpenRouter, Respostas, Avaliadas) com `overflow-x: auto` em mobile.
+
+### 3.9 Páginas auxiliares (fora do menu)
 
 - **`/settings`** — tema/modo (claro/escuro) e cor de acento FluentUI (com "Feeling lucky?" → `OfficeColorUtilities.GetRandom()`) + seleção/gravação do modelo do chat (`localStorage "ollama_model"`).
-- **`/settings2`** (experimental) — lista de modelos carregados e gestão do prompt "juiz IA" (`localStorage "juiz_ai_prompt"`); vários métodos existem sem botões ligados no markup.
-- **`/analise-benchmarks`** — análise master-detail: `FluentDataGrid` de prompts (ID, Prompt, Data, nº de modelos) e, ao selecionar, `blockquote` do prompt + cards de resposta por modelo com badges `Tokens/s`, `Eval (ms)`, `Load (ms)`, `Tokens` e texto bruto.
 
 ---
 
@@ -148,10 +154,10 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 
 | Componente | Uso |
 |---|---|
-| `HistoryPanel` | Painel lateral deslizante direito (50vw×80vh, com overlay; em mobile `min(92vw, 560px)`×`100dvh`) com histórico de execuções (`HistoryResponseAsync`; grelha paginada 12/página: Descrição, Modelo, Data, Tempo Eval., Tempo Procº) — ver 4.1 |
+| `HistoryPanel` | Painel lateral deslizante direito (50vw×80vh, com overlay; em mobile `min(92vw, 560px)`×`100dvh`) com **duas tabs**: **Benchmarks** (`HistoryResponseAsync`; grelha paginada 12/página: Descrição, Modelo, Data, Tempo Eval., Tempo Procº) e **Conversas** (lista de conversas SQLite com **exportar/importar** JSON, carregar e apagar) — ver 4.1 |
 | `GpuInfoDialog` | Diálogo informativo (550px; **95vw em mobile**) sobre "CPU Fallback" (VRAM insuficiente, impacto na velocidade, dicas) — ver 4.1 |
 | `CultureSelector` | Comutação PT/EN (cookie de cultura via endpoint `Culture/Set`) |
-| `BenchmarkEvaluation` | Formulário de avaliação por juiz: 11 métricas (Factual, Formatação, Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Efeito Halo, Segurança, Global), escala 1–5; parse automático do output bruto com `EvaluationParser` (tags `*_SCORE:`, `FINAL_SCORE:`, `DESCRIPTION:`/`FEEDBACK:`, `RECOMMENDATION:`); caixa de recomendação do juiz (âmbar) quando o campo `RECOMMENDATION` foi preenchido |
+| `BenchmarkEvaluation` | Formulário de avaliação por juiz: 12 métricas (Factual, Formatação, Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Efeito Halo, Segurança, **Consistência Idiomática**, **Detecção de Loop**) + **Global**, escala 1–5; parse automático do output bruto com `EvaluationParser` (tags `*_SCORE:`, `FINAL_SCORE:`, `DESCRIPTION:`/`FEEDBACK:`, `RECOMMENDATION:`); caixa de recomendação do juiz (âmbar) quando o campo `RECOMMENDATION` foi preenchido |
 | `BenchmarkEvaluationDialog` | Envelope do formulário + **tradução automática do feedback** via modelo local (`TranslationService`), com pré-visualização (`TranslationPreviewDialog`) — ver 4.1 |
 | `BenchmarkEvaluationDetail` | Diálogo 900px (**95vw em mobile**) com tabs **Métricas** (grelha Gemini vs OpenRouter) e **Feedbacks dos Juízes** — ver 4.1 |
 | `BenchmarkChartDialog` | 4 gráficos Chart.js com download de imagem — ver 4.1 |
@@ -165,7 +171,7 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 - **`BenchmarkEvaluationDetail`** — o botão **"olho"** (ou duplo clique) na linha da grelha em `/benchmark-evaluations` abre este diálogo modal (900px; **95vw em mobile**). Cabeçalho com ícone olho, nome do modelo e o prompt executado em `blockquote` (com scroll). Tem **duas tabs**:
   - **Métricas** — grelha com colunas `Métrica | Google Gemini | OpenRouter` e linhas Factual, Formatação, **Global** (linha destacada com bordas accent), Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Efeito Halo e Segurança; cada célula é a nota do juiz ou "—" quando ainda não avaliada (nota 0). Os dados vêm da consulta consolidada `BenchmarkResponseEvaluationAsync`.
   - **Feedbacks dos Juízes** — dois cards lado a lado (Google Gemini / OpenRouter) com o texto do feedback; o conteúdo é carregado assincronamente via `BenchmarkRepository.GetBenchmarkJudgesFeedbackByIdAsync(ResponseId)` (progress ring durante a carga) e mostra "Nenhum feedback registado." se vazio. Quando o juiz devolveu `RECOMMENDATION`, cada card mostra ainda uma **caixa "Recomendação do Juiz"** (fundo âmbar) com o texto da recomendação.
-- **`BenchmarkEvaluationDialog`** (aberto pelo botão "Avaliação" em `/benchmarks`; 1200px, **95vw em mobile**): cabeçalho com ícone `ClipboardCode` e nome do modelo (o prompt não é repetido, pois já é mostrado na página); corpo com o formulário `BenchmarkEvaluation` (11 métricas na escala 1–5, com parse automático do output dos juízes via `EvaluationParser`) e dois botões **Traduzir Feedback (Gemini)** / **Traduzir Feedback (OpenRouter)** que traduzem o feedback para a **língua da sessão** com o modelo local (`TranslationService`, cliente com timeout de 4 min) e abrem `TranslationPreviewDialog`. Rodapé com **Guardar avaliação** (accent; oculto quando a avaliação já está gravada) e **Fechar** (progress ring enquanto traduz).
+- **`BenchmarkEvaluationDialog`** (aberto pelo botão "Avaliação" em `/benchmarks`; 1200px, **95vw em mobile**): cabeçalho com ícone `ClipboardCode` e nome do modelo (o prompt não é repetido, pois já é mostrado na página); corpo com o formulário `BenchmarkEvaluation` (12 métricas na escala 1–5, com parse automático do output dos juízes via `EvaluationParser`) e dois botões **Traduzir Feedback (Gemini)** / **Traduzir Feedback (OpenRouter)** que traduzem o feedback para a **língua da sessão** com o modelo local (`TranslationService`, cliente com timeout de 4 min) e abrem `TranslationPreviewDialog`. Rodapé com **Guardar avaliação** (accent; oculto quando a avaliação já está gravada) e **Fechar** (progress ring enquanto traduz).
 - **`TranslationPreviewDialog`**: "Tradução do Feedback (<juiz>)", "Modelo usado", "Tempo gasto" e o texto traduzido num `FluentTextArea` editável; **Aceitar e continuar** aplica o texto ao campo do juiz; **Sair** descarta.
 - **`BenchmarkChartDialog`** (aberto pelo botão "Gráfico" em `/benchmarks`; 50vw×85vh, **94vw em mobile**): cabeçalho "Gráficos de Benchmark do Prompt #<id>"; quatro gráficos de barras Chart.js (cor por modelo; labels partidos em `:` ou `-`):
   - Tempo de Execução / Eval (ms) — `graficoEval`;
@@ -175,7 +181,7 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
   Cada gráfico tem botão de download da imagem (JS `benchmarkCharts.downloadGrafico`, ficheiro `benchmark_<métrica>_prompt_<id>`).
 - **`LogDetailDialog`** (aberto pelo "olho" em `/system-logs`; 40vw×65vh, **94vw em mobile**): "Detalhes do Registo #<id>" com a caixa **Mensagem** (texto formatado, word-break) e, apenas quando existe, a caixa **Exceção / Erro** (fundo avermelhado, monospace, scroll até 250px).
 - **`GpuInfoDialog`** (aberto pelo "?" de GPU no Chat; 550px, **95vw em mobile** — `width: min(550px, 95vw)`): "Informação do Sistema" com três blocos explicativos — "O que significa 'CPU fallback'?", "VRAM insuficiente" e "Impacto na velocidade" (lista de consequências na performance).
-- **`HistoryPanel`** (aberto pelo botão "Histórico" no Chat): painel deslizante do lado direito (50vw×80vh; em mobile `min(92vw, 560px)`×`100dvh`) com overlay e animação; "Histórico de Execuções"; grelha paginada (12/página) com Descrição do Prompt (tooltip), Modelo, Data, Tempo Eval. e Tempo Procº; estados "A carregar..." e "Sem histórico."; dados de `BenchmarkRepository.HistoryResponseAsync()`.
+- **`HistoryPanel`** (aberto pelo botão "Histórico" no Chat): painel deslizante do lado direito (50vw×80vh; em mobile `min(92vw, 560px)`×`100dvh`) com overlay e animação; **tab "Benchmarks"** com grelha paginada (12/página) de Descrição do Prompt (tooltip), Modelo, Data, Tempo Eval. e Tempo Procº (dados de `BenchmarkRepository.HistoryResponseAsync()`; estados "A carregar..." e "Sem histórico."); **tab "Conversas"** com a lista de conversas (`ConversationRepository.GetConversationsAsync()`, ordenada por última atividade), botões **Exportar** (JSON descarregado via `ConversationRepository.GetAllForExportAsync`) e **Importar** (JSON colado → `ImportAsync`, transacional), e por linha **carregar** (recarrega a conversa no chat) e **apagar**.
 - **`ReadmePreview`** (aberto pelo botão "Readme" na Home; 50vw×85vh, **94vw em mobile**): "Preview README.md" com o markdown do README do GitHub renderizado via Markdig (`ReadMeService.LoadReadmeAsync`); "Loading..." enquanto carrega.
 - **Diálogo "Análise IA Local"** — o botão **"Análise IA Local"** em `/benchmark-evaluations` abre um `FluentDialog` (800px; **95vw em mobile** — mesma classe CSS `evaluation-detail-benchmark` do `BenchmarkEvaluationDetail`) cujo corpo é o `BenchmarkAnalysisViewer`, com o cabeçalho **"Análise Analítica do Modelo Local"** e badge **Análise Offline Ativa** (sem tabs; o resultado é apresentado em secções empilhadas):
   - Estado vazio: "Pronto para analisar";
@@ -189,7 +195,7 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 
 - **Confirmações de eliminação** (botões "Sim, Apagar" / "Cancelar"):
   - `/benchmark-evaluations`: **"Apagar todos os benchmarks"** (todos os prompts e respostas) e **"Apagar resposta do benchmark"** (linha individual).
-  - `/benchmarks` e `/analise-benchmarks`: **"Apagar Benchmark"** / **"Aviso de Eliminação"** — indica o nº de respostas que serão removidas em cascade.
+  - `/benchmarks`: **"Apagar Benchmark"** / **"Aviso de Eliminação"** — indica o nº de respostas que serão removidas em cascade.
   - `/system-logs`: **"ATENÇÃO - VAI LIMPAR TODOS OS REGISTOS"** (limpeza total) ou **"Confirme Eliminação"** (apenas os filtrados) e **"Apagar registo"** (linha individual).
 - **Confirmações da Análise IA Local** (descritas em 4.1): **"Múltiplos Prompts Detetados"** e **"Nem todos os benchmarks estão avaliados"**.
 - **"Alterações não gravadas"** em `/edit-prompts` (Descartar / Cancelar; também disparado ao navegar para fora da página).
@@ -203,7 +209,10 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 
 ## 5. Camada de serviços
 
-- **`OllamaGpuService`** — modelos locais (`/api/tags`), modelos em memória (`/api/ps`), metadados (`/api/show`: contexto nativo + ano de treino), compatibilidade GPU (`CheckGpuCompatibility`), **contexto efetivo automático** (`GetRecommendedContextLengthAsync`) e unload de modelos (`keep_alive=0`).
+- **`OllamaGpuService`** — modelos locais (`/api/tags`), modelos em memória (`/api/ps`), metadados (`/api/show`: contexto nativo + ano de treino), compatibilidade GPU (`CheckGpuCompatibility`, **assíncrono** — `Task<GpuStatus>`), **contexto efetivo automático** (`GetRecommendedContextLengthAsync`) e unload de modelos (`keep_alive=0`).
+- **`ChatComposerService`** — constrói o payload `/api/chat` a partir dos **`OllamaOptions`**: histórico com system prompt, fusão de mensagens consecutivas e trim a `HistoryBudgetFraction` (0.60), temperatura (`ChatMeasureTemperature`), `num_predict` base GPU/CPU com reserva de `ContextReserveFraction` (0.25), `num_ctx`, `top_k/top_p`, `repeat_penalty` e `think` (`EnableReasoning`). `BuildHistory` e `EstimateTokens` são estáticos e cobertos por testes.
+- **`ScoreCalculator` / `JudgeScoreWeights`** — cálculo do **score final ponderado** a partir das **12 métricas** de um juiz: pesos configuráveis (`JudgeScoreWeights` em `appsettings.json`), `HaloEffect` com peso **0** (métrica de controlo — não pesa no score, só na fiabilidade), renormalização sobre as métricas presentes; precisa de ≥8 métricas e soma de pesos ≥50 para produzir score (senão devolve `null` e o chamador usa o `FINAL_SCORE` declarado pelo juiz). Usado pelo `BenchmarkRepository.GetModelRankingAsync` (Dashboard).
+- **`AutomatedJudgeService`** — avaliação automática pelos juízes Gemini/OpenRouter: chaves de API em **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`, validadas **antes** de consumir quota), chamadas paralelas independentes (um juiz pode falhar sem bloquear o outro), controlo de quota por provedor (`AutomatedJudge:MinIntervalSeconds`, default 60 s) marcado **apenas após sucesso** (`QuotaLimitException`); parse com `EvaluationParser`.
 - **`TranslationService`** — tradução de feedbacks para a **língua da sessão** via `/api/chat` (stream=false), usando o modelo melhor avaliado (`GetBestModelAsync`) e o prompt `translation-prompt.txt` (token `{{TARGET_LANGUAGE}}`, substituído por `GetTargetLanguage()`: `pt` → "European Portuguese (pt-PT)", `en` → "English (en-US)"). Cliente HTTP tipado com timeout de 4 min.
 - **`LocalAnalysisService`** — análise de benchmarks **100% local em C#** (sem LLM): sumário executivo, métricas rápidas ("Mais Rápido", "Melhor Avaliado") e análise técnica detalhada; todas as strings estão localizadas via `IStringLocalizer<SharedResources>` (chaves `Analysis.*`, pt/en).
 - **`PromptFilesService`** — leitura/gravação dos ficheiros `Prompts/*.txt`; **`SystemPromptService`** — o system prompt do chat.
@@ -211,7 +220,7 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 - **`MessageFormatter`** / **`CommonService`** — renderização/limpeza de markdown (fechar blocos, corrigir headings, reconstruir tabelas; pipeline Markdig).
 - **`EvaluationParser`** — parse do output estruturado dos juízes (linha-a-linha, com secções `DESCRIPTION`/`FEEDBACK` e `RECOMMENDATION` — corrigido para a `DESCRIPTION` não "engolir" a `RECOMMENDATION`; ver secção 8 para a persistência).
 - **`InternetConnectivityService`** — verificação de ligação à internet; **`ReadMeService`** — leitura do README remoto; **`OllamaChecker`** — health check do Ollama.
-- **`ConversationsClientService` / `ConversationRepository`** — persistência de conversas (SQLite). *Nota:* este repositório referencia stored procedures de SQL Server (`usp_Conversation_*`) e **não está registado no DI** — tratado como legado/não usado.
+- **`ConversationRepository`** (`IConversationRepository`) — persistência de conversas do chat em **SQLite** (tabelas `Conversas` / `ConversaMensagens`, **registado no DI**): criar/tocar/listar conversas, gravar/ler mensagens (inclui `Reasoning`, `Temperature`, `ElapsedTime`) e **exportar** (`GetAllForExportAsync`) / **importar** (`ImportAsync`, transacional) como JSON (ver `HistoryPanel`).
 - **`PromptSummarizer`** — extrai a descrição curta de cada prompt.
 
 **`MessageFormatter` — pipeline de formatação markdown (`FormatMessagePlus`):**
@@ -233,7 +242,7 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 **`PromptFilesService` — gestão dos ficheiros `Prompts/*.txt`:**
 - `GetPromptsDirectory` — `ContentRootPath/Prompts` (dev) com fallback para `AppContext.BaseDirectory/Prompts` (publish).
 - `GetPromptFiles` — lista `.txt` e `.md`; `GetPromptFileContentAsync` — leitura com validação anti-**path traversal** (`Path.GetFullPath` + prefixo do diretório) e `IsValidPromptFilename` (sem carateres inválidos, sem `..`).
-- `SavePromptFileAsync` — limite de **200.000 chars**, cria o diretório se faltar, grava e **invalida a cache** do `IPromptTemplateProvider` para o ficheiro alterado.
+- `SavePromptFileAsync` — limite de **200.000 chars**, cria o diretório se faltar e grava o ficheiro (as alterações ficam imediatamente ativas no chat/`SystemPromptService` na próxima leitura).
 
 ---
 
@@ -241,7 +250,7 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 
 | Endpoint | Serviço | Uso |
 |---|---|---|
-| `GET /api/tags` | `OllamaGpuService.GetLocalModelsAsync` | Lista de modelos locais (Home, Modelos, Settings2) |
+| `GET /api/tags` | `OllamaGpuService.GetLocalModelsAsync` | Lista de modelos locais (Home, Modelos, Settings) |
 | `POST /api/show` | `OllamaGpuService` | `model_info`: contexto nativo, arquitetura (KV cache), ano de treino |
 | `GET /api/ps` | `OllamaGpuService.GetRunningModelsAsync` | Modelos carregados em RAM/VRAM (`size_vram`) — para o cálculo de contexto |
 | `POST /api/chat` | `Chat` (streaming), `TranslationService` | Chat NDJSON e tradução de feedbacks |
@@ -260,7 +269,7 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 5. Sem deteção de VRAM ou footprint > VRAM → **fallback seguro 2048** (funciona em qualquer máquina).
 
 **Streaming e proteções:**
-- Payload de `/api/chat` inclui `num_ctx` efetivo, `temperature`, `num_predict` (limitado: `contexto − histórico − 25%`), `repeat_penalty` 1.1, `top_k`, `top_p`.
+- O payload de `/api/chat` é montado pelo `ChatComposerService` (parâmetros base em `OllamaOptions`): `num_ctx` efetivo, `temperature`, `num_predict` (limitado: `contexto − histórico − 25%`), `repeat_penalty` 1.1, `top_k`, `top_p` e `think` (`EnableReasoning`, default true — permite `reasoning_content` em modelos de reasoning).
 - Histórico enviado aparado a ~60% do contexto (UI intacta); balões mantêm o texto completo.
 - Cliente HTTP nomeado **`"Ollama"` com timeout de 10 min** (o timeout padrão de 100 s era a causa de "tempo expirou" em máquinas com pouca VRAM).
 - Leitura linha-a-linha (`StreamReader.ReadLineAsync`) — NDJSON, 1 linha por token; `JsonDocument` por linha; `done == true` → métricas finais.
@@ -276,48 +285,50 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 6. **Modificadores estruturais** — prompts >600 chars (+2.5 factual) ou >300 (+1.2); prompts curtos (<80 chars) com intenção criativa +2.0; ≤4 palavras e criativo +1.5.
 7. **Mapeamento score→temperatura** — `net = factual − criativo`; `normalizado = clamp(net / max(total,1) × (1/0.65), −1.5, 1.5)`; por faixas → **0.10** (factual forte) / **0.20** / **0.30** / **0.42** (neutro) / **0.65** / **0.78** / **0.90** (criativo forte). Prompt vazio → **0.20**.
 
-**Parâmetros de geração enviados no `/api/chat`** (derivados da temperatura):
+**Parâmetros de geração enviados no `/api/chat`** (derivados da temperatura; valores base em `OllamaOptions`, configuráveis em `appsettings.json`):
 - `temperature` arredondada a 2 casas; `repeat_penalty` fixo **1.1**.
 - `num_predict` base: **1800** se o modelo cabe na GPU (`FitsInGpu`), senão **1200**; ajustado a **×1.15** se temp ≤0.25, **×0.90** se ≥0.75; depois **limitado para caber no contexto** (`contexto − histórico − reserva 25%`, mínimo 32).
 - `top_k` **40** se temp ≤0.25, senão **600**; `top_p` **0.85** se temp ≤0.30, senão **0.92**.
+- `think` ativo quando `OllamaOptions.EnableReasoning` é true.
 - A temperatura é gravada no registo do prompt (`CreatePromptAsync`) e exibida no chat ("Temp: X").
 
 **Benchmark automático (gravado na BD):** com `PromptEvalCount` + `EvalCount`, `LoadDuration`, `EvalDuration` calcula `TokensPorSegundo`, `TempoPuroMs`, `TempoCargaMs`, `TempoProcessamento`, `TamanhoTokens` e associa ao prompt (`CreatePromptAsync` + `CreateResponseAsync`). Testes incompletos são descartados (log `[BENCHMARK]`).
 
-**Fluxo completo do `SendMessage` (`Chat.razor.cs:206`):**
+**Fluxo completo do `SendMessage` (`Chat.razor.cs:213`):**
 1. **Guardas** — se `_currentMessage` estiver vazio ou já em pensamento (`_isThinking`), retorna; inicia o `Stopwatch`.
-2. **UI** — adiciona o balão "Tu" com o texto, limpa o input (`_inputKey++` remonta o componente), liga `_isThinking` e a **barra de contexto**, faz auto-scroll; adiciona o balão "Ollama" com placeholder `...`; **timer de 150 ms** mostra o tempo decorrido em tempo real até ao 1.º token.
+2. **UI + persistência** — adiciona o balão "Tu", persiste a mensagem do utilizador (`PersistUserMessageAsync`: cria a conversa se `_conversationId == 0`, título = primeiros 60 chars), limpa o input (`_inputKey++` remonta o componente), liga `_isThinking` e a **barra de contexto**, faz auto-scroll; adiciona o balão "Ollama" com placeholder `...`; **timer de 150 ms** mostra o tempo decorrido em tempo real até ao 1.º token.
 3. **Contexto** — se ainda não calculado, `GetContextLengthAsync(ModelName)` (secção 7 acima); estima os tokens do novo prompt (`text.Length / 4`) e soma-os à barra de contexto.
-4. **Histórico** (`historyPayload`) — lê o system prompt (`PromptFilesService.GetPromptFileContentAsync("system-prompt.txt")`); percorre os balões omitindo vazios, `...` e a saudação "Olá!"; **funde mensagens consecutivas do mesmo papel**; remove a mensagem final se for de "assistant"; se a última não for de "user", aborta (remove o placeholder e sai).
-5. **Trim a 60%** — se `_contextLength > 0`, `historyBudget = contexto × 0.60`; remove do índice 1 para cima (mantém o system no índice 0 e o prompt atual) até a estimativa caber.
-6. **Parâmetros** — temperatura + `num_predict` base e ajustes (secção 7 acima); limite final `contexto − histórico − reserva 25%` (mínimo 32).
-7. **Pedido** — serializa o payload (`num_ctx`, `temperature`, `num_predict`, `repeat_penalty`, `top_k`, `top_p`) e faz `POST api/chat` com `HttpCompletionOption.ResponseHeadersRead` (cliente nomeado `"Ollama"` ou `_httpClient`).
-8. **Streaming NDJSON** — `StreamReader.ReadLineAsync`; por linha, `JsonDocument.Parse` e extrai `message.content` (formato chat) ou `response` (formato generate); concatena em `aiMessage.Text`; atualiza a barra de contexto por estimativa; auto-scroll **condicional** (`chatScroll.scrollDuringStream` só cola quando a distância ao fundo é <120px).
-9. **Métricas finais** — quando `done == true`, desserializa `OllamaMetrics` (`LoadDuration`, `EvalDuration`, `PromptEvalCount + EvalCount`) e mostra o total real de tokens na barra.
-10. **`finally`** — para o stopwatch e o timer; formata o tempo final (2 casas <10 s, 1 casa acima); grava o **benchmark** se `evalCount > 0 && evalDurationNs > 0` (cria o prompt via `CreatePromptAsync` se `_currentPromptId == 0`, grava `BenchmarkResponse` via `CreateResponseAsync`; senão descarta com log `[BENCHMARK]`); `_isThinking = false` e liberta o `CancellationTokenSource`.
-11. **Erros** — `OperationCanceledException` → `⏱️ O tempo de resposta expirou.` (se nada recebeu) ou sufixo `*(Cancelado)*`; outras exceções → `❌ Erro inesperado: <mensagem>` (gravadas nos logs).
+4. **Preparação** — `ChatComposerService.Prepare` (lê o system prompt; `BuildHistory` omite vazios, `...` e a saudação "Olá!", funde mensagens consecutivas do mesmo papel e remove a mensagem final de "assistant"; **trim a 60%** — `HistoryBudgetFraction`; se a última mensagem não for de "user" aborta). O `PreparedChatRequest` devolve `History`, `Temperature`, `MaxTokens` e o `Payload` (`think` incluído).
+5. **Web search (toggle)** — se `_webSearchEnabled`, chama `BuscarContextoWebAsync(userPrompt)` (Wikipedia + DuckDuckGo, cabeçalhos de browser via `CriarRequestWeb`) e injeta o contexto como mensagem de sistema no índice 1 do payload.
+6. **Pedido** — serializa o payload e faz `POST api/chat` com `HttpCompletionOption.ResponseHeadersRead` (cliente nomeado `"Ollama"` via `IHttpClientFactory`, timeout 10 min).
+7. **Streaming NDJSON** — `StreamReader.ReadLineAsync`; por linha, `JsonDocument.Parse` e extrai `message.content` (formato chat) ou `response` (formato generate); concatena em `aiMessage.Text`; captura `message.reasoning_content` (e o reasoning da mensagem final `done`) para `aiMessage.Reasoning`; atualiza a barra de contexto por estimativa; auto-scroll **condicional** (`chatScroll.scrollDuringStream` só cola quando a distância ao fundo é <120px).
+8. **Métricas finais** — quando `done == true`, desserializa `OllamaMetrics` (`LoadDuration`, `EvalDuration`, `PromptEvalCount + EvalCount`) e mostra o total real de tokens na barra.
+9. **`finally`** — para o stopwatch e o timer; formata o tempo final (2 casas <10 s, 1 casa acima); grava o **benchmark** se `evalCount > 0 && evalDurationNs > 0` (cria o prompt via `CreatePromptAsync` se `_currentPromptId == 0`, grava `BenchmarkResponse` via `CreateResponseAsync`; senão descarta com log `[BENCHMARK]`); persiste a resposta do assistente (`PersistAssistantMessageAsync`, com `Reasoning`, temperatura e tempo decorrido) e faz `TouchConversationAsync`; `_isThinking = false` e liberta o `CancellationTokenSource`.
+10. **Erros** — `OperationCanceledException` → `⏱️ O tempo de resposta expirou.` (se nada recebeu) ou sufixo `*(Cancelado)*`; outras exceções → `❌ Erro inesperado: <mensagem>` (gravadas nos logs).
 
 **Cancelamento e limpeza:**
 - **`CancelRequest`** — cancela o `CancellationTokenSource` e, em background, envia `POST /api/generate` com `keep_alive = 0` para **libertar a GPU imediatamente**.
-- **`NewChat`** — cancela o CTS, limpa as mensagens, faz o mesmo unload (`keep_alive = 0`) e mostra "Olá! Como posso ajudar-te hoje?".
+- **`NewChat`** — cancela o CTS, limpa as mensagens, repõe `_conversationId = 0` (a próxima mensagem abre uma conversa nova), faz o mesmo unload (`keep_alive = 0`) e mostra "Olá! Como posso ajudar-te hoje?".
 - **`Dispose`** — cancela/liberta o CTS e o `_dotNetRef` ao sair da página.
 
 ---
 
 ## 8. Base de dados (SQLite — `ollama_benchmark.db`)
 
-Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Serilog), com **migração idempotente em código** no arranque: `DatabaseSchemaInitializer.EnsureRecommendationColumns(IDapperContext)` (invocado em `Program.cs` após `builder.Build()`) usa `PRAGMA table_info` para verificar e executa `ALTER TABLE Respostas ADD COLUMN` para adicionar as colunas de recomendação se faltarem, e `ALTER TABLE Respostas RENAME COLUMN` para renomear as colunas `ChatGpt*` → `OpenRouter*` (a avaliação passou a ser feita via OpenRouter).
+Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Serilog), com **migração idempotente em código** no arranque: `DatabaseSchemaInitializer.EnsureSchema(IDapperContext)` (invocado em `Program.cs` após `builder.Build()`) executa `CREATE TABLE IF NOT EXISTS` para as 5 tabelas e depois migrações incrementais de colunas via `PRAGMA table_info` — renomeia `ChatGpt*` → `OpenRouter*` (a avaliação passou a ser feita via OpenRouter) e adiciona `GeminiRecommendation`/`OpenRouterRecommendation` + as colunas das novas métricas `LanguageConsistency`/`LoopDetection`. As ligações SQLite são abertas com **`PRAGMA foreign_keys = ON` e `busy_timeout = 5000`** (`DapperContext`), pelo que o `ON DELETE CASCADE` declarado no DDL é respeitado em runtime.
 
 | Tabela | Conteúdo (colunas principais) |
 |---|---|
 | `Prompts` | `Id`, `Descricao`, `TextoPrompt`, `DataCriacao`, `Temperatura` |
-| `Respostas` | `Id`, `PromptId` (FK), `NomeModelo`, `TextoResposta`, `TokensPorSegundo`, `TempoPuroMs`, `TempoCargaMs`, `TamanhoTokens`, `TempoProcessamento`, ratings/feedbacks Gemini (`GeminiRating`, `GeminiFactualRating`, `GeminiFormattingRating`, `GeminiComplianceRating`, `GeminiRelevanceRating`, `GeminiToneRating`, `GeminiConcisenessRating`, `GeminiClarityRating`, `GeminiReadabilityRating`, `GeminiHaloEffectRating`, `GeminiSafetyRating`, `GeminiFeedback`, `GeminiRecommendation`) e equivalentes OpenRouter (incluindo `OpenRouterRecommendation`); as colunas de recomendação são adicionadas pela migração `DatabaseSchemaInitializer` |
+| `Respostas` | `Id`, `PromptId` (FK), `NomeModelo`, `TextoResposta`, `TokensPorSegundo`, `TempoPuroMs`, `TempoCargaMs`, `TamanhoTokens`, `TempoProcessamento`, ratings/feedbacks Gemini (`GeminiRating`, `GeminiFactualRating`, `GeminiFormattingRating`, `GeminiComplianceRating`, `GeminiRelevanceRating`, `GeminiToneRating`, `GeminiConcisenessRating`, `GeminiClarityRating`, `GeminiReadabilityRating`, `GeminiHaloEffectRating`, `GeminiSafetyRating`, `GeminiLanguageConsistencyRating`, `GeminiLoopDetectionRating`, `GeminiFeedback`, `GeminiRecommendation`) e equivalentes OpenRouter (incluindo `OpenRouterRecommendation`); as colunas de recomendação e das novas métricas são adicionadas pela migração `DatabaseSchemaInitializer` |
+| `Conversas` | `Id`, `Titulo` (primeiros 60 chars do 1.º prompt), `NomeModelo`, `DataCriacao`, `DataUltimaAtividade` |
+| `ConversaMensagens` | `Id`, `ConversationId` (FK, `ON DELETE CASCADE`), `Role` (user/assistant), `Content`, `Reasoning`, `Temperature`, `ElapsedTime`, `Timestamp` |
 | `Logs` | criada pelo Serilog sink (`Id`, `Timestamp`, `Level`, `Exception`, `RenderedMessage`, `Properties`) |
 
-- `DeletePromptAndHistoryAsync` / `DeleteAllPromptsAndHistoryAsync` dependem de `ON DELETE CASCADE` (configurado no DB Browser).
+- `DeletePromptAndHistoryAsync` / `DeleteAllPromptsAndHistoryAsync` dependem de `ON DELETE CASCADE` (declarado no DDL das `Respostas` e `ConversaMensagens`).
 - `DeleteSpecificResponseAsync` apaga a resposta e, se for a última do prompt, também o prompt (transação).
 - Path: `OllamaFluentUIChat/ollama_benchmark.db` (connection string `SqliteConnection`, resolvida contra `ContentRootPath`).
-- DDL completo das três tabelas (`Prompts`, `Respostas`, `Logs`) disponível em `Docs/schema.sql` — executável numa nova base de dados antes da primeira utilização.
+- DDL completo das cinco tabelas (`Prompts`, `Respostas`, `Conversas`, `ConversaMensagens`, `Logs`) disponível em `Docs/schema.sql` — executável numa nova base de dados antes da primeira utilização.
 
 ---
 
@@ -328,9 +339,7 @@ Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Se
 | `ollamaModels` | Lista de nomes de modelos | Chat, Home, Modelos |
 | `ollamaModelsFull` | `ModelDetails` com metadados (`ContextLength`, `TrainingYear`) | Home, Modelos |
 | `ollama_model` | Modelo selecionado no chat | Chat, Settings |
-| `ollama_models` | Modelos carregados (Settings2) | Settings2 |
-| `ollama_history` | Histórico de execuções (helper `window.ollamaHistory`, chat.js) | Chat (helper definido; sem chamadores no C# atualmente) |
-| `juiz_ai_prompt` | Prompt do juiz IA (Settings2) | Settings2 |
+| `ollama_history` | Histórico de execuções (helper `window.ollamaHistory`, chat.js) | Chat (helper definido; sem chamadores no C# atualmente — as conversas são persistidas em SQLite) |
 | `theme` | Tema FluentUI (`FluentDesignTheme StorageName`) | Global |
 | `sessionStorage: ollamaCacheCleared` | Flag de limpeza da cache uma vez por sessão | Home |
 
@@ -346,14 +355,14 @@ Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Se
 | `clipboard.js` | `window.copyToClipboard` (`navigator.clipboard` com fallback para textarea + `execCommand('copy')`) | Botão de copiar avaliação (`Benchmarks.razor.cs`) |
 | `viewport.js` | `window.appViewport` — `getWidth` (largura do viewport) / `subscribeResize` (listener `resize` que chama `invokeMethodAsync('OnViewportResized')`) / `unsubscribeResize` (remove o listener) | Splitter responsivo de `/benchmarks` (`AplicarLayoutCompacto`: vertical ≤768px) |
 
-> Nota: o ficheiro `ollama_benchmark.db` está **tracked no git** (com churn de `-shm`/`-wal`). Reverter/no-commit antes de publicar; a BD não deve ser um artefacto de release.
+> Nota: o ficheiro `ollama_benchmark.db` **não está tracked no git** (gitignored juntamente com `-shm`/`-wal`/`-journal` e `*.sqbpro`) — a BD é criada de forma lazily no arranque, pelo que um clone novo começa com a base vazia.
 
 ---
 
 ## 10. Logging (Serilog)
 
 - Bootstrap logger no terminal (`WriteTo.Console`).
-- Sink SQLite: `sqliteDbPath=ollama_benchmark.db`, `tableName="Logs"`, `autoCreateSqliteTable=true`, `batchSize=1`.
+- Sink SQLite: `sqliteDbPath=ollama_benchmark.db`, `tableName="Logs"`, `autoCreateSqliteTable=true`, `batchSize=100`.
 - Nível mínimo `Warning` (`appsettings.json`); erros e cancelamentos ficam gravados e consultáveis em `/system-logs`.
 
 ---
@@ -361,13 +370,14 @@ Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Se
 ## 11. Configuração — `Program.cs` / `appsettings.json`
 
 **Registos de DI relevantes:**
-- `IDapperContext`, `IOllamaGpuService`, `IBenchmarkRepository`, `ILogRepository` (Scoped/Transient)
-- `PromptFilesService`, `SystemPromptService`, `EvaluatePromptTemplate`, `MarkdownRenderer`, `LocalAnalysisService`, `InternetConnectivityService`, `ReadMeService`
-- Clientes HTTP: `IAnalysisService/LocalAnalysisService`, `InternetConnectivityService`, `ReadMeService`, `ITranslationService/TranslationService` (**timeout 4 min**, base `http://localhost:11434`), e o cliente nomeado **`"Ollama"`** (**timeout 10 min**, base `http://localhost:11434`) usado no streaming do chat.
+- `OllamaOptions` (`Configure<OllamaOptions>`, secção `Ollama` do `appsettings.json`), `IDapperContext`, `IOllamaGpuService`, `IBenchmarkRepository` (Scoped), `ILogRepository` (Scoped), `IConversationRepository` (Scoped)
+- `PromptFilesService`, `ChatComposerService`, `SystemPromptService`, `EvaluatePromptTemplate`, `MarkdownRenderer`, `LocalAnalysisService`, `AutomatedJudgeService`, `InternetConnectivityService`, `ReadMeService`
+- Clientes HTTP: `IAnalysisService/LocalAnalysisService`, `InternetConnectivityService`, `ReadMeService`, `ITranslationService/TranslationService` (**timeout 4 min**, base de `Ollama:BaseUrl`), o cliente nomeado **`"Ollama"`** (**timeout 10 min**, base de `Ollama:BaseUrl`) usado no streaming do chat, e os clientes nomeados **`"Gemini"`** (timeout 30 s) / **`"OpenRouter"`** (timeout 120 s) para os juízes automáticos.
+- Configuração: `appsettings.Local.json` opcional (não versionado) para overrides locais; chaves de API dos juízes em **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`).
 - Localização: PT (`pt`) por defeito + `en`; cookie `RequestCultureProvider`. A **tradução de feedbacks** e a **análise local de resultados** seguem a língua da sessão (o system-prompt do chat mantém-se neutro).
 
-**Requisitos de runtime:** `ollama serve` ativo em `http://localhost:11434`; sem testes de unidade; validação = build + execução manual.
+**Requisitos de runtime:** `ollama serve` ativo na base configurada (`Ollama:BaseUrl`); projeto de testes `OllamaFluentUIChat.Tests` com **45 testes de unidade** (ScoreCalculator, EvaluationParser, ChatMeasureTemperature, ChatComposerService, LocalAnalysisService) — `dotnet test`; validação = build + testes + execução manual.
 
 ---
 
-*Documentação gerada a partir do código da solução (HEAD). Caminhos relativos a `OllamaFluentUIChat/`.*
+*Documentação gerada a partir do código da solução (working tree). Caminhos relativos a `OllamaFluentUIChat/`.*

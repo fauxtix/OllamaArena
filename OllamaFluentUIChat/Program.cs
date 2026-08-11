@@ -20,7 +20,8 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    // Ficheiro local não versionado para chaves de API (appsettings.Local.json no .gitignore)
+    // Ficheiro local não versionado para overrides de configuração
+    // (as chaves de API vivem em user-secrets: `dotnet user-secrets set "ApiKeys:Gemini" "<valor>"`)
     builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 
     // Localização
@@ -35,7 +36,7 @@ try
         .WriteTo.SQLite(
             sqliteDbPath: dbPath,
             tableName: "Logs",
-            batchSize: 1
+            batchSize: 100
         ));
 
     builder.Services.AddRazorComponents()
@@ -45,12 +46,16 @@ try
 
     builder.Services.AddFluentUIComponents();
 
+    builder.Services.Configure<OllamaOptions>(builder.Configuration.GetSection(OllamaOptions.SectionName));
+    var ollamaBaseUrl = builder.Configuration["Ollama:BaseUrl"] ?? "http://localhost:11434";
+
     builder.Services.AddTransient<IDapperContext, DapperContext>();
     builder.Services.AddTransient<IOllamaGpuService, OllamaGpuService>();
 
     builder.Services.AddTransient<ISystemPromptService, SystemPromptService>();
     builder.Services.AddTransient<IPromptTemplateProvider, PromptTemplateProvider>();
     builder.Services.AddTransient<PromptFilesService>();
+    builder.Services.AddTransient<ChatComposerService>();
     builder.Services.AddTransient<EvaluatePromptTemplate>();
 
     builder.Services.AddHttpClient<IAnalysisService, LocalAnalysisService>();
@@ -65,10 +70,13 @@ try
     builder.Services.AddHttpClient("OpenRouter", client => client.Timeout = TimeSpan.FromSeconds(120));
     builder.Services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
     builder.Services.AddScoped<ILogRepository, LogRepository>();
+    builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
+
+    builder.Services.AddHttpClient();
 
     builder.Services.AddHttpClient<ITranslationService, TranslationService>(client =>
     {
-        client.BaseAddress = new Uri("http://localhost:11434");
+        client.BaseAddress = new Uri(ollamaBaseUrl);
         client.Timeout = TimeSpan.FromMinutes(4);
         client.DefaultRequestHeaders.Add("Accept", "application/json");
     });
@@ -77,7 +85,7 @@ try
     // pode demorar muito tempo antes de devolver o primeiro byte (carregamento + KV cache).
     builder.Services.AddHttpClient("Ollama", client =>
     {
-        client.BaseAddress = new Uri("http://localhost:11434");
+        client.BaseAddress = new Uri(ollamaBaseUrl);
         client.Timeout = TimeSpan.FromMinutes(10);
         client.DefaultRequestHeaders.Add("Accept", "application/json");
     });
@@ -87,7 +95,7 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<IDapperContext>();
-        DatabaseSchemaInitializer.EnsureRecommendationColumns(context);
+        DatabaseSchemaInitializer.EnsureSchema(context);
     }
 
     if (!app.Environment.IsDevelopment())
@@ -111,13 +119,6 @@ try
     app.UseRouting();
     // ---------------------------------
 
-    app.MapGet("/culture-reload", (string redirectUri) =>
-    {
-        return Results.Content($@"
-        <html><body>
-        <script>location.replace('{redirectUri}');</script>
-        </body></html>", "text/html");
-    });
     app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
     app.UseHttpsRedirection();
     app.UseAntiforgery();

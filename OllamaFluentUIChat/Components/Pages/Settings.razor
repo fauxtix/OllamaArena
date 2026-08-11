@@ -2,9 +2,11 @@
 @using Microsoft.Extensions.Localization
 @using Microsoft.FluentUI.AspNetCore.Components.Extensions
 @using OllamaFluentUIChat.Resources
+@using OllamaFluentUIChat.Services.Interfaces.Services
 @rendermode InteractiveServer
 @inject IStringLocalizer<SharedResources> L
 @inject IJSRuntime JS
+@inject IOllamaGpuService OllamaService
 
 <FluentDesignTheme @bind-Mode="@Mode"
                    @bind-OfficeColor="@OfficeColor"
@@ -43,57 +45,85 @@
             <FluentButton Appearance="Appearance.Accent" OnClick="PickRandomColor">@L["Settings.FeelingLucky"]</FluentButton>
         </FluentGridItem>
 
-        @* NOVO: Configuração do Modelo do Ollama *@
+        @* Configuração do Modelo do Ollama *@
         <FluentGridItem xs="12" Style="margin-top: 20px;">
             <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Bottom" Style="gap: 12px; flex-wrap: wrap;">
-                <FluentSelect Label="@L["Settings.ModelLabel"]"
-                              Class="settings-select"
-                              Width="250px"
-                              Items="@_availableModels"
-                              @bind-SelectedOption="@_selectedModel" />
+                @if (_isLoading)
+                {
+                    <FluentProgressRing />
+                }
+                else
+                {
+                    <FluentSelect Label="@L["Settings.ModelLabel"]"
+                                  Class="settings-select"
+                                  Width="250px"
+                                  Items="@_availableModels"
+                                  @bind-SelectedOption="@_selectedModel" />
 
-                <FluentButton Appearance="Appearance.Accent" OnClick="SaveModelAsync">
-                    @L["Settings.SaveModel"]
-                </FluentButton>
+                    <FluentButton Appearance="Appearance.Accent" OnClick="SaveModelAsync">
+                        @L["Settings.SaveModel"]
+                    </FluentButton>
+                }
             </FluentStack>
+            @if (!_isLoading && _availableModels.Count == 0)
+            {
+                <FluentLabel Style="color: var(--neutral-foreground-hint); margin-top: 8px;">
+                    @L["Settings.NoModels"]
+                </FluentLabel>
+            }
         </FluentGridItem>
     </FluentGrid>
-
-    <FluentStack Style="margin: 30px 0px; padding: 30px; border: 1px solid var(--accent-fill-rest);">
-        <FluentIcon Value="@(new Icons.Regular.Size24.Airplane())" />
-        <FluentLabel>@L["Settings.ExampleContent"]</FluentLabel>
-        <FluentButton Appearance="Appearance.Outline">@L["Settings.OutlineButton"]</FluentButton>
-        <FluentButton Appearance="Appearance.Accent">@L["Settings.AccentButton"]</FluentButton>
-    </FluentStack>
 </div>
 
 @code
 {
     public DesignThemeModes Mode { get; set; }
     public OfficeColor? OfficeColor { get; set; }
-    // Variáveis para os Modelos
-    private List<string> _availableModels = new() { "phi4-mini:latest", "mistral:latest", "qwen3.5:latest" };
-    private string _selectedModel = "phi4-mini:latest";
 
-    // Quando a página carrega, lê o modelo que estava guardado
+    private List<string> _availableModels = new();
+    private string _selectedModel = "";
+    private bool _isLoading = true;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (!firstRender) return;
+
+        try
         {
-            try
+            _availableModels = new List<string>();
+            var response = await OllamaService.GetLocalModelsAsync();
+            foreach (var model in response?.Models ?? new())
             {
-                var savedModel = await JS.InvokeAsync<string>("localStorage.getItem", "ollama_model");
-                if (!string.IsNullOrEmpty(savedModel) && _availableModels.Contains(savedModel))
-                {
-                    _selectedModel = savedModel;
-                    StateHasChanged();
-                }
+                if (!string.IsNullOrWhiteSpace(model?.Name))
+                    _availableModels.Add(model.Name);
             }
-            catch { }
+
+            _selectedModel = await LoadSelectedModelAsync() ?? string.Empty;
+            if (string.IsNullOrEmpty(_selectedModel) && _availableModels.Count > 0)
+            {
+                _selectedModel = _availableModels[0];
+            }
+        }
+        catch
+        {
+            _availableModels = new();
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
         }
     }
 
-    // Grava o modelo escolhido no localStorage
+    private async Task<string?> LoadSelectedModelAsync()
+    {
+        try
+        {
+            return await JS.InvokeAsync<string>("localStorage.getItem", "ollama_model");
+        }
+        catch { return null; }
+    }
+
     private async Task SaveModelAsync()
     {
         try

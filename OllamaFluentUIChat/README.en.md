@@ -41,10 +41,11 @@ Turn every conversation into a scientific test. Every time you send a message, t
 With this data collected automatically, you can:
 
 - Browse the **complete history of all tests** in an organized table, with search and filters (All, Pending Review, Reviewed);
-- **Assess quality with two AI judges** — rate your models' responses from 1 to 5 across 11 criteria (factuality, formatting, clarity, safety, etc.) using the **Gemini** and **OpenRouter** judges, also saving each judge's **recommendation**;
+- **Assess quality with two AI judges** — rate your models' responses from 1 to 5 across 12 criteria (factuality, formatting, clarity, safety, etc.) using the **Gemini** and **OpenRouter** judges, also saving each judge's **recommendation**;
 - **Analyse results 100% locally** — the app produces a smart summary with conclusions and performance recommendations (pure C# analysis, no cloud dependency);
 - **Export results to Excel**, with reports grouped by question, ready to share;
 - Compare the responses of **several models side by side** for the same question, in the Quality and Metrics panel;
+- Check the **Dashboard** with the aggregated per-model ranking — the overall best model and each one's weighted score (12 metrics);
 - Manage your records, deleting individual tests or the entire history whenever you want.
 
 ## ⚖️ Evaluation by the Two Judges (Gemini & OpenRouter)
@@ -53,7 +54,7 @@ The app integrates a structured external audit process in the **Benchmarks** pan
 
 1. **Evaluate Automatically:** The user accesses the response of a specific model and clicks the **"Evaluate automatically"** button. The app first checks the internet connection (the judges are cloud services) and then internally generates the audit prompt and submits it to both judges; without internet, it warns the user and suggests the manual process via **"Copy prompt"**.
 2. **Critical Context Injected:** The generated prompt automatically includes smart metadata (such as the local model's training year) under the `[CRITICAL CONTEXT]` marker, instructing the external judge not to penalize the model for lacking knowledge of future events.
-3. **Direct API Calls:** The app sends the prompt to both judges **in parallel** — **Gemini** (`gemini-flash-latest`) and **OpenRouter** (`openrouter/free`) — using the keys configured in `appsettings.Local.json` (section `ApiKeys`). A minimum interval between evaluations (configurable via `AutomatedJudge:MinIntervalSeconds`, 60s by default) protects the free-tier API limits.
+3. **Direct API Calls:** The app sends the prompt to both judges **in parallel** — **Gemini** (`gemini-flash-latest`) and **OpenRouter** (`openrouter/free`) — using the keys configured in **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`; `appsettings.Local.json` is optional for local overrides). A minimum interval between evaluations (configurable via `AutomatedJudge:MinIntervalSeconds`, 60s by default) protects the free-tier API limits.
 4. **Evaluation Screen Opens Pre-filled:** As soon as the judges reply, the evaluation screen opens **already filled in** with the metrics (1-5 scale), the *Global* score, the feedback and each judge's **RECOMMENDATION** — ready to review and save.
 5. **Partial Failure Handling:** If one of the judges fails (rate limit, network or invalid key), a warning identifies which one failed and that judge's fields remain editable for manual pasting. The **"Copy prompt"** button remains available for the manual process.
 6. **Translation and Consolidation:** The user can use the **"Translate Feedback"** option to view a read-only preview of the analyses translated into the language currently active in the interface (Portuguese or English) — the translated text is informational only and does not modify the feedback field. Finally, click **"Save evaluation"** to persist all data permanently in the Database; the button is disabled once the record has already been saved (read-only).
@@ -95,7 +96,7 @@ Save time on repetitive tasks:
 
 ## 🧭 User Experience
 
-Navigation is simple. The side menu shows every section of the app: **Chat**, **Benchmarks**, **Quality and Metrics**, **Loaded Models**, **Prompts** and **Logs**.
+Navigation is simple. The side menu shows every section of the app: **Chat**, **Benchmarks**, **Quality and Metrics**, **Dashboard**, **Loaded Models**, **Prompts** and **Logs**.
 
 - **Fully responsive**: the interface adapts automatically to any screen size. On phones (≤768px), the side menu becomes a slide-in drawer opened from the hamburger icon in the header; dialogs, data tables, the chat and the benchmark panel splitter adjust to ensure a great experience on any device.
 - **Chat**: open the Chat, type your message in the text box and press <kbd>Enter</kbd> or the send button. Responses appear in real time and each one shows how long it took. Use **History** to resume previous conversations and **New Chat** to start over.

@@ -1,17 +1,13 @@
-﻿using OllamaFluentUIChat.Services.Providers;
-
-namespace OllamaFluentUIChat.Services;
+﻿namespace OllamaFluentUIChat.Services;
 
 public class PromptFilesService
 {
     private readonly ILogger<PromptFilesService> _logger;
-    private readonly IPromptTemplateProvider _promptProvider;
     private readonly IHostEnvironment _environment;
 
-    public PromptFilesService(ILogger<PromptFilesService> logger, IPromptTemplateProvider promptProvider, IHostEnvironment environment)
+    public PromptFilesService(ILogger<PromptFilesService> logger, IHostEnvironment environment)
     {
         _logger = logger;
-        _promptProvider = promptProvider;
         _environment = environment;
     }
 
@@ -89,8 +85,6 @@ public class PromptFilesService
                 throw new InvalidOperationException("Invalid filename.");
 
             await File.WriteAllTextAsync(file, content, cancellationToken);
-
-            _promptProvider.Invalidate(fileName);
 
             _logger.LogInformation("Saved prompt file: {File}", file);
         }

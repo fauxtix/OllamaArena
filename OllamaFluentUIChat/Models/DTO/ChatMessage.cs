@@ -9,5 +9,6 @@
         public bool IsCurrentUser { get; set; }
         public string? ElapsedTime { get; set; }
         public double Temperature { get; set; }
+        public string? Reasoning { get; set; }
     }
 }

@@ -1,19 +1,16 @@
-﻿using System.Collections.Concurrent;
-using System.Text;
+﻿using System.Text;
 
 namespace OllamaFluentUIChat.Services.Providers;
 
 public interface IPromptTemplateProvider
 {
     Task<string> GetTemplateAsync(string templateName, CancellationToken cancellationToken = default);
-    void Invalidate(string templateName);
 }
 
 public sealed class PromptTemplateProvider : IPromptTemplateProvider
 {
     private readonly ILogger<PromptTemplateProvider> _logger;
     private readonly string _promptsRoot;
-    private readonly ConcurrentDictionary<string, string> _cache = new(StringComparer.OrdinalIgnoreCase);
 
     public PromptTemplateProvider(ILogger<PromptTemplateProvider> logger)
     {
@@ -43,12 +40,6 @@ public sealed class PromptTemplateProvider : IPromptTemplateProvider
             _logger.LogError(ex, "Failed to load prompt template {TemplateName} from {PromptsRoot}", templateName, _promptsRoot);
             throw;
         }
-    }
-
-    public void Invalidate(string templateName)
-    {
-        if (!string.IsNullOrWhiteSpace(templateName))
-            _cache.TryRemove(templateName, out _);
     }
 }
 

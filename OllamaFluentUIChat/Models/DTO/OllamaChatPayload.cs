@@ -11,6 +11,9 @@
         [System.Text.Json.Serialization.JsonPropertyName("stream")]
         public bool Stream { get; set; }
 
+        [System.Text.Json.Serialization.JsonPropertyName("think")]
+        public bool? Think { get; set; }
+
         // Usar um dicionário evita que o System.Text.Json envie campos extra ou inválidos
         [System.Text.Json.Serialization.JsonPropertyName("options")]
         public Dictionary<string, object>? Options { get; set; }

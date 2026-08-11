@@ -65,42 +65,77 @@
 
         /// <summary>
         /// Executa as avaliações automáticas dos dois juízes em paralelo, usando as chaves
-        /// configuradas em appsettings.Local.json (secção ApiKeys).
+        /// configuradas em user-secrets (secção ApiKeys).
         /// </summary>
         public async Task<AutomatedJudgeResult> GetFeedbacksAutomatizadosAsync(string prompt)
         {
-            // 1. Controlo de quota: se algum provedor ainda estiver dentro do intervalo mínimo,
-            //    bloqueia a execução com a contagem de segundos em falta.
-            EnsureRateLimitOk();
+            // 1. Valida as chaves de API ANTES de consumir qualquer quota.
+            string geminiKey = LimparChave(_configuration["ApiKeys:Gemini"]);
+            string openRouterKey = LimparChave(_configuration["ApiKeys:OpenRouter"]);
 
-            // 2. Chamadas em paralelo (provedores independentes).
-            var geminiTask = CallGeminiApiAsync(prompt);
-            var openRouterTask = CallOpenRouterApiAsync(prompt);
+            bool geminiDisponivel = !string.IsNullOrWhiteSpace(geminiKey) && geminiKey.Length >= 10;
+            bool openRouterDisponivel = !string.IsNullOrWhiteSpace(openRouterKey);
+
+            if (!geminiDisponivel && !openRouterDisponivel)
+            {
+                const string aviso = "Nenhuma chave de API configurada. Configure-as em user-secrets (ApiKeys:Gemini / ApiKeys:OpenRouter).";
+                _logger.LogWarning(aviso);
+                return new AutomatedJudgeResult
+                {
+                    Gemini = Falha("Gemini", "A chave de API não está configurada ou é inválida."),
+                    OpenRouter = Falha("OpenRouter", "A chave de API não está configurada ou é inválida.")
+                };
+            }
+
+            // 2. Controlo de quota apenas dos provedores que vão ser usados (ainda não consome).
+            VerificarRateLimit(geminiDisponivel, openRouterDisponivel);
+
+            // 3. Chamadas em paralelo (provedores independentes).
+            var geminiTask = geminiDisponivel
+                ? CallGeminiApiAsync(prompt, geminiKey)
+                : Task.FromResult(Falha("Gemini", "A chave de API não está configurada ou é inválida."));
+            var openRouterTask = openRouterDisponivel
+                ? CallOpenRouterApiAsync(prompt, openRouterKey)
+                : Task.FromResult(Falha("OpenRouter", "A chave de API não está configurada ou é inválida."));
 
             await Task.WhenAll(geminiTask, openRouterTask).ConfigureAwait(false);
 
-            return new AutomatedJudgeResult
+            var resultado = new AutomatedJudgeResult
             {
                 Gemini = await geminiTask,
                 OpenRouter = await openRouterTask
             };
+
+            // 4. A quota só é marcada como consumida após sucesso (falhas não bloqueiam retries).
+            MarcarQuotaSeSucesso(resultado);
+
+            return resultado;
         }
 
-        private void EnsureRateLimitOk()
+        private void VerificarRateLimit(bool usarGemini, bool usarOpenRouter)
         {
             lock (RateLock)
             {
-                int faltamGemini = SegundosEmFalta(_ultimoGemini);
-                int faltamOpenRouter = SegundosEmFalta(_ultimoOpenRouter);
+                int faltamGemini = usarGemini ? SegundosEmFalta(_ultimoGemini) : 0;
+                int faltamOpenRouter = usarOpenRouter ? SegundosEmFalta(_ultimoOpenRouter) : 0;
                 int maxFalta = Math.Max(faltamGemini, faltamOpenRouter);
 
                 if (maxFalta > 0)
                 {
                     throw new QuotaLimitException(maxFalta);
                 }
+            }
+        }
 
-                _ultimoGemini = DateTime.Now;
-                _ultimoOpenRouter = DateTime.Now;
+        private static void MarcarQuotaSeSucesso(AutomatedJudgeResult resultado)
+        {
+            lock (RateLock)
+            {
+                if (resultado.Gemini.Success)
+                    _ultimoGemini = DateTime.Now;
+
+                if (resultado.OpenRouter.Success)
+                    _ultimoOpenRouter = DateTime.Now;
             }
         }
 
@@ -114,21 +149,9 @@
             return Math.Max(0, emFalta);
         }
 
-        private async Task<JudgeFeedbackResult> CallGeminiApiAsync(string prompt)
+        private async Task<JudgeFeedbackResult> CallGeminiApiAsync(string prompt, string apiKey)
         {
-            string cleanApiKey = LimparChave(_configuration["ApiKeys:Gemini"]);
-
-            if (string.IsNullOrWhiteSpace(cleanApiKey) || cleanApiKey.Length < 10)
-            {
-                _logger.LogWarning("[Gemini] A chave de API não está configurada em appsettings.Local.json (ApiKeys:Gemini).");
-                return new JudgeFeedbackResult
-                {
-                    Success = false,
-                    ErrorMessage = "Erro Gemini: A chave de API não está configurada ou é inválida. Configure-a em appsettings.Local.json."
-                };
-            }
-
-            string geminiUrl = string.Format(GeminiUrlTemplate, GeminiModel, Uri.EscapeDataString(cleanApiKey));
+            string geminiUrl = string.Format(GeminiUrlTemplate, GeminiModel, Uri.EscapeDataString(apiKey));
             var requestBody = new { contents = new[] { new { parts = new[] { new { text = prompt } } } } };
 
             return await ExecuteGeminiRequestAsync(geminiUrl, requestBody);
@@ -199,20 +222,8 @@
             }
         }
 
-        private async Task<JudgeFeedbackResult> CallOpenRouterApiAsync(string prompt)
+        private async Task<JudgeFeedbackResult> CallOpenRouterApiAsync(string prompt, string apiKey)
         {
-            string cleanApiKey = LimparChave(_configuration["ApiKeys:OpenRouter"]);
-
-            if (string.IsNullOrWhiteSpace(cleanApiKey))
-            {
-                _logger.LogWarning("[OpenRouter] A chave de API não está configurada em appsettings.Local.json (ApiKeys:OpenRouter).");
-                return new JudgeFeedbackResult
-                {
-                    Success = false,
-                    ErrorMessage = "Erro OpenRouter: A chave de API não está configurada ou é inválida. Configure-a em appsettings.Local.json."
-                };
-            }
-
             var requestBody = new
             {
                 // Router automático gratuito: evita usar um ID de modelo fixo que possa ser desativado.
@@ -220,7 +231,7 @@
                 messages = new[] { new { role = "user", content = prompt } }
             };
 
-            return await ExecuteOpenRouterRequestAsync(cleanApiKey, requestBody);
+            return await ExecuteOpenRouterRequestAsync(apiKey, requestBody);
         }
 
         private async Task<JudgeFeedbackResult> ExecuteOpenRouterRequestAsync(string apiKey, object requestBody)

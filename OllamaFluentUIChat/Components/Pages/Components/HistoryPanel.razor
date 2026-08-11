@@ -1,8 +1,10 @@
 ﻿@using Microsoft.Extensions.Localization
 @using Microsoft.FluentUI.AspNetCore.Components
 @using OllamaFluentUIChat.Models.DTO
+@using OllamaFluentUIChat.Models.Entities
 @using OllamaFluentUIChat.Resources
 @using OllamaFluentUIChat.Services.Interfaces.Repositories
+@using System.Text.Json
 @inject IStringLocalizer<SharedResources> L
 @inject IJSRuntime JS
 @inject ILogger<App> _logger
@@ -18,7 +20,44 @@
         <FluentButton Appearance="Appearance.Stealth" OnClick="@Close">@L["Common.Close"]</FluentButton>
     </div>
 
-    @if (History == null)
+    <div class="tabs">
+        <FluentButton Appearance="@(_showConversations ? Appearance.Accent : Appearance.Stealth)" OnClick="@(() => _showConversations = false)">@L["HistoryPanel.TabBenchmarks"]</FluentButton>
+        <FluentButton Appearance="@(_showConversations ? Appearance.Stealth : Appearance.Accent)" OnClick="@(() => _showConversations = true)">@L["HistoryPanel.TabConversations"]</FluentButton>
+    </div>
+
+    @if (_showConversations)
+    {
+        @if (Conversations == null)
+        {
+            <p>@L["Common.Loading"]</p>
+        }
+        else
+        {
+            <div class="conv-actions">
+                <FluentButton Appearance="Appearance.Outline" OnClick="@ExportConversationsAsync">@L["HistoryPanel.Export"]</FluentButton>
+                <FluentButton Appearance="Appearance.Outline" OnClick="@ImportConversationsAsync">@L["HistoryPanel.Import"]</FluentButton>
+            </div>
+
+            @if (Conversations.Count == 0)
+            {
+                <p>@L["HistoryPanel.NoConversations"]</p>
+            }
+            else
+            {
+                @foreach (var conv in Conversations)
+                {
+                    <div class="conv-row" @onclick="() => LoadConversation(conv.Id)">
+                        <div class="conv-info">
+                            <span class="conv-title">@conv.Titulo</span>
+                            <span class="conv-meta">@conv.NomeModelo · @conv.DataUltimaAtividadeFormatada</span>
+                        </div>
+                        <FluentButton Appearance="Appearance.Stealth" Icon="@(new Icons.Regular.Size20.ArrowClockwise())" Title="@L["HistoryPanel.LoadConversation"]"></FluentButton>
+                    </div>
+                }
+            }
+        }
+    }
+    else if (History == null)
     {
         <p>@L["Common.Loading"]</p>
     }
@@ -54,7 +93,15 @@
 
     [Inject]
     public required IBenchmarkRepository BenchmarksRepo { get; set; }
+    [Inject]
+    public required IConversationRepository ConversationsRepo { get; set; }
     private IEnumerable<HistoryResponse> History { get; set; } = [];
+    private List<ChatConversation> Conversations { get; set; } = [];
+    private bool _showConversations;
+
+    [Parameter]
+    public EventCallback<int> OnLoadConversation { get; set; }
+
     public bool IsOpen { get; set; }
 
     PaginationState pagination = new PaginationState() { ItemsPerPage = 12 };
@@ -65,6 +112,7 @@
         try
         {
             History = await BenchmarksRepo.HistoryResponseAsync() ?? [];
+            Conversations = await ConversationsRepo.GetConversationsAsync() ?? [];
         }
         catch (Exception ex)
         {
@@ -78,6 +126,51 @@
     public void Close()
     {
         IsOpen = false;
+    }
+
+    private async Task LoadConversation(int conversationId)
+    {
+        if (OnLoadConversation.HasDelegate)
+            await OnLoadConversation.InvokeAsync(conversationId);
+        Close();
+    }
+
+    private async Task ExportConversationsAsync()
+    {
+        try
+        {
+            var itens = await ConversationsRepo.GetAllForExportAsync();
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            string json = JsonSerializer.Serialize(itens, options);
+            string nomeFicheiro = $"conversas_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+            await JS.InvokeVoidAsync("conversations.downloadJson", nomeFicheiro, json);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ERRO em ExportConversationsAsync()");
+        }
+    }
+
+    private async Task ImportConversationsAsync()
+    {
+        try
+        {
+            string? conteudo = await JS.InvokeAsync<string>("conversations.pickJsonFile");
+            if (string.IsNullOrWhiteSpace(conteudo)) return;
+
+            var itens = JsonSerializer.Deserialize<List<ConversationExportItem>>(conteudo);
+            if (itens is null || itens.Count == 0) return;
+
+            var (conversas, mensagens) = await ConversationsRepo.ImportAsync(itens);
+            _logger.LogInformation("Importadas {Conversas} conversas e {Mensagens} mensagens", conversas, mensagens);
+
+            Conversations = await ConversationsRepo.GetConversationsAsync() ?? [];
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ERRO em ImportConversationsAsync()");
+        }
     }
 
     public async Task ClearHistory()
@@ -128,6 +221,49 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .history-aside .tabs {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .history-aside .conv-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .history-aside .conv-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--neutral-stroke-divider-rest);
+            cursor: pointer;
+        }
+
+            .history-aside .conv-row:hover {
+                background: var(--neutral-fill-secondary-hover);
+            }
+
+        .history-aside .conv-info {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .history-aside .conv-title {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .history-aside .conv-meta {
+            font-size: 12px;
+            color: var(--neutral-foreground-hint);
         }
 
     @@keyframes fadeIn {

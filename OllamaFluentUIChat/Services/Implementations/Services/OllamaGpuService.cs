@@ -1,4 +1,5 @@
-﻿using OllamaFluentUIChat.Services.Interfaces.Services;
+﻿using Microsoft.Extensions.Options;
+using OllamaFluentUIChat.Services.Interfaces.Services;
 using System.Management;
 using System.Text.Json;
 using static OllamaFluentUIChat.Models.DTO.OllamaModels;
@@ -9,16 +10,18 @@ public class OllamaGpuService : IOllamaGpuService
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<OllamaGpuService> _logger;
-    private const string OllamaUrl = "http://localhost:11434/api/tags";
-    private const string OllamaPsUrl = "http://localhost:11434/api/ps";
-    private const string OllamaChatUrl = "http://localhost:11434/api/chat";
-    private const string OllamaShowUrl = "http://localhost:11434/api/show";
+    private readonly OllamaOptions _options;
+    private string OllamaUrl => $"{_options.BaseUrl}/api/tags";
+    private string OllamaPsUrl => $"{_options.BaseUrl}/api/ps";
+    private string OllamaChatUrl => $"{_options.BaseUrl}/api/chat";
+    private string OllamaShowUrl => $"{_options.BaseUrl}/api/show";
 
 
-    public OllamaGpuService(HttpClient httpClient, ILogger<OllamaGpuService> logger)
+    public OllamaGpuService(HttpClient httpClient, ILogger<OllamaGpuService> logger, IOptions<OllamaOptions> options)
     {
         _httpClient = httpClient;
         _logger = logger;
+        _options = options.Value;
     }
 
     /// <summary>
@@ -51,7 +54,7 @@ public class OllamaGpuService : IOllamaGpuService
             var payload = new { name = modelName };
             var response = await _httpClient.PostAsJsonAsync(OllamaShowUrl, payload);
 
-            if (!response.IsSuccessStatusCode) return 2048;
+            if (!response.IsSuccessStatusCode) return _options.DefaultContextLength;
 
             var showData = await response.Content.ReadFromJsonAsync<OllamaShowResponse>();
 
@@ -74,25 +77,26 @@ public class OllamaGpuService : IOllamaGpuService
             _logger.LogError($"Erro ao extrair context_length nativo via model_info: {ex.Message}");
         }
 
-        return 2048;
+        return _options.DefaultContextLength;
     }
 
     /// <summary>
     /// Lê a VRAM livre em bytes. Tenta nvidia-smi primeiro (Windows + Linux, NVIDIA),
     /// depois WMI (apenas Windows) como fallback. Devolve 0 se não for possível detetar.
     /// </summary>
-    private long GetUsableVramBytes()
+    private async Task<long> GetUsableVramBytesAsync()
     {
-        var nvidia = TryGetVramViaNvidiaSmi();
+        var nvidia = await TryGetVramViaNvidiaSmiAsync();
         if (nvidia.HasValue) return nvidia.Value.FreeBytes;
         return GetAvailableVramInBytes();
     }
 
     /// <summary>
     /// Consulta o nvidia-smi (embutido nos drivers NVIDIA) para obter a memória total e livre.
-    /// Unidades devolvidas pelo nvidia-smi: MiB.
+    /// Unidades devolvidas pelo nvidia-smi: MiB. Executa de forma assíncrona e espera a
+    /// saída do processo antes de ler o stdout (evita o bloqueio/deadlock do ReadToEnd síncrono).
     /// </summary>
-    private static (long TotalBytes, long FreeBytes)? TryGetVramViaNvidiaSmi()
+    private static async Task<(long TotalBytes, long FreeBytes)?> TryGetVramViaNvidiaSmiAsync()
     {
         try
         {
@@ -111,8 +115,9 @@ public class OllamaGpuService : IOllamaGpuService
 
             if (!process.Start()) return null;
 
-            string output = process.StandardOutput.ReadToEnd();
-            process.WaitForExit(5000);
+            var outputTask = process.StandardOutput.ReadToEndAsync();
+            await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));
+            string output = await outputTask;
 
             var line = output.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
             if (string.IsNullOrWhiteSpace(line)) return null;
@@ -163,20 +168,20 @@ public class OllamaGpuService : IOllamaGpuService
     /// Pega no tamanho do modelo (SizeInBytes) e faz o cálculo matemático,
     /// retornando o resultado preenchido na classe 'GpuStatus'.
     /// </summary>
-    public GpuStatus CheckGpuCompatibility(long modelSizeInBytes)
+    public async Task<GpuStatus> CheckGpuCompatibility(long modelSizeInBytes)
     {
         try
         {
-            long vramBytes = GetAvailableVramInBytes();
+            long vramBytes = await GetUsableVramBytesAsync();
 
             if (vramBytes == 0)
             {
                 return new GpuStatus { FitsInGpu = false, AvailableVramGB = 0, EstimatedRequiredMemoryGB = 0 };
             }
 
-            double estimatedRequiredBytes = modelSizeInBytes * 1.2;
+            double estimatedRequiredBytes = modelSizeInBytes * _options.ModelLoadOverheadFactor;
 
-            long windowsOverheadBytes = 350L * 1024 * 1024;
+            long windowsOverheadBytes = _options.WindowsOverheadMb * 1024 * 1024;
             long realUsableVramBytes = vramBytes - windowsOverheadBytes;
 
             if (realUsableVramBytes < 0) realUsableVramBytes = 0;
@@ -253,7 +258,7 @@ public class OllamaGpuService : IOllamaGpuService
     /// </summary>
     public async Task<(int ContextLength, string TrainingYear)> GetExtendedModelMetadataAsync(string modelName)
     {
-        int contextLength = 2048; // Valor padrão seguro
+        int contextLength = _options.DefaultContextLength; // Valor padrão seguro
         string trainingYear = "2024";
 
         try
@@ -322,11 +327,11 @@ public class OllamaGpuService : IOllamaGpuService
     /// </summary>
     public async Task<int> GetRecommendedContextLengthAsync(long modelSizeInBytes, string modelName)
     {
-        const int safeDefault = 2048;
+        int safeDefault = _options.DefaultContextLength;
 
         try
         {
-            long usableVram = GetUsableVramBytes();
+            long usableVram = await GetUsableVramBytesAsync();
 
             int nativeContext = safeDefault;
             int kvBytesPerToken = 1024;
@@ -363,7 +368,7 @@ public class OllamaGpuService : IOllamaGpuService
                 return Math.Min(safeDefault, nativeContext);
 
             // Footprint real do modelo em VRAM: /api/ps se estiver carregado, senão estimativa
-            long modelFootprint = (long)(modelSizeInBytes * 1.2);
+            long modelFootprint = (long)(modelSizeInBytes * _options.ModelLoadOverheadFactor);
             try
             {
                 var running = await GetRunningModelsAsync();
@@ -376,15 +381,15 @@ public class OllamaGpuService : IOllamaGpuService
             }
             catch { }
 
-            const long windowsOverheadBytes = 350L * 1024 * 1024;
-            long reserveBytes = (long)(usableVram * 0.10);
+            long windowsOverheadBytes = _options.WindowsOverheadMb * 1024 * 1024;
+            long reserveBytes = (long)(usableVram * _options.VramReserveFraction);
 
             long availableForKv = usableVram - modelFootprint - windowsOverheadBytes - reserveBytes;
             if (availableForKv <= 0)
                 return Math.Min(safeDefault, nativeContext);
 
             long tokensByVram = availableForKv / kvBytesPerToken;
-            int maxAllowed = Math.Min(nativeContext, 32768);
+            int maxAllowed = Math.Min(nativeContext, _options.MaxContextCap);
             int recommended = (int)Math.Clamp(tokensByVram, 1024L, (long)maxAllowed);
 
             _logger.LogInformation(

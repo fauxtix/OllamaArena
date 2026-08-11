@@ -19,7 +19,7 @@ The solution builds as a **single project**. The root `Services/` folder (a stal
 
 ## State & persistence gotchas
 
-- `ollama_benchmark.db` is **tracked in git** (currently shows as modified + deleted `-shm`/`-wal` files). Don't commit DB churn; run with it or revert before committing.
+- `ollama_benchmark.db` is **not tracked** (gitignored along with `-shm`/`-wal`/`-journal` and `*.sqbpro`). The schema is created lazily on first run, so a fresh clone starts with an empty DB.
 - Model list, selected model, theme, and settings persist in browser **localStorage**, not the DB: keys `ollamaModels`, `ollama_model`, `theme`. New models only appear after `ollama pull <tag>` + adding them on the Settings page.
 
 ## Prompts
