@@ -19,7 +19,8 @@ public sealed class ChatComposerService
         string welcomeMessage,
         string modelName,
         int contextLength,
-        bool fitsInGpu)
+        bool fitsInGpu,
+        bool modelSupportsThinking = false)
     {
         if (string.IsNullOrWhiteSpace(userPrompt))
             return null;
@@ -66,7 +67,9 @@ public sealed class ChatComposerService
             Model = modelName,
             Messages = history,
             Stream = true,
-            Think = _options.EnableReasoning,
+            // Só envia `think` quando o modelo suporta reasoning; em modelos comuns o Ollama
+            // devolve 400 ("does not support thinking") se o campo for true.
+            Think = _options.EnableReasoning && modelSupportsThinking ? true : null,
             Options = new Dictionary<string, object>
             {
                 { "num_ctx", contextLength },

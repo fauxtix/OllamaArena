@@ -45,6 +45,9 @@ namespace OllamaFluentUIChat.Components.Pages
         private int _contextUsedTokens;
         private bool _showContextBar;
 
+        private bool _modelSupportsThinking;
+        private string _modelSupportsThinkingFor = "";
+
         private ElementReference messagesDiv;
         private bool userAtBottom = true;
 
@@ -277,6 +280,8 @@ namespace OllamaFluentUIChat.Components.Pages
             {
                 string systemInstructions = await PromptFilesService.GetPromptFileContentAsync("system-prompt.txt") ?? string.Empty;
 
+                await EnsureModelSupportsThinkingAsync();
+
                 var prepared = ChatComposer.Prepare(
                     _messages,
                     userPrompt,
@@ -284,7 +289,8 @@ namespace OllamaFluentUIChat.Components.Pages
                     L["Chat.WelcomeMessage"],
                     ModelName,
                     _contextLength,
-                    _gpuReport?.FitsInGpu == true);
+                    _gpuReport?.FitsInGpu == true,
+                    _modelSupportsThinking);
 
                 if (prepared is null)
                 {
@@ -365,6 +371,10 @@ namespace OllamaFluentUIChat.Components.Pages
                             {
                                 reasoningText = reasoningProp.GetString();
                             }
+                            else if (msgProp.TryGetProperty("thinking", out var thinkingProp))
+                            {
+                                reasoningText = thinkingProp.GetString();
+                            }
                         }
                         else if (root.TryGetProperty("response", out var respProp))
                         {
@@ -422,7 +432,8 @@ namespace OllamaFluentUIChat.Components.Pages
 
                             // Alguns modelos (ex.: qwq, deepseek-r1) enviam o reasoning apenas na mensagem final
                             if (root.TryGetProperty("message", out var doneMsg)
-                                && doneMsg.TryGetProperty("reasoning_content", out var doneReasoning))
+                                && (doneMsg.TryGetProperty("reasoning_content", out var doneReasoning)
+                                    || doneMsg.TryGetProperty("thinking", out doneReasoning)))
                             {
                                 string? finalReasoning = doneReasoning.GetString();
                                 if (!string.IsNullOrWhiteSpace(finalReasoning))
@@ -615,6 +626,21 @@ namespace OllamaFluentUIChat.Components.Pages
             catch
             {
                 return OllamaSettings.Value.DefaultContextLength;
+            }
+        }
+
+        private async Task EnsureModelSupportsThinkingAsync()
+        {
+            try
+            {
+                if (GpuService == null || _modelSupportsThinkingFor == ModelName) return;
+
+                _modelSupportsThinking = await GpuService.ModelSupportsThinkingAsync(ModelName);
+                _modelSupportsThinkingFor = ModelName;
+            }
+            catch
+            {
+                _modelSupportsThinking = false;
             }
         }
 

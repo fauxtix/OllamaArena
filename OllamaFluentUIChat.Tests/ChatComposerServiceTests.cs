@@ -105,7 +105,7 @@ public class ChatComposerServiceTests
         var servico = CriarServico();
         var mensagens = Historico(Msg("O que é a inertia?", true));
 
-        var preparado = servico.Prepare(mensagens, "O que é a inertia?", SystemPrompt, Welcome, "qwen2.5", 4096, false);
+        var preparado = servico.Prepare(mensagens, "O que é a inertia?", SystemPrompt, Welcome, "qwen2.5", 4096, false, modelSupportsThinking: true);
 
         Assert.NotNull(preparado);
         Assert.Equal("qwen2.5", preparado.Payload.Model);
@@ -113,6 +113,31 @@ public class ChatComposerServiceTests
         Assert.Equal(4096, preparado.Payload.Options!["num_ctx"]);
         Assert.Equal(1.1, preparado.Payload.Options["repeat_penalty"]);
         Assert.True(preparado.Payload.Think);
+    }
+
+    [Fact]
+    public void Prepare_ModeloSemThinking_OmiteCampoThink()
+    {
+        var servico = CriarServico();
+        var mensagens = Historico(Msg("O que é a inertia?", true));
+
+        var preparado = servico.Prepare(mensagens, "O que é a inertia?", SystemPrompt, Welcome, "qwen2.5", 4096, false, modelSupportsThinking: false);
+
+        Assert.NotNull(preparado);
+        Assert.Null(preparado.Payload.Think);
+    }
+
+    [Fact]
+    public void Prepare_ThinkingDesativadoNaConfiguracao_OmiteCampoThink()
+    {
+        var opcoes = new OllamaOptions { EnableReasoning = false };
+        var servico = new ChatComposerService(Options.Create(opcoes));
+        var mensagens = Historico(Msg("Pergunta", true));
+
+        var preparado = servico.Prepare(mensagens, "Pergunta", SystemPrompt, Welcome, "deepseek-r1", 4096, true, modelSupportsThinking: true);
+
+        Assert.NotNull(preparado);
+        Assert.Null(preparado.Payload.Think);
     }
 
     [Fact]

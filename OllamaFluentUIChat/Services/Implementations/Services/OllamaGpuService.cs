@@ -322,6 +322,30 @@ public class OllamaGpuService : IOllamaGpuService
     }
 
     /// <summary>
+    /// Verifica via /api/show se o modelo suporta reasoning (capacidade "thinking").
+    /// Devolve false por defeito em caso de erro ou de resposta sem a capacidade —
+    /// assim nunca envia `think` para modelos que o rejeitam (Ollama devolve 400).
+    /// </summary>
+    public async Task<bool> ModelSupportsThinkingAsync(string modelName)
+    {
+        try
+        {
+            var payload = new { name = modelName };
+            var response = await _httpClient.PostAsJsonAsync(OllamaShowUrl, payload);
+
+            if (!response.IsSuccessStatusCode) return false;
+
+            var showData = await response.Content.ReadFromJsonAsync<OllamaShowResponse>();
+            return showData?.Capabilities?.Contains("thinking", StringComparer.OrdinalIgnoreCase) == true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao verificar capacidade de thinking de {ModelName}.", modelName);
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Calcula automaticamente o tamanho de contexto efetivo (num_ctx) a partir dos recursos
     /// disponíveis (VRAM detetada) e da arquitetura do modelo. Transparente para o utilizador.
     /// </summary>

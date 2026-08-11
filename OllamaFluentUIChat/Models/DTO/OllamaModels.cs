@@ -79,6 +79,11 @@ namespace OllamaFluentUIChat.Models.DTO
             // --- ADICIONADO: Captura as chaves dinâmicas nativas do ficheiro (ex: context_length) ---
             [JsonPropertyName("model_info")]
             public Dictionary<string, object>? ModelInfo { get; set; }
+
+            // Capacidades do modelo (ex.: "thinking", "tools", "vision") — usado para decidir
+            // se o payload deve incluir `think` sem que modelos que não o suportam rejeitem o pedido.
+            [JsonPropertyName("capabilities")]
+            public List<string>? Capabilities { get; set; }
         }
 
         public class GpuStatus
