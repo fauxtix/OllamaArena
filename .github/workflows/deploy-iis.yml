@@ -1,0 +1,80 @@
+name: Deploy IIS
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    env:
+      IIS_SITE_PATH: ${{ vars.IIS_SITE_PATH || 'C:\inetpub\wwwroot\OllamaFluentUIChat' }}
+      SITE_PORT: ${{ vars.IIS_SITE_PORT || '4501' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish (Release)
+        shell: powershell
+        run: |
+          dotnet publish "$env:GITHUB_WORKSPACE\OllamaFluentUIChat\OllamaFluentUIChat.csproj" -c Release -o "$env:RUNNER_TEMP\publish" --nologo
+
+      - name: Take site offline
+        shell: powershell
+        run: |
+          $site = $env:IIS_SITE_PATH
+          New-Item -ItemType Directory -Path $site -Force | Out-Null
+          $offline = Join-Path $site 'app_offline.htm'
+          Set-Content -Path $offline -Value ('<html><body><h1>Deploy em curso...</h1></body></html>' + ('<!-- ' + ('x' * 1024) + ' -->'))
+
+      - name: Deploy files (preserving DB and local config)
+        shell: powershell
+        run: |
+          $site = $env:IIS_SITE_PATH
+          $publish = Join-Path $env:RUNNER_TEMP 'publish'
+          $keep = @(
+            'ollama_benchmark.db',
+            'ollama_benchmark.db-shm',
+            'ollama_benchmark.db-wal',
+            'ollama_benchmark.db-journal',
+            'appsettings.Local.json'
+          )
+          Get-ChildItem -LiteralPath $site -Force | Where-Object { $_.Name -notin $keep } | ForEach-Object {
+            Remove-Item -LiteralPath $_.FullName -Recurse -Force
+          }
+          $maxAttempts = 20
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            try {
+              Get-ChildItem -LiteralPath $publish | Where-Object { $_.Name -ne 'appsettings.Local.json' } |
+                Copy-Item -Destination $site -Recurse -Force
+              break
+            } catch {
+              if ($i -eq $maxAttempts) { throw }
+              Start-Sleep -Seconds 2
+            }
+          }
+
+          $local = Join-Path $site 'appsettings.Local.json'
+          $cfg = if (Test-Path $local) { Get-Content -LiteralPath $local -Raw | ConvertFrom-Json } else { [pscustomobject]@{} }
+          $cfg | Add-Member -NotePropertyName Security -NotePropertyValue ([pscustomobject]@{ EnableHttpsRedirection = $false }) -Force
+          $cfg | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $local -Encoding utf8
+
+      - name: Bring site online
+        shell: powershell
+        run: |
+          $offline = Join-Path $env:IIS_SITE_PATH 'app_offline.htm'
+          if (Test-Path $offline) { Remove-Item -LiteralPath $offline -Force }
+
+      - name: Smoke test
+        shell: powershell
+        run: |
+          Start-Sleep -Seconds 8
+          $r = Invoke-WebRequest -Uri "http://localhost:$env:SITE_PORT" -UseBasicParsing -TimeoutSec 120
+          Write-Host "HTTP $($r.StatusCode) - $($r.RawContentLength) bytes"
+          if ($r.StatusCode -ne 200) { throw "Smoke test failed: HTTP $($r.StatusCode)" }

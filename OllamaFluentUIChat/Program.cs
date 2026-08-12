@@ -90,6 +90,10 @@ try
         client.DefaultRequestHeaders.Add("Accept", "application/json");
     });
 
+    // Em deployments HTTP-only (ex.: IIS em porta sem certificado), o redirect/HSTS
+    // para HTTPS causaria um loop. Controlado via "Security:EnableHttpsRedirection".
+    var enableHttpsRedirection = builder.Configuration.GetValue<bool>("Security:EnableHttpsRedirection", true);
+
     var app = builder.Build();
 
     using (var scope = app.Services.CreateScope())
@@ -101,7 +105,10 @@ try
     if (!app.Environment.IsDevelopment())
     {
         app.UseExceptionHandler("/Error", createScopeForErrors: true);
-        app.UseHsts();
+        if (enableHttpsRedirection)
+        {
+            app.UseHsts();
+        }
     }
 
     // ---------- LOCALIZAÇÃO ----------
@@ -120,7 +127,10 @@ try
     // ---------------------------------
 
     app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-    app.UseHttpsRedirection();
+    if (enableHttpsRedirection)
+    {
+        app.UseHttpsRedirection();
+    }
     app.UseAntiforgery();
     app.MapStaticAssets();
 
