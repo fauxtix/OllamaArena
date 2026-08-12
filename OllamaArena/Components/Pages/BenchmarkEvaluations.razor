@@ -314,11 +314,11 @@
 
             if (_filtroAtual == BenchmarkFilter.PorAvaliar)
             {
-                query = query.Where(b => b.GeminiRating == 0 || b.OpenRouterRating == 0);
+                query = query.Where(b => !b.GeminiRating.HasValue && !b.OpenRouterRating.HasValue);
             }
             else if (_filtroAtual == BenchmarkFilter.Avaliados)
             {
-                query = query.Where(b => b.GeminiRating > 0 || b.OpenRouterRating > 0);
+                query = query.Where(b => b.GeminiRating.HasValue || b.OpenRouterRating.HasValue);
             }
 
             if (!string.IsNullOrWhiteSpace(_search))

@@ -29,6 +29,8 @@ try
 
     string dbPath = Path.Combine(builder.Environment.ContentRootPath, "ollama_benchmark.db");
 
+    builder.Configuration["ConnectionStrings:SqliteConnection"] = $"Data Source={dbPath}";
+
     // 2. Configuração do Serilog
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)

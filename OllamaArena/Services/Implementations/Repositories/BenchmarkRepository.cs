@@ -371,14 +371,14 @@ public class BenchmarkRepository : IBenchmarkRepository
         sb.Append("SELECT P.Id, R.Id AS ResponseId, R.PromptId, P.TextoPrompt, R.NomeModelo, ");
 
         // Métricas Gemini
-        sb.Append("R.GeminiRating, R.GeminiFactualRating, R.GeminiFormattingRating, ");
+        sb.Append("CAST(R.GeminiRating AS REAL) AS GeminiRating, R.GeminiFactualRating, R.GeminiFormattingRating, ");
         sb.Append("R.GeminiComplianceRating, R.GeminiRelevanceRating, R.GeminiToneRating, ");
         sb.Append("R.GeminiConcisenessRating, R.GeminiClarityRating, R.GeminiReadabilityRating, ");
         sb.Append("R.GeminiHaloEffectRating, R.GeminiSafetyRating, ");
         sb.Append("R.GeminiLanguageConsistencyRating, R.GeminiLoopDetectionRating, ");
 
         // Métricas OpenRouter
-        sb.Append("R.OpenRouterRating, R.OpenRouterFactualRating, R.OpenRouterFormattingRating, ");
+        sb.Append("CAST(R.OpenRouterRating AS REAL) AS OpenRouterRating, R.OpenRouterFactualRating, R.OpenRouterFormattingRating, ");
         sb.Append("R.OpenRouterComplianceRating, R.OpenRouterRelevanceRating, R.OpenRouterToneRating, ");
         sb.Append("R.OpenRouterConcisenessRating, R.OpenRouterClarityRating, R.OpenRouterReadabilityRating, ");
         sb.Append("R.OpenRouterHaloEffectRating, R.OpenRouterSafetyRating, ");
@@ -433,11 +433,11 @@ public class BenchmarkRepository : IBenchmarkRepository
             GeminiFactualRating, GeminiFormattingRating, GeminiComplianceRating, GeminiRelevanceRating,
             GeminiToneRating, GeminiConcisenessRating, GeminiClarityRating, GeminiReadabilityRating,
             GeminiHaloEffectRating, GeminiSafetyRating, GeminiLanguageConsistencyRating, GeminiLoopDetectionRating,
-            GeminiRating,
+            CAST(GeminiRating AS REAL) AS GeminiRating,
             OpenRouterFactualRating, OpenRouterFormattingRating, OpenRouterComplianceRating, OpenRouterRelevanceRating,
             OpenRouterToneRating, OpenRouterConcisenessRating, OpenRouterClarityRating, OpenRouterReadabilityRating,
             OpenRouterHaloEffectRating, OpenRouterSafetyRating, OpenRouterLanguageConsistencyRating, OpenRouterLoopDetectionRating,
-            OpenRouterRating
+            CAST(OpenRouterRating AS REAL) AS OpenRouterRating
             FROM Respostas;";
 
         using var connection = _context.CreateConnection();

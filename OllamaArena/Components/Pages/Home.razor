@@ -98,10 +98,16 @@
         }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnAfterRender(bool firstRender)
     {
-        if (!firstRender) return;
+        if (firstRender)
+        {
+            _ = WarmModelCacheAsync();
+        }
+    }
 
+    private async Task WarmModelCacheAsync()
+    {
         try
         {
             // 1. Verificar se já limpamos a cache nesta sessão do browser
@@ -149,13 +155,13 @@
                     JsonSerializer.Serialize(_fullModels, JsonOptions));
             }
         }
+        catch (JSDisconnectedException)
+        {
+            // O circuito foi desligado (navegação/abate do separador) enquanto aguardávamos → ignorar
+        }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Erro ao gerir cache dos modelos na Home");
-        }
-        finally
-        {
-            StateHasChanged();
         }
     }
 
