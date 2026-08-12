@@ -1,0 +1,471 @@
+@using Microsoft.Extensions.Localization
+@using OllamaArena.Models.Entities
+@using OllamaArena.Resources
+@using OllamaArena.Services.Helpers
+@inject IStringLocalizer<SharedResources> L
+@inject IJSRuntime JS
+
+@if (Response is not null)
+{
+    <div class="assessment-grid">
+        <!-- COLUNA GOOGLE GEMINI -->
+        <div class="judge-column judge-column-style">
+            <div class="judge-header">
+                <div class="judge-label-wrapper">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Sparkle())" Color="Color.Accent" />
+                    <div class="judge-label">@L["Evaluation.JudgeGemini"]</div>
+                </div>
+            </div>
+
+            <!-- Grupo de Ratings com grelha para as 10 métricas -->
+            <div class="ratings-group-container">
+                <div class="ratings-group-header">@L["Evaluation.MetricsHeader"]</div>
+                <div class="ratings-grid">
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricFactual"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiFactualRating" ReadOnly="@(Response.GeminiFactualRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricFormatting"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiFormattingRating" ReadOnly="@(Response.GeminiFormattingRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricCompliance"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiComplianceRating" ReadOnly="@(Response.GeminiComplianceRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricRelevance"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiRelevanceRating" ReadOnly="@(Response.GeminiRelevanceRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricTone"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiToneRating" ReadOnly="@(Response.GeminiToneRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricConciseness"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiConcisenessRating" ReadOnly="@(Response.GeminiConcisenessRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricClarity"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiClarityRating" ReadOnly="@(Response.GeminiClarityRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricReadability"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiReadabilityRating" ReadOnly="@(Response.GeminiReadabilityRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricHaloEffect"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiHaloEffectRating" ReadOnly="@(Response.GeminiHaloEffectRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricSafety"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiSafetyRating" ReadOnly="@(Response.GeminiSafetyRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricLanguageConsistency"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiLanguageConsistencyRating" ReadOnly="@(Response.GeminiLanguageConsistencyRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricLoopDetection"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiLoopDetectionRating" ReadOnly="@(Response.GeminiLoopDetectionRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label-bold">@L["Evaluation.MetricOverall"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiRating" Class="final-rating-field" ReadOnly="@(Response.GeminiRating != null)" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Caixa de Recomendação -->
+            @if (!string.IsNullOrWhiteSpace(Response.GeminiRecommendation))
+            {
+                <div class="recommendation-box @(_geminiRecommendationOpen ? "open" : string.Empty)">
+                    <div class="recommendation-box-header" role="button" tabindex="0"
+                         aria-expanded="@_geminiRecommendationOpen"
+                         @onclick="() => _geminiRecommendationOpen = !_geminiRecommendationOpen"
+                         @onkeydown="(e) => ToggleRecomendacaoTecla(e, () => _geminiRecommendationOpen = !_geminiRecommendationOpen)">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Lightbulb())" Color="Color.Accent" />
+                        <span>@L["Evaluation.RecommendationLabel"]</span>
+                        <FluentIcon Class="recommendation-box-chevron"
+                                    Value="@(GetChevron(_geminiRecommendationOpen))" />
+                    </div>
+                    @if (_geminiRecommendationOpen)
+                    {
+                        <div class="recommendation-box-text">@Response.GeminiRecommendation</div>
+                    }
+                </div>
+            }
+
+            <!-- Caixa de Feedback -->
+            <FluentTextArea Value="@Response.GeminiFeedback"
+                            ValueChanged="@OnGeminiInputChanged"
+                            Label="@L["Evaluation.FeedbackGemini"]"
+                            Style="font-size:14px;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; width: 100%;"
+                            Rows="8"
+                            ReadOnly="@(!string.IsNullOrWhiteSpace(Response.GeminiFeedback))" />
+        </div>
+
+        <!-- COLUNA OPENROUTER -->
+        <div class="judge-column judge-column-style">
+            <div class="judge-header">
+                <div class="judge-label-wrapper">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Sparkle())" Color="Color.Accent" />
+                    <div class="judge-label">@L["Evaluation.JudgeOpenRouter"]</div>
+                </div>
+            </div>
+
+            <!-- Grupo de Ratings com grelha para as 10 métricas -->
+            <div class="ratings-group-container">
+                <div class="ratings-group-header">@L["Evaluation.MetricsHeader"]</div>
+                <div class="ratings-grid">
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricFactual"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterFactualRating" ReadOnly="@(Response.OpenRouterFactualRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricFormatting"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterFormattingRating" ReadOnly="@(Response.OpenRouterFormattingRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricCompliance"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterComplianceRating" ReadOnly="@(Response.OpenRouterComplianceRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricRelevance"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterRelevanceRating" ReadOnly="@(Response.OpenRouterRelevanceRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricTone"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterToneRating" ReadOnly="@(Response.OpenRouterToneRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricConciseness"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterConcisenessRating" ReadOnly="@(Response.OpenRouterConcisenessRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricClarity"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterClarityRating" ReadOnly="@(Response.OpenRouterClarityRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricReadability"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterReadabilityRating" ReadOnly="@(Response.OpenRouterReadabilityRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricHaloEffect"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterHaloEffectRating" ReadOnly="@(Response.OpenRouterHaloEffectRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricSafety"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterSafetyRating" ReadOnly="@(Response.OpenRouterSafetyRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricLanguageConsistency"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterLanguageConsistencyRating" ReadOnly="@(Response.OpenRouterLanguageConsistencyRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label">@L["Evaluation.MetricLoopDetection"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterLoopDetectionRating" ReadOnly="@(Response.OpenRouterLoopDetectionRating != null)" />
+                    </div>
+                    <div class="rating-cell">
+                        <span class="rating-label-bold">@L["Evaluation.MetricOverall"]</span>
+                        <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterRating" Class="final-rating-field" ReadOnly="@(Response.OpenRouterRating != null)" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Caixa de Recomendação -->
+            @if (!string.IsNullOrWhiteSpace(Response.OpenRouterRecommendation))
+            {
+                <div class="recommendation-box @(_openRouterRecommendationOpen ? "open" : string.Empty)">
+                    <div class="recommendation-box-header" role="button" tabindex="0"
+                         aria-expanded="@_openRouterRecommendationOpen"
+                         @onclick="() => _openRouterRecommendationOpen = !_openRouterRecommendationOpen"
+                         @onkeydown="(e) => ToggleRecomendacaoTecla(e, () => _openRouterRecommendationOpen = !_openRouterRecommendationOpen)">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Lightbulb())" Color="Color.Accent" />
+                        <span>@L["Evaluation.RecommendationLabel"]</span>
+                        <FluentIcon Class="recommendation-box-chevron"
+                                    Value="@(GetChevron(_openRouterRecommendationOpen))" />
+                    </div>
+                    @if (_openRouterRecommendationOpen)
+                    {
+                        <div class="recommendation-box-text">@Response.OpenRouterRecommendation</div>
+                    }
+                </div>
+            }
+
+            <!-- Caixa de Feedback -->
+            <FluentTextArea Value="@Response.OpenRouterFeedback"
+                            ValueChanged="@OnOpenRouterInputChanged"
+                            Label="@L["Evaluation.FeedbackOpenRouter"]"
+                            Style="font-size:14px;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; width: 100%;"
+                            Rows="8"
+                            ReadOnly="@(!string.IsNullOrWhiteSpace(Response.OpenRouterFeedback))" />
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public BenchmarkResponse Response { get; set; } = default!;
+    [Parameter] public EventCallback OnEvaluationChanged { get; set; }
+
+    private bool _geminiRecommendationOpen;
+    private bool _openRouterRecommendationOpen;
+
+    private static Icon GetChevron(bool open)
+        => open ? new Icons.Regular.Size12.ChevronUp() : new Icons.Regular.Size12.ChevronDown();
+
+    private static void ToggleRecomendacaoTecla(KeyboardEventArgs e, Action toggle)
+    {
+        if (e.Key == " " || e.Key == "Enter")
+        {
+            toggle();
+        }
+    }
+
+    private async Task OnGeminiInputChanged(string value)
+    {
+        if (Response is null) return;
+
+        if (value.Contains("FACTUAL_SCORE:", StringComparison.OrdinalIgnoreCase))
+        {
+            var parsed = EvaluationParser.ParseEvaluation(value);
+
+            Response.GeminiFactualRating = parsed.FactualScore;
+            Response.GeminiFormattingRating = parsed.FormattingScore;
+            Response.GeminiComplianceRating = parsed.ComplianceScore;
+            Response.GeminiRelevanceRating = parsed.RelevanceScore;
+            Response.GeminiToneRating = parsed.ToneScore;
+            Response.GeminiConcisenessRating = parsed.ConcisenessScore;
+            Response.GeminiClarityRating = parsed.ClarityScore;
+            Response.GeminiReadabilityRating = parsed.ReadabilityScore;
+            Response.GeminiHaloEffectRating = parsed.HaloEffectScore;
+            Response.GeminiSafetyRating = parsed.SafetyScore;
+            Response.GeminiLanguageConsistencyRating = parsed.LanguageConsistencyScore;
+            Response.GeminiLoopDetectionRating = parsed.LoopDetectionScore;
+
+            Response.GeminiRating = parsed.FinalScore;
+            Response.GeminiFeedback = parsed.Description;
+            Response.GeminiRecommendation = parsed.Recommendation;
+        }
+        else
+        {
+            Response.GeminiFeedback = value;
+        }
+
+        StateHasChanged();
+        await OnEvaluationChanged.InvokeAsync();
+    }
+
+    private async Task OnOpenRouterInputChanged(string value)
+    {
+        if (Response is null) return;
+
+        if (value.Contains("FACTUAL_SCORE:", StringComparison.OrdinalIgnoreCase))
+        {
+            var parsed = EvaluationParser.ParseEvaluation(value);
+
+            Response.OpenRouterFactualRating = parsed.FactualScore;
+            Response.OpenRouterFormattingRating = parsed.FormattingScore;
+            Response.OpenRouterComplianceRating = parsed.ComplianceScore;
+            Response.OpenRouterRelevanceRating = parsed.RelevanceScore;
+            Response.OpenRouterToneRating = parsed.ToneScore;
+            Response.OpenRouterConcisenessRating = parsed.ConcisenessScore;
+            Response.OpenRouterClarityRating = parsed.ClarityScore;
+            Response.OpenRouterReadabilityRating = parsed.ReadabilityScore;
+            Response.OpenRouterHaloEffectRating = parsed.HaloEffectScore;
+            Response.OpenRouterSafetyRating = parsed.SafetyScore;
+            Response.OpenRouterLanguageConsistencyRating = parsed.LanguageConsistencyScore;
+            Response.OpenRouterLoopDetectionRating = parsed.LoopDetectionScore;
+
+            Response.OpenRouterRating = parsed.FinalScore;
+            Response.OpenRouterFeedback = parsed.Description;
+            Response.OpenRouterRecommendation = parsed.Recommendation;
+        }
+        else
+        {
+            Response.OpenRouterFeedback = value;
+        }
+
+        StateHasChanged();
+        await OnEvaluationChanged.InvokeAsync();
+    }
+}
+
+<style>
+    .assessment-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+        min-height: 40vh;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .judge-column {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
+    }
+
+        .judge-column textarea {
+            flex-grow: 1;
+            width: 100%;
+        }
+
+    .judge-column-style {
+        background-color: var(--neutral-layer-2);
+        padding: 14px;
+        border-radius: 4px;
+        border: 1px solid var(--neutral-stroke-divider);
+    }
+
+    .judge-label-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .judge-label {
+        display: inline-block;
+        padding: 2px 6px;
+        border: 1px solid var(--neutral-stroke-strong, #666);
+        border-radius: 4px;
+        font-weight: 600;
+        color: var(--neutral-foreground-rest);
+    }
+
+    .judge-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+
+    /* Container do grupo de Notas */
+    .ratings-group-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        background-color: rgba(0, 0, 0, 0.1);
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px dashed var(--neutral-stroke-divider);
+    }
+
+    .ratings-group-header {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        color: var(--neutral-foreground-rest);
+        opacity: 0.7;
+    }
+
+    /* Grelha adaptativa para os 11 campos de rating */
+    .ratings-grid {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)) !important;
+        gap: 10px !important;
+        width: 100%;
+    }
+
+    .rating-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .rating-label {
+        font-size: 11px;
+        color: var(--neutral-foreground-rest);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 75px;
+    }
+
+    .rating-label-bold {
+        font-size: 11px;
+        font-weight: bold;
+        color: var(--accent-fill-rest, #0078d4);
+    }
+
+    /* Ajuste no tamanho das caixas de texto/número */
+    .rating-cell fluent-number-field,
+    .rating-cell > * {
+        width: 100% !important;
+        min-width: 50px !important;
+        height: 32px;
+    }
+
+        .rating-cell fluent-number-field::part(control) {
+            text-align: center !important;
+            font-weight: 600;
+            border-radius: 4px;
+        }
+
+        .rating-cell fluent-number-field input {
+            text-align: center !important;
+        }
+
+    /* Realce na borda do campo Global */
+    .final-rating-field::part(control) {
+        border: 1.5px solid var(--accent-fill-rest, #0078d4) !important;
+        color: var(--accent-fill-rest, #0078d4) !important;
+        -webkit-text-fill-color: var(--accent-fill-rest, #0078d4) !important;
+        font-weight: bold;
+    }
+
+    /* Caixa de Recomendação destacada */
+    .recommendation-box {
+        background-color: rgba(255, 183, 77, 0.12);
+        border: 1px solid rgba(209, 158, 0, 0.45);
+        border-left: 4px solid #d19e00;
+        border-radius: 4px;
+        padding: 10px 12px;
+    }
+
+        .recommendation-box-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #d19e00;
+            margin-bottom: 0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .recommendation-box-header:focus-visible {
+            outline: 1px solid var(--accent-fill-rest, #0078d4);
+            outline-offset: 2px;
+        }
+
+        .recommendation-box.open .recommendation-box-header {
+            margin-bottom: 6px;
+        }
+
+        .recommendation-box-chevron {
+            margin-left: auto;
+            flex: 0 0 auto;
+        }
+
+        .recommendation-box-text {
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--neutral-foreground-rest);
+            white-space: pre-wrap;
+        }
+
+    @@media (max-width: 768px) {
+        .assessment-grid {
+            grid-template-columns: 1fr;
+            min-height: 0;
+        }
+    }
+</style>

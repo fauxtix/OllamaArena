@@ -4,20 +4,20 @@ Blazor Server (.NET 10) app — a local Ollama chat + LLM benchmark lab using Fl
 
 ## Build status (important)
 
-The solution builds as a **single app project** (`OllamaFluentUIChat/`) plus a **test project** (`OllamaFluentUIChat.Tests/`, xUnit). The root `Services/` folder (a stale, abandoned refactor with broken namespaces `MediaOrganizerApp.WebApi.Services`) was **removed**; the slnx only references `OllamaFluentUIChat/` and `OllamaFluentUIChat.Tests/`. If a `Services/Services.csproj` ever reappears, do not "fix" it — the live service layer is `OllamaFluentUIChat/Services/` (namespaces `OllamaFluentUIChat.Services.*`), wired up in `Program.cs`.
+The solution builds as a **single app project** (`OllamaArena/`) plus a **test project** (`OllamaArena.Tests/`, xUnit). The root `Services/` folder (a stale, abandoned refactor with broken namespaces `MediaOrganizerApp.WebApi.Services`) was **removed**; the slnx only references `OllamaArena/` and `OllamaArena.Tests/`. If a `Services/Services.csproj` ever reappears, do not "fix" it — the live service layer is `OllamaArena/Services/` (namespaces `OllamaArena.Services.*`), wired up in `Program.cs`.
 
 ## Commands
 
-- Run: `dotnet watch run` from `OllamaFluentUIChat/` (launch profile `https`).
-- Build: `dotnet build OllamaFluentUIChat.slnx` (solution uses the new XML `.slnx` format).
-- Test: `dotnet test OllamaFluentUIChat.slnx` (47 cases / 43 methods; no test count guarantees, so don't hardcode a number).
+- Run: `dotnet watch run` from `OllamaArena/` (launch profile `https`).
+- Build: `dotnet build OllamaArena.slnx` (solution uses the new XML `.slnx` format).
+- Test: `dotnet test OllamaArena.slnx` (47 cases / 43 methods; no test count guarantees, so don't hardcode a number).
 - CI: `.github/workflows/deploy-iis.yml` publishes Release and deploys to the author's self-hosted IIS runner (port 4501); not relevant on other machines.
 - Verification: successful build + passing tests + manual run.
 
 ## Runtime requirements
 
 - Ollama daemon must be running (`ollama serve`); the app hardcodes `http://localhost:11434` (chat, translation, and keep-alive unload requests in `Chat.razor.cs`).
-- No migrations: the SQLite schema is created lazily. DB lives at `OllamaFluentUIChat/ollama_benchmark.db` (path from `appsettings.json` `SqliteConnection`, resolved against `ContentRootPath`). Serilog's SQLite sink writes to the same DB/table `Logs`.
+- No migrations: the SQLite schema is created lazily. DB lives at `OllamaArena/ollama_benchmark.db` (path from `appsettings.json` `SqliteConnection`, resolved against `ContentRootPath`). Serilog's SQLite sink writes to the same DB/table `Logs`.
 
 ## State & persistence gotchas
 

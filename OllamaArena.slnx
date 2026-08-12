@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="OllamaArena/OllamaArena.csproj" />
+  <Project Path="OllamaArena.Tests/OllamaArena.Tests.csproj" />
+</Solution>

@@ -21,7 +21,7 @@ A aplicação é mais do que um simples chat: é um **laboratório de experiment
 2. Instalar os modelos pretendidos: `ollama pull <modelo>` (ex.: `ollama pull llama3.2`);
 3. Executar a partir da pasta do projeto:
    ```bash
-   cd OllamaFluentUIChat
+   cd OllamaArena
    dotnet watch run
    ```
 4. Abrir `https://localhost:7175` (ou `http://localhost:5292`). No primeiro arranque, a base de dados SQLite é criada automaticamente.
@@ -41,7 +41,7 @@ A aplicação é mais do que um simples chat: é um **laboratório de experiment
 O repositório inclui um workflow GitHub Actions (`deploy-iis.yml`) que publica a aplicação e faz o deploy para um **self-hosted runner registado apenas na máquina do autor** (a app fica em `http://localhost:4501`). Noutras máquinas, ignore o workflow e corra localmente com `dotnet watch run` — não é necessário qualquer token ou credencial para clonar e testar.
 
 ### 📚 Documentação técnica (pasta `Docs`)
-A pasta **`OllamaFluentUIChat/Docs/`** reúne a documentação técnica do projeto em Markdown — pode consultá-la no repositório ou, após um clone, diretamente no explorador de ficheiros:
+A pasta **`OllamaArena/Docs/`** reúne a documentação técnica do projeto em Markdown — pode consultá-la no repositório ou, após um clone, diretamente no explorador de ficheiros:
 
 | Ficheiro | Conteúdo |
 |---|---|
@@ -54,7 +54,7 @@ A pasta **`OllamaFluentUIChat/Docs/`** reúne a documentação técnica do proje
 Alguns documentos têm também versão **PDF** na mesma pasta, para consulta offline fora da aplicação (`Guia_Como_Comparar_Modelos.pdf`, `Relatorio_Analise.pdf`); para os gerar a partir dos `.md`, pode usar qualquer conversor de Markdown para PDF (ex.: `pandoc`), por exemplo:
 
 ```bash
-pandoc OllamaFluentUIChat/Docs/Relatorio_Analise.md -o Relatorio_Analise.pdf
+pandoc OllamaArena/Docs/Relatorio_Analise.md -o Relatorio_Analise.pdf
 ```
 
 ---

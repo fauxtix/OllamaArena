@@ -1,0 +1,474 @@
+@page "/chat"
+@rendermode InteractiveServer
+@layout MainLayout
+@using Microsoft.FluentUI.AspNetCore.Components
+@using OllamaArena.Components.Pages.Components
+
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<PageTitle>@L["Chat.PageTitle"]</PageTitle>
+
+@if (showOllamaError)
+{
+    <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        display: flex; justify-content: center; align-items: center;
+        background-color: rgba(0, 0, 0, 0.2); z-index: 9999;">
+
+        <FluentMessageBar Title="@L["Chat.ModelsLoadErrorTitle"]"
+                          Class="chat-error-bar"
+                          Intent="MessageIntent.Error"
+                          Type="@MessageType.Notification">
+            <hr />
+            @L["Chat.OllamaNotRunning"]
+        </FluentMessageBar>
+    </div>
+}
+else
+{
+
+    <div class="chat-container">
+        <FluentCard Class="chat-card">
+
+            <FluentStack Orientation="Orientation.Horizontal"
+                         HorizontalAlignment="HorizontalAlignment.Stretch"
+                         VerticalAlignment="VerticalAlignment.Center"
+                         Class="chat-header-bar"
+                         Style="border-bottom: 1px solid var(--neutral-stroke-layer-rest);
+                padding-bottom: 12px;
+                margin-bottom: 12px;
+                justify-content: space-between;">
+
+                <FluentStack Orientation="Orientation.Horizontal" Width="auto" Style="gap: 8px; flex-shrink: 0;">
+                    <FluentPersona Name="Ollama Streaming AI"
+                                   Status="@(_isThinking ? PresenceStatus.Busy : PresenceStatus.Available)"
+                                   Initials="AI" />
+                </FluentStack>
+
+                <FluentStack Orientation="Orientation.Horizontal" Width="auto"
+                             HorizontalAlignment="HorizontalAlignment.Center">
+                    <FluentSelect Class="chat-model-select"
+                                  Items="@_models"
+                                  @bind-SelectedOption="@ModelName" />
+                </FluentStack>
+
+                <FluentStack Orientation="Orientation.Horizontal" Width="auto" Style="gap: 4px; min-width: 0;">
+                    @if (_gpuReport != null)
+                    {
+                        @if (_gpuReport.FitsInGpu)
+                        {
+                            <span class="gpu-badge" style="font-size: 0.8rem; background-color: rgba(34, 197, 94, 0.15); border: 1px solid rgb(34, 197, 94); padding: 4px 8px; border-radius: 6px; color: rgb(21, 128, 61); display: flex; align-items: start; gap: 4px;">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.CheckmarkCircle())" Color="Color.Success" />
+                                @L["Chat.GpuOk", _gpuReport.EstimatedRequiredMemoryGB, _gpuReport.AvailableVramGB]
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="gpu-badge" style="font-size: 0.8rem; background-color: rgba(245, 158, 11, 0.15); border: 1px solid rgb(245, 158, 11); padding: 4px 8px; border-radius: 6px; color: var(--neutral-foreground-rest); display: flex; justify-content:start; align-items: center; gap: 4px;"
+                                  title="@L["Chat.GpuCpuFallbackTitle"]">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Warning())" Color="Color.Warning" />
+                                @L["Chat.GpuCpuFallback", _gpuReport.EstimatedRequiredMemoryGB, _gpuReport.AvailableVramGB]
+                            </span>
+
+                            <FluentButton Appearance="Appearance.Stealth" @bind-Visible="GPUDialogVisibility"
+                                          Style="min-width: 24px; width: 24px; height: 24px; padding: 0; border-radius: 50%;"
+                                          OnClick="() => GPUDialogVisibility = true"
+                                          Title="@L["Chat.GpuInfoTooltip"]">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.QuestionCircle())" Color="Color.Warning" />
+                            </FluentButton>
+
+                            <GpuInfoDialog @ref="gpuDialog" Visible="GPUDialogVisibility" VisibleChanged="v => GPUDialogVisibility = v" />
+                        }
+                    }
+                </FluentStack>
+
+            </FluentStack>
+
+            <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px; margin-bottom: 12px;">
+                <FluentButton Appearance="Appearance.Outline"
+                              IconStart="@(new Icons.Regular.Size16.Add())"
+                              OnClick="NewChat"
+                              Disabled="@_isThinking">
+                    @L["Chat.NewChat"]
+                </FluentButton>
+
+                <FluentButton Appearance="Appearance.Outline"
+                              Disabled="@_isThinking"
+                              OnClick="@OpenHistory">
+                    @L["Chat.History"]
+                </FluentButton>
+
+                <FluentSwitch @bind-Value="_webSearchEnabled"
+                              Disabled="@_isThinking"
+                              Label="@L["Chat.WebSearchLabel"]"
+                              Style="font-size: 0.8rem;" />
+            </FluentStack>
+
+            @if (_showContextBar && _contextLength > 0)
+            {
+                <div style="margin-bottom: 12px;">
+                    <FluentProgress Min="0"
+                                    Max="@_contextLength"
+                                    Value="@ContextProgressValue"
+                                    Color="@(ContextNearLimit ? "#f59e0b" : "var(--accent-fill-rest)")" />
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--neutral-foreground-hint); margin-top: 4px;">
+                        <span>@L["Chat.ContextTokens", _contextUsedTokens.ToString("N0"), _contextLength.ToString("N0")]</span>
+                        <span>@L["Chat.ContextRemaining", ContextRemaining.ToString("N0")]</span>
+                    </div>
+                </div>
+            }
+
+            <div @ref="messagesDiv" @onscroll="OnScroll"
+                 style="flex-grow: 1; min-height: 0; overflow-y: auto; padding-right: 8px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px;">
+                @if (isLoadingModels)
+                {
+                    <div class="loading-state">
+                        <FluentProgressRing />
+                    </div>
+                }
+                else
+                {
+                    @foreach (var msg in _messages)
+                    {
+                        <div style="display: flex; flex-direction: column; align-items: @(msg.IsCurrentUser ? "flex-end" : "flex-start"); width: 100%;">
+
+                            <span style="font-size: 0.75rem; color: var(--neutral-foreground-hint); margin-bottom: 2px;">
+
+                                <span>@msg.User</span>
+                                <span class="timestamp">• @msg.Timestamp.ToString("HH:mm")</span>
+                                @if (msg.Temperature > 0)
+                                {
+                                    <span class="elapsed-time">• @L["Chat.TemperatureLabel", msg.Temperature]</span>
+                                }
+                                @if (!string.IsNullOrEmpty(msg.ElapsedTime))
+                                {
+                                    <span class="elapsed-time">• @msg.ElapsedTime</span>
+                                }                               
+                            </span>
+
+                            <div class="chat-content"
+                                 style="max-width: 95%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem;
+                                background-color: @(msg.IsCurrentUser ? "var(--accent-fill-rest)" : "var(--neutral-layer-2)");
+                                color: @(msg.IsCurrentUser ? "var(--foreground-on-accent-rest)" : "var(--neutral-foreground-rest)");">
+
+                                @if (!msg.IsCurrentUser && !string.IsNullOrWhiteSpace(msg.Reasoning))
+                                {
+                                    <details class="reasoning-block">
+                                        <summary>
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())" Color="Color.Accent" />
+                                            @L["Chat.ReasoningLabel"]
+                                        </summary>
+                                        <div class="reasoning-content">@msg.Reasoning</div>
+                                    </details>
+                                }
+
+                                @((MarkupString)FormatMessage(msg.Text))
+
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <FluentStack Orientation="Orientation.Horizontal"
+                         Width="100%"
+                         VerticalAlignment="VerticalAlignment.Center"
+                         Style="gap: 8px;">
+
+                <textarea class="chat-input" style="color:var(--neutral-foreground-rest);"
+                          @bind="_currentMessage"
+                          @bind:event="oninput"
+                          @ref="chatInputRef"
+                          placeholder="@L["Chat.InputPlaceholder"]"
+                          disabled="@_isThinking">
+                </textarea>
+
+                @if (!_isThinking)
+                {
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  OnClick="@SendMessage"
+                                  Disabled="@(string.IsNullOrWhiteSpace(_currentMessage))"
+                                  Title="@L["Chat.SendPrompt"]"
+                                  Style="min-width: 40px; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Send())" Color="Color.Custom" CustomColor="var(--neutral-foreground-rest)" />
+                    </FluentButton>
+                }
+                else
+                {
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  OnClick="@CancelRequest"
+                                  Title="@L["Chat.CancelRequest"]"
+                                  Style="min-width: 40px; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; background-color: #dc2626; border-radius: 50%;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Square())" Color="Color.Custom" CustomColor="#ffffff" />
+                    </FluentButton>
+                }
+            </FluentStack>
+        </FluentCard>
+        <HistoryPanel @ref="historyPanel" OnLoadConversation="@LoadConversationAsync" />
+    </div>
+}
+<style>
+    .cursor {
+        display: inline-block;
+        width: 8px;
+        animation: blink 1s step-start infinite;
+        color: #007bff;
+    }
+
+    .chat-content h1,
+    .chat-content h2,
+    .chat-content h3,
+    .chat-content h4 {
+        font-size: 0.95rem !important;
+        font-weight: bold !important;
+        margin-top: 0px !important;
+        margin-bottom: 2px !important;
+        display: block !important;
+        color: inherit !important;
+    }
+
+    .chat-content div,
+    .chat-content p {
+        font-size: 0.9rem;
+        line-height: 1.2;
+    }
+
+    .chat-content ul, .chat-content ol {
+        padding-left: 20px;
+        margin: 4px 0;
+    }
+
+    .chat-content code {
+        background-color: rgba(0,0,0,0.1);
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-family: monospace;
+    }
+
+    .typing-dots {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        height: 20px;
+    }
+
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            background-color: currentColor;
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+            .typing-dots span:nth-child(1) {
+                animation-delay: -0.32s;
+            }
+
+            .typing-dots span:nth-child(2) {
+                animation-delay: -0.16s;
+            }
+
+    @@keyframes bounce {
+        0%, 80%, 100% {
+            transform: scale(0);
+        }
+
+        40% {
+            transform: scale(1.0);
+        }
+    }
+
+    .chat-input {
+        flex: 1;
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 1rem;
+        background: var(--neutral-fill-layer-rest);
+        min-height: 40px;
+        max-height: 220px;
+        resize: vertical;
+        overflow: auto;
+        box-sizing: border-box;
+    }
+
+    .send-controls {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .chat-action-button {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: solid 0.08em #000;
+        background-color: transparent;
+        color: black;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        transition: all .2s ease;
+    }
+
+        .chat-action-button:hover {
+            transform: scale(1.05);
+        }
+
+        .chat-action-button:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+    .chat-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 0.85rem;
+        background-color: var(--neutral-layer-1);
+        color: var(--neutral-foreground-rest);
+    }
+
+    .chat-content th, .chat-content td {
+        border: 1px solid var(--neutral-stroke-layer-rest);
+        padding: 6px 10px;
+        text-align: left;
+    }
+
+    .chat-content th {
+        background-color: var(--neutral-layer-3);
+        font-weight: bold;
+    }
+
+    .chat-content[style*="var(--accent-fill-rest)"] th,
+    .chat-content[style*="var(--accent-fill-rest)"] td {
+        border-color: rgba(255, 255, 255, 0.25);
+        color: var(--foreground-on-accent-rest) !important;
+    }
+
+    .chat-content[style*="var(--accent-fill-rest)"] th {
+        background-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .chat-content pre {
+        background-color: rgba(0, 0, 0, 0.2);
+        padding: 8px;
+        border-radius: 6px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+
+    .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        text-align: center;
+    }
+
+    .elapsed-time {
+        color: #8b9cb3;
+        font-size: 0.85em;
+        margin-left: 4px;
+    }
+
+    .reasoning-block {
+        border: 1px solid var(--neutral-stroke-layer-rest);
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-bottom: 8px;
+        background-color: var(--neutral-layer-1);
+    }
+
+    .reasoning-block summary {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--neutral-foreground-rest);
+        user-select: none;
+    }
+
+    .reasoning-content {
+        margin-top: 8px;
+        font-size: 0.8rem;
+        line-height: 1.4;
+        color: var(--neutral-foreground-hint);
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .chat-content[style*="var(--accent-fill-rest)"] .reasoning-block,
+    .chat-content[style*="var(--accent-fill-rest)"] .reasoning-content {
+        color: var(--foreground-on-accent-rest);
+    }
+
+    .chat-container {
+        display: flex;
+        justify-content: start;
+        margin-left: 10px;
+        padding: 20px;
+        min-width: 0;
+    }
+
+    .chat-card {
+        width: 75vw;
+        height: 80vh;
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        border-radius: 12px;
+        box-sizing: border-box;
+        min-width: 0;
+    }
+
+    .chat-header-bar {
+        flex-wrap: nowrap;
+        min-width: 0;
+    }
+
+    .chat-model-select {
+        width: 220px;
+    }
+
+    .chat-error-bar {
+        width: min(500px, 90vw);
+        border: 2px solid var(--accent-fill-rest);
+    }
+
+    .gpu-badge {
+        max-width: 100%;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    @@media (max-width: 768px) {
+        .chat-container {
+            margin-left: 0;
+            padding: 8px;
+        }
+
+        .chat-card {
+            width: 100%;
+            height: calc(100dvh - 120px);
+        }
+
+        .chat-model-select {
+            width: 100%;
+        }
+
+        .chat-header-bar {
+            flex-wrap: wrap;
+            row-gap: 8px;
+        }
+
+        .chat-header-bar > .stack-horizontal {
+            width: 100%;
+            flex-shrink: 0;
+        }
+    }
+</style>

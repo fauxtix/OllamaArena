@@ -1,0 +1,73 @@
+@using Microsoft.Extensions.Localization
+@using OllamaArena.Resources
+@inject IStringLocalizer<SharedResources> L
+
+<FluentDialog Hidden="@(!Visible)" 
+              Modal="true"
+              Style="width: 60%"
+              TrapFocus="true">
+
+    <FluentDialogHeader Visible="true">
+        <FluentLabel Typo="Typography.Header">
+            @L["TranslationDialog.Title", JudgeName ?? string.Empty]
+        </FluentLabel>
+    </FluentDialogHeader>
+
+    <FluentDialogBody>
+
+        <FluentLabel Typo="Typography.Subject">
+            @L["TranslationDialog.ModelUsed", ModelUsed ?? string.Empty]
+        </FluentLabel>
+
+        <FluentLabel Typo="Typography.Body">
+            @L["TranslationDialog.TimeSpent", TimeSpent ?? string.Empty]
+        </FluentLabel>
+
+        <div class="translation-preview">
+            @TranslatedText
+        </div>
+    </FluentDialogBody>
+
+    <FluentDialogFooter>
+        <FluentSpacer />
+
+        <FluentButton Appearance="Appearance.Stealth"
+                      OnClick="Cancelar">
+            @L["TranslationDialog.Exit"]
+        </FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+
+    [Parameter, EditorRequired] public string? JudgeName { get; set; }
+    [Parameter] public string? TranslatedText { get; set; }
+    [Parameter] public string? ModelUsed { get; set; }
+    [Parameter] public string? TimeSpent { get; set; }
+
+    private async Task Cancelar()
+    {
+        await VisibleChanged.InvokeAsync(false);
+    }
+}
+
+<style>
+    .translation-preview {
+        margin-top: 16px;
+        padding: 12px;
+        width: 100%;
+        max-height: 400px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 14px;
+        line-height: 1.5;
+        background-color: var(--neutral-layer-2);
+        border: 1px solid var(--neutral-stroke-rest);
+        border-radius: 4px;
+        color: var(--neutral-foreground-rest);
+    }
+</style>

@@ -12,8 +12,8 @@ jobs:
       run:
         shell: powershell -ExecutionPolicy Bypass -file {0}
     env:
-      IIS_SITE_PATH: ${{ vars.IIS_SITE_PATH || 'C:\inetpub\wwwroot\OllamaFluentUIChat' }}
-      IIS_APP_POOL: ${{ vars.IIS_APP_POOL || 'OllamaFluentUIChat' }}
+      IIS_SITE_PATH: ${{ vars.IIS_SITE_PATH || 'C:\inetpub\wwwroot\OllamaArena' }}
+      IIS_APP_POOL: ${{ vars.IIS_APP_POOL || 'OllamaArena' }}
       SITE_PORT: ${{ vars.IIS_SITE_PORT || '4501' }}
     steps:
       - name: Checkout
@@ -26,7 +26,7 @@ jobs:
 
       - name: Publish (Release)
         run: |
-          dotnet publish "$env:GITHUB_WORKSPACE\OllamaFluentUIChat\OllamaFluentUIChat.csproj" -c Release -o "$env:RUNNER_TEMP\publish" --nologo
+          dotnet publish "$env:GITHUB_WORKSPACE\OllamaArena\OllamaArena.csproj" -c Release -o "$env:RUNNER_TEMP\publish" --nologo
 
       - name: Take site offline
         run: |

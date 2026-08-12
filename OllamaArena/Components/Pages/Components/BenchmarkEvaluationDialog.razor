@@ -1,0 +1,249 @@
+@using Microsoft.Extensions.Localization
+@using OllamaArena.Models.Entities
+@using OllamaArena.Resources
+@using OllamaArena.Services.Interfaces.Services
+@inject IStringLocalizer<SharedResources> L
+
+<FluentDialog Hidden="@(!Visible)"
+              Modal="true"
+              Class="evaluation-dialogue-benchmark"
+              Style="--dialog-width: 1200px; --dialog-height: min(calc(100vh - 64px), 760px);"
+              TrapFocus="true"
+              AriaLabel="@L["EvalDialog.AriaLabel"]">
+
+    <FluentDialogHeader Visible="true">
+        <FluentStack Orientation="Orientation.Horizontal"
+                     VerticalAlignment="VerticalAlignment.Center">
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <FluentIcon Value="@(new Icons.Regular.Size24.ClipboardCode())" />
+                <FluentLabel Typo="Typography.Body">
+                    @L["EvalDialog.Title", Response?.NomeModelo ?? string.Empty]
+                </FluentLabel>
+            </div>
+        </FluentStack>
+    </FluentDialogHeader>
+
+    <FluentDialogBody>
+
+        @if (Response != null)
+        {
+            <BenchmarkEvaluation Response="Response" OnEvaluationChanged="StateHasChanged" />
+            <div class="grelha-botoes-traducao">
+
+                <div>
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  Disabled="@isTranslating"
+                                  OnClick="TraduzirGemini">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Translate())" />
+                        @L["EvalDialog.TranslateGemini"]
+                    </FluentButton>
+                </div>
+
+                <div>
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  Disabled="@isTranslating"
+                                  OnClick="TraduzirOpenRouter">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Translate())" />
+                        @L["EvalDialog.TranslateOpenRouter"]
+                    </FluentButton>
+                </div>
+
+            </div>
+        }
+    </FluentDialogBody>
+
+    <FluentDialogFooter>
+
+        @if (isTranslating)
+        {
+            <FluentProgressRing Style="margin-right:12px;" />
+        }
+
+        <FluentSpacer />
+
+        @if (!IsAlreadySaved)
+        {
+            <FluentButton Appearance="Appearance.Accent" Disabled="@isTranslating"
+                          OnClick="Guardar">
+                @L["EvalDialog.SaveEvaluation"]
+            </FluentButton>
+        }
+
+        <FluentButton Appearance="Appearance.Stealth"
+                      OnClick="Fechar">
+            @L["Common.Close"]
+        </FluentButton>
+
+    </FluentDialogFooter>
+
+</FluentDialog>
+
+
+<TranslationPreviewDialog Visible="@showTranslationDialog"
+                          VisibleChanged="@(v => showTranslationDialog = v)"
+                          TranslatedText="@translatedText"
+                          ModelUsed="@modelUsed" JudgeName="@targetField"
+                          TimeSpent="@timeSpent" />
+
+@code {
+    [Inject] public ITranslationService TranslationService { get; set; } = default!;
+    [Inject] public ILogger<App> Logger { get; set; } = default!;
+
+    [Inject] protected IDialogService DialogService { get; set; } = default!;
+
+
+    [Parameter, EditorRequired] public BenchmarkResponse? Response { get; set; }
+
+    [Parameter, EditorRequired] public bool Visible { get; set; }
+    [Parameter, EditorRequired] public EventCallback<bool> VisibleChanged { get; set; }
+
+    [Parameter] public EventCallback<BenchmarkResponse> OnSave { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    [Parameter] public bool IsAlreadySaved { get; set; }
+
+    private bool showTranslationDialog;
+    private string? translatedText;
+    private string? targetField;
+    private bool isTranslating = false;
+
+    private string? modelUsed;
+    private string? timeSpent;
+
+    private async Task Guardar()
+    {
+        try
+        {
+            if (Response is not null)
+            {
+                await OnSave.InvokeAsync(Response);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erro ao guardar avaliação do benchmark.");
+            await DialogService.ShowErrorAsync(L["EvalDialog.SaveError"], L["EvalDialog.SaveChanges"]);
+        }
+
+    }
+
+    private async Task Fechar()
+    {
+        await OnClose.InvokeAsync();
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+
+    private async Task TraduzirOpenRouter()
+    {
+        if (Response?.OpenRouterFeedback is null)
+            return;
+
+        targetField = "openrouter";
+        isTranslating = true;
+        StateHasChanged();
+        try
+        {
+            var result = await TranslationService.TranslateAsync(
+                Response.OpenRouterFeedback,
+                Response.NomeModelo
+            );
+
+            translatedText = result.TranslatedText;
+            modelUsed = result.ModelUsed;
+            timeSpent = result.TimeSpentFormatted;
+
+            showTranslationDialog = true;
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowErrorAsync(L["EvalDialog.TranslateOpenRouterError"], L["EvalDialog.TranslateTitle"]);
+            Logger.LogError(ex, "Erro ao traduzir feedback do OpenRouter");
+        }
+        finally
+        {
+            isTranslating = false;
+            StateHasChanged();
+        }
+
+    }
+
+    private async Task TraduzirGemini()
+    {
+        if (Response?.GeminiFeedback is null)
+            return;
+
+        targetField = "gemini";
+        isTranslating = true;
+        StateHasChanged();
+        try
+        {
+            var result = await TranslationService.TranslateAsync(
+                Response.GeminiFeedback,
+                Response.NomeModelo
+            );
+
+            translatedText = result.TranslatedText;
+            modelUsed = result.ModelUsed;
+            timeSpent = result.TimeSpentFormatted;
+
+            showTranslationDialog = true;
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowErrorAsync(L["EvalDialog.TranslateGeminiError"], L["EvalDialog.TranslateTitle"]);
+
+
+            Logger.LogError(ex, "Erro ao traduzir feedback do Gemini");
+        }
+        finally
+        {
+            isTranslating = false;
+            StateHasChanged();
+        }
+
+    }
+}
+
+<style>
+    .evaluation-dialogue-benchmark {
+        border-radius: 10px;
+        max-width: 95vw;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .evaluation-dialogue-benchmark .fluent-dialog-body {
+            padding: 16px;
+            min-height: 0;
+            overflow-y: auto;
+            scrollbar-gutter: stable;
+        }
+
+    .detalhe-header {
+        flex: 0 0 auto;
+        background-color: var(--neutral-layer-1);
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--neutral-stroke-divider);
+        margin-bottom: 12px;
+    }
+
+        .detalhe-header h3 {
+            margin-top: 0;
+        }
+
+    .grelha-botoes-traducao {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+
+    @@media (max-width: 768px) {
+        .grelha-botoes-traducao {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+    }
+</style>

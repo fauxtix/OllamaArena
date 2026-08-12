@@ -1,0 +1,198 @@
+@page "/edit-prompts"
+@using Microsoft.Extensions.Localization
+@using Microsoft.FluentUI.AspNetCore.Components
+@using OllamaArena.Resources
+@rendermode InteractiveServer
+
+<PageTitle>@L["EditPrompts.PageTitle"]</PageTitle>
+
+<div class="edit-prompts-main">
+    <div class="prompt-editor-pane prompt-card">
+
+        <div class="prompt-header-row">
+            <div class="prompt-title">
+                <FluentHeader Style="background-color:transparent; color: #2ecc71; font-size:1.5rem; margin: 0; padding: 0;">
+                    @L["EditPrompts.SavedPrompts"]
+                </FluentHeader>
+            </div>
+
+            <div class="prompt-selector-middle">
+                <FluentSelect Items="@_promptFiles" TOption="string"
+                              Height="200px"
+                              Width="250px"
+                              SelectedOption="@_selectedPromptFile"
+                              SelectedOptionChanged="OnPromptFileChanged">
+                </FluentSelect>
+            </div>
+
+            <div class="prompt-actions-top-right">
+                <FluentButton Appearance="Appearance.Accent"
+                              Style="border-radius:10px"
+                              IconStart="@(new Icons.Regular.Size16.Save())"
+                              OnClick="OnSave">
+                    @L["EditPrompts.Save"]
+                </FluentButton>
+                <FluentButton Appearance="Appearance.Outline"
+                              Style="border-radius:10px"
+                              IconStart="@(new Icons.Regular.Size16.Dismiss())"
+                              OnClick="OnCancel">
+                    @L["EditPrompts.CancelEdit"]
+                </FluentButton>
+            </div>
+        </div>
+        <hr class="card-divider" />
+
+        @if (_isLoading)
+        {
+            <FluentProgressRing>@L["EditPrompts.LoadingPrompt"]</FluentProgressRing>
+        }
+        else if (!_promptFiles.Any())
+        {
+            <div class="prompt-empty-state">
+                <span>@L["EditPrompts.EmptyState"]</span>
+            </div>
+        }
+        else
+        {
+            <!-- TextArea com altura expandida -->
+            <FluentTextArea @bind-Value="EditorContent"
+                            Rows="28"
+                            Resize="TextAreaResize.Vertical"
+                            Style="width: 100%;" />
+
+            <!-- Apenas o botão Sair isolado no fundo do card -->
+            <div class="prompt-footer-exit">
+                <FluentButton Appearance="Appearance.Lightweight"
+                              Style="border-radius:10px"
+                              IconStart="@(new Icons.Regular.Size16.ArrowExit())"
+                              OnClick="@(() => NavigationManager.NavigateTo("/"))">
+                    @L["EditPrompts.Exit"]
+                </FluentButton>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    /* ===== Layout Geral ===== */
+    .edit-prompts-main {
+        display: flex;
+        flex-direction: row;
+        gap: 1.5rem;
+        box-sizing: border-box;
+        max-width: 100%;
+        align-items: stretch;
+        padding: 1rem;
+        height: calc(100vh - 80px);
+    }
+
+    /* ===== Estilo do Cartão Arredondado (AGORA ADAPTÁVEL) ===== */
+    .prompt-card {
+        /* SUBSTITUÍDO: var(--neutral-layer-2) usa fundo claro no light mode e fundo escuro no dark mode */
+        background-color: var(--neutral-layer-2);
+        /* SUBSTITUÍDO: Usa a cor de borda nativa do sistema para melhor integração */
+        border: 1px solid var(--neutral-stroke-rest);
+        border-radius: 12px;
+        padding: 1.5rem !important;
+        /* SUBSTITUÍDO: Sombra mais suave no modo claro, forte no modo escuro */
+        box-shadow: var(--elevation-shadow-card-rest, 0 4px 12px rgba(0, 0, 0, 0.15));
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        box-sizing: border-box;
+    }
+
+    .prompt-editor-pane {
+        flex: 0 0 60%;
+        min-width: 0;
+    }
+
+    .card-divider {
+        border: 0;
+        /* SUBSTITUÍDO: Linha divisória adaptável */
+        border-top: 1px solid var(--neutral-stroke-rest);
+        margin: 1rem 0;
+        flex: 0 0 auto;
+    }
+
+    .prompt-header-row {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex: 0 0 auto;
+    }
+
+    .prompt-title {
+        flex: 1;
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .prompt-selector-middle {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+    }
+
+    .prompt-actions-top-right {
+        flex: 1;
+        display: flex;
+        gap: 0.8rem;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    /* Onde a mágica acontece para o scroll interno da caixa de texto */
+    .prompt-editor-pane fluent-text-area {
+        width: 100% !important;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 1rem;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    /* Estado vazio: sem ficheiros de prompt */
+    .prompt-empty-state {
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--neutral-foreground-hint); /* SUBSTITUÍDO: Texto secundário adaptável */
+        font-size: 1.1rem;
+    }
+
+    /* Botão Sair no fundo do card */
+    .prompt-footer-exit {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        flex: 0 0 auto;
+    }
+
+    @@media (max-width: 900px) {
+        .edit-prompts-main {
+            flex-direction: column;
+            gap: 1rem;
+            height: auto;
+        }
+
+        .prompt-editor-pane {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .prompt-header-row {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.75rem;
+        }
+
+        .prompt-selector-middle, .prompt-actions-top-right, .prompt-footer-exit {
+            justify-content: flex-end;
+        }
+    }
+</style>
+

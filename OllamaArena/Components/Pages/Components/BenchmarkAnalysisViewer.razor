@@ -1,0 +1,189 @@
+@using Models.DTO
+@using Microsoft.Extensions.Localization
+@using OllamaArena.Resources
+@using OllamaArena.Services.Helpers
+@inject IStringLocalizer<SharedResources> L
+@inject IJSRuntime JS
+
+<div class="analysis-container" style="margin-top: 24px;">
+    <FluentCard Style="padding: 18px; margin-bottom: 14px; border-left: 6px solid var(--accent-fill-rest); background: var(--neutral-layer-1);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h3 style="margin: 0; color: var(--neutral-foreground-rest); display: flex; align-items: center; gap: 8px;">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.BrainCircuit())" Color="@Color.Accent" />
+                    @L["AnalysisViewer.Title"]
+                </h3>
+                <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--neutral-stroke-accessible-rest);">
+                    @L["AnalysisViewer.Subtitle"]
+                </p>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+                <FluentBadge Appearance="Appearance.Accent">@L["AnalysisViewer.OfflineBadge"]</FluentBadge>
+            </div>
+        </div>
+    </FluentCard>
+
+    @if (!IsAnalyzing && string.IsNullOrEmpty(StreamingLog) && AnaliseResultado == null)
+    {
+        <FluentCard Style="padding: 60px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center;">
+            <FluentIcon Value="@(new Icons.Regular.Size48.BrainCircuit())" Color="@Color.Neutral" style="opacity: 0.5;" />
+            <div>
+                <h3 style="margin: 0 0 8px 0; color: var(--neutral-foreground-rest);">@L["AnalysisViewer.ReadyTitle"]</h3>
+                <p style="margin: 0; font-size: 14px; color: var(--neutral-stroke-accessible-rest); max-width: 400px;">
+                    @((MarkupString)L["AnalysisViewer.ReadyHint"].ToString())
+                </p>
+            </div>
+        </FluentCard>
+    }
+
+    @if (IsAnalyzing || !string.IsNullOrEmpty(StreamingLog) || AnaliseResultado != null)
+    {
+        <FluentCard Style="padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--neutral-stroke-rest); padding-bottom: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    @if (IsAnalyzing)
+                    {
+                        <FluentProgressRing />
+                        <div>
+                            <h4 style="margin: 0; font-size: 15px;">@L["AnalysisViewer.ProcessingTitle"]</h4>
+                            <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--neutral-stroke-accessible-rest);">@L["AnalysisViewer.ProcessingHint"]</p>
+                        </div>
+                    }
+                    else if (AnaliseResultado != null)
+                    {
+                        <FluentIcon Value="@(new Icons.Regular.Size24.CheckmarkCircle())" Color="@Color.Success" />
+                        <div>
+                            <h4 style="margin: 0; font-size: 15px;">@L["AnalysisViewer.DoneTitle"]</h4>
+                            <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--neutral-stroke-accessible-rest);">@L["AnalysisViewer.DoneHint"]</p>
+                        </div>
+                    }
+                </div>
+
+                @if (IsAnalyzing)
+                {
+                    <FluentButton Appearance="Appearance.Lightweight"
+                                  BackgroundColor="rgba(231, 54, 24, 1)"
+                                  Style="color:white;"
+                                  IconStart="@(new Icons.Regular.Size20.Stop())"
+                                  OnClick="CancelarAnalise">@L["Common.Cancel"]</FluentButton>
+                }
+            </div>
+
+            <!-- STREAMING (durante processamento) -->
+            @if (!string.IsNullOrEmpty(StreamingLog) && AnaliseResultado == null)
+            {
+                <div class="streaming-output"
+                     @ref="_streamingOutputRef"
+                     style="padding: 14px; background: var(--neutral-layer-2); border-radius: 6px; border-left: 4px solid var(--accent-fill-rest); font-family: 'Courier New', monospace; font-size: 12.5px; line-height: 1.5; max-height: 420px; overflow-y: auto; white-space: pre-wrap;">
+                    @MessageFormatter.FormatMessagePlus(StreamingLog);
+                </div>
+            }
+
+            @if (AnaliseResultado != null)
+            {
+                <div class="benchmark-analysis-container" style="display: flex; flex-direction: column; gap: 16px; padding: 16px; background: var(--neutral-layer-2); border-radius: 8px;">
+
+                    @* 1. Sumário Executivo *@
+                    @if (!string.IsNullOrEmpty(AnaliseResultado.Sumario))
+                    {
+                        <div style="padding: 12px; background: var(--neutral-layer-1); border-radius: 6px; border-left: 4px solid var(--accent-fill-rest);">
+                            <h5 style="margin: 0 0 6px 0; font-size: 13px; font-weight: 600;">@L["AnalysisViewer.ExecutiveSummary"]</h5>
+                            <p style="margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--neutral-foreground-rest);">
+                                @AnaliseResultado.Sumario
+                            </p>
+                        </div>
+                    }
+
+                    @* 2. Cards de Métricas Rápidas *@
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                        <div style="padding: 10px 14px; background: var(--neutral-layer-1); border-radius: 6px;">
+                            <span style="font-size: 11px; color: var(--neutral-foreground-hint); display: block;">@L["AnalysisViewer.Fastest"]</span>
+                            <strong style="font-size: 14px; color: var(--neutral-foreground-rest);">@AnaliseResultado.ModeloMaisRapido</strong>
+                            <span style="font-size: 12px; color: var(--neutral-foreground-rest); display: block; margin-top: 2px;">@L["AnalysisViewer.TokensSec", AnaliseResultado.MaxTokensSec]</span>
+                        </div>
+
+                        <div style="padding: 10px 14px; background: var(--neutral-layer-1); border-radius: 6px;">
+                            <span style="font-size: 11px; color: var(--neutral-foreground-hint); display: block;">@L["AnalysisViewer.BestRated"]</span>
+                            <strong style="font-size: 14px; color: var(--neutral-foreground-rest);">@AnaliseResultado.ModeloMelhorAvaliado</strong>
+                        </div>
+                    </div>
+
+                    @* 3. Análise Técnica Detalhada *@
+                    @if (AnaliseResultado.LinhasAnaliseDetalhada?.Any() == true)
+                    {
+                        <div style="padding: 14px; background: var(--neutral-layer-1); border-radius: 6px;">
+                            <h5 style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600;">@L["AnalysisViewer.TechnicalAnalysis"]</h5>
+                            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; line-height: 1.5; color: var(--neutral-foreground-rest);">
+                                @foreach (var linha in AnaliseResultado.LinhasAnaliseDetalhada)
+                                {
+                                    <div>@((MarkupString)linha)</div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                </div>
+            }
+        </FluentCard>
+    }
+</div>
+
+@code {
+    [Parameter] public bool IsAnalyzing { get; set; }
+    [Parameter] public EventCallback<bool> IsAnalyzingChanged { get; set; }
+    [Parameter] public BenchmarkAnalysisResult? AnaliseResultado { get; set; }
+    [Parameter] public EventCallback<BenchmarkAnalysisResult> AnaliseResultadoChanged { get; set; }
+    [Parameter] public EventCallback OnCancelarAnalise { get; set; }
+
+    public string StreamingLog { get; set; } = string.Empty;
+
+    private ElementReference _streamingOutputRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsAnalyzing && !string.IsNullOrEmpty(StreamingLog))
+        {
+            try { await JS.InvokeVoidAsync("chatScroll.scrollToBottom", _streamingOutputRef); } catch { }
+        }
+    }
+
+    private async Task CancelarAnalise() => await OnCancelarAnalise.InvokeAsync();
+
+    private string ConvertMarkdownToHtml(string markdown)
+    {
+        if (string.IsNullOrEmpty(markdown)) return string.Empty;
+        return System.Net.WebUtility.HtmlEncode(markdown)
+            .Replace("## ", "<h3 style='margin:10px 0 6px 0;color:var(--neutral-foreground-rest);'>")
+            .Replace("**", "<strong>")
+            .Replace("\n", "<br />");
+    }
+
+    private string FormatMessage(string content)
+    {
+        return MessageFormatter.FormatMessagePlus(content);
+    }
+}
+
+<style>
+    .analysis-container {
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .markdown-content {
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+</style>

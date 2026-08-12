@@ -1,0 +1,36 @@
+@page "/Error"
+@using System.Diagnostics
+@using Microsoft.Extensions.Localization
+@using OllamaArena.Resources
+@inject IStringLocalizer<SharedResources> L
+
+<PageTitle>@L["ErrorPage.PageTitle"]</PageTitle>
+
+<h1 class="text-danger">@L["ErrorPage.Title"]</h1>
+<h2 class="text-danger">@L["ErrorPage.Subtitle"]</h2>
+
+@if (ShowRequestId)
+{
+    <p>
+        <strong>@L["ErrorPage.RequestId"]</strong> <code>@RequestId</code>
+    </p>
+}
+
+<h3>@L["ErrorPage.DevModeTitle"]</h3>
+<p>
+    @((MarkupString)L["ErrorPage.DevModeBody"].ToString())
+</p>
+<p>
+    @((MarkupString)L["ErrorPage.DevModeWarning"].ToString())
+</p>
+
+@code{
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private string? RequestId { get; set; }
+    private bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+
+    protected override void OnInitialized() =>
+        RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+}

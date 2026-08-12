@@ -1,0 +1,61 @@
+@using Microsoft.Extensions.Localization
+@using Microsoft.FluentUI.AspNetCore.Components
+@using OllamaArena.Resources
+@inject IStringLocalizer<SharedResources> L
+<div class="navmenu">
+    <nav class="sitenav" aria-labelledby="main-menu" onclick="document.getElementById('navmenu-toggle').click();">
+        <FluentNavMenu Id="main-menu" Collapsible="true" Width="250" Title="@L["Nav.NavigationMenu"]" @bind-Expanded="expanded">
+            <FluentNavLink Href="/" Match="NavLinkMatch.All"
+                           Icon="@(new Icons.Regular.Size20.Home())"
+                           IconColor="Color.Accent">@L["Home"]</FluentNavLink>
+
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
+
+            <FluentNavLink Href="/chat"
+                           Icon="@(new Icons.Regular.Size20.Chat())"
+                           IconColor="Color.Accent">@L["Chat"]</FluentNavLink>
+
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
+
+            <FluentNavLink Href="/benchmark-evaluations"
+                           Icon="@(new Icons.Regular.Size20.DataBarVertical())"
+                           IconColor="Color.Accent">@L["Benchmarks"]</FluentNavLink>
+
+            <FluentNavLink Href="/benchmarks"
+                           Icon="@(new Icons.Regular.Size20.DataBarHorizontal())"
+                           IconColor="Color.Accent">@L["QualityAndMetrics"]</FluentNavLink>
+
+            <FluentNavLink Href="/dashboard"
+                           Icon="@(new Icons.Regular.Size20.Gauge())"
+                           IconColor="Color.Accent">@L["Dashboard"]</FluentNavLink>
+
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
+
+            <FluentNavLink Href="/modelos-ollama"
+                           Icon="@(new Icons.Regular.Size20.Bot())"
+                           IconColor="Color.Accent">@L["LoadedModels"]</FluentNavLink>
+
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
+
+            <FluentNavLink Href="/edit-prompts"
+                           Icon="@(new Icons.Regular.Size20.DocumentEdit())"
+                           IconColor="Color.Accent">@L["EditPrompts"]</FluentNavLink>
+
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
+
+            <FluentNavLink Href="/system-logs"
+                           Icon="@(new Icons.Regular.Size20.DocumentText())"
+                           IconColor="Color.Accent">@L["SystemLogs"]</FluentNavLink>
+        </FluentNavMenu>
+    </nav>
+</div>
+
+@code {
+    private bool expanded = true;
+}
+<style>
+    .sitenav .nav-link.active {
+        background-color: #f0f0f0; /* Change this to your desired highlight color */
+        border-style:dotted;
+    }
+</style>

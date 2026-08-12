@@ -1,0 +1,521 @@
+@using Microsoft.Extensions.Localization
+@using OllamaArena.Models.DTO
+@using OllamaArena.Resources
+@using OllamaArena.Services.Interfaces.Repositories
+@inject IStringLocalizer<SharedResources> L
+@inject IBenchmarkRepository BenchmarkRepo
+
+<FluentDialog Hidden="@(!Visible)"
+              Modal="true"
+              Class="evaluation-detail-benchmark"
+              Style="--dialog-width: 900px; --dialog-height: auto;"
+              TrapFocus="true"
+              AriaLabel="@L["EvalDetail.AriaLabel"]">
+
+    <FluentDialogHeader Visible="true">
+        <FluentStack Orientation="Orientation.Horizontal"
+                     VerticalAlignment="VerticalAlignment.Center">
+
+            <div style="display: flex; align-items: flex-start; gap: 10px; width: 100%;">
+                <FluentIcon Value="@(new Icons.Regular.Size24.Eye())" />
+                <FluentLabel Typo="Typography.Body">
+                    @Response?.NomeModelo
+                </FluentLabel>
+
+                <blockquote class="prompt-citacao" style="flex: 1; margin: 0;">
+                    "@Response?.TextoPrompt"
+                </blockquote>
+            </div>
+        </FluentStack>
+    </FluentDialogHeader>
+
+    <FluentDialogBody>
+        @if (Response != null)
+        {
+            <div class="detail-container">
+                <hr />
+                <FluentTabs ActiveTabId="tab-metrics">
+
+                    @* ABA 1: MÉTRICAS E PONTUAÇÕES *@
+                    <FluentTab Id="tab-metrics">
+                        <Header>
+                            <FluentIcon Value="@(new Icons.Regular.Size16.DataHistogram())" Style="margin-right: 6px;" />
+                            <span>@L["EvalDetail.TabMetrics"]</span>
+                        </Header>
+                        <Content>
+                            <div class="tab-content-wrapper">
+                                <div class="ratings-grid-container">
+                                    <div class="ratings-header">
+                                        <div class="metric-cell header-metric">@L["EvalDetail.Metric"]</div>
+                                        <div class="rating-cell header-cell">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())" Color="Color.Accent" />
+                                            <span>@L["Evaluation.JudgeGemini"]</span>
+                                        </div>
+                                        <div class="rating-cell header-cell">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Chat())" Color="Color.Accent" />
+                                            <span>@L["Evaluation.JudgeOpenRouter"]</span>
+                                        </div>
+                                    </div>
+
+                                    @* 1. FACTUAL *@
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">@L["Evaluation.MetricFactual"]</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiFactualRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterFactualRating)</div>
+                                    </div>
+
+                                    @* 2. FORMATAÇÃO *@
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">@L["Evaluation.MetricFormatting"]</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiFormattingRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterFormattingRating)</div>
+                                    </div>
+
+                                    @* PONTUAÇÃO GLOBAL *@
+                                    <div class="ratings-row global-row">
+                                        <div class="metric-cell global-metric">@L["Evaluation.MetricOverall"]</div>
+                                        <div class="rating-cell">
+                                            @if (Response.GeminiRating > 0)
+                                            {
+                                                <span class="rating-value global-value">@Response.GeminiRating</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="rating-empty">—</span>
+                                            }
+                                        </div>
+                                        <div class="rating-cell">
+                                            @if (Response.OpenRouterRating > 0)
+                                            {
+                                                <span class="rating-value global-value">@Response.OpenRouterRating</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="rating-empty">—</span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">@L["Evaluation.MetricCompliance"]</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiComplianceRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterComplianceRating)</div>
+                                    </div>
+
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">@L["Evaluation.MetricRelevance"]</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiRelevanceRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterRelevanceRating)</div>
+                                    </div>
+
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">@L["Evaluation.MetricTone"]</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiToneRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterToneRating)</div>
+                                    </div>
+
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">@L["Evaluation.MetricConciseness"]</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiConcisenessRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterConcisenessRating)</div>
+                                    </div>
+
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">@L["Evaluation.MetricClarity"]</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiClarityRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterClarityRating)</div>
+                                    </div>
+
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">@L["Evaluation.MetricReadability"]</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiReadabilityRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterReadabilityRating)</div>
+                                    </div>
+
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">@L["Evaluation.MetricHaloEffect"]</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiHaloEffectRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterHaloEffectRating)</div>
+                                    </div>
+
+                                    <div class="ratings-row">
+                                        <div class="metric-cell">@L["Evaluation.MetricSafety"]</div>
+                                        <div class="rating-cell">@RenderRating(Response.GeminiSafetyRating)</div>
+                                        <div class="rating-cell">@RenderRating(Response.OpenRouterSafetyRating)</div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </Content>
+                    </FluentTab>
+
+                    @* ABA 2: FEEDBACKS (CARDS LADO A LADO) *@
+                    <FluentTab Id="tab-feedbacks">
+                        <Header>
+                            <FluentIcon Value="@(new Icons.Regular.Size16.CommentMultiple())" Style="margin-right: 6px;" />
+                            <span>@L["EvalDetail.TabFeedbacks"]</span>
+                        </Header>
+                        <Content>
+                            <div class="tab-content-wrapper">
+                                @if (_isLoadingFeedback)
+                                {
+                                    <div style="display: flex; justify-content: center; padding: 40px;">
+                                        <FluentProgressRing />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <FluentGrid Spacing="3" Justify="JustifyContent.FlexStart">
+
+                                        @* CARD GEMINI *@
+                                        <FluentGridItem xs="12" sm="6">
+                                            <FluentCard Class="feedback-card">
+                                                <div class="feedback-card-header">
+                                                    <FluentIcon Value="@(new Icons.Regular.Size20.Sparkle())" Color="Color.Accent" />
+                                                    <FluentLabel Typo="Typography.H5" Weight="FontWeight.Bold" Style="color: #7B68EE;">@L["Evaluation.JudgeGemini"]</FluentLabel>
+                                                </div>
+                                                <div class="feedback-card-body">
+                                                    @if (!string.IsNullOrWhiteSpace(Feedback?.GeminiRecommendation))
+                                                    {
+                                                        <div class="recommendation-box">
+                                                            <div class="recommendation-box-header">
+                                                                <FluentIcon Value="@(new Icons.Regular.Size16.Lightbulb())" Color="Color.Accent" />
+                                                                <span>@L["EvalDetail.Recommendation"]</span>
+                                                            </div>
+                                                            <div class="recommendation-box-text">@Feedback.GeminiRecommendation</div>
+                                                        </div>
+                                                    }
+                                                    @if (!string.IsNullOrWhiteSpace(Feedback?.GeminiFeedback))
+                                                    {
+                                                        <div class="feedback-text">@Feedback.GeminiFeedback</div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <p class="feedback-empty">@L["EvalDetail.NoFeedback"]</p>
+                                                    }
+                                                </div>
+                                            </FluentCard>
+                                        </FluentGridItem>
+
+                                        @* CARD OPENROUTER *@
+                                        <FluentGridItem xs="12" sm="6">
+                                            <FluentCard Class="feedback-card">
+                                                <div class="feedback-card-header">
+                                                    <FluentIcon Value="@(new Icons.Regular.Size20.Chat())" Color="Color.Accent" />
+                                                    <FluentLabel Typo="Typography.H5" Weight="FontWeight.Bold" Style="color: #7B68EE;">@L["Evaluation.JudgeOpenRouter"]</FluentLabel>
+                                                </div>
+                                                <div class="feedback-card-body">
+                                                    @if (!string.IsNullOrWhiteSpace(Feedback?.OpenRouterRecommendation))
+                                                    {
+                                                        <div class="recommendation-box">
+                                                            <div class="recommendation-box-header">
+                                                                <FluentIcon Value="@(new Icons.Regular.Size16.Lightbulb())" Color="Color.Accent" />
+                                                                <span>@L["EvalDetail.Recommendation"]</span>
+                                                            </div>
+                                                            <div class="recommendation-box-text">@Feedback.OpenRouterRecommendation</div>
+                                                        </div>
+                                                    }
+                                                    @if (!string.IsNullOrWhiteSpace(Feedback?.OpenRouterFeedback))
+                                                    {
+                                                        <div class="feedback-text">@Feedback.OpenRouterFeedback</div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <p class="feedback-empty">@L["EvalDetail.NoFeedback"]</p>
+                                                    }
+                                                </div>
+                                            </FluentCard>
+                                        </FluentGridItem>
+
+                                    </FluentGrid>
+                                }
+                            </div>
+                        </Content>
+                    </FluentTab>
+
+                </FluentTabs>
+            </div>
+        }
+    </FluentDialogBody>
+
+    <FluentDialogFooter>
+        <FluentSpacer />
+        <FluentButton Appearance="Appearance.Outline" Color="Color.Neutral" OnClick="Fechar">
+            @L["Common.Close"]
+        </FluentButton>
+    </FluentDialogFooter>
+
+</FluentDialog>
+
+@code {
+    [Inject] public IBenchmarkRepository? BenchmarkRepository { get; set; }
+    [Parameter, EditorRequired] public BenchmarkEvaluationModel? Response { get; set; }
+    [Parameter, EditorRequired] public bool Visible { get; set; }
+    [Parameter, EditorRequired] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    protected PromptFeedback Feedback { get; set; } = new();
+    private int _lastResponseId;
+    private bool _isLoadingFeedback = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Response is not null) 
+        {
+            _lastResponseId = Response.Id;
+            await GetJudgesFeedback();
+        }
+    }
+
+    protected async Task GetJudgesFeedback()
+    {
+        if (Response is not null && BenchmarkRepository is not null)
+        {
+            _isLoadingFeedback = true;
+            try
+            {
+                Feedback = await BenchmarkRepository.GetBenchmarkJudgesFeedbackByIdAsync(Response.ResponseId) ?? new();
+            }
+            finally
+            {
+                _isLoadingFeedback = false;
+            }
+        }
+    }
+
+    private async Task Fechar()
+    {
+        await OnClose.InvokeAsync();
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    private RenderFragment RenderRating(int? rating) => builder =>
+    {
+        if (rating.HasValue && rating > 0)
+        {
+            builder.OpenElement(0, "span");
+            builder.AddAttribute(1, "class", "rating-value");
+            builder.AddContent(2, rating.Value);
+            builder.CloseElement();
+        }
+        else
+        {
+            builder.OpenElement(0, "span");
+            builder.AddAttribute(1, "class", "rating-empty");
+            builder.AddContent(2, "—");
+            builder.CloseElement();
+        }
+    };
+}
+
+<style>
+    .detail-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .tab-content-wrapper {
+        padding-top: 16px;
+    }
+
+    .feedback-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 320px;
+        background-color: var(--neutral-layer-1);
+        border: 1px solid var(--neutral-stroke-rest);
+        border-radius: 6px;
+        padding: 12px 16px;
+    }
+
+    .feedback-card-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--neutral-stroke-divider);
+        margin-bottom: 12px;
+    }
+
+    .feedback-card-body {
+        flex: 1;
+        max-height: 350px;
+        overflow-y: auto;
+        padding-right: 6px;
+    }
+
+    .recommendation-box {
+        background-color: rgba(255, 183, 77, 0.12);
+        border: 1px solid rgba(209, 158, 0, 0.45);
+        border-left: 4px solid #d19e00;
+        border-radius: 4px;
+        padding: 10px 12px;
+        margin-bottom: 12px;
+    }
+
+        .recommendation-box-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #d19e00;
+            margin-bottom: 6px;
+        }
+
+        .recommendation-box-text {
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--neutral-foreground-rest);
+            white-space: pre-wrap;
+        }
+
+    .feedback-text {
+        white-space: pre-wrap;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        color: var(--neutral-foreground-rest);
+    }
+
+    .feedback-empty {
+        color: var(--neutral-foreground-hint);
+        font-style: italic;
+        text-align: center;
+        margin-top: 40px;
+        font-size: 13px;
+    }
+
+    .ratings-grid-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        background-color: var(--neutral-layer-1);
+        border: 1px solid var(--neutral-stroke-rest);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .ratings-header {
+        display: grid;
+        grid-template-columns: 140px 1fr 1fr;
+        gap: 0;
+        background-color: var(--neutral-layer-2);
+        border-bottom: 2px solid var(--neutral-stroke-divider);
+        padding: 0;
+    }
+
+    .ratings-row {
+        display: grid;
+        grid-template-columns: 140px 1fr 1fr;
+        gap: 0;
+        border-bottom: 1px solid var(--neutral-stroke-rest);
+    }
+
+        .ratings-row:last-child {
+            border-bottom: none;
+        }
+
+        .ratings-row:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+    .metric-cell {
+        padding: 5px 6px;
+        text-align: left;
+        font-weight: 400;
+        color: var(--neutral-foreground-secondary);
+        display: flex;
+        font-family: Arial;
+        align-items: center;
+        font-size: 14px;
+    }
+
+        .metric-cell.header-metric {
+            color: var(--neutral-foreground-rest);
+        }
+
+        .metric-cell.global-metric {
+            font-weight: 700;
+            color: var(--neutral-foreground-rest);
+        }
+
+    .rating-cell {
+        padding: 5px 6px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--neutral-foreground-rest);
+    }
+
+        .rating-cell.header-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-weight: 600;
+            color: var(--neutral-foreground-rest);
+            font-size: 13px;
+        }
+
+    .rating-value {
+        display: inline-block;
+        font-weight: 700;
+        color: var(--accent-fill-rest);
+        font-size: 15px;
+        min-width: 30px;
+    }
+
+        .rating-value.global-value {
+            color: var(--accent-fill-rest);
+            font-size: 16px;
+        }
+
+    .rating-empty {
+        color: var(--neutral-foreground-hint);
+        font-size: 14px;
+    }
+
+    .global-row {
+        background-color: rgba(0, 120, 212, 0.05);
+        border-top: 2px solid var(--accent-fill-rest);
+        border-bottom: 2px solid var(--accent-fill-rest);
+    }
+
+        .global-row:hover {
+            background-color: rgba(0, 120, 212, 0.08);
+        }
+
+    .prompt-citacao {
+        max-height: 10.0em;
+        overflow-y: auto;
+        overflow-x: hidden;
+        white-space: normal;
+        padding-right: 6px;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    fluent-dialog.evaluation-detail-benchmark::part(control) {
+        max-width: 95vw !important;
+    }
+
+    @@media (max-width: 768px) {
+        fluent-dialog.evaluation-detail-benchmark::part(control) {
+            --dialog-width: 95vw !important;
+        }
+
+        .ratings-header,
+        .ratings-row {
+            grid-template-columns: 110px 1fr 1fr;
+        }
+
+        .feedback-card {
+            min-height: 0;
+        }
+    }
+</style>

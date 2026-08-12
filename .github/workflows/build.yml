@@ -18,10 +18,10 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore OllamaFluentUIChat.slnx
+        run: dotnet restore OllamaArena.slnx
 
       - name: Build
-        run: dotnet build OllamaFluentUIChat.slnx --no-restore --configuration Release
+        run: dotnet build OllamaArena.slnx --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test OllamaFluentUIChat.slnx --no-build --configuration Release
+        run: dotnet test OllamaArena.slnx --no-build --configuration Release

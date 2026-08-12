@@ -1,0 +1,387 @@
+@page "/system-logs"
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.Extensions.Localization
+@using OllamaArena.Components.Pages.Components
+@using OllamaArena.Models.Entities
+@using OllamaArena.Resources
+@using OllamaArena.Services.Interfaces.Repositories
+@inject IStringLocalizer<SharedResources> L
+@inject ILogRepository LogRepository
+@inject IDialogService DialogService
+@rendermode InteractiveServer
+
+<PageTitle>@L["SystemLogs.PageTitle"]</PageTitle>
+
+<FluentStack VerticalGap="15" Orientation="Orientation.Vertical">
+
+    <!-- Cabeçalho Principal -->
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Right">
+        <div style="display: flex; gap: 12px; align-items: center; width: 100%; margin:16px; flex-wrap: wrap;">
+
+            <FluentLabel Typo="Typography.PageTitle">@L["SystemLogs.PageTitle"]</FluentLabel>
+
+            <FluentSpacer />
+
+            <FluentButton Appearance="Appearance.Lightweight"
+                          Color="" BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
+                          IconStart="@(new Icons.Regular.Size20.Delete())"
+                          OnClick="ConfirmarLimpezaLogs">
+                @L["SystemLogs.ClearLogs"] @(_filtroAtual == "all" && string.IsNullOrWhiteSpace(_search) ? L["SystemLogs.ClearVisible"] : L["SystemLogs.ClearFiltered"])
+            </FluentButton>
+        </div>
+    </FluentStack>
+
+    <!-- Linha Única: Opções de Filtro (Esquerda) + Pesquisa (Direita) -->
+    <div class="logs-container">
+        <FluentStack Orientation="Orientation.Horizontal"
+                     HorizontalGap="10"
+                     VerticalAlignment="VerticalAlignment.Center"
+                     Style="margin-top:16px; margin-bottom: 12px; width: 100%; flex-wrap: wrap;">
+
+            <FluentButton Appearance="Appearance.Outline"
+                          OnClick="@(() => AlterarFiltroNivel("information"))"
+                          IconStart="@(new Icons.Regular.Size20.Info())"
+                          Style="--neutral-stroke-rest: #0078d4; --neutral-stroke-hover: #106ebe; color: #0078d4;">
+                @L["SystemLogs.FilterInformation"]
+            </FluentButton>
+
+            <FluentButton Appearance="Appearance.Outline"
+                          OnClick="@(() => AlterarFiltroNivel("warnings"))"
+                          IconStart="@(new Icons.Regular.Size20.Warning())"
+                          Style="--neutral-stroke-rest: #ff9800; --neutral-stroke-hover: #e68a00; color: #ff9800;">
+                @L["SystemLogs.FilterWarnings"]
+            </FluentButton>
+
+            <FluentButton Appearance="Appearance.Outline"
+                          OnClick="@(() => AlterarFiltroNivel("errors"))"
+                          IconStart="@(new Icons.Regular.Size20.ErrorCircle())"
+                          Style="--neutral-stroke-rest: #d32f2f; --neutral-stroke-hover: #c62828; color: #d32f2f;">
+                @L["SystemLogs.FilterErrors"]
+            </FluentButton>
+
+            <FluentButton Appearance="Appearance.Outline"
+                          OnClick="@(() => AlterarFiltroNivel("all"))"
+                          IconStart="@(new Icons.Regular.Size20.Filter())"
+                          Style="--neutral-stroke-rest: #0078d4; --neutral-stroke-hover: #106ebe; color: #0078d4;">
+                @L["SystemLogs.FilterAll"]
+            </FluentButton>
+
+            <!-- Empurra a barra de pesquisa para a extremidade direita da grelha -->
+            <FluentSpacer />
+
+            <FluentSearch @bind-Value="_search"
+                          @bind-Value:after="AplicarFiltros"
+                          Placeholder="@L["SystemLogs.SearchPlaceholder"]"
+                          class="search-box"
+                          Clearable="true" />
+        </FluentStack>
+
+        @if (_logsFiltrados == null)
+        {
+            <FluentProgressRing>@L["SystemLogs.LoadingRecords"]</FluentProgressRing>
+        }
+        else if (!_logsFiltrados.Any())
+        {
+            <FluentStack Orientation="Orientation.Horizontal"
+                         HorizontalAlignment="HorizontalAlignment.Center"
+                         VerticalAlignment="VerticalAlignment.Center"
+                         Class="no-logs-box">
+                <FluentLabel Typo="Typography.Body" Style="border-color:white; border-radius:16px;">
+                    @L["SystemLogs.NoRecordsForFilter"]
+                </FluentLabel>
+            </FluentStack>
+        }
+        else
+        {
+            <div style="overflow-x: auto;">
+                <FluentDataGrid Items="@_logsFiltrados.AsQueryable()" Pagination="@_pagination"
+                                RowSize="DataGridRowSize.Medium" 
+                                OnRowDoubleClick="OnDoubleClick"
+                                TGridItem="LogEntity" ResizableColumns="true">
+
+                    <PropertyColumn Property="@(p => p.Id)" Title="@L["SystemLogs.ColId"]" Sortable="true" Width="100px" />
+                    <TemplateColumn Title="@L["SystemLogs.ColDateTime"]" Width="160px">
+                        @{
+                            <FluentBadge Appearance="Appearance.Neutral">
+                                @FormatHora(context.Timestamp)
+                            </FluentBadge>
+                        }
+                    </TemplateColumn>
+                    <TemplateColumn Title="@L["SystemLogs.ColLevel"]" Sortable="true" SortBy="@_sortByLevel" Width="120px">
+                        @{
+                            var level = context.Level ?? "Information";
+                            var badgeFill = level.Contains("Error") || level.Contains("Fatal") ? "danger" :
+                                            level.Contains("Warning") ? "warning" :
+                                            "info";
+                        }
+                        <FluentBadge Fill="@badgeFill">
+                            @level
+                        </FluentBadge>
+                    </TemplateColumn>
+                    <PropertyColumn Property="@(p => p.RenderedMessage)" Title="@L["SystemLogs.ColMessage"]" Sortable="true" />
+                    <TemplateColumn Title="@L["SystemLogs.ColActions"]" Align="Align.Center" Width="120px">
+                        <FluentStack Orientation="Orientation.Horizontal"
+                                     HorizontalAlignment="HorizontalAlignment.Center"
+                                     VerticalAlignment="VerticalAlignment.Center"
+                                     HorizontalGap="4">
+
+                            <FluentButton Appearance="Appearance.Outline"
+                                          IconStart="@(new Icons.Regular.Size20.Eye())"
+                                          OnClick="@(() => AbrirDetalhesLog(context))"
+                                          Title="@L["SystemLogs.ViewDetails"]" />
+                            <FluentButton Appearance="Appearance.Outline"
+                                          OnClick="@(() => ApagarLog(context.Id))"
+                                          IconStart="@(new Icons.Regular.Size20.Delete())"
+                                          Style="--neutral-stroke-rest: #d32f2f; --neutral-stroke-hover: #c62828; color: #d32f2f;">
+                            </FluentButton>
+                        </FluentStack>
+                    </TemplateColumn>
+                </FluentDataGrid>
+            </div>
+
+            <FluentPaginator State="@_pagination" />
+        }
+    </div>
+</FluentStack>
+
+<LogDetailDialog Log="@_logSelecionado"
+                 Visible="@_isDialogVisible"
+                 VisibleChanged="@(() => _isDialogVisible = false)" />
+
+@code {
+    private List<LogEntity>? _logs;
+    private List<LogEntity>? _logsFiltrados;
+    private string? _search;
+
+    private PaginationState _pagination = new() { ItemsPerPage = 10 };
+    private GridSort<LogEntity> _sortByLevel = GridSort<LogEntity>.ByAscending(p => p.Level ?? "");
+
+    private LogEntity? _logSelecionado;
+    private bool _isDialogVisible = false;
+
+    private string _filtroAtual = "all";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarLogsAsync();
+    }
+
+    private async Task CarregarLogsAsync()
+    {
+        _logs = await LogRepository.GetAllLogsAsync();
+        AplicarFiltros();
+    }
+
+    private string FormatHora(string? timestamp)
+    {
+        if (string.IsNullOrWhiteSpace(timestamp))
+            return "";
+
+        if (DateTime.TryParse(timestamp, out var dt))
+            return dt.ToString("yyyy-MM-dd HH:mm");
+
+        return timestamp;
+    }
+
+    private void AlterarFiltroNivel(string filtro)
+    {
+        _filtroAtual = filtro;
+        AplicarFiltros();
+    }
+
+    private void AplicarFiltros()
+    {
+        if (_logs == null)
+        {
+            _logsFiltrados = new();
+            return;
+        }
+
+        IEnumerable<LogEntity> resultado = _logs;
+
+        // 1. Filtro por nível (Botões)
+        resultado = _filtroAtual switch
+        {
+            "information" => resultado.Where(l =>
+            {
+                var level = (l.Level ?? "").Trim().ToLower();
+                return level.Contains("information") || level.Contains("info") || string.IsNullOrWhiteSpace(l.Level);
+            }),
+
+            "warnings" => resultado.Where(l => (l.Level ?? "").Trim().ToLower().Contains("warning")),
+
+            "errors" => resultado.Where(l =>
+            {
+                var level = (l.Level ?? "").Trim().ToLower();
+                return level.Contains("error") || level.Contains("fatal");
+            }),
+
+            _ => resultado
+        };
+
+        // 2. Filtro por texto de pesquisa
+        if (!string.IsNullOrWhiteSpace(_search))
+        {
+            var termo = _search.Trim();
+
+            resultado = resultado.Where(l =>
+                (l.RenderedMessage != null && l.RenderedMessage.Contains(termo, StringComparison.OrdinalIgnoreCase)) ||
+                (l.Level != null && l.Level.Contains(termo, StringComparison.OrdinalIgnoreCase)) ||
+                l.Id.ToString().Contains(termo)
+            );
+        }
+
+        _logsFiltrados = resultado.ToList();
+    }
+
+    private async Task ConfirmarLimpezaLogs()
+    {
+        if (_logsFiltrados == null || !_logsFiltrados.Any())
+        {
+            await DialogService.ShowInfoAsync(L["SystemLogs.NoLogsToDeleteTitle"],
+                L["SystemLogs.NoLogsToDeleteMessage"]);
+            return;
+        }
+
+        int quantidade = _logsFiltrados.Count;
+        bool isAll = _filtroAtual == "all" && string.IsNullOrWhiteSpace(_search);
+
+        string titulo = isAll ? L["SystemLogs.DeleteAllTitle"] : L["SystemLogs.DeleteFilteredTitle"];
+
+        string mensagem = isAll
+                ? L["SystemLogs.DeleteAllMessage", quantidade]
+                : L["SystemLogs.DeleteFilteredMessage", quantidade];
+
+        var dialog = await DialogService.ShowConfirmationAsync(mensagem, L["SystemLogs.DeleteYes"], L["Common.Cancel"], titulo);
+
+        var resultado = await dialog.Result;
+
+        if (!resultado.Cancelled)
+        {
+            var idsParaApagar = _logsFiltrados.Select(l => l.Id).ToList();
+
+            try
+            {
+                await LogRepository.DeleteLogsByIdsAsync(idsParaApagar);
+
+                await CarregarLogsAsync();
+
+                await DialogService.ShowInfoAsync(L["Common.Success"],
+                    L["SystemLogs.DeletedMessage", quantidade]);
+            }
+            catch (Exception ex)
+            {
+                await DialogService.ShowErrorAsync(L["SystemLogs.DeleteErrorTitle"],
+                    L["SystemLogs.DeleteErrorMessage", ex.Message]);
+            }
+        }
+    }
+
+    private void AbrirDetalhesLog(LogEntity log)
+    {
+        _logSelecionado = log;
+        _isDialogVisible = true;
+    }
+
+    private async Task ApagarLog(int logId)
+    {
+        string mensagem = L["SystemLogs.DeleteOneMessage", logId];
+        string titulo = L["SystemLogs.DeleteOneTitle"];
+
+        var dialog = await DialogService.ShowConfirmationAsync(mensagem, L["SystemLogs.DeleteYes"], L["Common.Cancel"], titulo);
+
+        var resultado = await dialog.Result;
+
+        if (!resultado.Cancelled)
+        {
+            var logParaApagar = _logsFiltrados?.FirstOrDefault(l => l.Id == logId);
+            if (logParaApagar != null)
+            {
+                await LogRepository.DeleteLogByIdAsync(logId);
+                await CarregarLogsAsync();
+            }
+        }
+    }
+    private void OnDoubleClick(FluentDataGridRow<LogEntity> row)
+    {
+        if (row?.Item == null) return;
+        AbrirDetalhesLog(row.Item);
+    }
+
+}
+
+<style>
+    /* Pills de nível: cores destacadas que respeitam o tema (Light/Dark).
+       O FluentBadge usa var(--badge-fill-{fill}) / var(--badge-color-{fill}). */
+    body[data-theme="light"] fluent-badge {
+        --badge-fill-info: #d8ebff;
+        --badge-color-info: #0b4a8f;
+        --badge-fill-warning: #fff0c2;
+        --badge-color-warning: #7a5b00;
+        --badge-fill-danger: #ffdcdc;
+        --badge-color-danger: #b00020;
+    }
+
+    body[data-theme="dark"] fluent-badge {
+        --badge-fill-info: #123c63;
+        --badge-color-info: #9ccbff;
+        --badge-fill-warning: #4d3d00;
+        --badge-color-warning: #ffcf6b;
+        --badge-fill-danger: #541d1d;
+        --badge-color-danger: #ff9b9b;
+    }
+
+    .log-action-delete-button {
+        width: 42px;
+        height: 42px;
+        border-radius: 5%;
+        border: solid 0.08em #000;
+        background: coral !important;
+        color: white;
+        justify-content: end;
+        cursor: pointer;
+        transition: all .2s ease;
+    }
+
+        .log-action-delete-button:hover {
+            transform: scale(1.05);
+        }
+
+        .log-action-delete-button:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+    .separator-line {
+        width: 100%;
+        height: 1px;
+        margin: 0;
+        background-color: #d1d1d1;
+        margin: 10px 0 5px 0;
+    }
+
+    .search-box {
+        width: 280px;
+    }
+
+    .logs-container {
+        width: 75%;
+        min-width: 0;
+    }
+
+    @@media (max-width: 768px) {
+        .logs-container {
+            width: 100%;
+        }
+
+        .search-box {
+            width: 100%;
+        }
+
+        .logs-container fluent-spacer,
+        .logs-container div.spacer {
+            flex: 0 0 100%;
+            height: 0;
+        }
+    }
+</style>

@@ -1,0 +1,214 @@
+@page "/"
+@using System.Text.Json
+@using OllamaArena.Components.Pages.Components
+@using OllamaArena.Services
+@using OllamaArena.Services.Helpers
+@using OllamaArena.Services.Interfaces.Services
+@using static OllamaArena.Models.DTO.OllamaModels
+@using OllamaArena.Resources
+@inject IStringLocalizer<SharedResources> L
+
+
+@inject IDialogService DialogService
+@rendermode InteractiveServer
+
+
+<PageTitle>Home</PageTitle>
+
+<div class="home-container">
+    <FluentStack Orientation="Orientation.Vertical"
+                 HorizontalAlignment="HorizontalAlignment.Center"
+                 VerticalAlignment="VerticalAlignment.Center"
+                 Style="width: 100%; gap: 30px;">
+        <FluentStack Orientation="Orientation.Horizontal"
+                     HorizontalAlignment="HorizontalAlignment.Center"
+                     VerticalAlignment="VerticalAlignment.Center"
+                     Class="home-images"
+                     Style="gap: 50px;">
+
+            <FluentCard Style="padding: 12px; width: max-content; height: max-content;">
+                <img src="images/OllamaAsAJudge.png"
+                     alt="@L["Home.ImageAlt"]"
+                     class="home-img"
+                     style="box-shadow: var(--elevation-shadow-card-hover);
+                object-fit: cover;
+                display: block;
+                overflow: hidden;
+                border-radius: calc(var(--layer-corner-radius) * 1px);" />
+            </FluentCard>
+
+            <FluentCard Style="padding: 12px; width: max-content; height: max-content;">
+                <img src="images/OllamaWithFluentUI.jpg"
+                     alt="@L["Home.ImageAlt"]"
+                     class="home-img"
+                     style="box-shadow: var(--elevation-shadow-card-hover);
+                object-fit: cover;
+                display: block;
+                overflow: hidden;
+                border-radius: calc(var(--layer-corner-radius) * 1px);" />
+            </FluentCard>
+
+        </FluentStack>
+
+        <div>
+            <FluentButton Appearance="Appearance.Outline" OnClick="ShowReadme">@L["ReadmeViewer"]</FluentButton>
+        </div>
+
+        @if (showOllamaError)
+        {
+            <div style="background-color: rgba(0, 0, 0, 0.2); z-index: 9999;">
+                <FluentMessageBar Title="@L["Chat.ModelsLoadErrorTitle"]"
+                                  Style="width: 500px; border: 2px solid var(--accent-fill-rest);"
+                                  Intent="MessageIntent.Error"
+                                  Type="@MessageType.Notification">
+                    @L["Chat.OllamaNotRunning"]
+                </FluentMessageBar>
+            </div>
+        }
+
+    </FluentStack>
+</div>
+<ReadmePreview @ref="preview" />
+
+@code {
+    [Inject] public required InternetConnectivityService Internet { get; set; }
+    [Inject] public IJSRuntime JS { get; set; } = default!;
+    [Inject] public IOllamaGpuService? GpuService { get; set; }
+    [Inject] public ILogger<App>? _logger { get; set; }
+
+    private ReadmePreview? preview;
+    private List<string> _models = new();
+    private List<ModelDetails> _fullModels = new();
+
+    private bool showOllamaError = false;
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        showOllamaError = false;
+        var isOllamaRunning = await OllamaChecker.IsOllamaRunningAsync();
+        if (!isOllamaRunning)
+        {
+            showOllamaError = true;
+            _logger?.LogError("Ollama server is not running.");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            // 1. Verificar se já limpamos a cache nesta sessão do browser
+            var alreadyCleared = await JS.InvokeAsync<string?>("sessionStorage.getItem", "ollamaCacheCleared");
+
+            if (string.IsNullOrEmpty(alreadyCleared))
+            {
+                // Ainda não limpamos → limpar localStorage e marcar a sessão
+                await JS.InvokeVoidAsync("localStorage.removeItem", "ollamaModels");
+                await JS.InvokeVoidAsync("localStorage.removeItem", "ollamaModelsFull");
+                await JS.InvokeVoidAsync("sessionStorage.setItem", "ollamaCacheCleared", "1");
+            }
+
+            // 2. Tentar ler a cache
+            var json = await JS.InvokeAsync<string?>("localStorage.getItem", "ollamaModelsFull");
+
+            if (!string.IsNullOrEmpty(json))
+            {
+                // Cache existe → usar
+                _fullModels = JsonSerializer.Deserialize<List<ModelDetails>>(json, JsonOptions) ?? [];
+                _models = _fullModels.Select(m => m.Model).ToList();
+            }
+            else
+            {
+                // Cache vazia → ir ao Ollama, enriquecer e gravar
+                if (showOllamaError) return; // Ollama não está a correr
+
+                var response = await GpuService!.GetLocalModelsAsync();
+                _fullModels = response.Models ?? [];
+
+                foreach (var model in _fullModels)
+                {
+                    var metadata = await GpuService.GetExtendedModelMetadataAsync(model.Model);
+                    model.ContextLength = metadata.ContextLength;
+                    model.TrainingYear = metadata.TrainingYear;
+                }
+
+                _models = _fullModels.Select(m => m.Model).ToList();
+
+                // Gravar as duas chaves
+                await JS.InvokeVoidAsync("localStorage.setItem", "ollamaModels",
+                    JsonSerializer.Serialize(_models));
+
+                await JS.InvokeVoidAsync("localStorage.setItem", "ollamaModelsFull",
+                    JsonSerializer.Serialize(_fullModels, JsonOptions));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Erro ao gerir cache dos modelos na Home");
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
+    private async Task ShowReadme()
+    {
+        var hasInternet = await Internet.HasInternetAsync();
+        if (!hasInternet)
+        {
+            await DialogService.ShowErrorAsync(L["Home.NoInternetError"], L["Home.ReadmeTitle"]);
+            return;
+        }
+
+        if (preview is not null)
+        {
+            await preview.OpenAsync();
+        }
+    }
+}
+<style>
+    .home-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex: 1 1 auto;
+        min-height: 0;
+        height: 100%;
+        width: 100%;
+    }
+
+    .home-img {
+        width: 28vw;
+        height: 36vh;
+        min-width: 260px;
+        min-height: 220px;
+    }
+
+    @@media (max-width: 768px) {
+        .home-images {
+            flex-direction: column !important;
+            gap: 24px !important;
+            width: 100% !important;
+        }
+
+        .home-images fluent-card {
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        .home-img {
+            width: 100%;
+            height: auto;
+            min-width: 0;
+            min-height: 0;
+        }
+    }
+</style>
