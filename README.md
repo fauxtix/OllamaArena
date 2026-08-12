@@ -10,6 +10,55 @@ A aplicação é mais do que um simples chat: é um **laboratório de experiment
 
 ---
 
+## 🚀 Como executar e testar
+
+### Pré-requisitos
+- **[.NET 10 SDK](https://dotnet.microsoft.com/download)** instalado;
+- **Ollama** a correr localmente (`ollama serve`) — a aplicação liga-se a `http://localhost:11434`.
+
+### Passos
+1. Clonar o repositório;
+2. Instalar os modelos pretendidos: `ollama pull <modelo>` (ex.: `ollama pull llama3.2`);
+3. Executar a partir da pasta do projeto:
+   ```bash
+   cd OllamaFluentUIChat
+   dotnet watch run
+   ```
+4. Abrir `https://localhost:7175` (ou `http://localhost:5292`). No primeiro arranque, a base de dados SQLite é criada automaticamente.
+
+### Configuração opcional
+- **Chaves de API dos juízes** (Gemini/OpenRouter) para a avaliação automática — ficam fora do repositório, em user-secrets:
+  ```bash
+  dotnet user-secrets set "ApiKeys:Gemini" "<chave>"
+  dotnet user-secrets set "ApiKeys:OpenRouter" "<chave>"
+  ```
+- O ficheiro `appsettings.Local.json` (não versionado) pode ser usado para overrides locais — por exemplo, desativar o redirect HTTPS num deploy sem certificado:
+  ```json
+  { "Security": { "EnableHttpsRedirection": false } }
+  ```
+
+### Nota sobre o deploy em IIS
+O repositório inclui um workflow GitHub Actions (`deploy-iis.yml`) que publica a aplicação e faz o deploy para um **self-hosted runner registado apenas na máquina do autor** (a app fica em `http://localhost:4501`). Noutras máquinas, ignore o workflow e corra localmente com `dotnet watch run` — não é necessário qualquer token ou credencial para clonar e testar.
+
+### 📚 Documentação técnica (pasta `Docs`)
+A pasta **`OllamaFluentUIChat/Docs/`** reúne a documentação técnica do projeto em Markdown — pode consultá-la no repositório ou, após um clone, diretamente no explorador de ficheiros:
+
+| Ficheiro | Conteúdo |
+|---|---|
+| `Funcionalidades.md` | Documentação técnica completa (stack, páginas, serviços, BD, configuração, deploy) |
+| `Guia_Testes.md` | Checklist manual de validação (build + testes + smoke test das funcionalidades) |
+| `Guia_Como_Comparar_Modelos.md` | Como usar o laboratório para comparar modelos de forma justa |
+| `Relatorio_Analise.md` | Relatório de análise do código (pontos fortes, bugs, dívida técnica) |
+| `schema.sql` | DDL das 5 tabelas SQLite (executável numa BD nova antes do 1.º arranque) |
+
+Alguns documentos têm também versão **PDF** na mesma pasta, para consulta offline fora da aplicação (`Guia_Como_Comparar_Modelos.pdf`, `Relatorio_Analise.pdf`); para os gerar a partir dos `.md`, pode usar qualquer conversor de Markdown para PDF (ex.: `pandoc`), por exemplo:
+
+```bash
+pandoc OllamaFluentUIChat/Docs/Relatorio_Analise.md -o Relatorio_Analise.pdf
+```
+
+---
+
 ## 🎯 Motivação, Filosofia e Engenharia de Seleção
 
 Este laboratório nasceu para resolver um desafio prático e diário no ecossistema local: **como escolher o modelo de IA certo para a tarefa certa?** No universo de modelos abertos, o tamanho nem sempre dita a eficácia. Um modelo de `1.5B` ou `3B` pode ter um desempenho factual e de formatação superior ao de um modelo maior para um determinado tipo de prompt. 
@@ -41,7 +90,7 @@ Transforme cada conversa num teste científico. Sempre que envia uma mensagem, a
 Com estes dados recolhidos automaticamente, pode:
 
 - Consultar o **histórico completo de todos os testes** numa tabela organizada, com pesquisa e filtros (Todos, Por Avaliar, Avaliados);
-- **Avaliar a qualidade com dois juízes de IA** — atribuir uma nota de 1 a 5 em 11 critérios (factualidade, formatação, clareza, segurança, etc.) às respostas dos seus modelos, através dos juízes **Gemini** e **OpenRouter**, guardando também a **recomendação** de cada juiz;
+- **Avaliar a qualidade com dois juízes de IA** — atribuir uma nota de 1 a 5 em 12 critérios (factualidade, formatação, clareza, segurança, consistência idiomática, deteção de loop, etc.) às respostas dos seus modelos, através dos juízes **Gemini** e **OpenRouter**, guardando também a **recomendação** de cada juiz;
 - **Analisar os resultados de forma 100% local** — a aplicação gera um resumo inteligente com conclusões e recomendações de desempenho (análise em C# puro, sem depender da nuvem);
 - **Exportar os resultados para Excel**, com relatórios agrupados por pergunta, prontos a partilhar;
 - Comparar as respostas de **vários modelos lado a lado** para a mesma pergunta, no painel de Qualidade e Métricas;
@@ -53,7 +102,7 @@ A aplicação integra um processo estruturado de auditoria externa no painel de 
 
 1. **Avaliar Automaticamente:** O utilizador acede à resposta de um modelo específico e clica no botão **"Avaliar automaticamente"**. A aplicação verifica primeiro a ligação à internet (os juízes são serviços em nuvem) e, de seguida, gera internamente o prompt de auditoria e submete-o aos dois juízes; sem internet, avisa o utilizador e sugere o processo manual com **"Copiar prompt"**.
 2. **Contexto Crítico Injetado:** O prompt gerado inclui automaticamente metadados inteligentes (como o ano de treino do modelo local) sob a marca `[CRITICAL CONTEXT]`, instruindo o juiz externo a não penalizar o modelo por falta de conhecimento de eventos futuros.
-3. **Chamadas Diretas às APIs:** A aplicação envia o prompt aos dois juízes **em paralelo** — **Gemini** (`gemini-flash-latest`) e **OpenRouter** (`openrouter/free`) — usando as chaves configuradas em `appsettings.Local.json` (secção `ApiKeys`). Um intervalo mínimo entre avaliações (configurável em `AutomatedJudge:MinIntervalSeconds`, 60s por defeito) protege os limites gratuitos das APIs.
+3. **Chamadas Diretas às APIs:** A aplicação envia o prompt aos dois juízes **em paralelo** — **Gemini** (`gemini-flash-latest`) e **OpenRouter** (`openrouter/free`) — usando as chaves configuradas em **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`; o `appsettings.Local.json` é opcional para overrides locais). Um intervalo mínimo entre avaliações (configurável em `AutomatedJudge:MinIntervalSeconds`, 60s por defeito) protege os limites gratuitos das APIs.
 4. **Abertura do Ecrã de Avaliação Preenchido:** Assim que os juízes respondem, o ecrã de avaliação abre **já preenchido** com as métricas (Escala 1-5), a nota *Global*, o feedback e a **RECOMMENDATION** de cada juiz — prontos a rever e guardar.
 5. **Tratamento de Falhas Parciais:** Se um dos juízes falhar (limite de requisições, rede ou chave inválida), um aviso identifica qual falhou e os campos desse juiz ficam editáveis para colagem manual. O botão **"Copiar prompt"** continua disponível para o processo manual.
 6. **Tradução e Consolidação:** O utilizador pode utilizar a opção **"Traduzir Feedback"** para ver uma pré-visualização só-leitura da tradução das análises para a língua ativa na interface (português ou inglês) — o texto traduzido é apenas informativo e não altera o campo de feedback. Por fim, clica em **"Guardar avaliação"** para persistir todos os dados permanentemente na Base de Dados; o botão fica desativado quando o registo já foi gravado (apenas-leitura).
@@ -62,11 +111,14 @@ A aplicação integra um processo estruturado de auditoria externa no painel de 
 
 - **Respostas em tempo real (streaming)** — o texto aparece no ecrã palavra a palavra, à medida que o modelo o gera;
 - **Formatação** — títulos, listas, tabelas e blocos de código são apresentados de forma limpa e legível;
-- **Histórico de conversas** — guarda e reabre as suas conversas anteriores em qualquer altura;
+- **Histórico de conversas** — guarda e reabre as suas conversas anteriores em qualquer altura, com **exportar/importar em JSON** para fazer backup ou migrar entre máquinas;
 - **Novo chat com um clique** — começa uma conversa do zero instantaneamente, libertando os recursos do computador;
 - **Cronómetro integrado** — cada resposta mostra quanto tempo demorou, para monitorizar o desempenho;
 - **Cancelamento a qualquer momento** — interromper uma resposta;
 - **Indicador de compatibilidade gráfica** — a aplicação avisa-o se o modelo cabe na memória da sua placa gráfica ou se vai correr mais devagar no processador;
+- **Barra de contexto** — um indicador visual mostra os tokens usados e restantes do contexto do modelo, com aviso quando se aproxima do limite;
+- **Raciocínio visível** — modelos de reasoning (ex.: `deepseek-r1`, `qwq`) mostram o bloco de "Pensamento" com o raciocínio, colapsado por defeito e também guardado na conversa;
+- **Pesquisa web** — o toggle liga a pesquisa na internet (Wikipedia + DuckDuckGo) para dar contexto atualizado ao modelo antes de responder;
 - **Comportamento ajustado automaticamente** — a aplicação deteta o tipo de pedido (criativo, factual, tradução) e afina automaticamente o modelo para obter o melhor resultado em cada situação.
 
 ## 🤖 Gestão de Modelos de IA
@@ -95,7 +147,7 @@ Poupe tempo em tarefas repetitivas:
 
 ## 🧭 Experiência do Utilizador
 
-A navegação é simples. No menu lateral encontra todas as secções da aplicação: **Chat**, **Benchmarks**, **Qualidade e Métricas**, **Modelos carregados**, **Prompts** e **Logs**.
+A navegação é simples. No menu lateral encontra todas as secções da aplicação: **Chat**, **Benchmarks**, **Qualidade e Métricas**, **Dashboard**, **Modelos carregados**, **Prompts** e **Logs**.
 
 - **Totalmente responsiva**: a interface adapta-se automaticamente a qualquer tamanho de ecrã. Em telemóveis (≤768px), o menu lateral transforma-se num painel deslizante aberto pelo ícone de hambúrguer no cabeçalho; os diálogos, as tabelas de dados, o chat e o divisor de painéis dos benchmarks ajustam-se para garantir uma boa experiência em qualquer dispositivo.
 - **Conversar**: abra o Chat, escreva a sua mensagem na caixa de texto e prima <kbd>Enter</kbd> ou o botão de envio. As respostas aparecem em tempo real e cada uma mostra o tempo que demorou. Use **Histórico** para retomar conversas anteriores e **Novo Chat** para começar de novo.

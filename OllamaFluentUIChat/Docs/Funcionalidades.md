@@ -30,7 +30,7 @@ Aplicação **Blazor Server** (.NET 10) que funciona como um **chat local com Ol
 - `Prompts/*.txt` — ficheiros de prompt editáveis em runtime (Content files)
 - `PromptTemplates/` — construtores de prompt em C# (`EvaluatePromptTemplate`, `TranslatePromptTemplate`, `ChatInstructionsPrompt`)
 
-> **Nota de build:** a solução (`OllamaFluentUIChat.slnx`) é de **projeto único** (`OllamaFluentUIChat/`) + projeto de **testes** (`OllamaFluentUIChat.Tests/`, 45 testes de unidade). Um antigo `Services/Services.csproj` na raiz (refactor abandonado que não compilava) foi **removido**; o build limpo faz-se com `dotnet build OllamaFluentUIChat.slnx`.
+> **Nota de build:** a solução (`OllamaFluentUIChat.slnx`) é de **projeto único** (`OllamaFluentUIChat/`) + projeto de **testes** (`OllamaFluentUIChat.Tests/`, 47 testes de unidade — 43 métodos). Um antigo `Services/Services.csproj` na raiz (refactor abandonado que não compilava) foi **removido**; o build limpo faz-se com `dotnet build OllamaFluentUIChat.slnx`.
 
 ---
 
@@ -374,10 +374,25 @@ Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Se
 - `OllamaOptions` (`Configure<OllamaOptions>`, secção `Ollama` do `appsettings.json`), `IDapperContext`, `IOllamaGpuService`, `IBenchmarkRepository` (Scoped), `ILogRepository` (Scoped), `IConversationRepository` (Scoped)
 - `PromptFilesService`, `ChatComposerService`, `SystemPromptService`, `EvaluatePromptTemplate`, `MarkdownRenderer`, `LocalAnalysisService`, `AutomatedJudgeService`, `InternetConnectivityService`, `ReadMeService`
 - Clientes HTTP: `IAnalysisService/LocalAnalysisService`, `InternetConnectivityService`, `ReadMeService`, `ITranslationService/TranslationService` (**timeout 4 min**, base de `Ollama:BaseUrl`), o cliente nomeado **`"Ollama"`** (**timeout 10 min**, base de `Ollama:BaseUrl`) usado no streaming do chat, e os clientes nomeados **`"Gemini"`** (timeout 30 s) / **`"OpenRouter"`** (timeout 120 s) para os juízes automáticos.
-- Configuração: `appsettings.Local.json` opcional (não versionado) para overrides locais; chaves de API dos juízes em **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`).
+- Configuração: `appsettings.Local.json` opcional (não versionado) para overrides locais — incluindo `Security:EnableHttpsRedirection` (`false` para deploys HTTP-only, ver secção 12); chaves de API dos juízes em **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`).
 - Localização: PT (`pt`) por defeito + `en`; cookie `RequestCultureProvider`. A **tradução de feedbacks** e a **análise local de resultados** seguem a língua da sessão (o system-prompt do chat mantém-se neutro).
 
-**Requisitos de runtime:** `ollama serve` ativo na base configurada (`Ollama:BaseUrl`); projeto de testes `OllamaFluentUIChat.Tests` com **45 testes de unidade** (ScoreCalculator, EvaluationParser, ChatMeasureTemperature, ChatComposerService, LocalAnalysisService) — `dotnet test`; validação = build + testes + execução manual.
+**Requisitos de runtime:** `ollama serve` ativo na base configurada (`Ollama:BaseUrl`); projeto de testes `OllamaFluentUIChat.Tests` com **47 testes de unidade** (43 métodos: ScoreCalculator, EvaluationParser, ChatMeasureTemperature, ChatComposerService, LocalAnalysisService) — `dotnet test`; validação = build + testes + execução manual.
+
+---
+
+## 12. Deploy em IIS (GitHub Actions)
+
+O repositório inclui um workflow GitHub Actions (`.github/workflows/deploy-iis.yml`) que publica a aplicação e faz o deploy para um **self-hosted runner** registado apenas na máquina do autor (a app fica em `http://localhost:4501`):
+
+- **Triggers:** `push` para `master` ou `workflow_dispatch`.
+- **Publicação:** `dotnet publish OllamaFluentUIChat.csproj -c Release` (SDK .NET 10).
+- **Deploy:** para `C:\inetpub\wwwroot\OllamaFluentUIChat` (site) + app pool `OllamaFluentUIChat` (configuráveis via secrets `IIS_SITE_PATH`/`IIS_APP_POOL`/`SITE_PORT`).
+- **Sem interrupção de dados:** o app pool é parado antes da substituição dos ficheiros (evita DLLs bloqueadas) e re-iniciado no fim; a BD `ollama_benchmark.db` (e `-shm`/`-wal`/`-journal`) e o `appsettings.Local.json` são **preservados** entre deploys.
+- **HTTP-only:** o workflow garante `Security:EnableHttpsRedirection = false` no `appsettings.Local.json` do site (sem certificado não há redirect/HSTS).
+- **Smoke test:** após o arranque, valida `HTTP 200` em `http://localhost:4501`.
+
+Em máquinas sem o runner, o workflow é irrelevante — a app corre localmente com `dotnet watch run` (ver README), sem tokens ou credenciais.
 
 ---
 

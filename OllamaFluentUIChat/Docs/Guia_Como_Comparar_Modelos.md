@@ -13,7 +13,7 @@ Objetivo deste guia: definir um fluxo repetível para responder à pergunta *"qu
 A arquitetura assenta em dois eixos independentes:
 
 - **Velocidade** (`BenchmarkResponse`): tokens por segundo, tempo de carga do modelo, tempo puro de geração e tamanho da resposta em tokens.
-- **Qualidade** (`BenchmarkEvaluation`): 10 métricas — Factual, Formatação, Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Halo Effect e Segurança — mais uma nota global, avaliadas por dois juízes independentes (Gemini e OpenRouter).
+- **Qualidade** (`BenchmarkEvaluation`): 12 métricas — Factual, Formatação, Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Halo Effect, Segurança, Consistência Idiomática e Detecção de Loop — mais uma nota global, avaliadas por dois juízes independentes (Gemini e OpenRouter).
 
 Existe ainda um terceiro mecanismo-chave: o **ajuste automático de temperatura** (`ChatMeasureTemperature`). A aplicação classifica cada prompt e decide sozinha a temperatura: `0.10–0.30` para pedidos factuais (história, código, tradução) e `0.65–0.90` para criatividade (contos, anedotas, roleplay). Ou seja, a app já faz por nós a pergunta *"isto é factual ou criativo?"*.
 
@@ -33,7 +33,7 @@ O erro mais comum é comparar respostas a perguntas diferentes. Para que os mode
 
 ### Passo 2 — Carregar o conjunto candidato no Ollama
 
-- Faça `ollama pull <modelo>` para os candidatos e adicione-os na página de Definições para aparecerem no seletor do chat.
+- Faça `ollama pull <modelo>` para os candidatos. Os modelos instalados aparecem automaticamente no seletor do chat; na página de Definições pode apenas escolher qual é o **modelo predefinido** (não é aí que se adicionam modelos).
 - Inclua **a mesma família em tamanhos diferentes** (ex.: `qwen3:4b`, `qwen3:8b`, `qwen3:14b`) — a tese da aplicação é que um modelo pequeno pode superar um maior numa temática específica.
 
 ### Passo 3 — Executar a bateria
@@ -48,8 +48,8 @@ Para cada modelo, responda **às mesmas perguntas**, mudando apenas o modelo no 
 
 ### Passo 5 — Tirar conclusões em três locais
 
-- **Qualidade e Métricas** (`/benchmark-evaluations`): grelha com filtros e análise local automática.
-- **Benchmarks** (`/benchmarks`): comparação lado a lado por pergunta.
+- **Benchmarks** (`/benchmark-evaluations`): tabela consolidada com filtros, export para Excel e análise local automática.
+- **Qualidade e Métricas** (`/benchmarks`): comparação lado a lado por pergunta.
 - **Análise automática** (`LocalAnalysisService`): identifica o mais rápido, o melhor avaliado, o consenso entre juízes e alerta se todos ficarem abaixo de 4.0/5.
 
 ## 3. Como ler os resultados
@@ -76,4 +76,4 @@ Para cada modelo, responda **às mesmas perguntas**, mudando apenas o modelo no 
 - As correções associadas a este guia garantem que o agrupamento por pergunta (`PromptId`) funciona na grelha de Qualidade e Métricas, e que a análise local não rebenta quando ainda não existem avaliações factuais.
 - A avaliação é **por resposta**, manual ou por juízes em nuvem (limitados a ~60 s entre chamadas para proteger os limites gratuitos).
 - A **temperatura é automática**: para testar o mesmo modelo em modo criativo vs factual, a diferença tem de vir do próprio prompt — é esse o desenho da aplicação.
-- O histórico de conversas do chat vive no navegador (localStorage); apenas os dados de benchmark e as avaliações são persistidos na base de dados.
+- O histórico de conversas do chat é **persistido na base de dados** (SQLite, tabelas `Conversas`/`ConversaMensagens`) e pode ser **exportado/importado em JSON** a partir do painel Histórico do Chat; as avaliações e os benchmarks também vivem na mesma base de dados.

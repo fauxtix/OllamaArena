@@ -10,6 +10,55 @@ This application is more than a simple chat: it's an **experimentation laborator
 
 ---
 
+## 🚀 How to run and test
+
+### Prerequisites
+- **[.NET 10 SDK](https://dotnet.microsoft.com/download)** installed;
+- **Ollama** running locally (`ollama serve`) — the app connects to `http://localhost:11434`.
+
+### Steps
+1. Clone the repository;
+2. Pull the models you want: `ollama pull <model>` (e.g. `ollama pull llama3.2`);
+3. Run from the project folder:
+   ```bash
+   cd OllamaFluentUIChat
+   dotnet watch run
+   ```
+4. Open `https://localhost:7175` (or `http://localhost:5292`). On first start, the SQLite database is created automatically.
+
+### Optional configuration
+- **Judge API keys** (Gemini/OpenRouter) for automatic evaluation — kept out of the repository via user-secrets:
+  ```bash
+  dotnet user-secrets set "ApiKeys:Gemini" "<key>"
+  dotnet user-secrets set "ApiKeys:OpenRouter" "<key>"
+  ```
+- The `appsettings.Local.json` file (not versioned) can be used for local overrides — for example, disabling the HTTPS redirect on a certificate-less deployment:
+  ```json
+  { "Security": { "EnableHttpsRedirection": false } }
+  ```
+
+### A note on the IIS deployment
+The repository includes a GitHub Actions workflow (`deploy-iis.yml`) that publishes the app and deploys it to a **self-hosted runner registered only on the author's machine** (the app runs on `http://localhost:4501`). On any other machine, ignore the workflow and run locally with `dotnet watch run` — no token or credential is needed to clone and test.
+
+### 📚 Technical documentation (the `Docs` folder)
+The **`OllamaFluentUIChat/Docs/`** folder gathers the project's technical documentation in Markdown — you can browse it in the repository or, after cloning, directly in your file explorer:
+
+| File | Content |
+|---|---|
+| `Funcionalidades.md` | Full technical documentation (stack, pages, services, DB, configuration, deployment) |
+| `Guia_Testes.md` | Manual validation checklist (build + unit tests + feature smoke tests) |
+| `Guia_Como_Comparar_Modelos.md` | How to use the lab to compare models fairly |
+| `Relatorio_Analise.md` | Code analysis report (strengths, bugs, technical debt) |
+| `schema.sql` | DDL of the 5 SQLite tables (executable on a fresh DB before first run) |
+
+Some documents also ship as **PDF** in the same folder for offline reference outside the app (`Guia_Como_Comparar_Modelos.pdf`, `Relatorio_Analise.pdf`); to regenerate them from the `.md` files, use any Markdown-to-PDF converter (e.g. `pandoc`):
+
+```bash
+pandoc OllamaFluentUIChat/Docs/Relatorio_Analise.md -o Relatorio_Analise.pdf
+```
+
+---
+
 ## 🎯 Motivation, Philosophy and Selection Engineering
 
 This laboratory was born to solve a practical, everyday challenge in the local ecosystem: **how do you choose the right AI model for the right task?** In the world of open models, size does not always dictate effectiveness. A `1.5B` or `3B` model can deliver better factual and formatting performance than a larger model for a given type of prompt.
@@ -41,7 +90,7 @@ Turn every conversation into a scientific test. Every time you send a message, t
 With this data collected automatically, you can:
 
 - Browse the **complete history of all tests** in an organized table, with search and filters (All, Pending Review, Reviewed);
-- **Assess quality with two AI judges** — rate your models' responses from 1 to 5 across 11 criteria (factuality, formatting, clarity, safety, etc.) using the **Gemini** and **OpenRouter** judges, also saving each judge's **recommendation**;
+- **Assess quality with two AI judges** — rate your models' responses from 1 to 5 across 12 criteria (factuality, formatting, clarity, safety, language consistency, loop detection, etc.) using the **Gemini** and **OpenRouter** judges, also saving each judge's **recommendation**;
 - **Analyse results 100% locally** — the app produces a smart summary with conclusions and performance recommendations (pure C# analysis, no cloud dependency);
 - **Export results to Excel**, with reports grouped by question, ready to share;
 - Compare the responses of **several models side by side** for the same question, in the Quality and Metrics panel;
@@ -53,7 +102,7 @@ The app integrates a structured external audit process in the **Benchmarks** pan
 
 1. **Evaluate Automatically:** The user accesses the response of a specific model and clicks the **"Evaluate automatically"** button. The app first checks the internet connection (the judges are cloud services) and then internally generates the audit prompt and submits it to both judges; without internet, it warns the user and suggests the manual process via **"Copy prompt"**.
 2. **Critical Context Injected:** The generated prompt automatically includes smart metadata (such as the local model's training year) under the `[CRITICAL CONTEXT]` marker, instructing the external judge not to penalize the model for lacking knowledge of future events.
-3. **Direct API Calls:** The app sends the prompt to both judges **in parallel** — **Gemini** (`gemini-flash-latest`) and **OpenRouter** (`openrouter/free`) — using the keys configured in `appsettings.Local.json` (section `ApiKeys`). A minimum interval between evaluations (configurable via `AutomatedJudge:MinIntervalSeconds`, 60s by default) protects the free-tier API limits.
+3. **Direct API Calls:** The app sends the prompt to both judges **in parallel** — **Gemini** (`gemini-flash-latest`) and **OpenRouter** (`openrouter/free`) — using the keys configured in **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`; `appsettings.Local.json` is optional for local overrides). A minimum interval between evaluations (configurable via `AutomatedJudge:MinIntervalSeconds`, 60s by default) protects the free-tier API limits.
 4. **Evaluation Screen Opens Pre-filled:** As soon as the judges reply, the evaluation screen opens **already filled in** with the metrics (1-5 scale), the *Global* score, the feedback and each judge's **RECOMMENDATION** — ready to review and save.
 5. **Partial Failure Handling:** If one of the judges fails (rate limit, network or invalid key), a warning identifies which one failed and that judge's fields remain editable for manual pasting. The **"Copy prompt"** button remains available for the manual process.
 6. **Translation and Consolidation:** The user can use the **"Translate Feedback"** option to view a read-only preview of the analyses translated into the language currently active in the interface (Portuguese or English) — the translated text is informational only and does not modify the feedback field. Finally, click **"Save evaluation"** to persist all data permanently in the Database; the button is disabled once the record has already been saved (read-only).
@@ -62,11 +111,14 @@ The app integrates a structured external audit process in the **Benchmarks** pan
 
 - **Real-time responses (streaming)** — the text appears on screen word by word, as the model generates it;
 - **Formatting** — headings, lists, tables and code blocks are rendered cleanly and legibly;
-- **Conversation history** — saves and reopens your previous conversations at any time;
+- **Conversation history** — saves and reopens your previous conversations at any time, with **JSON export/import** for backups or migrating between machines;
 - **New chat with one click** — starts a conversation from scratch instantly, freeing up computer resources;
 - **Built-in stopwatch** — each response shows how long it took, to monitor performance;
 - **Cancel at any time** — interrupt a response;
 - **Graphics compatibility indicator** — the app warns you whether the model fits in your graphics card memory or will run slower on the CPU;
+- **Context bar** — a visual indicator shows the tokens used and remaining from the model's context, with a warning as it approaches the limit;
+- **Visible reasoning** — reasoning models (e.g. `deepseek-r1`, `qwq`) show a collapsed "Thinking" block with the chain of thought, also saved in the conversation;
+- **Web search** — the toggle enables internet search (Wikipedia + DuckDuckGo) to give the model fresh external context before answering;
 - **Automatically adjusted behaviour** — the app detects the type of request (creative, factual, translation) and automatically fine-tunes the model for the best result in each situation.
 
 ## 🤖 AI Model Management
@@ -95,7 +147,7 @@ Save time on repetitive tasks:
 
 ## 🧭 User Experience
 
-Navigation is simple. The side menu shows every section of the app: **Chat**, **Benchmarks**, **Quality and Metrics**, **Loaded Models**, **Prompts** and **Logs**.
+Navigation is simple. The side menu shows every section of the app: **Chat**, **Benchmarks**, **Quality and Metrics**, **Dashboard**, **Loaded Models**, **Prompts** and **Logs**.
 
 - **Fully responsive**: the interface adapts automatically to any screen size. On phones (≤768px), the side menu becomes a slide-in drawer opened from the hamburger icon in the header; dialogs, data tables, the chat and the benchmark panel splitter adjust to ensure a great experience on any device.
 - **Chat**: open the Chat, type your message in the text box and press <kbd>Enter</kbd> or the send button. Responses appear in real time and each one shows how long it took. Use **History** to resume previous conversations and **New Chat** to start over.

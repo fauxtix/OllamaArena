@@ -19,7 +19,7 @@ dotnet build OllamaFluentUIChat.slnx
 dotnet test OllamaFluentUIChat.slnx
 ```
 
-Esperado: **45 casos (41 métodos)** a passar:
+Esperado: **47 casos (43 métodos)** a passar:
 
 | Projeto de teste | Cobre |
 | --- | --- |
