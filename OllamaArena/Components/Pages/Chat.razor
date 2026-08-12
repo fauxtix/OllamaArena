@@ -98,9 +98,12 @@ else
                     @L["Chat.History"]
                 </FluentButton>
 
+                @* REMARK: a pesquisa web funciona parcialmente — a Wikipedia devolve contexto, mas o DuckDuckGo
+                   usa proteção anti-bot e pode devolver resultados vazios (ver SearchWebContext_DuckDuckGo_Async). *@
                 <FluentSwitch @bind-Value="_webSearchEnabled"
                               Disabled="@_isThinking"
                               Label="@L["Chat.WebSearchLabel"]"
+                              Title="@L["Chat.WebSearchTooltip"]"
                               Style="font-size: 0.8rem;" />
             </FluentStack>
 

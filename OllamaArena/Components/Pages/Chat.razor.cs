@@ -66,6 +66,8 @@ namespace OllamaArena.Components.Pages
 
         private bool isLoadingModels = false;
 
+        // REMARK (web search): toggle com limitações — a Wikipedia (API) devolve contexto, mas o DuckDuckGo
+        // usa proteção anti-bot (HTML/JS) e pode devolver resultados vazios. Ver BuscarContextoWebAsync.
         private bool _webSearchEnabled = false;
 
         private int _currentPromptId;
@@ -818,12 +820,41 @@ namespace OllamaArena.Components.Pages
             return request;
         }
 
+        /// <summary>
+        /// Extrai uma query de pesquisa compacta a partir de um prompt: remove markdown/símbolos e
+        /// colapsa espaços, truncando no limite seguro (~280 chars) da API de pesquisa da Wikipedia.
+        /// </summary>
+        private static string CriarQueryWebCompacta(string? prompt, int maxChars = 280)
+        {
+            if (string.IsNullOrWhiteSpace(prompt))
+                return string.Empty;
+
+            string compacta = System.Text.RegularExpressions.Regex.Replace(prompt, @"[\r\n\t]+", " ");
+            compacta = System.Text.RegularExpressions.Regex.Replace(compacta, @"[#*_`>~\[\](){}]|`{3}", " ");
+            compacta = System.Text.RegularExpressions.Regex.Replace(compacta, @"\s+", " ").Trim();
+
+            if (compacta.Length <= maxChars)
+                return compacta;
+
+            int corte = compacta.LastIndexOf(' ', maxChars);
+            if (corte <= maxChars / 2)
+                corte = maxChars;
+
+            return compacta.Substring(0, corte).Trim();
+        }
+
         private async Task<string> BuscarContextoWebAsync(string query)
         {
             try
             {
-                var duckDuckGoTask = SearchWebContext_DuckDuckGo_Async(query);
-                var wikipediaTask = SearchWebContext_Wikipedia_Async(query);
+                // REMARK: a API de pesquisa da Wikipedia limita o parâmetro q a ~300 caracteres e o DuckDuckGo
+                // usa anti-bot; por isso extrai-se uma query compacta (sem markdown/espaços) e com tamanho seguro.
+                string webQuery = CriarQueryWebCompacta(query);
+                if (string.IsNullOrWhiteSpace(webQuery))
+                    return string.Empty;
+
+                var duckDuckGoTask = SearchWebContext_DuckDuckGo_Async(webQuery);
+                var wikipediaTask = SearchWebContext_Wikipedia_Async(webQuery);
 
                 await Task.WhenAll(duckDuckGoTask, wikipediaTask);
 
@@ -876,6 +907,9 @@ namespace OllamaArena.Components.Pages
 
                 var html = await response.Content.ReadAsStringAsync();
 
+                // REMARK: o DuckDuckGo mudou o HTML e usa mecanismo anti-bot — o seletor 'result-link'
+                // pode não existir e esta função devolve "Não foram encontrados dados externos relevantes."
+                // (comportamento conhecido; a Wikipedia via API é a fonte fiável desta funcionalidade).
                 var doc = new HtmlAgilityPack.HtmlDocument();
                 doc.LoadHtml(html);
 
@@ -973,7 +1007,16 @@ namespace OllamaArena.Components.Pages
                     throw new InvalidOperationException("HttpClient is not initialized.");
                 }
 
-                string url = $"https://pt.wikipedia.org/w/api.php?action=query&list=search&srsearch={Uri.EscapeDataString(query)}&format=json&origin=*";
+                string cleanQuery = query?.Trim() ?? string.Empty;
+
+                // REMARK: a API de pesquisa da Wikipedia só aceita ~300 caracteres em srsearch (q).
+                if (string.IsNullOrEmpty(cleanQuery))
+                    return string.Empty;
+
+                if (cleanQuery.Length > 300)
+                    cleanQuery = cleanQuery.Substring(0, 300);
+
+                string url = $"https://pt.wikipedia.org/w/api.php?action=query&list=search&srsearch={Uri.EscapeDataString(cleanQuery)}&format=json&origin=*";
 
                 using var request = CriarRequestWeb(new Uri(url, UriKind.Absolute));
                 var response = await _httpClient.SendAsync(request);

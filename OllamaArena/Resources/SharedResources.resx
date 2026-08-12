@@ -264,6 +264,9 @@
   <data name="Chat.WebSearchLabel" xml:space="preserve">
     <value>Pesquisa web</value>
   </data>
+  <data name="Chat.WebSearchTooltip" xml:space="preserve">
+    <value>Pesquisa web limitada: a Wikipedia devolve contexto, mas o DuckDuckGo usa proteção anti-bot e pode não devolver resultados.</value>
+  </data>
   <data name="Benchmarks.SearchPlaceholder" xml:space="preserve">
     <value>Pesquisa benchmarks (modelo, descrição)</value>
   </data>
