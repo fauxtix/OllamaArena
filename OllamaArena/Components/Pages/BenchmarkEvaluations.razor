@@ -1,4 +1,4 @@
-compila e vê se há error@page "/benchmark-evaluations"
+@page "/benchmark-evaluations"
 @rendermode InteractiveServer
 
 @using Models.DTO
@@ -27,43 +27,41 @@ compila e vê se há error@page "/benchmark-evaluations"
                 <FluentSearch @bind-Value="_search"
                               Placeholder="@L["Benchmarks.SearchPlaceholder"]"
                               class="search-box" />
-
                     <FluentSpacer />
-
-                <FluentButton Appearance="Appearance.Outline"
-                              Disabled="@(_benchmarks.Any() == false)"
-                              IconStart="@(new Icons.Regular.Size24.ArrowDownload())"
-                              @onclick="ExportarParaExcel">
-                    @L["Common.ExportExcel"]
-                </FluentButton>
-                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
                     <FluentButton Appearance="Appearance.Outline"
-                                  Disabled="@(!_podeExportarPdf)"
-                                  IconStart="@(new Icons.Regular.Size24.DocumentText())"
-                                  @onclick="ExportarParaPdfAsync">
-                        @L["Benchmarks.ExportPdf"]
+                                  Disabled="@(_benchmarks.Any() == false)"
+                                  IconStart="@(new Icons.Regular.Size24.ArrowDownload())"
+                                  @onclick="ExportarParaExcel">
+                        @L["Common.ExportExcel"]
                     </FluentButton>
-                    @if (!_podeExportarPdf && _quantidadePorAvaliar > 0)
-                    {
-                        <FluentLabel Style="color: var(--neutral-foreground-hint); font-size: 12px; max-width: 280px;">
-                            @L["Benchmarks.ExportPdfHint", _quantidadePorAvaliar]
-                        </FluentLabel>
-                    }
-                </FluentStack>
-                <FluentButton Appearance="Appearance.Accent"
-                              Disabled="@(_benchmarks.Any() == false || _isAnalyzing)"
-                              IconStart="@(new Icons.Regular.Size24.BrainCircuit())"
-                              @onclick="AnalisarResultadosComModeloLocal">
-                    @L["Benchmarks.AnalysisLocal"]
-                </FluentButton>
+                    @* <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;"> *@
+                        <FluentButton Appearance="Appearance.Outline"
+                                      Disabled="@(!_podeExportarPdf)"
+                                      IconStart="@(new Icons.Regular.Size24.DocumentText())"
+                                      @onclick="ExportarParaPdfAsync">
+                            @L["Benchmarks.ExportPdf"]
+                        </FluentButton>
+                        @if (!_podeExportarPdf && _quantidadePorAvaliar > 0)
+                        {
+                            <FluentLabel Style="color: var(--neutral-foreground-hint); font-size: 12px; max-width: 280px;">
+                                @L["Benchmarks.ExportPdfHint", _quantidadePorAvaliar]
+                            </FluentLabel>
+                        }
+                    @* </FluentStack> *@
+                    <FluentButton Appearance="Appearance.Accent"
+                                  Disabled="@(_benchmarks.Any() == false || _isAnalyzing)"
+                                  IconStart="@(new Icons.Regular.Size24.BrainCircuit())"
+                                  @onclick="AnalisarResultadosComModeloLocal">
+                        @L["Benchmarks.AnalysisLocal"]
+                    </FluentButton>
 
-                <FluentButton Appearance="Appearance.Lightweight"
-                              Disabled="@(_benchmarks.Any() == false)"
-                              Color="rgba(255, 255,255, 1)"
-                              BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
-                              IconStart="@(new Icons.Regular.Size16.Delete())" OnClick="DeleteAllDataAsync">
-                    @L["Benchmarks.DeleteAll"]
-                </FluentButton>
+                    <FluentButton Appearance="Appearance.Lightweight"
+                                  Disabled="@(_benchmarks.Any() == false)"
+                                  Color="rgba(255, 255,255, 1)"
+                                  BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
+                                  IconStart="@(new Icons.Regular.Size16.Delete())" OnClick="DeleteAllDataAsync">
+                        @L["Benchmarks.DeleteAll"]
+                    </FluentButton>
 
             </div>
 
@@ -92,8 +90,8 @@ compila e vê se há error@page "/benchmark-evaluations"
 
         <FluentDataGrid Items="@FilteredBenchmarks"
                         TGridItem="BenchmarkEvaluationModel"
-                        Pagination="@_pagination" OnRowDoubleClick="OnDoubleClick" 
-                        RowSize="DataGridRowSize.Medium" 
+                        Pagination="@_pagination" OnRowDoubleClick="OnDoubleClick"
+                        RowSize="DataGridRowSize.Medium"
                         DisplayMode="DataGridDisplayMode.Grid"
                         class="benchmark-grid">
 
@@ -105,7 +103,7 @@ compila e vê se há error@page "/benchmark-evaluations"
                 </HeaderCellTitleTemplate>
             </PropertyColumn>
 
-            <TemplateColumn Title="@L["Benchmarks.ColDescription"]" Tooltip="true" Width="200px">
+            <TemplateColumn Title="@L["Benchmarks.ColDescription"]" Tooltip="true" Width="200px" Align="Align.Start">
                 <HeaderCellItemTemplate>
                     <span class="header-columns">@L["Benchmarks.ColDescription"]</span>
                 </HeaderCellItemTemplate>
@@ -134,20 +132,20 @@ compila e vê se há error@page "/benchmark-evaluations"
                 <HeaderCellTitleTemplate>
                     <span class="header-columns">@L["Benchmarks.ColTokensPerSecond"]</span>
                 </HeaderCellTitleTemplate>
-                </PropertyColumn>
-            <PropertyColumn Property="@(b => b.TempoPuroFormatado)"  Title="@L["Benchmarks.ColTime"]" Align="Align.Center" Width="100px" Sortable="true" >
+            </PropertyColumn>
+            <PropertyColumn Property="@(b => b.TempoPuroFormatado)" Title="@L["Benchmarks.ColTime"]" Align="Align.Center" Width="100px" Sortable="true">
                 <HeaderCellTitleTemplate>
                     <span class="header-columns">@L["Benchmarks.ColTime"]</span>
                 </HeaderCellTitleTemplate>
 
             </PropertyColumn>
-            <PropertyColumn Property="@(b => b.TempoCargaFormatado)" Title="@L["Benchmarks.ColLoad"]" Align="Align.Center" Width="100px" Sortable="true" >
+            <PropertyColumn Property="@(b => b.TempoCargaFormatado)" Title="@L["Benchmarks.ColLoad"]" Align="Align.Center" Width="100px" Sortable="true">
                 <HeaderCellTitleTemplate>
                     <span class="header-columns">@L["Benchmarks.ColLoad"]</span>
                 </HeaderCellTitleTemplate>
 
             </PropertyColumn>
-            <PropertyColumn Property="@(b => b.TamanhoTokens)" Title="@L["Benchmarks.ColTokens"]" Align="Align.Center" Width="100px" Sortable="true" >
+            <PropertyColumn Property="@(b => b.TamanhoTokens)" Title="@L["Benchmarks.ColTokens"]" Align="Align.Center" Width="100px" Sortable="true">
                 <HeaderCellTitleTemplate>
                     <span class="header-columns">@L["Benchmarks.ColTokens"]</span>
                 </HeaderCellTitleTemplate>
@@ -205,7 +203,7 @@ compila e vê se há error@page "/benchmark-evaluations"
 <BenchmarkEvaluationDetail Response="@_selectedBenchmarkResponse"
                            Visible="@_isDialogVisible"
                            VisibleChanged="@((v) => _isDialogVisible = v)"
-                            OnClose="@(() => _isDialogVisible = false)" />
+                           OnClose="@(() => _isDialogVisible = false)" />
 
 
 @code {
@@ -831,14 +829,14 @@ compila e vê se há error@page "/benchmark-evaluations"
     }
 
     .header-blue {
-        display:flex;
-        justify-content:center;
+        display: flex;
+        justify-content: center;
         color: var(--accent-fill-rest, #0078d4) !important;
         font-weight: 700;
         font-size: 0.9rem;
         border-radius: 3px;
         border: 1px solid var(--neutral-stroke-rest);
-        align-items:center;
+        align-items: center;
     }
 
     .header-columns {
