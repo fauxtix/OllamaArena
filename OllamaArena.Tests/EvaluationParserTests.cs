@@ -1,3 +1,4 @@
+using System.Globalization;
 using OllamaArena.Services.Helpers;
 
 namespace OllamaArena.Tests;
@@ -139,5 +140,41 @@ public class EvaluationParserTests
 
         Assert.Equal(3, resultado.LanguageConsistencyScore);
         Assert.Equal(2, resultado.LoopDetectionScore);
+    }
+
+    [Fact]
+    public void FinalScoreDecimalComPonto_CulturaPt_ParseiaComoDecimal()
+    {
+        var culturaOriginal = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("pt-PT");
+
+            var resultado = EvaluationParser.ParseEvaluation("FINAL_SCORE: 2.3");
+
+            Assert.Equal(2.3f, resultado.FinalScore);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = culturaOriginal;
+        }
+    }
+
+    [Fact]
+    public void FinalScoreDecimalComVirgula_CulturaPt_ParseiaComoDecimal()
+    {
+        var culturaOriginal = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("pt-PT");
+
+            var resultado = EvaluationParser.ParseEvaluation("FINAL_SCORE: 2,3");
+
+            Assert.Equal(2.3f, resultado.FinalScore);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = culturaOriginal;
+        }
     }
 }

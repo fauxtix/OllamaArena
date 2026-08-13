@@ -40,6 +40,18 @@ This application is more than a simple chat: it's an **experimentation laborator
 ### A note on the IIS deployment
 The repository includes a GitHub Actions workflow (`deploy-iis.yml`) that publishes the app and deploys it to a **self-hosted runner registered only on the author's machine** (the app runs on `http://localhost:4501`). On any other machine, ignore the workflow and run locally with `dotnet watch run` — no token or credential is needed to clone and test.
 
+#### API keys on IIS
+On IIS, user-secrets are **not read** (they are only loaded in Development). Configure the judge keys in `appsettings.Local.json` on the server (e.g. `C:\inetpub\wwwroot\OllamaArena\appsettings.Local.json`):
+
+```json
+{
+  "Security": { "EnableHttpsRedirection": false },
+  "ApiKeys": { "Gemini": "<key>", "OpenRouter": "<key>" }
+}
+```
+
+This file is **preserved by the workflow on every deploy** (it is excluded from the publish output and from the site cleanup) and is re-read at runtime (`reloadOnChange`), without restarting the site. **Keep the `Security` block** — the workflow writes it automatically on each deploy. Alternative: environment variables on the IIS App Pool (`ApiKeys__Gemini` / `ApiKeys__OpenRouter`, the `__` maps to `:`), which also survive redeploys.
+
 ### 📚 Technical documentation (the `Docs` folder)
 The **`OllamaArena/Docs/`** folder gathers the project's technical documentation in Markdown — you can browse it in the repository or, after cloning, directly in your file explorer:
 

@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace OllamaArena.Services.Helpers
 {
     public class ParsedEvaluationResult
@@ -125,7 +127,11 @@ namespace OllamaArena.Services.Helpers
                     if (slash >= 0)
                         rawValue = rawValue.Substring(0, slash).Trim();
 
-                    if (float.TryParse(rawValue, out float val))
+                    // Parse invariante à cultura: pt-PT usa vírgula como separador decimal,
+                    // o que descartaria "2.3". Normaliza vírgula para ponto.
+                    rawValue = rawValue.Replace(',', '.');
+
+                    if (float.TryParse(rawValue, NumberStyles.Float, CultureInfo.InvariantCulture, out float val))
                         result.FinalScore = val;
                     section = Section.None;
                 }
@@ -186,7 +192,8 @@ namespace OllamaArena.Services.Helpers
                 if (slash >= 0)
                     rawValue = rawValue.Substring(0, slash).Trim();
 
-                return int.TryParse(rawValue, out score);
+                // Parse invariante à cultura (evita divergências pt-PT vs en-US).
+                return int.TryParse(rawValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out score);
             }
             return false;
         }

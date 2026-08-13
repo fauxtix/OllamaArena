@@ -11,6 +11,14 @@ Checklist manual para validar o estado atual da aplicação (build + testes unit
   - `dotnet user-secrets set "ApiKeys:Gemini" "<chave>"`
   - `dotnet user-secrets set "ApiKeys:OpenRouter" "<chave>"`
   - Sem chaves, o juiz automático mostra um aviso (não bloqueia o resto da app).
+- (Opcional, **deploy IIS**) Em IIS o user-secrets não é lido (só em Development). Acrescente as chaves ao `appsettings.Local.json` no servidor (ex.: `C:\inetpub\wwwroot\OllamaArena\appsettings.Local.json`):
+  ```json
+  {
+    "Security": { "EnableHttpsRedirection": false },
+    "ApiKeys": { "Gemini": "<chave>", "OpenRouter": "<chave>" }
+  }
+  ```
+  O ficheiro é preservado pelo workflow de deploy e relido em runtime (`reloadOnChange`). Manter o bloco `Security` (escrito automaticamente pelo workflow). Alternativa: variáveis de ambiente no App Pool (`ApiKeys__Gemini` / `ApiKeys__OpenRouter`).
 
 ## 1. Build + testes unitários
 
