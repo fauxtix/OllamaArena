@@ -1,6 +1,6 @@
 # Relatório de Análise — Ollama Chat & Benchmark Laboratory
 
-**Aplicação:** OllamaArena (Blazor Server, .NET 10) · **Data:** 10 de agosto de 2026
+**Aplicação:** OllamaArena (Blazor Server, .NET 10)
 
 > **Nota de atualização:** após a geração inicial deste relatório foram corrigidos dois dos bugs identificados (secções 2.4 e 2.5). Este documento é a **fonte de verdade** em Markdown; o ficheiro `Docs/Relatorio_Analise.pdf` é o artefacto de distribuição correspondente.
 
