@@ -66,11 +66,18 @@ try
     builder.Services.AddSingleton<MarkdownRenderer>();
     builder.Services.AddHttpClient<ReadMeService>();
     builder.Services.AddTransient<AutomatedJudgeService>();
+    builder.Services.AddHttpClient<IOpenRouterCatalogService, OpenRouterCatalogService>(client =>
+    {
+        client.Timeout = TimeSpan.FromSeconds(15);
+        client.DefaultRequestHeaders.Add("Accept", "application/json");
+    });
 
     // Clientes nomeados para os juízes automáticos (Gemini e OpenRouter)
     builder.Services.AddHttpClient("Gemini", client => client.Timeout = TimeSpan.FromSeconds(30));
     builder.Services.AddHttpClient("OpenRouter", client => client.Timeout = TimeSpan.FromSeconds(120));
     builder.Services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
+    builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
+    builder.Services.AddScoped<IModelosJuizRepository, ModelosJuizRepository>();
     builder.Services.AddScoped<ILogRepository, LogRepository>();
     builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
 

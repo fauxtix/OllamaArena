@@ -27,6 +27,7 @@ public static class DatabaseSchemaInitializer
         connection.Open();
 
         EnsureTable(connection);
+        SeedModelosJuiz(connection);
         EnsureColumns(connection);
     }
 
@@ -121,6 +122,53 @@ public static class DatabaseSchemaInitializer
                 FOREIGN KEY ("ConversationId") REFERENCES "Conversas" ("Id") ON DELETE CASCADE
             );
             """);
+
+        // Definições configuráveis pela página Settings (chave/valor).
+        connection.Execute("""
+            CREATE TABLE IF NOT EXISTS "Configuracoes" (
+                "Chave" TEXT PRIMARY KEY,
+                "Valor" TEXT NOT NULL
+            );
+            """);
+
+        // Registo de modelos ":free" do OpenRouter para a combo-box da página Settings.
+        connection.Execute("""
+            CREATE TABLE IF NOT EXISTS "ModelosJuiz" (
+                "Id"          INTEGER PRIMARY KEY AUTOINCREMENT,
+                "Nome"        TEXT NOT NULL UNIQUE,
+                "DataCriacao" TEXT NOT NULL
+            );
+            """);
+    }
+
+    /// <summary>
+    /// Popula a tabela ModelosJuiz apenas quando está vazia (para não repor modelos
+    /// que o utilizador apagou). Lista curada de modelos ":free" gerais do OpenRouter.
+    /// </summary>
+    private static void SeedModelosJuiz(IDbConnection connection)
+    {
+        int total = connection.ExecuteScalar<int>("SELECT COUNT(*) FROM ModelosJuiz;");
+        if (total > 0)
+            return;
+
+        string[] modelosCurados =
+        [
+            "meta-llama/llama-3.3-70b-instruct:free",
+            "openai/gpt-oss-120b:free",
+            "openai/gpt-oss-20b:free",
+            "qwen/qwen3-next-80b-a3b-instruct:free",
+            "google/gemma-4-31b-it:free",
+            "nvidia/nemotron-3-ultra-550b-a55b:free",
+            "nvidia/nemotron-3-super-120b-a12b:free",
+            "nvidia/nemotron-3-nano-30b-a3b:free"
+        ];
+
+        foreach (var nome in modelosCurados)
+        {
+            connection.Execute(
+                "INSERT INTO ModelosJuiz (Nome, DataCriacao) VALUES (@Nome, @DataCriacao);",
+                new { Nome = nome, DataCriacao = DateTime.UtcNow.ToString("o") });
+        }
     }
 
     /// <summary>

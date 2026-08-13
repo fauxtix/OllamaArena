@@ -153,6 +153,9 @@
   <data name="SystemLogs" xml:space="preserve">
     <value>System Logs</value>
   </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
   <data name="Common.Cancel" xml:space="preserve">
     <value>Cancel</value>
   </data>
@@ -347,6 +350,42 @@
   </data>
   <data name="Benchmarks.ExcelIdGroup" xml:space="preserve">
     <value>ID #{0} ({1})</value>
+  </data>
+  <data name="Benchmarks.ExportPdf" xml:space="preserve">
+    <value>Export PDF</value>
+  </data>
+  <data name="Benchmarks.ExportPdfHint" xml:space="preserve">
+    <value>Available when all responses are evaluated ({0} still to evaluate).</value>
+  </data>
+  <data name="Benchmarks.ExportPdfTitle" xml:space="preserve">
+    <value>Judges' Evaluation Report</value>
+  </data>
+  <data name="Benchmarks.ExportPdfGeneratedAt" xml:space="preserve">
+    <value>Generated on</value>
+  </data>
+  <data name="Benchmarks.ExportPdfPrompt" xml:space="preserve">
+    <value>Prompt</value>
+  </data>
+  <data name="Benchmarks.ExportPdfModel" xml:space="preserve">
+    <value>Model</value>
+  </data>
+  <data name="Benchmarks.ExportPdfMetric" xml:space="preserve">
+    <value>Metric</value>
+  </data>
+  <data name="Benchmarks.ExportPdfPerformance" xml:space="preserve">
+    <value>Performance</value>
+  </data>
+  <data name="Benchmarks.ExportPdfFeedback" xml:space="preserve">
+    <value>Feedback</value>
+  </data>
+  <data name="Benchmarks.ExportPdfRecommendation" xml:space="preserve">
+    <value>Recommendation</value>
+  </data>
+  <data name="Benchmarks.ExportPdfDate" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="Benchmarks.ExportPdfError" xml:space="preserve">
+    <value>Error generating the PDF:</value>
   </data>
   <data name="Benchmarks.MultipleGroupsWarning" xml:space="preserve">
     <value>⚠️ Attention - Multiple Prompt Groups</value>
@@ -1095,29 +1134,11 @@ Do you want to continue?</value>
   <data name="ErrorPage.DevModeWarning" xml:space="preserve">
     <value>&lt;strong&gt;The Development environment shouldn't be enabled for deployed applications.&lt;/strong&gt; It can result in displaying sensitive information from exceptions to end users. For local debugging, enable the &lt;strong&gt;Development&lt;/strong&gt; environment by setting the &lt;strong&gt;ASPNETCORE_ENVIRONMENT&lt;/strong&gt; environment variable to &lt;strong&gt;Development&lt;/strong&gt; and restarting the app.</value>
   </data>
-  <data name="Settings.ThemeLabel" xml:space="preserve">
-    <value>Theme</value>
-  </data>
   <data name="Theme.ToDark" xml:space="preserve">
     <value>Switch to dark theme</value>
   </data>
   <data name="Theme.ToLight" xml:space="preserve">
     <value>Switch to light theme</value>
-  </data>
-  <data name="Settings.ColorLabel" xml:space="preserve">
-    <value>Color</value>
-  </data>
-  <data name="Settings.FeelingLucky" xml:space="preserve">
-    <value>Feeling lucky?</value>
-  </data>
-  <data name="Settings.ModelLabel" xml:space="preserve">
-    <value>Ollama Model</value>
-  </data>
-  <data name="Settings.SaveModel" xml:space="preserve">
-    <value>Save Model</value>
-  </data>
-  <data name="Settings.NoModels" xml:space="preserve">
-    <value>No models available. Install a model in Ollama (ollama pull) and reload this page.</value>
   </data>
   <data name="Settings.ExampleContent" xml:space="preserve">
     <value>Example of content</value>
@@ -1127,6 +1148,81 @@ Do you want to continue?</value>
   </data>
   <data name="Settings.AccentButton" xml:space="preserve">
     <value>Accent button</value>
+  </data>
+  <data name="Settings.JudgesSectionTitle" xml:space="preserve">
+    <value>AI Judges (Gemini &amp; OpenRouter)</value>
+  </data>
+  <data name="Settings.OpenRouterModelLabel" xml:space="preserve">
+    <value>OpenRouter judge model</value>
+  </data>
+  <data name="Settings.JudgeModelTitle" xml:space="preserve">
+    <value>OpenRouter judge model</value>
+  </data>
+  <data name="Settings.JudgeModelsLoading" xml:space="preserve">
+    <value>Loading the free models catalog...</value>
+  </data>
+  <data name="Settings.JudgeModelsSearchPlaceholder" xml:space="preserve">
+    <value>Search model (name or ID)...</value>
+  </data>
+  <data name="Settings.JudgeModelsLoadError" xml:space="preserve">
+    <value>Unable to load the catalog (no internet?). You can type a model ID manually in the field below.</value>
+  </data>
+  <data name="Settings.JudgeModelsRouterAuto" xml:space="preserve">
+    <value>Free automatic router</value>
+  </data>
+  <data name="Settings.JudgeModelsRouterBadge" xml:space="preserve">
+    <value>Automatic</value>
+  </data>
+  <data name="Settings.JudgeModelsFreeBadge" xml:space="preserve">
+    <value>Free</value>
+  </data>
+  <data name="Settings.JudgeModelsContextTokens" xml:space="preserve">
+    <value>{0} tokens</value>
+  </data>
+  <data name="Settings.JudgeModelsNoResults" xml:space="preserve">
+    <value>No model matches the search.</value>
+  </data>
+  <data name="Settings.JudgeModelsManualLabel" xml:space="preserve">
+    <value>Or type an ID manually</value>
+  </data>
+  <data name="Settings.JudgeModelsManualHelper" xml:space="preserve">
+    <value>Useful offline or for models not listed. If the chosen model becomes unavailable (404), the app automatically falls back to openrouter/free.</value>
+  </data>
+  <data name="Settings.GeminiKeyLabel" xml:space="preserve">
+    <value>Gemini API key</value>
+  </data>
+  <data name="Settings.OpenRouterKeyLabel" xml:space="preserve">
+    <value>OpenRouter API key</value>
+  </data>
+  <data name="Settings.SaveJudges" xml:space="preserve">
+    <value>Save judge configuration</value>
+  </data>
+  <data name="Settings.JudgesSaved" xml:space="preserve">
+    <value>Judge configuration saved.</value>
+  </data>
+  <data name="Settings.JudgesSaveError" xml:space="preserve">
+    <value>Error saving judge configuration:</value>
+  </data>
+  <data name="Settings.SaveJudgesConfirmTitle" xml:space="preserve">
+    <value>Confirm changes</value>
+  </data>
+  <data name="Settings.SaveJudgesConfirmYes" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Settings.SaveJudgesConfirmMessage" xml:space="preserve">
+    <value>Do you confirm saving the following changes?</value>
+  </data>
+  <data name="Settings.UnsavedChangesHint" xml:space="preserve">
+    <value>You have unsaved changes.</value>
+  </data>
+  <data name="Settings.ChangeNoValue" xml:space="preserve">
+    <value>(no value)</value>
+  </data>
+  <data name="Settings.ChangeKeySet" xml:space="preserve">
+    <value>set/changed</value>
+  </data>
+  <data name="Settings.ChangeKeyRemoved" xml:space="preserve">
+    <value>removed</value>
   </data>
   <data name="Reconnect.Joining" xml:space="preserve">
     <value>Rejoining the server...</value>

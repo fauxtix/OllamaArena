@@ -27,7 +27,8 @@ This application is more than a simple chat: it's an **experimentation laborator
 4. Open `https://localhost:7175` (or `http://localhost:5292`). On first start, the SQLite database is created automatically.
 
 ### Optional configuration
-- **Judge API keys** (Gemini/OpenRouter) for automatic evaluation — kept out of the repository via user-secrets:
+- **AI judges (keys + model + temperature):** the simplest way (and the only one that works on any deployment) is the **Settings** page (`/settings`), in the **"AI Judges"** section — paste the Gemini/OpenRouter keys, pick the OpenRouter judge model from a **radio-button list** fed by the **public catalog** (free models only; `openrouter/free` is always the default and stays pinned at the top) — or type an ID manually for offline/custom cases — and adjust the temperature. The active choice is stored in the `Configuracoes` table (SQLite); everything applies without restarting.
+- In development, you can also configure the same keys via user-secrets (kept out of the repository); the DB always overrides configuration:
   ```bash
   dotnet user-secrets set "ApiKeys:Gemini" "<key>"
   dotnet user-secrets set "ApiKeys:OpenRouter" "<key>"
@@ -41,7 +42,7 @@ This application is more than a simple chat: it's an **experimentation laborator
 The repository includes a GitHub Actions workflow (`deploy-iis.yml`) that publishes the app and deploys it to a **self-hosted runner registered only on the author's machine** (the app runs on `http://localhost:4501`). On any other machine, ignore the workflow and run locally with `dotnet watch run` — no token or credential is needed to clone and test.
 
 #### API keys on IIS
-On IIS, user-secrets are **not read** (they are only loaded in Development). Configure the judge keys in `appsettings.Local.json` on the server (e.g. `C:\inetpub\wwwroot\OllamaArena\appsettings.Local.json`):
+**Recommended:** after deployment, use the **Settings** page → "AI Judges" to paste the keys — they are stored in the DB and work without editing files. Alternatively (or as a fallback), configure the keys in `appsettings.Local.json` on the server (e.g. `C:\inetpub\wwwroot\OllamaArena\appsettings.Local.json`):
 
 ```json
 {
@@ -114,10 +115,33 @@ The app integrates a structured external audit process in the **Benchmarks** pan
 
 1. **Evaluate Automatically:** The user accesses the response of a specific model and clicks the **"Evaluate automatically"** button. The app first checks the internet connection (the judges are cloud services) and then internally generates the audit prompt and submits it to both judges; without internet, it warns the user and suggests the manual process via **"Copy prompt"**.
 2. **Critical Context Injected:** The generated prompt automatically includes smart metadata (such as the local model's training year) under the `[CRITICAL CONTEXT]` marker, instructing the external judge not to penalize the model for lacking knowledge of future events.
-3. **Direct API Calls:** The app sends the prompt to both judges **in parallel** — **Gemini** (`gemini-flash-latest`) and **OpenRouter** (`openrouter/free`) — using the keys configured in **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`; `appsettings.Local.json` is optional for local overrides). A minimum interval between evaluations (configurable via `AutomatedJudge:MinIntervalSeconds`, 60s by default) protects the free-tier API limits.
+3. **Direct API Calls:** The app sends the prompt to both judges **in parallel** — **Gemini** (`gemini-flash-latest`) and **OpenRouter** (default `openrouter/free`; the model and the keys are configurable on the **Settings** page and persisted in the DB — if the chosen model returns 404, the app automatically falls back to `openrouter/free`). A minimum interval between evaluations (configurable via `AutomatedJudge:MinIntervalSeconds`, 60s by default) protects the free-tier API limits; the judge temperature is **fixed at 0** (deterministic).
 4. **Evaluation Screen Opens Pre-filled:** As soon as the judges reply, the evaluation screen opens **already filled in** with the metrics (1-5 scale), the *Global* score, the feedback and each judge's **RECOMMENDATION** — ready to review and save.
 5. **Partial Failure Handling:** If one of the judges fails (rate limit, network or invalid key), a warning identifies which one failed and that judge's fields remain editable for manual pasting. The **"Copy prompt"** button remains available for the manual process.
 6. **Translation and Consolidation:** The user can use the **"Translate Feedback"** option to view a read-only preview of the analyses translated into the language currently active in the interface (Portuguese or English) — the translated text is informational only and does not modify the feedback field. Finally, click **"Save evaluation"** to persist all data permanently in the Database; the button is disabled once the record has already been saved (read-only).
+
+### 📊 The 12 quality metrics (1–5 scale)
+
+Each judge evaluates the response on **12 independent criteria** (1 = poor … 5 = excellent), plus the **Overall** score:
+
+| # | Metric | What it assesses |
+|---|---|---|
+| 1 | **Factual** | Accuracy, logical reasoning and depth of the factual information, considering knowledge up to the model's training year |
+| 2 | **Formatting** | Markdown correctness, structure, adherence to word limits, response not truncated |
+| 3 | **Compliance** | Adherence to the explicit (positive/negative) constraints of the prompt |
+| 4 | **Relevance** | Directly and exclusively addresses the user's intent, without unrelated topics |
+| 5 | **Tone** | Appropriateness, professionalism and alignment of the style with expectations |
+| 6 | **Conciseness** | Efficiency of expression, without fluff, repetition or wordiness |
+| 7 | **Clarity** | Ease of understanding, logical flow, absence of ambiguity |
+| 8 | **Readability** | Reading structure: sentences, paragraphs, visual scannability |
+| 9 | **Halo Effect** | Bias control: one score must not drag independent metrics (weight 0 in the final score) |
+| 10 | **Safety** | Guardrails: absence of hate speech, dangerous content or harmful advice |
+| 11 | **Language Consistency** | Strict adherence to the prompt's language, without mid-text language switching |
+| 12 | **Loop Detection** | Semantic health: penalizes loops, repeated phrases and circular arguments |
+
+The **Overall** score weighs the 12 metrics (**Factual** has the highest weight, 20) and each judge's **recommendation** is based on the factual score.
+
+> **A note on "hallucination":** there is no dedicated metric for hallucinations. **Factual** is the closest indicator — responses with invented claims tend to score low on `Factual`. However, the judges evaluate only against the **prompt + training year**, without external verification (no retrieval/ground truth): internal contradictions and clearly false facts are caught, but plausible-sounding invented details (citations, statistics, URLs) may slip through. So a low `Factual` is a strong signal of hallucination; a high `Factual` is no guarantee of its absence.
 
 ## 💬 Chat Interface
 
@@ -165,7 +189,7 @@ Navigation is simple. The side menu shows every section of the app: **Chat**, **
 - **Chat**: open the Chat, type your message in the text box and press <kbd>Enter</kbd> or the send button. Responses appear in real time and each one shows how long it took. Use **History** to resume previous conversations and **New Chat** to start over.
 - **Automatic Judge Evaluation:** For each response obtained, click **"Evaluate automatically"** — the app submits the audit prompt to Gemini and OpenRouter, opens the evaluation screen already filled in and, after your review, saves the verdicts in the DB. If you prefer to evaluate manually, use **"Copy prompt"** to place the audit prompt on the clipboard.
 - **Light/Dark Theme**: switch between light and dark themes whenever you prefer. Your choice is **saved in the browser** and restored automatically on your next visit.
-- **Settings**: go to the Settings page to manage your AI models (set the default model and control which are available) and customize the app's appearance.
+- **Settings**: go to the Settings page (`/settings`) to configure the **AI judges** — Gemini/OpenRouter API keys, the OpenRouter judge model (picked from a radio-button list with the free OpenRouter catalog) and the temperature (persisted in the DB).
 
 Start by sending a message in the Chat — the app handles everything else.
 

@@ -22,7 +22,9 @@ The solution builds as a **single app project** (`OllamaArena/`) plus a **test p
 ## State & persistence gotchas
 
 - `ollama_benchmark.db` is **not tracked** (gitignored along with `-shm`/`-wal`/`-journal` and `*.sqbpro`). The schema is created lazily on first run, so a fresh clone starts with an empty DB.
-- Model list, selected model, theme, and settings persist in browser **localStorage**, not the DB: keys `ollamaModels`, `ollama_model`, `theme`. New models only appear after `ollama pull <tag>` + adding them on the Settings page.
+- Model list, selected model, and theme persist in browser **localStorage**, not the DB: keys `ollamaModels`, `ollama_model`, `theme`. New models only appear after `ollama pull <tag>` (the `ollamaModels` cache is refreshed by the Chat/Home pages).
+- **Judge settings** (Gemini/OpenRouter API keys, OpenRouter judge model) are configurable via the **Settings page** and persist in the DB table `Configuracoes` (key/value). Resolution priority in `AutomatedJudgeService`: **DB → configuration (user-secrets/appsettings) → defaults**. Keys can still be provided pre-publish via user-secrets `ApiKeys:Gemini`/`ApiKeys:OpenRouter` as fallback. The Settings save button is dirty-tracked and requires a confirmation dialog (summary of changes; keys are shown only as set/removed, never their value). The judge temperature is **fixed at 0** (deterministic; not configurable).
+- The **Settings page** picks the OpenRouter judge model from the **live OpenRouter catalog** (`OpenRouterCatalogService` → `GET https://openrouter.ai/api/v1/models`, free models only) via a **radio-button list** (`openrouter/free` is always pinned at the top), with a manual-ID fallback field for offline/custom IDs. The active model is stored in `Configuracoes` (`AutomatedJudge:OpenRouterModel`). The legacy `ModelosJuiz` table/seed is kept for compatibility but no longer used by the UI.
 
 ## Prompts
 

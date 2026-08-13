@@ -2,6 +2,7 @@ namespace OllamaArena.Services
 {
     using OllamaArena.Services.Exceptions;
     using OllamaArena.Services.Helpers;
+    using OllamaArena.Services.Interfaces.Repositories;
     using System;
     using System.Net.Http;
     using System.Text;
@@ -34,12 +35,17 @@ namespace OllamaArena.Services
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
+        private readonly ISettingsRepository _settingsRepository;
         private readonly ILogger<AutomatedJudgeService> _logger;
 
         // URLs oficiais das APIs
         private const string GeminiModel = "gemini-flash-latest";
         private const string GeminiUrlTemplate = "https://generativelanguage.googleapis.com/v1beta/models/{0}:generateContent?key={1}";
         private const string OpenRouterUrl = "https://openrouter.ai/api/v1/chat/completions";
+
+        // Temperatura determinística dos juízes (0 = mesmo resultado para o mesmo input/modelo);
+        // fixa e não configurável — o juiz deve ser determinístico para benchmarks comparáveis.
+        private const double JudgeTemperature = 0;
 
         // Controlo de quota por provedor (as chamadas dos dois juízes são independentes).
         // Estático para sobreviver à recriação de instâncias do serviço (página recarregada).
@@ -56,29 +62,71 @@ namespace OllamaArena.Services
             }
         }
 
-        public AutomatedJudgeService(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<AutomatedJudgeService> logger)
+        public AutomatedJudgeService(
+            IHttpClientFactory httpClientFactory,
+            IConfiguration configuration,
+            ISettingsRepository settingsRepository,
+            ILogger<AutomatedJudgeService> logger)
         {
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
+            _settingsRepository = settingsRepository;
             _logger = logger;
         }
 
         /// <summary>
+        /// Resolve as definições dos juízes com prioridade: BD (página Settings) → configuração (user-secrets/appsettings) → default.
+        /// </summary>
+        private async Task<DefinicoesJuiz> ObterDefinicoesAsync()
+        {
+            var daBd = await _settingsRepository.GetValuesAsync(
+            [
+                "ApiKeys:Gemini",
+                "ApiKeys:OpenRouter",
+                "AutomatedJudge:OpenRouterModel"
+            ]);
+
+            string geminiKey = daBd.GetValueOrDefault("ApiKeys:Gemini")
+                ?? _configuration["ApiKeys:Gemini"]
+                ?? string.Empty;
+
+            string openRouterKey = daBd.GetValueOrDefault("ApiKeys:OpenRouter")
+                ?? _configuration["ApiKeys:OpenRouter"]
+                ?? string.Empty;
+
+            // Modelo do juiz OpenRouter: "openrouter/free" (router gratuito, default)
+            // ou um modelo ":free" fixo por user (configurado na página Settings).
+            string openRouterModelo = daBd.GetValueOrDefault("AutomatedJudge:OpenRouterModel")
+                ?? _configuration["AutomatedJudge:OpenRouterModel"]
+                ?? "openrouter/free";
+
+            return new DefinicoesJuiz(geminiKey, openRouterKey, openRouterModelo);
+        }
+
+        private sealed record DefinicoesJuiz(
+            string GeminiKey,
+            string OpenRouterKey,
+            string OpenRouterModelo);
+
+        /// <summary>
         /// Executa as avaliações automáticas dos dois juízes em paralelo, usando as chaves
-        /// configuradas em user-secrets (secção ApiKeys).
+        /// configuradas na página Settings (BD) ou, em fallback, em user-secrets (secção ApiKeys).
         /// </summary>
         public async Task<AutomatedJudgeResult> GetFeedbacksAutomatizadosAsync(string prompt)
         {
+            // 0. Resolve as definições com prioridade BD (página Settings) → configuração → default.
+            var definicoes = await ObterDefinicoesAsync();
+
             // 1. Valida as chaves de API ANTES de consumir qualquer quota.
-            string geminiKey = LimparChave(_configuration["ApiKeys:Gemini"]);
-            string openRouterKey = LimparChave(_configuration["ApiKeys:OpenRouter"]);
+            string geminiKey = LimparChave(definicoes.GeminiKey);
+            string openRouterKey = LimparChave(definicoes.OpenRouterKey);
 
             bool geminiDisponivel = !string.IsNullOrWhiteSpace(geminiKey) && geminiKey.Length >= 10;
             bool openRouterDisponivel = !string.IsNullOrWhiteSpace(openRouterKey);
 
             if (!geminiDisponivel && !openRouterDisponivel)
             {
-                const string aviso = "Nenhuma chave de API configurada. Configure-as em user-secrets (ApiKeys:Gemini / ApiKeys:OpenRouter).";
+                const string aviso = "Nenhuma chave de API configurada. Configure-as na página Settings ou em user-secrets (ApiKeys:Gemini / ApiKeys:OpenRouter).";
                 _logger.LogWarning(aviso);
                 return new AutomatedJudgeResult
                 {
@@ -92,10 +140,10 @@ namespace OllamaArena.Services
 
             // 3. Chamadas em paralelo (provedores independentes).
             var geminiTask = geminiDisponivel
-                ? CallGeminiApiAsync(prompt, geminiKey)
+                ? CallGeminiApiAsync(prompt, geminiKey, JudgeTemperature)
                 : Task.FromResult(Falha("Gemini", "A chave de API não está configurada ou é inválida."));
             var openRouterTask = openRouterDisponivel
-                ? CallOpenRouterApiAsync(prompt, openRouterKey)
+                ? CallOpenRouterApiAsync(prompt, openRouterKey, definicoes.OpenRouterModelo, JudgeTemperature)
                 : Task.FromResult(Falha("OpenRouter", "A chave de API não está configurada ou é inválida."));
 
             await Task.WhenAll(geminiTask, openRouterTask).ConfigureAwait(false);
@@ -149,10 +197,14 @@ namespace OllamaArena.Services
             return Math.Max(0, emFalta);
         }
 
-        private async Task<JudgeFeedbackResult> CallGeminiApiAsync(string prompt, string apiKey)
+        private async Task<JudgeFeedbackResult> CallGeminiApiAsync(string prompt, string apiKey, double temperatura)
         {
             string geminiUrl = string.Format(GeminiUrlTemplate, GeminiModel, Uri.EscapeDataString(apiKey));
-            var requestBody = new { contents = new[] { new { parts = new[] { new { text = prompt } } } } };
+            var requestBody = new
+            {
+                contents = new[] { new { parts = new[] { new { text = prompt } } } },
+                generationConfig = new { temperature = temperatura }
+            };
 
             return await ExecuteGeminiRequestAsync(geminiUrl, requestBody);
         }
@@ -222,69 +274,59 @@ namespace OllamaArena.Services
             }
         }
 
-        private async Task<JudgeFeedbackResult> CallOpenRouterApiAsync(string prompt, string apiKey)
+        private async Task<JudgeFeedbackResult> CallOpenRouterApiAsync(string prompt, string apiKey, string modelo, double temperatura)
         {
-            var requestBody = new
-            {
-                // Router automático gratuito: evita usar um ID de modelo fixo que possa ser desativado.
-                model = "openrouter/free",
-                messages = new[] { new { role = "user", content = prompt } }
-            };
-
-            return await ExecuteOpenRouterRequestAsync(apiKey, requestBody);
+            return await ExecuteOpenRouterRequestAsync(apiKey, prompt, modelo, temperatura);
         }
 
-        private async Task<JudgeFeedbackResult> ExecuteOpenRouterRequestAsync(string apiKey, object requestBody)
+        private async Task<JudgeFeedbackResult> ExecuteOpenRouterRequestAsync(string apiKey, string prompt, string modelo, double temperatura)
         {
             try
             {
                 using var client = _httpClientFactory.CreateClient("OpenRouter");
 
-                using var request = new HttpRequestMessage(HttpMethod.Post, OpenRouterUrl);
-                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+                var (status, conteudo) = await EnviarPedidoOpenRouterAsync(client, apiKey, modelo, prompt, temperatura).ConfigureAwait(false);
 
-                // Cabeçalhos obrigatórios exigidos pela plataforma do OpenRouter
-                request.Headers.Add("HTTP-Referer", "http://localhost");
-                request.Headers.Add("X-Title", "OllamaArena");
-
-                request.Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-
-                using var response = await client.SendAsync(request).ConfigureAwait(false);
-                var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                // Fallback automático: modelo ":free" fixo removido/indisponível -> tenta o router gratuito.
+                if (status == System.Net.HttpStatusCode.NotFound)
                 {
-                    _logger.LogWarning("[OpenRouter] openrouter/free retornou 404.");
-                    return Falha("OpenRouter", "Nenhum modelo gratuito funcionou.");
+                    if (string.Equals(modelo, "openrouter/free", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogWarning("[OpenRouter] openrouter/free retornou 404.");
+                        return Falha("OpenRouter", "Nenhum modelo gratuito funcionou.");
+                    }
+
+                    _logger.LogWarning("[OpenRouter] Modelo '{Modelo}' devolveu 404; a tentar openrouter/free.", modelo);
+                    (status, conteudo) = await EnviarPedidoOpenRouterAsync(client, apiKey, "openrouter/free", prompt, temperatura).ConfigureAwait(false);
+                    if (status == System.Net.HttpStatusCode.NotFound)
+                    {
+                        _logger.LogWarning("[OpenRouter] openrouter/free também devolveu 404.");
+                        return Falha("OpenRouter", "Nenhum modelo gratuito funcionou.");
+                    }
                 }
 
-                if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                if (status == System.Net.HttpStatusCode.TooManyRequests)
                 {
-                    _logger.LogError("[OpenRouter] 429 Rate Limit Response: {Response}", responseContent);
+                    _logger.LogError("[OpenRouter] 429 Rate Limit Response: {Response}", conteudo);
                     return Falha("OpenRouter", "Limite de requisições excedido.");
                 }
 
-                if (!response.IsSuccessStatusCode)
+                int codigo = (int)status;
+                if (codigo < 200 || codigo >= 300)
                 {
-                    _logger.LogError("[OpenRouter] Error ({StatusCode}): {Response}", response.StatusCode, responseContent);
-                    return Falha("OpenRouter", $"Erro HTTP ({response.StatusCode}): {responseContent}");
+                    _logger.LogError("[OpenRouter] Error ({StatusCode}): {Response}", status, conteudo);
+                    return Falha("OpenRouter", $"Erro HTTP ({status}): {conteudo}");
                 }
 
-                _logger.LogInformation("[OpenRouter] Sucesso com modelo: openrouter/free");
+                _logger.LogInformation("[OpenRouter] Sucesso com modelo: {Modelo}", modelo);
 
-                using var doc = JsonDocument.Parse(responseContent);
-                var root = doc.RootElement;
-
-                if (root.TryGetProperty("choices", out var choices) &&
-                    choices.GetArrayLength() > 0 &&
-                    choices[0].TryGetProperty("message", out var message) &&
-                    message.TryGetProperty("content", out var textProp))
+                string? texto = ExtrairTextoOpenRouter(conteudo);
+                if (texto is null)
                 {
-                    string texto = textProp.GetString() ?? string.Empty;
-                    return Ok(texto);
+                    return Falha("OpenRouter", "A resposta não contém o formato esperado.");
                 }
 
-                return Falha("OpenRouter", "A resposta não contém o formato esperado.");
+                return Ok(texto);
             }
             catch (HttpRequestException httpEx)
             {
@@ -302,6 +344,47 @@ namespace OllamaArena.Services
                 _logger.LogError(ex, "[OpenRouter] Exception.");
                 return Falha("OpenRouter", $"{ex.Message} | Detalhe: {inner}");
             }
+        }
+
+        private async Task<(System.Net.HttpStatusCode Status, string Conteudo)> EnviarPedidoOpenRouterAsync(
+            HttpClient client, string apiKey, string modelo, string prompt, double temperatura)
+        {
+            var requestBody = new
+            {
+                // Modelo configurável: "openrouter/free" (default) ou um modelo ":free" fixo por user.
+                model = modelo,
+                messages = new[] { new { role = "user", content = prompt } },
+                temperature = temperatura
+            };
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, OpenRouterUrl);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+
+            // Cabeçalhos obrigatórios exigidos pela plataforma do OpenRouter
+            request.Headers.Add("HTTP-Referer", "http://localhost");
+            request.Headers.Add("X-Title", "OllamaArena");
+
+            request.Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+
+            using var response = await client.SendAsync(request).ConfigureAwait(false);
+            string conteudo = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            return (response.StatusCode, conteudo);
+        }
+
+        private static string? ExtrairTextoOpenRouter(string responseContent)
+        {
+            using var doc = JsonDocument.Parse(responseContent);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("choices", out var choices) &&
+                choices.GetArrayLength() > 0 &&
+                choices[0].TryGetProperty("message", out var message) &&
+                message.TryGetProperty("content", out var textProp))
+            {
+                return textProp.GetString() ?? string.Empty;
+            }
+
+            return null;
         }
 
         private static JudgeFeedbackResult Ok(string texto)

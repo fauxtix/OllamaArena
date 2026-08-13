@@ -17,6 +17,27 @@ A arquitetura assenta em dois eixos independentes:
 
 Existe ainda um terceiro mecanismo-chave: o **ajuste automático de temperatura** (`ChatMeasureTemperature`). A aplicação classifica cada prompt e decide sozinha a temperatura: `0.10–0.30` para pedidos factuais (história, código, tradução) e `0.65–0.90` para criatividade (contos, anedotas, roleplay). Ou seja, a app já faz por nós a pergunta *"isto é factual ou criativo?"*.
 
+### 1.1 As 12 métricas de qualidade (escala 1–5)
+
+Cada juiz avalia a resposta em **12 critérios independentes** (1 = mau … 5 = excelente), mais a nota **Global**:
+
+| # | Métrica | O que avalia |
+|---|---|---|
+| 1 | **Factual** | Veracidade, raciocínio lógico e profundidade das informações, considerando o conhecimento até ao ano de treino do modelo |
+| 2 | **Formatação** | Correção de Markdown, estrutura, cumprimento de limites de palavras, resposta não truncada |
+| 3 | **Compliance** | Cumprimento das restrições explícitas (positivas/negativas) do prompt |
+| 4 | **Relevância** | Responde direta e exclusivamente à intenção do utilizador, sem tópicos paralelos |
+| 5 | **Tom** | Adequação, profissionalismo e alinhamento do estilo com o esperado |
+| 6 | **Concisão** | Eficiência de expressão, sem rodeios, repetições ou verborreia |
+| 7 | **Clareza** | Facilidade de compreensão, fluxo lógico, ausência de ambiguidade |
+| 8 | **Legibilidade** | Estrutura de leitura: frases, parágrafos, escaneabilidade visual |
+| 9 | **Halo Effect** | Controlo de viés: uma nota não deve arrastar métricas independentes (peso 0 no score final) |
+| 10 | **Segurança** | Guardrails: ausência de ódio, conteúdo perigoso ou conselhos prejudiciais |
+| 11 | **Consistência idiomática** | Adesão estrita à língua do prompt, sem trocar de idioma a meio |
+| 12 | **Detecção de Loop** | Saúde semântica: penaliza loops, frases repetidas e argumentos circulares |
+
+A **Global** pondera as 12 métricas (a **Factual** tem o peso mais alto, 20) e a **recomendação** de cada juiz baseia-se no score factual.
+
 ## 2. A metodologia recomendada (5 passos)
 
 ### Passo 1 — Definir uma bateria de prompts por temática
@@ -59,6 +80,7 @@ Para cada modelo, responda **às mesmas perguntas**, mudando apenas o modelo no 
 3. **Cruzamento velocidade × qualidade.** Para uso quase exclusivo no dia-a-dia, o modelo mais rápido que mantenha qualidade ≥ 4 no *seu* tipo de prompt é melhor do que o melhor avaliado que demora 3× mais.
 4. **Compatibilidade de VRAM** (badge GPU no chat): determina se o candidato corre na sua placa ou no CPU. Um modelo que "cabe na GPU" ganha sempre na prática.
 5. **Alerta de qualidade baixa global.** Se *nenhum* modelo passa de 4/5 numa temática, a decisão correta é mudar de família ou de tamanho — não aceitar o menor dos maus.
+6. **Factual baixo = sinal de alucinação.** Não há métrica dedicada a alucinações: respostas com afirmações inventadas tendem a ter `Factual` baixo. Mas os juízes avaliam apenas contra o **prompt + ano de treino**, sem verificação externa (não há pesquisa/ground truth) — contradições internas e factos claramente falsos são detetados, enquanto detalhes inventados mas plausíveis (citações, estatísticas, URLs) podem passar. Reforce com o consenso entre juízes (item 2): se ambos concordam em `Factual` baixo, é sinal forte.
 
 ## 4. Mapa temática → perfil de modelo
 

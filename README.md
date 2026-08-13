@@ -27,7 +27,8 @@ A aplicação é mais do que um simples chat: é um **laboratório de experiment
 4. Abrir `https://localhost:7175` (ou `http://localhost:5292`). No primeiro arranque, a base de dados SQLite é criada automaticamente.
 
 ### Configuração opcional
-- **Chaves de API dos juízes** (Gemini/OpenRouter) para a avaliação automática — ficam fora do repositório, em user-secrets:
+- **Juízes de IA (chaves + modelo + temperatura):** a forma mais simples (e a única que funciona em qualquer deploy) é a página **Definições** (`/settings`), com a secção **"Juízes de IA"** — lá pode colar as chaves Gemini/OpenRouter, escolher o modelo do juiz OpenRouter numa **lista de radio buttons** a partir do **catálogo público** (modelos gratuitos; `openrouter/free` é sempre o default e fica fixo no topo) — ou escrever um ID à mão para casos offline/custom — e ajustar a temperatura. A escolha ativa fica na tabela `Configuracoes` (SQLite); tudo se aplica sem reiniciar.
+- Em desenvolvimento, pode configurar as mesmas chaves via user-secrets (ficam fora do repositório); a BD sobrepõe-se sempre à configuração:
   ```bash
   dotnet user-secrets set "ApiKeys:Gemini" "<chave>"
   dotnet user-secrets set "ApiKeys:OpenRouter" "<chave>"
@@ -41,7 +42,7 @@ A aplicação é mais do que um simples chat: é um **laboratório de experiment
 O repositório inclui um workflow GitHub Actions (`deploy-iis.yml`) que publica a aplicação e faz o deploy para um **self-hosted runner registado apenas na máquina do autor** (a app fica em `http://localhost:4501`). Noutras máquinas, ignore o workflow e corra localmente com `dotnet watch run` — não é necessário qualquer token ou credencial para clonar e testar.
 
 #### Chaves de API no IIS
-Em IIS o user-secrets **não é lido** (só é carregado em Development). Configure as chaves dos juízes no `appsettings.Local.json` do servidor (ex.: `C:\inetpub\wwwroot\OllamaArena\appsettings.Local.json`):
+**Recomendado:** depois do deploy, use a página **Definições** → "Juízes de IA" para colar as chaves — ficam na BD e funcionam sem editar ficheiros. Em alternativa (ou como fallback), configure as chaves no `appsettings.Local.json` do servidor (ex.: `C:\inetpub\wwwroot\OllamaArena\appsettings.Local.json`):
 
 ```json
 {
@@ -114,10 +115,33 @@ A aplicação integra um processo estruturado de auditoria externa no painel de 
 
 1. **Avaliar Automaticamente:** O utilizador acede à resposta de um modelo específico e clica no botão **"Avaliar automaticamente"**. A aplicação verifica primeiro a ligação à internet (os juízes são serviços em nuvem) e, de seguida, gera internamente o prompt de auditoria e submete-o aos dois juízes; sem internet, avisa o utilizador e sugere o processo manual com **"Copiar prompt"**.
 2. **Contexto Crítico Injetado:** O prompt gerado inclui automaticamente metadados inteligentes (como o ano de treino do modelo local) sob a marca `[CRITICAL CONTEXT]`, instruindo o juiz externo a não penalizar o modelo por falta de conhecimento de eventos futuros.
-3. **Chamadas Diretas às APIs:** A aplicação envia o prompt aos dois juízes **em paralelo** — **Gemini** (`gemini-flash-latest`) e **OpenRouter** (`openrouter/free`) — usando as chaves configuradas em **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`; o `appsettings.Local.json` é opcional para overrides locais). Um intervalo mínimo entre avaliações (configurável em `AutomatedJudge:MinIntervalSeconds`, 60s por defeito) protege os limites gratuitos das APIs.
+3. **Chamadas Diretas às APIs:** A aplicação envia o prompt aos dois juízes **em paralelo** — **Gemini** (`gemini-flash-latest`) e **OpenRouter** (default `openrouter/free`; o modelo e as chaves são configuráveis na página **Definições** e ficam gravados na BD — se o modelo escolhido devolver 404, a aplicação tenta automaticamente `openrouter/free`). Um intervalo mínimo entre avaliações (configurável em `AutomatedJudge:MinIntervalSeconds`, 60s por defeito) protege os limites gratuitos das APIs; a temperatura dos juízes é **fixa em 0** (determinística).
 4. **Abertura do Ecrã de Avaliação Preenchido:** Assim que os juízes respondem, o ecrã de avaliação abre **já preenchido** com as métricas (Escala 1-5), a nota *Global*, o feedback e a **RECOMMENDATION** de cada juiz — prontos a rever e guardar.
 5. **Tratamento de Falhas Parciais:** Se um dos juízes falhar (limite de requisições, rede ou chave inválida), um aviso identifica qual falhou e os campos desse juiz ficam editáveis para colagem manual. O botão **"Copiar prompt"** continua disponível para o processo manual.
 6. **Tradução e Consolidação:** O utilizador pode utilizar a opção **"Traduzir Feedback"** para ver uma pré-visualização só-leitura da tradução das análises para a língua ativa na interface (português ou inglês) — o texto traduzido é apenas informativo e não altera o campo de feedback. Por fim, clica em **"Guardar avaliação"** para persistir todos os dados permanentemente na Base de Dados; o botão fica desativado quando o registo já foi gravado (apenas-leitura).
+
+### 📊 As 12 métricas de qualidade (escala 1–5)
+
+Cada juiz avalia a resposta em **12 critérios independentes** (1 = mau … 5 = excelente), mais a nota **Global**:
+
+| # | Métrica | O que avalia |
+|---|---|---|
+| 1 | **Factual** | Veracidade, raciocínio lógico e profundidade das informações, considerando o conhecimento até ao ano de treino do modelo |
+| 2 | **Formatação** | Correção de Markdown, estrutura, cumprimento de limites de palavras, resposta não truncada |
+| 3 | **Compliance** | Cumprimento das restrições explícitas (positivas/negativas) do prompt |
+| 4 | **Relevância** | Responde direta e exclusivamente à intenção do utilizador, sem tópicos paralelos |
+| 5 | **Tom** | Adequação, profissionalismo e alinhamento do estilo com o esperado |
+| 6 | **Concisão** | Eficiência de expressão, sem rodeios, repetições ou verborreia |
+| 7 | **Clareza** | Facilidade de compreensão, fluxo lógico, ausência de ambiguidade |
+| 8 | **Legibilidade** | Estrutura de leitura: frases, parágrafos, escaneabilidade visual |
+| 9 | **Halo Effect** | Controlo de viés: uma nota não deve arrastar métricas independentes (peso 0 no score final) |
+| 10 | **Segurança** | Guardrails: ausência de ódio, conteúdo perigoso ou conselhos prejudiciais |
+| 11 | **Consistência idiomática** | Adesão estrita à língua do prompt, sem trocar de idioma a meio |
+| 12 | **Detecção de Loop** | Saúde semântica: penaliza loops, frases repetidas e argumentos circulares |
+
+A nota **Global** pondera as 12 métricas (a **Factual** tem o peso mais alto, 20) e a **recomendação** de cada juiz baseia-se no score factual.
+
+> **Nota sobre "alucinação":** não existe uma métrica dedicada a alucinações. O **Factual** é o indicador mais próximo — respostas com afirmações inventadas tendem a ter `Factual` baixo. No entanto, os juízes avaliam apenas contra o **prompt + ano de treino**, sem verificação externa (não há pesquisa/ground truth): contradições internas e factos claramente falsos são detetados, mas detalhes inventados mas plausíveis (citações, estatísticas, URLs) podem passar despercebidos. Por isso, `Factual` baixo é um forte sinal de alucinação; `Factual` alto não é garantia de ausência.
 
 ## 💬 Interface de Chat
 
@@ -165,7 +189,7 @@ A navegação é simples. No menu lateral encontra todas as secções da aplica�
 - **Conversar**: abra o Chat, escreva a sua mensagem na caixa de texto e prima <kbd>Enter</kbd> ou o botão de envio. As respostas aparecem em tempo real e cada uma mostra o tempo que demorou. Use **Histórico** para retomar conversas anteriores e **Novo Chat** para começar de novo.
 - **Avaliação Automática de Juízes:** Para cada resposta obtida, clique em **"Avaliar automaticamente"** — a aplicação submete o prompt de auditoria ao Gemini e ao OpenRouter, abre o ecrã de avaliação já preenchido e, após a sua revisão, guarda os veredictos na BD. Se preferir avaliar manualmente, use **"Copiar prompt"** para colocar o prompt de auditoria no clipboard.
 - **Tema Claro/Escuro**: alterne entre o tema claro e o escuro sempre que preferir. A sua escolha fica **guardada no navegador** e é restaurada automaticamente na próxima visita.
-- **Definições**: aceda à página de Definições para gerir os seus modelos de IA (definir o modelo predefinido e controlar os disponíveis) e personalizar a aparência da aplicação.
+- **Definições**: aceda à página de Definições (`/settings`) para configurar os **juízes de IA** — chaves de API Gemini/OpenRouter, modelo do juiz OpenRouter (escolhido numa lista de radio buttons com o catálogo gratuito do OpenRouter) e temperatura (gravadas na BD).
 
 Comece por enviar uma mensagem no Chat — a aplicação trata de tudo o resto.
 

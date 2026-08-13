@@ -385,7 +385,8 @@ public class BenchmarkRepository : IBenchmarkRepository
         sb.Append("R.OpenRouterLanguageConsistencyRating, R.OpenRouterLoopDetectionRating, ");
 
         // Métricas de Performance e Datas
-        sb.Append("P.DataCriacao, P.Descricao, R.TokensPorSegundo, R.TempoPuroMs, R.TempoCargaMs, R.TamanhoTokens ");
+        sb.Append("P.DataCriacao, P.Descricao, R.TokensPorSegundo, R.TempoPuroMs, R.TempoCargaMs, R.TamanhoTokens, ");
+        sb.Append("R.GeminiFeedback, R.GeminiRecommendation, R.OpenRouterFeedback, R.OpenRouterRecommendation ");
         sb.Append("FROM Prompts P ");
         sb.Append("LEFT JOIN Respostas R ON R.PromptId = P.Id");
 

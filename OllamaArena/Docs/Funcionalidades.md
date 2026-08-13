@@ -51,7 +51,7 @@ O menu lateral (`Components/Layout/NavMenu.razor`) expõe as funcionalidades pri
 
 > **Responsividade:** em ecrãs **≤768px** o `NavMenu` deixa de ocupar o lado esquerdo e passa a ser um **drawer deslizante** (`min(80vw, 280px)`) com overlay escurecido, aberto/fechado pelo ícone de hambúrguer no cabeçalho (`MainLayout`); os links fecham o drawer após a navegação.
 
-Existe ainda uma página auxiliar fora do menu: `/settings` (tema/cor + modelo).
+Existe ainda uma página auxiliar fora do menu: `/settings` (configuração dos juízes Gemini/OpenRouter).
 
 ---
 
@@ -113,7 +113,7 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 - **Fluxo:**
   1. `GetDataAsync()` → `BenchmarkRepository.GetAllBenchmarksAsync()` (prompts + respostas).
   2. Esquerda: cards de prompt com badge `#id`, data e nº de modelos; botões **Gráfico** (`BenchmarkChartDialog` — 4 gráficos Chart.js com download de imagem, ver 4.1) e apagar (cascade, com confirmação "Apagar Benchmark", ver 4.2).
-   3. Direita: card por resposta com badges `Tokens/s`, `Eval`, `Load`, `Tokens`; ratings Gemini/OpenRouter; botões **Avaliação** (`BenchmarkEvaluationDialog` — formulário 12 métricas 1–5 + tradução de feedback, ver 4.1) e **Avaliar automaticamente** (`AvaliarAutomaticamenteAsync` — gera o prompt do juiz com `EvaluatePromptTemplate` + metadados do modelo via `/api/show`, submete-o aos juízes Gemini (`gemini-flash-latest`) e OpenRouter (`openrouter/free`) via `AutomatedJudgeService`, preenche as métricas com `EvaluationParser` e abre o diálogo já preenchido). As chaves de API dos juízes vêm de **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`); o serviço impõe um **intervalo mínimo entre avaliações** (`AutomatedJudge:MinIntervalSeconds`, default 60 s) marcado **apenas após sucesso** (falhas não bloqueiam novas tentativas) e mostra o diálogo `Benchmarks.QuotaLimitMessage` quando o limite é atingido. Antes de submeter, `AvaliarAutomaticamenteAsync` verifica a ligação à internet via `InternetConnectivityService.HasInternetAsync()` e mostra o erro `Benchmarks.NoInternetError` se não houver (os juízes são serviços em nuvem). O botão **Copiar prompt** (`CopiarPromptAvaliacaoAsync`) mantém o fallback manual (só copia o prompt gerado, sem precisar de internet).
+   3. Direita: card por resposta com badges `Tokens/s`, `Eval`, `Load`, `Tokens`; ratings Gemini/OpenRouter; botões **Avaliação** (`BenchmarkEvaluationDialog` — formulário 12 métricas 1–5 + tradução de feedback, ver 4.1) e **Avaliar automaticamente** (`AvaliarAutomaticamenteAsync` — gera o prompt do juiz com `EvaluatePromptTemplate` + metadados do modelo via `/api/show`, submete-o aos juízes Gemini (`gemini-flash-latest`) e OpenRouter (default `openrouter/free`) via `AutomatedJudgeService`, preenche as métricas com `EvaluationParser` e abre o diálogo já preenchido). As chaves de API dos juízes vêm da **página Settings** (BD, tabela `Configuracoes`; fallback em user-secrets `ApiKeys:Gemini` / `ApiKeys:OpenRouter`); o serviço impõe um **intervalo mínimo entre avaliações** (`AutomatedJudge:MinIntervalSeconds`, default 60 s) marcado **apenas após sucesso** (falhas não bloqueiam novas tentativas) e mostra o diálogo `Benchmarks.QuotaLimitMessage` quando o limite é atingido. Antes de submeter, `AvaliarAutomaticamenteAsync` verifica a ligação à internet via `InternetConnectivityService.HasInternetAsync()` e mostra o erro `Benchmarks.NoInternetError` se não houver (os juízes são serviços em nuvem). O botão **Copiar prompt** (`CopiarPromptAvaliacaoAsync`) mantém o fallback manual (só copia o prompt gerado, sem precisar de internet).
   4. `SaveEvaluationAsync` valida ratings 1–5 (diálogo "Erro de Validação" se fora do intervalo, ver 4.2) e grava com `UpdateResponseEvaluationAsync` (diálogo "Sucesso").
 
 > **Responsividade:** o `FluentSplitter` deteta a largura do viewport via **JS interop** (`appViewport.getWidth` + `subscribeResize` no primeiro render; `unsubscribeResize` em `DisposeAsync`) e aplica `AplicarLayoutCompacto` — em ecrãs **≤768px** a orientação passa a **vertical** (painéis empilhados, `_panel1MinSize` 120px / `_panel2MinSize` 200px), acima disso mantém-se **horizontal** (250px/400px). Se o JS falhar, mantém o estado predefinido (horizontal).
@@ -146,7 +146,7 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 
 ### 3.9 Páginas auxiliares (fora do menu)
 
-- **`/settings`** — tema/modo (claro/escuro) e cor de acento FluentUI (com "Feeling lucky?" → `OfficeColorUtilities.GetRandom()`) + seleção/gravação do modelo do chat (`localStorage "ollama_model"`).
+- **`/settings`** — configuração dos juízes Gemini/OpenRouter: chaves de API, modelo do juiz OpenRouter e temperatura — gravadas na BD (tabela `Configuracoes`). O modelo do juiz é escolhido por **radio buttons** a partir do **catálogo público do OpenRouter** (`OpenRouterCatalogService` → `GET /api/v1/models`, só modelos gratuitos; `openrouter/free` fixo no topo; pesquisa; campo "ou escreve um ID à mão" para casos offline/custom).
 
 ---
 
@@ -212,7 +212,7 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 - **`OllamaGpuService`** — modelos locais (`/api/tags`), modelos em memória (`/api/ps`), metadados (`/api/show`: contexto nativo + ano de treino), compatibilidade GPU (`CheckGpuCompatibility`, **assíncrono** — `Task<GpuStatus>`), **contexto efetivo automático** (`GetRecommendedContextLengthAsync`) e unload de modelos (`keep_alive=0`).
 - **`ChatComposerService`** — constrói o payload `/api/chat` a partir dos **`OllamaOptions`**: histórico com system prompt, fusão de mensagens consecutivas e trim a `HistoryBudgetFraction` (0.60), temperatura (`ChatMeasureTemperature`), `num_predict` base GPU/CPU com reserva de `ContextReserveFraction` (0.25), `num_ctx`, `top_k/top_p`, `repeat_penalty` e `think` (`EnableReasoning`). `BuildHistory` e `EstimateTokens` são estáticos e cobertos por testes.
 - **`ScoreCalculator` / `JudgeScoreWeights`** — cálculo do **score final ponderado** a partir das **12 métricas** de um juiz: pesos configuráveis (`JudgeScoreWeights` em `appsettings.json`), `HaloEffect` com peso **0** (métrica de controlo — não pesa no score, só na fiabilidade), renormalização sobre as métricas presentes; precisa de ≥8 métricas e soma de pesos ≥50 para produzir score (senão devolve `null` e o chamador usa o `FINAL_SCORE` declarado pelo juiz). Usado pelo `BenchmarkRepository.GetModelRankingAsync` (Dashboard).
-- **`AutomatedJudgeService`** — avaliação automática pelos juízes Gemini/OpenRouter: chaves de API em **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`, validadas **antes** de consumir quota), chamadas paralelas independentes (um juiz pode falhar sem bloquear o outro), controlo de quota por provedor (`AutomatedJudge:MinIntervalSeconds`, default 60 s) marcado **apenas após sucesso** (`QuotaLimitException`); parse com `EvaluationParser`.
+- **`AutomatedJudgeService`** — avaliação automática pelos juízes Gemini/OpenRouter: chaves de API resolvidas com prioridade **BD (`Configuracoes`, página Settings) → configuração (user-secrets/appsettings)**, validadas **antes** de consumir quota; chamadas paralelas independentes (um juiz pode falhar sem bloquear o outro); controlo de quota por provedor (`AutomatedJudge:MinIntervalSeconds`, default 60 s) marcado **apenas após sucesso** (`QuotaLimitException`); modelo do juiz OpenRouter configurável (`AutomatedJudge:OpenRouterModel`, default `openrouter/free`, com **fallback automático** para `openrouter/free` quando o modelo configurado devolve 404); temperatura determinística **fixa em 0** (não configurável); parse com `EvaluationParser`.
 - **`TranslationService`** — tradução de feedbacks para a **língua da sessão** via `/api/chat` (stream=false), usando o modelo melhor avaliado (`GetBestModelAsync`) e o prompt `translation-prompt.txt` (token `{{TARGET_LANGUAGE}}`, substituído por `GetTargetLanguage()`: `pt` → "European Portuguese (pt-PT)", `en` → "English (en-US)"). Cliente HTTP tipado com timeout de 4 min.
 - **`LocalAnalysisService`** — análise de benchmarks **100% local em C#** (sem LLM): sumário executivo, métricas rápidas ("Mais Rápido", "Melhor Avaliado") e análise técnica detalhada; todas as strings estão localizadas via `IStringLocalizer<SharedResources>` (chaves `Analysis.*`, pt/en).
 - **`PromptFilesService`** — leitura/gravação dos ficheiros `Prompts/*.txt`; **`SystemPromptService`** — o system prompt do chat.
@@ -251,7 +251,7 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 
 | Endpoint | Serviço | Uso |
 |---|---|---|
-| `GET /api/tags` | `OllamaGpuService.GetLocalModelsAsync` | Lista de modelos locais (Home, Modelos, Settings) |
+| `GET /api/tags` | `OllamaGpuService.GetLocalModelsAsync` | Lista de modelos locais (Home, Modelos) |
 | `POST /api/show` | `OllamaGpuService` | `model_info`: contexto nativo, arquitetura (KV cache), ano de treino |
 | `GET /api/ps` | `OllamaGpuService.GetRunningModelsAsync` | Modelos carregados em RAM/VRAM (`size_vram`) — para o cálculo de contexto |
 | `POST /api/chat` | `Chat` (streaming), `TranslationService` | Chat NDJSON e tradução de feedbacks |
@@ -316,7 +316,7 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 
 ## 8. Base de dados (SQLite — `ollama_benchmark.db`)
 
-Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Serilog), com **migração idempotente em código** no arranque: `DatabaseSchemaInitializer.EnsureSchema(IDapperContext)` (invocado em `Program.cs` após `builder.Build()`) executa `CREATE TABLE IF NOT EXISTS` para as 5 tabelas e depois migrações incrementais de colunas via `PRAGMA table_info` — renomeia `ChatGpt*` → `OpenRouter*` (a avaliação passou a ser feita via OpenRouter) e adiciona `GeminiRecommendation`/`OpenRouterRecommendation` + as colunas das novas métricas `LanguageConsistency`/`LoopDetection`. As ligações SQLite são abertas com **`PRAGMA foreign_keys = ON` e `busy_timeout = 5000`** (`DapperContext`), pelo que o `ON DELETE CASCADE` declarado no DDL é respeitado em runtime.
+Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Serilog), com **migração idempotente em código** no arranque: `DatabaseSchemaInitializer.EnsureSchema(IDapperContext)` (invocado em `Program.cs` após `builder.Build()`) executa `CREATE TABLE IF NOT EXISTS` para as 7 tabelas e depois migrações incrementais de colunas via `PRAGMA table_info` — renomeia `ChatGpt*` → `OpenRouter*` (a avaliação passou a ser feita via OpenRouter) e adiciona `GeminiRecommendation`/`OpenRouterRecommendation` + as colunas das novas métricas `LanguageConsistency`/`LoopDetection`. As ligações SQLite são abertas com **`PRAGMA foreign_keys = ON` e `busy_timeout = 5000`** (`DapperContext`), pelo que o `ON DELETE CASCADE` declarado no DDL é respeitado em runtime.
 
 | Tabela | Conteúdo (colunas principais) |
 |---|---|
@@ -324,6 +324,8 @@ Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Se
 | `Respostas` | `Id`, `PromptId` (FK), `NomeModelo`, `TextoResposta`, `TokensPorSegundo`, `TempoPuroMs`, `TempoCargaMs`, `TamanhoTokens`, `TempoProcessamento`, ratings/feedbacks Gemini (`GeminiRating`, `GeminiFactualRating`, `GeminiFormattingRating`, `GeminiComplianceRating`, `GeminiRelevanceRating`, `GeminiToneRating`, `GeminiConcisenessRating`, `GeminiClarityRating`, `GeminiReadabilityRating`, `GeminiHaloEffectRating`, `GeminiSafetyRating`, `GeminiLanguageConsistencyRating`, `GeminiLoopDetectionRating`, `GeminiFeedback`, `GeminiRecommendation`) e equivalentes OpenRouter (incluindo `OpenRouterRecommendation`); as colunas de recomendação e das novas métricas são adicionadas pela migração `DatabaseSchemaInitializer` |
 | `Conversas` | `Id`, `Titulo` (primeiros 60 chars do 1.º prompt), `NomeModelo`, `DataCriacao`, `DataUltimaAtividade` |
 | `ConversaMensagens` | `Id`, `ConversationId` (FK, `ON DELETE CASCADE`), `Role` (user/assistant), `Content`, `Reasoning`, `Temperature`, `ElapsedTime`, `Timestamp` |
+| `Configuracoes` | `Chave` (PK) / `Valor` — definições dos juízes gravadas pela página Settings (`ApiKeys:Gemini`, `ApiKeys:OpenRouter`, `AutomatedJudge:OpenRouterModel`) |
+| `ModelosJuiz` | `Id`, `Nome` (UNIQUE) / `DataCriacao` — tabela **legada** de modelos `:free` do OpenRouter, **sem uso pela UI** desde que o Settings passou a usar o catálogo ao vivo (`OpenRouterCatalogService`); continua a ser semeada no primeiro arranque se vazia |
 | `Logs` | criada pelo Serilog sink (`Id`, `Timestamp`, `Level`, `Exception`, `RenderedMessage`, `Properties`) |
 
 - `DeletePromptAndHistoryAsync` / `DeleteAllPromptsAndHistoryAsync` dependem de `ON DELETE CASCADE` (declarado no DDL das `Respostas` e `ConversaMensagens`).
@@ -339,10 +341,12 @@ Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Se
 |---|---|---|
 | `ollamaModels` | Lista de nomes de modelos | Chat, Home, Modelos |
 | `ollamaModelsFull` | `ModelDetails` com metadados (`ContextLength`, `TrainingYear`) | Home, Modelos |
-| `ollama_model` | Modelo selecionado no chat | Chat, Settings |
+| `ollama_model` | Modelo selecionado no chat | Chat |
 | `ollama_history` | Histórico de execuções (helper `window.ollamaHistory`, chat.js) | Chat (helper definido; sem chamadores no C# atualmente — as conversas são persistidas em SQLite) |
 | `theme` | Tema FluentUI (`FluentDesignTheme StorageName`) | Global |
 | `sessionStorage: ollamaCacheCleared` | Flag de limpeza da cache uma vez por sessão | Home |
+
+As **definições dos juízes** (chaves Gemini/OpenRouter, modelo do juiz OpenRouter) **não** usam localStorage — ficam na tabela SQLite `Configuracoes`, editáveis pela página Settings (`/settings`), com prioridade **BD → configuração → default** no `AutomatedJudgeService` (a temperatura dos juízes é **fixa em 0** — determinística — e não é configurável). O botão **Guardar configuração dos juízes** só fica ativo quando há alterações (dirty state) e abre um diálogo de confirmação com o resumo do que vai mudar (a chave nunca é mostrada — só o estado "definida/alterada" ou "removida"). A **escolha do modelo do juiz OpenRouter** é feita por **radio buttons** a partir do **catálogo público do OpenRouter** (`OpenRouterCatalogService`, `GET /api/v1/models`, só gratuitos; `openrouter/free` sempre fixo no topo; pesquisa; campo "ou escreve um ID à mão" para offline/custom). A tabela legada `ModelosJuiz` deixou de ser usada pela UI (mantida por compatibilidade).
 
 ### 9.1 Camada de JS interop (`wwwroot/js/`)
 
@@ -371,10 +375,10 @@ Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Se
 ## 11. Configuração — `Program.cs` / `appsettings.json`
 
 **Registos de DI relevantes:**
-- `OllamaOptions` (`Configure<OllamaOptions>`, secção `Ollama` do `appsettings.json`), `IDapperContext`, `IOllamaGpuService`, `IBenchmarkRepository` (Scoped), `ILogRepository` (Scoped), `IConversationRepository` (Scoped)
+- `OllamaOptions` (`Configure<OllamaOptions>`, secção `Ollama` do `appsettings.json`), `IDapperContext`, `IOllamaGpuService`, `IBenchmarkRepository` (Scoped), `ISettingsRepository` (Scoped), `IModelosJuizRepository` (Scoped), `ILogRepository` (Scoped), `IConversationRepository` (Scoped)
 - `PromptFilesService`, `ChatComposerService`, `SystemPromptService`, `EvaluatePromptTemplate`, `MarkdownRenderer`, `LocalAnalysisService`, `AutomatedJudgeService`, `InternetConnectivityService`, `ReadMeService`
 - Clientes HTTP: `IAnalysisService/LocalAnalysisService`, `InternetConnectivityService`, `ReadMeService`, `ITranslationService/TranslationService` (**timeout 4 min**, base de `Ollama:BaseUrl`), o cliente nomeado **`"Ollama"`** (**timeout 10 min**, base de `Ollama:BaseUrl`) usado no streaming do chat, e os clientes nomeados **`"Gemini"`** (timeout 30 s) / **`"OpenRouter"`** (timeout 120 s) para os juízes automáticos.
-- Configuração: `appsettings.Local.json` opcional (não versionado) para overrides locais — incluindo `Security:EnableHttpsRedirection` (`false` para deploys HTTP-only, ver secção 12); chaves de API dos juízes em **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`).
+- Configuração: `appsettings.Local.json` opcional (não versionado) para overrides locais — incluindo `Security:EnableHttpsRedirection` (`false` para deploys HTTP-only, ver secção 12); chaves de API dos juízes **recomendadas via página Settings** (BD, tabela `Configuracoes`), com fallback para **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`) ou `appsettings.Local.json`.
 - Localização: PT (`pt`) por defeito + `en`; cookie `RequestCultureProvider`. A **tradução de feedbacks** e a **análise local de resultados** seguem a língua da sessão (o system-prompt do chat mantém-se neutro).
 
 **Requisitos de runtime:** `ollama serve` ativo na base configurada (`Ollama:BaseUrl`); projeto de testes `OllamaArena.Tests` com **47 testes de unidade** (43 métodos: ScoreCalculator, EvaluationParser, ChatMeasureTemperature, ChatComposerService, LocalAnalysisService) — `dotnet test`; validação = build + testes + execução manual.

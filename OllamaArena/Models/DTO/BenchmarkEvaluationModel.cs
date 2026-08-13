@@ -48,6 +48,11 @@ public class BenchmarkEvaluationModel
     public int? OpenRouterLanguageConsistencyRating { get; set; }
     public int? OpenRouterLoopDetectionRating { get; set; }
 
+    public string GeminiFeedback { get; set; } = string.Empty;
+    public string GeminiRecommendation { get; set; } = string.Empty;
+    public string OpenRouterFeedback { get; set; } = string.Empty;
+    public string OpenRouterRecommendation { get; set; } = string.Empty;
+
     public string TempoPuroFormatado
     {
         get

@@ -1,150 +1,481 @@
 @page "/settings"
 @using Microsoft.Extensions.Localization
-@using Microsoft.FluentUI.AspNetCore.Components.Extensions
+@using OllamaArena.Models.DTO
 @using OllamaArena.Resources
 @using OllamaArena.Services.Interfaces.Services
+@using OllamaArena.Services.Interfaces.Repositories
+@using System.Globalization
 @rendermode InteractiveServer
 @inject IStringLocalizer<SharedResources> L
-@inject IJSRuntime JS
-@inject IOllamaGpuService OllamaService
+@inject ISettingsRepository SettingsRepository
+@inject IOpenRouterCatalogService OpenRouterCatalogService
+@inject IToastService ToastService
+@inject IDialogService DialogService
 
-<FluentDesignTheme @bind-Mode="@Mode"
-                   @bind-OfficeColor="@OfficeColor"
-                   OnLoaded="@OnLoaded"
-                   OnLuminanceChanged="@OnLuminanceChanged"
-                   StorageName="theme" />
+<div style="min-height: 250px; padding: 20px; max-width: 960px;">
+    <FluentStack Orientation="Orientation.Vertical" Style="gap: 14px;">
+        @* Configuração dos Juízes de IA (Gemini/OpenRouter) *@
+        <FluentLabel Typo="Typography.H5" Weight="FontWeight.Bold">@L["Settings.JudgesSectionTitle"]</FluentLabel>
 
-<div style="min-height: 250px; padding: 20px;">
-    <FluentGrid>
-        @* Configuração do Tema *@
-        <FluentGridItem>
-            <FluentSelect Label="@L["Settings.ThemeLabel"]"
-                          Class="settings-select"
-                          Width="250px"
-                          Items="@(Enum.GetValues<DesignThemeModes>())"
-                          @bind-SelectedOption="@Mode" />
-        </FluentGridItem>
+        @if (_judgesLoading)
+        {
+            <FluentProgressRing />
+        }
+        else
+        {
+            @* Modelo do juiz OpenRouter: seleção por rádio a partir do catálogo público *@
+            <FluentLabel Typo="Typography.H6" Weight="FontWeight.Bold">@L["Settings.JudgeModelTitle"]</FluentLabel>
 
-        @* Configuração da Cor *@
-        <FluentGridItem>
-            <FluentSelect Label="@L["Settings.ColorLabel"]"
-                          Class="settings-select"
-                          Items="@(Enum.GetValues<OfficeColor>().Select(i => (OfficeColor?)i))"
-                          Height="200px"
-                          Width="250px"
-                          @bind-SelectedOption="@OfficeColor">
-                <OptionTemplate>
-                    <FluentStack>
-                        <FluentIcon Value="@(new Icons.Filled.Size20.RectangleLandscape())"
-                                    Color="Color.Custom"
-                                    CustomColor="@(@context.ToAttributeValue() != "default" ? context.ToAttributeValue() : "#036ac4" )" />
-                        <FluentLabel>@context</FluentLabel>
-                    </FluentStack>
-                </OptionTemplate>
-            </FluentSelect>
-            <FluentButton Appearance="Appearance.Accent" OnClick="PickRandomColor">@L["Settings.FeelingLucky"]</FluentButton>
-        </FluentGridItem>
-
-        @* Configuração do Modelo do Ollama *@
-        <FluentGridItem xs="12" Style="margin-top: 20px;">
-            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Bottom" Style="gap: 12px; flex-wrap: wrap;">
-                @if (_isLoading)
-                {
+            @if (_catalogLoading)
+            {
+                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 10px; align-items: center;">
                     <FluentProgressRing />
-                }
-                else
-                {
-                    <FluentSelect Label="@L["Settings.ModelLabel"]"
-                                  Class="settings-select"
-                                  Width="250px"
-                                  Items="@_availableModels"
-                                  @bind-SelectedOption="@_selectedModel" />
+                    <FluentLabel Style="color: var(--neutral-foreground-hint);">@L["Settings.JudgeModelsLoading"]</FluentLabel>
+                </FluentStack>
+            }
+            else
+            {
+                <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
+                    <FluentSearch Width="100%"
+                                  Placeholder="@L["Settings.JudgeModelsSearchPlaceholder"]"
+                                  @bind-Value="_searchFiltro" />
 
-                    <FluentButton Appearance="Appearance.Accent" OnClick="SaveModelAsync">
-                        @L["Settings.SaveModel"]
-                    </FluentButton>
+                    @if (_catalogError && _catalogModels.Count == 0)
+                    {
+                        <FluentLabel Style="color: var(--neutral-foreground-hint); font-size: 12px;">
+                            @L["Settings.JudgeModelsLoadError"]
+                        </FluentLabel>
+                    }
+
+                    <div class="judge-model-list">
+                        @foreach (var modelo in ModelosExibidos)
+                        {
+                            var selecionado = string.Equals(modelo.Id, _judgeOpenRouterModel, StringComparison.OrdinalIgnoreCase);
+                            <label class="judge-model-row">
+                                <input type="radio"
+                                       name="judge-openrouter-model"
+                                       value="@modelo.Id"
+                                       checked="@selecionado"
+                                       @onchange="() => SelecionarModelo(modelo.Id)" />
+                                <span class="judge-model-info">
+                                    <span class="judge-model-name">@modelo.Nome</span>
+                                    <span class="judge-model-id">@modelo.Id</span>
+                                </span>
+                                <span class="judge-model-badges">
+                                    @if (modelo.EhRouter)
+                                    {
+                                        <span class="judge-model-badge router">@L["Settings.JudgeModelsRouterBadge"]</span>
+                                    }
+                                    else
+                                    {
+                                        @if (modelo.ContextLength.HasValue)
+                                        {
+                                            <span class="judge-model-badge">@L["Settings.JudgeModelsContextTokens", FormatarContexto(modelo.ContextLength.Value)]</span>
+                                        }
+                                        <span class="judge-model-badge free">@L["Settings.JudgeModelsFreeBadge"]</span>
+                                    }
+                                </span>
+                            </label>
+                        }
+                        @if (!ModelosExibidos.Any())
+                        {
+                            <FluentLabel Style="color: var(--neutral-foreground-hint); font-size: 12px; padding: 8px;">
+                                @L["Settings.JudgeModelsNoResults"]
+                            </FluentLabel>
+                        }
+                    </div>
+
+                    @* Fallback manual: escrever um ID à mão (offline ou não catalogado) *@
+                    <FluentTextField Label="@L["Settings.JudgeModelsManualLabel"]"
+                                     Placeholder="openrouter/google/gemini-2.5-flash:free"
+                                     Width="100%"
+                                     Autocomplete="off"
+                                     Value="@_manualModelo"
+                                     ValueChanged="@ManualModeloMudou" />
+                    <FluentLabel Style="color: var(--neutral-foreground-hint); font-size: 12px;">
+                        @L["Settings.JudgeModelsManualHelper"]
+                    </FluentLabel>
+                </FluentStack>
+            }
+
+            @* Parâmetros num card com grelha 2×2: cabeçalhos (linha 1) + inputs (linha 2) *@
+            <FluentCard Class="judge-params-card">
+                <div class="judge-params-grid">
+                    <div class="judge-param-label">@L["Settings.GeminiKeyLabel"]</div>
+                    <div class="judge-param-label">@L["Settings.OpenRouterKeyLabel"]</div>
+                    <FluentTextField Type="TextFieldType.Password"
+                                     Width="100%"
+                                     Autocomplete="off"
+                                     aria-label="@L["Settings.GeminiKeyLabel"]"
+                                     @bind-Value="_geminiKey" />
+                    <FluentTextField Type="TextFieldType.Password"
+                                     Width="100%"
+                                     Autocomplete="off"
+                                     aria-label="@L["Settings.OpenRouterKeyLabel"]"
+                                     @bind-Value="_openRouterKey" />
+                </div>
+            </FluentCard>
+
+            <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
+                <FluentButton Appearance="Appearance.Accent"
+                              Disabled="@(!_juizesDirty)"
+                              OnClick="SaveJudgesAsync">
+                    @L["Settings.SaveJudges"]
+                </FluentButton>
+                @if (_juizesDirty)
+                {
+                    <FluentLabel Style="color: var(--neutral-foreground-hint); font-size: 12px;">
+                        @L["Settings.UnsavedChangesHint"]
+                    </FluentLabel>
                 }
             </FluentStack>
-            @if (!_isLoading && _availableModels.Count == 0)
-            {
-                <FluentLabel Style="color: var(--neutral-foreground-hint); margin-top: 8px;">
-                    @L["Settings.NoModels"]
-                </FluentLabel>
-            }
-        </FluentGridItem>
-    </FluentGrid>
+        }
+    </FluentStack>
 </div>
 
 @code
 {
-    public DesignThemeModes Mode { get; set; }
-    public OfficeColor? OfficeColor { get; set; }
+    private const string ModeloRouterFree = "openrouter/free";
 
-    private List<string> _availableModels = new();
-    private string _selectedModel = "";
-    private bool _isLoading = true;
+    private bool _judgesLoading = true;
+    private string _judgeOpenRouterModel = "";
+    private string _geminiKey = "";
+    private string _openRouterKey = "";
+
+    private string _baselineOpenRouterModel = "";
+    private string _baselineGeminiKey = "";
+    private string _baselineOpenRouterKey = "";
+
+    private bool _juizesDirty =>
+        _judgeOpenRouterModel != _baselineOpenRouterModel
+        || _geminiKey != _baselineGeminiKey
+        || _openRouterKey != _baselineOpenRouterKey;
+
+    // Catálogo de modelos gratuitos do juiz OpenRouter
+    private bool _catalogLoading = true;
+    private bool _catalogError;
+    private List<OpenRouterCatalogModel> _catalogModels = new();
+    private List<ModeloJuiz> _modelosLista = new();
+    private string _searchFiltro = "";
+    private string _manualModelo = "";
+
+    private sealed record ModeloJuiz(string Id, string Nome, long? ContextLength, bool EhRouter = false);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+        await LoadJudgesAsync();
+    }
 
+    private async Task LoadJudgesAsync()
+    {
         try
         {
-            _availableModels = new List<string>();
-            var response = await OllamaService.GetLocalModelsAsync();
-            foreach (var model in response?.Models ?? new())
-            {
-                if (!string.IsNullOrWhiteSpace(model?.Name))
-                    _availableModels.Add(model.Name);
-            }
+            var valores = await SettingsRepository.GetValuesAsync(
+            [
+                "ApiKeys:Gemini",
+                "ApiKeys:OpenRouter",
+                "AutomatedJudge:OpenRouterModel"
+            ]);
 
-            _selectedModel = await LoadSelectedModelAsync() ?? string.Empty;
-            if (string.IsNullOrEmpty(_selectedModel) && _availableModels.Count > 0)
-            {
-                _selectedModel = _availableModels[0];
-            }
+            _geminiKey = valores.GetValueOrDefault("ApiKeys:Gemini") ?? string.Empty;
+            _openRouterKey = valores.GetValueOrDefault("ApiKeys:OpenRouter") ?? string.Empty;
+            _judgeOpenRouterModel = valores.GetValueOrDefault("AutomatedJudge:OpenRouterModel") ?? string.Empty;
         }
         catch
         {
-            _availableModels = new();
+            // Sem definições gravadas ou erro de BD: os campos ficam vazios.
+        }
+
+        // Sem escolha gravada (user ou sistema), o modelo do sistema fica sempre marcado.
+        if (string.IsNullOrWhiteSpace(_judgeOpenRouterModel))
+            _judgeOpenRouterModel = ModeloRouterFree;
+
+        _baselineGeminiKey = _geminiKey;
+        _baselineOpenRouterKey = _openRouterKey;
+        _baselineOpenRouterModel = _judgeOpenRouterModel;
+
+        _manualModelo = _judgeOpenRouterModel;
+
+        _judgesLoading = false;
+        StateHasChanged();
+
+        await CarregarCatalogoAsync();
+        MontarLista();
+        StateHasChanged();
+    }
+
+    private async Task CarregarCatalogoAsync()
+    {
+        _catalogLoading = true;
+        _catalogError = false;
+        try
+        {
+            _catalogModels = await OpenRouterCatalogService.GetFreeModelsAsync();
+        }
+        catch
+        {
+            _catalogError = true;
+            _catalogModels = new();
         }
         finally
         {
-            _isLoading = false;
+            _catalogLoading = false;
             StateHasChanged();
         }
     }
 
-    private async Task<string?> LoadSelectedModelAsync()
+    private void MontarLista()
     {
-        try
+        var lista = new List<ModeloJuiz>
         {
-            return await JS.InvokeAsync<string>("localStorage.getItem", "ollama_model");
+            new(ModeloRouterFree, L["Settings.JudgeModelsRouterAuto"], null, EhRouter: true)
+        };
+
+        lista.AddRange(_catalogModels.Select(m =>
+            new ModeloJuiz(m.Id, string.IsNullOrWhiteSpace(m.Name) ? m.Id : m.Name, m.ContextLength)));
+
+        // O modelo atualmente em uso pode não existir no catálogo (ID antigo/custom): fica fixo e selecionado.
+        if (!string.IsNullOrWhiteSpace(_judgeOpenRouterModel) &&
+            !string.Equals(_judgeOpenRouterModel, ModeloRouterFree, StringComparison.OrdinalIgnoreCase) &&
+            !_catalogModels.Any(m => string.Equals(m.Id, _judgeOpenRouterModel, StringComparison.OrdinalIgnoreCase)))
+        {
+            lista.Add(new ModeloJuiz(_judgeOpenRouterModel, _judgeOpenRouterModel, null));
         }
-        catch { return null; }
+
+        _modelosLista = lista;
     }
 
-    private async Task SaveModelAsync()
+    private IEnumerable<ModeloJuiz> ModelosExibidos
     {
-        try
+        get
         {
-            await JS.InvokeVoidAsync("localStorage.setItem", "ollama_model", _selectedModel);
+            if (string.IsNullOrWhiteSpace(_searchFiltro))
+                return _modelosLista;
+
+            var filtro = _searchFiltro.Trim();
+            return _modelosLista.Where(m =>
+                m.Id.Contains(filtro, StringComparison.OrdinalIgnoreCase) ||
+                m.Nome.Contains(filtro, StringComparison.OrdinalIgnoreCase));
         }
-        catch { }
     }
 
-    void OnLoaded(LoadedEventArgs e) { Mode = e.Mode; }
-    void OnLuminanceChanged(LuminanceChangedEventArgs e) { Mode = e.Mode; }
-    void PickRandomColor() { OfficeColor = OfficeColorUtilities.GetRandom(); }
+    private void SelecionarModelo(string id)
+    {
+        _judgeOpenRouterModel = id;
+        _manualModelo = id;
+    }
+
+    private void ManualModeloMudou(string? valor)
+    {
+        _manualModelo = valor ?? string.Empty;
+        _judgeOpenRouterModel = _manualModelo;
+    }
+
+    private static string FormatarContexto(long ctx) =>
+        ctx >= 100_000 ? $"~{ctx / 1_000}K"
+        : ctx >= 1_000 ? $"~{Math.Round(ctx / 1_000d, 1):0.#}K"
+        : ctx.ToString(CultureInfo.InvariantCulture);
+
+    private async Task SaveJudgesAsync()
+    {
+        var alteracoes = new List<string>();
+
+        if (_judgeOpenRouterModel != _baselineOpenRouterModel)
+        {
+            string de = string.IsNullOrWhiteSpace(_baselineOpenRouterModel) ? L["Settings.ChangeNoValue"] : _baselineOpenRouterModel;
+            string para = string.IsNullOrWhiteSpace(_judgeOpenRouterModel) ? L["Settings.ChangeNoValue"] : _judgeOpenRouterModel;
+            alteracoes.Add($"{L["Settings.OpenRouterModelLabel"]}: {de} → {para}");
+        }
+
+        if (_geminiKey != _baselineGeminiKey)
+        {
+            string estado = string.IsNullOrWhiteSpace(_geminiKey) ? L["Settings.ChangeKeyRemoved"] : L["Settings.ChangeKeySet"];
+            alteracoes.Add($"{L["Settings.GeminiKeyLabel"]}: {estado}");
+        }
+
+        if (_openRouterKey != _baselineOpenRouterKey)
+        {
+            string estado = string.IsNullOrWhiteSpace(_openRouterKey) ? L["Settings.ChangeKeyRemoved"] : L["Settings.ChangeKeySet"];
+            alteracoes.Add($"{L["Settings.OpenRouterKeyLabel"]}: {estado}");
+        }
+
+        if (alteracoes.Count == 0)
+            return;
+
+        string mensagem = L["Settings.SaveJudgesConfirmMessage"] + Environment.NewLine + Environment.NewLine
+                          + string.Join(Environment.NewLine, alteracoes);
+
+        var dialog = await DialogService.ShowConfirmationAsync(
+            mensagem,
+            L["Settings.SaveJudgesConfirmYes"],
+            L["Common.Cancel"],
+            L["Settings.SaveJudgesConfirmTitle"]);
+
+        var resultado = await dialog.Result;
+        if (resultado.Cancelled)
+            return;
+
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(_geminiKey))
+                await SettingsRepository.SetValueAsync("ApiKeys:Gemini", _geminiKey.Trim());
+            else
+                await SettingsRepository.DeleteValueAsync("ApiKeys:Gemini");
+
+            if (!string.IsNullOrWhiteSpace(_openRouterKey))
+                await SettingsRepository.SetValueAsync("ApiKeys:OpenRouter", _openRouterKey.Trim());
+            else
+                await SettingsRepository.DeleteValueAsync("ApiKeys:OpenRouter");
+
+            if (!string.IsNullOrWhiteSpace(_judgeOpenRouterModel))
+                await SettingsRepository.SetValueAsync("AutomatedJudge:OpenRouterModel", _judgeOpenRouterModel.Trim());
+            else
+                await SettingsRepository.DeleteValueAsync("AutomatedJudge:OpenRouterModel");
+
+            _baselineOpenRouterModel = _judgeOpenRouterModel;
+            _baselineGeminiKey = _geminiKey;
+            _baselineOpenRouterKey = _openRouterKey;
+
+            ToastService.ShowSuccess(L["Settings.JudgesSaved"], timeout: 3000);
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"{L["Settings.JudgesSaveError"]} {ex.Message}");
+        }
+    }
 }
+
 <style>
-    .settings-select {
-        width: 250px;
+    .judge-model-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-height: 320px;
+        overflow-y: auto;
+        padding: 8px;
+        border: 1px solid var(--neutral-stroke-rest);
+        border-radius: 10px;
+        background: var(--neutral-layer-2);
+    }
+
+    .judge-model-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        background: var(--neutral-layer-1);
+        cursor: pointer;
+        transition: border-color .15s ease, background-color .15s ease;
+    }
+
+    .judge-model-row:hover {
+        background: var(--neutral-layer-3);
+    }
+
+    .judge-model-row:has(input:checked) {
+        border-color: var(--accent-fill-rest, #0078d4);
+        background: var(--neutral-layer-3);
+    }
+
+    .judge-model-row input[type="radio"] {
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        border: 2px solid var(--neutral-stroke-rest);
+        border-radius: 50%;
+        flex-shrink: 0;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .judge-model-row input[type="radio"]:checked {
+        border-color: var(--accent-fill-rest, #0078d4);
+    }
+
+    .judge-model-row input[type="radio"]:checked::after {
+        content: "";
+        position: absolute;
+        inset: 3px;
+        border-radius: 50%;
+        background: var(--accent-fill-rest, #0078d4);
+    }
+
+    .judge-model-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        flex: 1;
+    }
+
+    .judge-model-name {
+        font-weight: 600;
+        color: var(--neutral-foreground-rest);
+    }
+
+    .judge-model-id {
+        font-size: 12px;
+        color: var(--neutral-foreground-hint);
+        font-family: Consolas, "Courier New", monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .judge-model-badges {
+        display: flex;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .judge-model-badge {
+        font-size: 11px;
+        line-height: 1;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: var(--neutral-layer-3);
+        color: var(--neutral-foreground-hint);
+        white-space: nowrap;
+    }
+
+    .judge-model-badge.free {
+        background: rgba(30, 126, 52, .12);
+        color: #1e7e34;
+    }
+
+    .judge-model-badge.router {
+        background: rgba(26, 115, 232, .12);
+        color: #1a73e8;
+    }
+
+    .judge-params-card {
+        padding: 16px 20px;
+    }
+
+    .judge-params-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px 16px;
+    }
+
+    .judge-param-label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--neutral-foreground-rest);
+    }
+
+    @@media (max-width: 640px) {
+        .judge-params-grid {
+            grid-template-columns: 1fr;
+        }
     }
 
     @@media (max-width: 768px) {
-        .settings-select {
-            width: 100%;
+        .judge-model-list {
+            max-height: 260px;
         }
     }
 </style>

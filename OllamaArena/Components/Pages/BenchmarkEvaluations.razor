@@ -1,4 +1,4 @@
-@page "/benchmark-evaluations"
+compila e vê se há error@page "/benchmark-evaluations"
 @rendermode InteractiveServer
 
 @using Models.DTO
@@ -7,6 +7,7 @@
 @using OllamaArena.Services.Interfaces.Services
 @using ClosedXML.Excel
 @using System.IO
+@using System.Globalization
 @using Microsoft.Extensions.Localization
 @using OllamaArena.Resources
 @inject IStringLocalizer<SharedResources> L
@@ -35,6 +36,20 @@
                               @onclick="ExportarParaExcel">
                     @L["Common.ExportExcel"]
                 </FluentButton>
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                    <FluentButton Appearance="Appearance.Outline"
+                                  Disabled="@(!_podeExportarPdf)"
+                                  IconStart="@(new Icons.Regular.Size24.DocumentText())"
+                                  @onclick="ExportarParaPdfAsync">
+                        @L["Benchmarks.ExportPdf"]
+                    </FluentButton>
+                    @if (!_podeExportarPdf && _quantidadePorAvaliar > 0)
+                    {
+                        <FluentLabel Style="color: var(--neutral-foreground-hint); font-size: 12px; max-width: 280px;">
+                            @L["Benchmarks.ExportPdfHint", _quantidadePorAvaliar]
+                        </FluentLabel>
+                    }
+                </FluentStack>
                 <FluentButton Appearance="Appearance.Accent"
                               Disabled="@(_benchmarks.Any() == false || _isAnalyzing)"
                               IconStart="@(new Icons.Regular.Size24.BrainCircuit())"
@@ -205,6 +220,12 @@
     private CancellationTokenSource? _cts;
 
     private string _streamingLog = "";
+
+    private int _quantidadePorAvaliar =>
+        _benchmarks.Count(b => !b.GeminiRating.HasValue || !b.OpenRouterRating.HasValue);
+
+    private bool _podeExportarPdf =>
+        _benchmarks.Any() && _quantidadePorAvaliar == 0;
 
 
     protected override async Task OnInitializedAsync()
@@ -433,6 +454,105 @@
         var base64 = Convert.ToBase64String(content);
         var fileName = $"Benchmarks_Agrupados_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
         await JS.InvokeVoidAsync("downloadFileFromBase64", fileName, base64);
+    }
+
+    private async Task ExportarParaPdfAsync()
+    {
+        try
+        {
+            var dados = FilteredBenchmarks.ToList();
+            if (dados.Count == 0) return;
+
+            var metricas = new (string Rotulo, Func<BenchmarkEvaluationModel, int?> Gemini, Func<BenchmarkEvaluationModel, int?> OpenRouter)[]
+            {
+                (L["Evaluation.MetricFactual"], b => b.GeminiFactualRating, b => b.OpenRouterFactualRating),
+                (L["Evaluation.MetricFormatting"], b => b.GeminiFormattingRating, b => b.OpenRouterFormattingRating),
+                (L["Evaluation.MetricCompliance"], b => b.GeminiComplianceRating, b => b.OpenRouterComplianceRating),
+                (L["Evaluation.MetricRelevance"], b => b.GeminiRelevanceRating, b => b.OpenRouterRelevanceRating),
+                (L["Evaluation.MetricTone"], b => b.GeminiToneRating, b => b.OpenRouterToneRating),
+                (L["Evaluation.MetricConciseness"], b => b.GeminiConcisenessRating, b => b.OpenRouterConcisenessRating),
+                (L["Evaluation.MetricClarity"], b => b.GeminiClarityRating, b => b.OpenRouterClarityRating),
+                (L["Evaluation.MetricReadability"], b => b.GeminiReadabilityRating, b => b.OpenRouterReadabilityRating),
+                (L["Evaluation.MetricHaloEffect"], b => b.GeminiHaloEffectRating, b => b.OpenRouterHaloEffectRating),
+                (L["Evaluation.MetricSafety"], b => b.GeminiSafetyRating, b => b.OpenRouterSafetyRating),
+                (L["Evaluation.MetricLanguageConsistency"], b => b.GeminiLanguageConsistencyRating, b => b.OpenRouterLanguageConsistencyRating),
+                (L["Evaluation.MetricLoopDetection"], b => b.GeminiLoopDetectionRating, b => b.OpenRouterLoopDetectionRating)
+            };
+
+            string ValorGlobal(float? v) =>
+                v.HasValue ? Convert.ToInt32(v.Value).ToString(CultureInfo.InvariantCulture) : "—";
+
+            string Valor(int? v) =>
+                v.HasValue ? v.Value.ToString(CultureInfo.InvariantCulture) : "—";
+
+            var relatorio = new
+            {
+                titulo = L["Benchmarks.ExportPdfTitle"],
+                geradoEm = L["Benchmarks.ExportPdfGeneratedAt"],
+                data = DateTime.Now.ToString("dd/MM/yyyy HH:mm"),
+                rotuloPrompt = L["Benchmarks.ExportPdfPrompt"],
+                rotuloModelo = L["Benchmarks.ExportPdfModel"],
+                rotuloMetrica = L["Benchmarks.ExportPdfMetric"],
+                rotuloPerformance = L["Benchmarks.ExportPdfPerformance"],
+                rotuloFeedback = L["Benchmarks.ExportPdfFeedback"],
+                rotuloRecomendacao = L["Benchmarks.ExportPdfRecommendation"],
+                rotuloGemini = L["Benchmarks.ColGemini"],
+                rotuloOpenRouter = L["Benchmarks.ColOpenRouter"],
+                rotuloData = L["Benchmarks.ExportPdfDate"],
+                rotulosDesempenho = new[]
+                {
+                    L["Benchmarks.ColTokensPerSecond"],
+                    L["Benchmarks.ColTime"],
+                    L["Benchmarks.ColLoad"],
+                    L["Benchmarks.ColTokens"]
+                },
+                grupos = dados
+                    .GroupBy(b => b.PromptId)
+                    .OrderBy(g => g.Key)
+                    .Select(g => new
+                    {
+                        id = g.Key,
+                        prompt = g.First().TextoPrompt,
+                        data = g.First().DataCriacaoFormatada,
+                        respostas = g.Select(b =>
+                        {
+                            var linhas = new List<object>
+                            {
+                                new { metrica = L["Evaluation.MetricOverall"], gemini = ValorGlobal(b.GeminiRating), openrouter = ValorGlobal(b.OpenRouterRating) }
+                            };
+                            linhas.AddRange(metricas.Select(m => new
+                            {
+                                metrica = m.Rotulo,
+                                gemini = Valor(m.Gemini(b)),
+                                openrouter = Valor(m.OpenRouter(b))
+                            }));
+                            return new
+                            {
+                                modelo = b.NomeModelo,
+                                desempenho = new[]
+                                {
+                                    b.TokensPorSegundo.ToString("F2", CultureInfo.InvariantCulture),
+                                    b.TempoPuroFormatado,
+                                    b.TempoCargaFormatado,
+                                    b.TamanhoTokens.ToString(CultureInfo.InvariantCulture)
+                                },
+                                linhas,
+                                feedbackGemini = b.GeminiFeedback,
+                                feedbackOpenRouter = b.OpenRouterFeedback,
+                                recomendacaoGemini = b.GeminiRecommendation,
+                                recomendacaoOpenRouter = b.OpenRouterRecommendation
+                            };
+                        }).ToList()
+                    }).ToList()
+            };
+
+            await JS.InvokeVoidAsync("gerarRelatorioPDF", relatorio);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erro ao gerar o relatório PDF.");
+            await DialogService.ShowErrorAsync($"{L["Benchmarks.ExportPdfError"]} {ex.Message}");
+        }
     }
 
     private enum BenchmarkFilter { Todos, PorAvaliar, Avaliados }
