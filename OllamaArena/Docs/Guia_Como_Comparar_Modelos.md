@@ -1,6 +1,6 @@
 # Como comparar modelos locais
 
-**Guia de metodologia para tirar o melhor partido do laboratório de benchmarking** · Ollama Chat & Benchmark Laboratory · 10 de agosto de 2026
+**Guia de metodologia para tirar o melhor partido do laboratório de benchmarking** · Ollama Chat & Benchmark Laboratory
 
 > **Fonte de verdade** em Markdown; o ficheiro `Docs/Guia_Como_Comparar_Modelos.pdf` é o artefacto de distribuição correspondente.
 
