@@ -401,7 +401,3 @@ O repositório inclui um workflow GitHub Actions (`.github/workflows/deploy-iis.
 - **Smoke test:** após o arranque, valida `HTTP 200` em `http://localhost:4501`.
 
 Em máquinas sem o runner, o workflow é irrelevante — a app corre localmente com `dotnet watch run` (ver README), sem tokens ou credenciais.
-
----
-
-*Documentação gerada a partir do código da solução (working tree). Caminhos relativos a `OllamaArena/`.*
