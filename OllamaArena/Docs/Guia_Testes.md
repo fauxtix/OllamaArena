@@ -27,7 +27,7 @@ dotnet build OllamaArena.slnx
 dotnet test OllamaArena.slnx
 ```
 
-Esperado: **47 casos (43 métodos)** a passar:
+Esperado: **55 casos** a passar:
 
 | Projeto de teste | Cobre |
 | --- | --- |
@@ -36,11 +36,12 @@ Esperado: **47 casos (43 métodos)** a passar:
 | `ChatComposerServiceTests` | trim do histórico a 60%, fusão de mensagens, remoção do assistant final, `num_predict` ≤ contexto |
 | `ChatMeasureTemperatureTests` | temperatura factual/criativa/código, remoção de acentos |
 | `LocalAnalysisServiceTests` | listas vazias/nulas sem crash, modelo mais rápido, melhor avaliado, consenso |
+| `SqliteTypeHandlersTests` | conversão de `INTEGER`/`REAL`/`NULL` do SQLite para `double`/`float`/nullable sem `InvalidCastException` |
 
 ## 2. Arranque e smoke test
 
 - `dotnet watch run` em `OllamaArena/` (perfil `https`).
-- Confirmar que `ollama_benchmark.db` é criada com as **5 tabelas** (`Prompts`, `Respostas`, `Conversas`, `ConversaMensagens`, `Logs`) e sem erros no terminal.
+- Confirmar que `ollama_benchmark.db` é criada com as **7 tabelas** (`Prompts`, `Respostas`, `Conversas`, `ConversaMensagens`, `Configuracoes`, `ModelosJuiz`, `Logs`) e sem erros no terminal.
 - Menu lateral inclui **Dashboard** (`/dashboard`); `Settings2` e `AnaliseBenchmark` foram removidas (devem dar 404).
 
 ## 3. Chat (`/chat`)
@@ -67,6 +68,7 @@ Esperado: **47 casos (43 métodos)** a passar:
 - [ ] **Quota**: segunda avaliação seguida → `QuotaLimitMessage` (intervalo default 60s). Falhas não marcam quota (novas tentativas permitidas de imediato).
 - [ ] **Copiar prompt** (fallback manual, funciona sem internet).
 - [ ] **Avaliação manual**: preencher as 12 métricas + Overall, gravar e confirmar no Dashboard.
+- [ ] **Gráficos por prompt**: abrir o diálogo de gráficos e validar as tabs **Desempenho** (4 gráficos de barras com download) e **Qualidade** (2 radares Gemini/OpenRouter na escala 0–5; sem avaliações de um juiz → "Sem avaliações para este juiz.").
 
 ## 6. Dashboard (`/dashboard`)
 

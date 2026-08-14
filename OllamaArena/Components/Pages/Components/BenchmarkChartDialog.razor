@@ -25,57 +25,119 @@
 
         @if (Prompt != null)
         {
-            <div class="benchmark-lista-cards">
+            <FluentTabs ActiveTabId=@_tabAtiva ActiveTabIdChanged="OnTabChanged">
 
-                <div class="grafico-card">
-                    <div class="grafico-header">
-                        <span class="grafico-titulo">@L["ChartDialog.EvalChartTitle"]</span>
-                        <FluentButton Appearance="Appearance.Stealth"
-                                      IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
-                                      OnClick="@(() => DownloadImageAsync("graficoEval", $"benchmark_eval_prompt_{Prompt.Id}"))" />
-                    </div>
-                    <div class="canvas-container">
-                        <canvas id="graficoEval"></canvas>
-                    </div>
-                </div>
+                <FluentTab Id="tab-desempenho">
+                    <Header>
+                        <FluentIcon Value="@(new Icons.Regular.Size16.DataHistogram())" Style="margin-right: 6px;" />
+                        <span>@L["ChartDialog.TabPerformance"]</span>
+                    </Header>
+                    <Content>
+                        <div class="benchmark-lista-cards">
 
-                <div class="grafico-card">
-                    <div class="grafico-header">
-                        <span class="grafico-titulo">@L["ChartDialog.LoadChartTitle"]</span>
-                        <FluentButton Appearance="Appearance.Stealth"
-                                      IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
-                                      OnClick="@(() => DownloadImageAsync("graficoLoad", $"benchmark_load_prompt_{Prompt.Id}"))" />
-                    </div>
-                    <div class="canvas-container">
-                        <canvas id="graficoLoad"></canvas>
-                    </div>
-                </div>
+                            <div class="grafico-card">
+                                <div class="grafico-header">
+                                    <span class="grafico-titulo">@L["ChartDialog.EvalChartTitle"]</span>
+                                    <FluentButton Appearance="Appearance.Stealth"
+                                                  IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                                  OnClick="@(() => DownloadImageAsync("graficoEval", $"benchmark_eval_prompt_{Prompt.Id}"))" />
+                                </div>
+                                <div class="canvas-container">
+                                    <canvas id="graficoEval"></canvas>
+                                </div>
+                            </div>
 
-                <div class="grafico-card">
-                    <div class="grafico-header">
-                        <span class="grafico-titulo">@L["ChartDialog.SpeedChartTitle"]</span>
-                        <FluentButton Appearance="Appearance.Stealth"
-                                      IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
-                                      OnClick="@(() => DownloadImageAsync("graficoVelocidade", $"benchmark_tokens_seg_prompt_{Prompt.Id}"))" />
-                    </div>
-                    <div class="canvas-container">
-                        <canvas id="graficoVelocidade"></canvas>
-                    </div>
-                </div>
+                            <div class="grafico-card">
+                                <div class="grafico-header">
+                                    <span class="grafico-titulo">@L["ChartDialog.LoadChartTitle"]</span>
+                                    <FluentButton Appearance="Appearance.Stealth"
+                                                  IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                                  OnClick="@(() => DownloadImageAsync("graficoLoad", $"benchmark_load_prompt_{Prompt.Id}"))" />
+                                </div>
+                                <div class="canvas-container">
+                                    <canvas id="graficoLoad"></canvas>
+                                </div>
+                            </div>
 
-                <div class="grafico-card">
-                    <div class="grafico-header">
-                        <span class="grafico-titulo">@L["ChartDialog.TotalTokensTitle"]</span>
-                        <FluentButton Appearance="Appearance.Stealth"
-                                      IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
-                                      OnClick="@(() => DownloadImageAsync("graficoTotalTokens", $"benchmark_total_tokens_prompt_{Prompt.Id}"))" />
-                    </div>
-                    <div class="canvas-container">
-                        <canvas id="graficoTotalTokens"></canvas>
-                    </div>
-                </div>
+                            <div class="grafico-card">
+                                <div class="grafico-header">
+                                    <span class="grafico-titulo">@L["ChartDialog.SpeedChartTitle"]</span>
+                                    <FluentButton Appearance="Appearance.Stealth"
+                                                  IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                                  OnClick="@(() => DownloadImageAsync("graficoVelocidade", $"benchmark_tokens_seg_prompt_{Prompt.Id}"))" />
+                                </div>
+                                <div class="canvas-container">
+                                    <canvas id="graficoVelocidade"></canvas>
+                                </div>
+                            </div>
 
-            </div>
+                            <div class="grafico-card">
+                                <div class="grafico-header">
+                                    <span class="grafico-titulo">@L["ChartDialog.TotalTokensTitle"]</span>
+                                    <FluentButton Appearance="Appearance.Stealth"
+                                                  IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                                  OnClick="@(() => DownloadImageAsync("graficoTotalTokens", $"benchmark_total_tokens_prompt_{Prompt.Id}"))" />
+                                </div>
+                                <div class="canvas-container">
+                                    <canvas id="graficoTotalTokens"></canvas>
+                                </div>
+                            </div>
+
+                        </div>
+                    </Content>
+                </FluentTab>
+
+                <FluentTab Id="tab-qualidade">
+                    <Header>
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())" Style="margin-right: 6px;" />
+                        <span>@L["ChartDialog.TabQuality"]</span>
+                    </Header>
+                    <Content>
+                        <div class="benchmark-lista-cards">
+
+                            <div class="grafico-card">
+                                <div class="grafico-header">
+                                    <span class="grafico-titulo">@L["ChartDialog.RadarGeminiTitle"]</span>
+                                    <FluentButton Appearance="Appearance.Stealth"
+                                                  IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                                  OnClick="@(() => DownloadImageAsync("graficoRadarGemini", $"benchmark_radar_gemini_prompt_{Prompt.Id}"))" />
+                                </div>
+                                @if (!_radarGeminiVazio)
+                                {
+                                    <div class="canvas-container-radar">
+                                        <canvas id="graficoRadarGemini"></canvas>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="radar-sem-dados">@L["ChartDialog.RadarNoData"]</p>
+                                }
+                            </div>
+
+                            <div class="grafico-card">
+                                <div class="grafico-header">
+                                    <span class="grafico-titulo">@L["ChartDialog.RadarOpenRouterTitle"]</span>
+                                    <FluentButton Appearance="Appearance.Stealth"
+                                                  IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                                  OnClick="@(() => DownloadImageAsync("graficoRadarOpenRouter", $"benchmark_radar_openrouter_prompt_{Prompt.Id}"))" />
+                                </div>
+                                @if (!_radarOpenRouterVazio)
+                                {
+                                    <div class="canvas-container-radar">
+                                        <canvas id="graficoRadarOpenRouter"></canvas>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="radar-sem-dados">@L["ChartDialog.RadarNoData"]</p>
+                                }
+                            </div>
+
+                        </div>
+                    </Content>
+                </FluentTab>
+
+            </FluentTabs>
         }
         else
         {
@@ -99,9 +161,22 @@
 
     private Dictionary<string, string> _coresDosModelos = new();
     private bool _graficoJaRenderizado = false;
+    private bool _renderizarRadarPendente = false;
+    private string _tabAtiva = "tab-desempenho";
+    private bool _radarGeminiVazio = false;
+    private bool _radarOpenRouterVazio = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        // O conteúdo do tab "Qualidade" só está montado no DOM depois da re-renderização
+        // que se segue ao OnTabChanged — por isso o render do radar é feito aqui.
+        if (_renderizarRadarPendente && Visible && Prompt != null)
+        {
+            _renderizarRadarPendente = false;
+            await Task.Delay(200); // Aguarda a animação do tab para evitar falhas de tamanho no Canvas
+            await RenderizarRadarAsync();
+        }
+
         if (Visible && Prompt != null && !_graficoJaRenderizado)
         {
             _graficoJaRenderizado = true;
@@ -111,6 +186,17 @@
         else if (!Visible)
         {
             _graficoJaRenderizado = false;
+            _renderizarRadarPendente = false;
+        }
+    }
+
+    private void OnTabChanged(string tabId)
+    {
+        _tabAtiva = tabId;
+
+        if (tabId == "tab-qualidade")
+        {
+            _renderizarRadarPendente = true;
         }
     }
 
@@ -137,6 +223,104 @@
         await JS.InvokeVoidAsync("benchmarkCharts.renderGrafico", "graficoLoad", dadosLoad, "ms");
         await JS.InvokeVoidAsync("benchmarkCharts.renderGrafico", "graficoVelocidade", dadosVelocidade, "tokens/s");
         await JS.InvokeVoidAsync("benchmarkCharts.renderGrafico", "graficoTotalTokens", dadosTotalTokens, "tokens");
+    }
+
+    private async Task RenderizarRadarAsync()
+    {
+        if (Prompt?.Answers == null || !Prompt.Answers.Any())
+            return;
+
+        var dadosRadarGemini = GerarDadosRadar(openRouter: false, out _radarGeminiVazio);
+        var dadosRadarOpenRouter = GerarDadosRadar(openRouter: true, out _radarOpenRouterVazio);
+
+        if (!_radarGeminiVazio)
+        {
+            await RenderizarRadarComRetryAsync("graficoRadarGemini", dadosRadarGemini);
+        }
+
+        if (!_radarOpenRouterVazio)
+        {
+            await RenderizarRadarComRetryAsync("graficoRadarOpenRouter", dadosRadarOpenRouter);
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task RenderizarRadarComRetryAsync(string canvasId, object dados)
+    {
+        // Garante o render mesmo que o canvas ainda esteja a ser montado pelo FluentTabs
+        for (int tentativa = 0; tentativa < 8; tentativa++)
+        {
+            var renderizado = await JS.InvokeAsync<bool>("benchmarkCharts.renderGrafico", canvasId, dados, "pts", "radar");
+            if (renderizado)
+                return;
+            await Task.Delay(100);
+        }
+    }
+
+    private object GerarDadosRadar(bool openRouter, out bool vazio)
+    {
+        var metricas = new (string Nome, Func<BenchmarkResponse, float?> Valor)[]
+        {
+            (L["Evaluation.MetricFactual"], a => openRouter ? a.OpenRouterFactualRating : a.GeminiFactualRating),
+            (L["Evaluation.MetricFormatting"], a => openRouter ? a.OpenRouterFormattingRating : a.GeminiFormattingRating),
+            (L["Evaluation.MetricCompliance"], a => openRouter ? a.OpenRouterComplianceRating : a.GeminiComplianceRating),
+            (L["Evaluation.MetricRelevance"], a => openRouter ? a.OpenRouterRelevanceRating : a.GeminiRelevanceRating),
+            (L["Evaluation.MetricTone"], a => openRouter ? a.OpenRouterToneRating : a.GeminiToneRating),
+            (L["Evaluation.MetricConciseness"], a => openRouter ? a.OpenRouterConcisenessRating : a.GeminiConcisenessRating),
+            (L["Evaluation.MetricClarity"], a => openRouter ? a.OpenRouterClarityRating : a.GeminiClarityRating),
+            (L["Evaluation.MetricReadability"], a => openRouter ? a.OpenRouterReadabilityRating : a.GeminiReadabilityRating),
+            (L["Evaluation.MetricHaloEffect"], a => openRouter ? a.OpenRouterHaloEffectRating : a.GeminiHaloEffectRating),
+            (L["Evaluation.MetricSafety"], a => openRouter ? a.OpenRouterSafetyRating : a.GeminiSafetyRating),
+            (L["Evaluation.MetricLanguageConsistency"], a => openRouter ? a.OpenRouterLanguageConsistencyRating : a.GeminiLanguageConsistencyRating),
+            (L["Evaluation.MetricLoopDetection"], a => openRouter ? a.OpenRouterLoopDetectionRating : a.GeminiLoopDetectionRating)
+        };
+
+        Func<BenchmarkResponse, float?> seletorGlobal =
+            a => openRouter ? a.OpenRouterRating : a.GeminiRating;
+
+        var gruposModelos = Prompt!.Answers
+            .Where(a => seletorGlobal(a).HasValue)
+            .GroupBy(a => a.NomeModelo)
+            .OrderBy(g => g.Key)
+            .ToList();
+
+        vazio = gruposModelos.Count == 0;
+
+        var datasets = gruposModelos.Select(grupo =>
+        {
+            var cor = _coresDosModelos.ContainsKey(grupo.Key) ? _coresDosModelos[grupo.Key] : GerarCorAleatoria();
+            var valores = metricas.Select(m => MediarRatings(grupo, m.Valor)).ToArray();
+
+            return new
+            {
+                label = grupo.Key,
+                data = valores,
+                borderColor = cor,
+                backgroundColor = CorPreenchimento(cor),
+                borderWidth = 2,
+                pointBackgroundColor = cor,
+                pointRadius = 3,
+                fill = true
+            };
+        }).ToList();
+
+        return new
+        {
+            labels = metricas.Select(m => m.Nome).ToArray(),
+            datasets = datasets
+        };
+    }
+
+    private static double MediarRatings(IEnumerable<BenchmarkResponse> respostas, Func<BenchmarkResponse, float?> seletor)
+    {
+        var valores = respostas.Where(r => seletor(r).HasValue).Select(r => (double)seletor(r)!.Value).ToList();
+        return valores.Count > 0 ? valores.Average() : 0;
+    }
+
+    private static string CorPreenchimento(string cor)
+    {
+        return cor.Replace("0.85)", "0.18)");
     }
 
     private object GerarDatasetUnico(List<string> labelsModelos, Func<BenchmarkResponse, double> seletorValor)
@@ -231,6 +415,21 @@
         height: 320px;
     }
 
+    .canvas-container-radar {
+        position: relative;
+        width: 100%;
+        max-width: 480px;
+        height: 440px;
+        margin: 0 auto;
+    }
+
+    .radar-sem-dados {
+        color: var(--neutral-foreground-hint);
+        font-size: 13px;
+        font-style: italic;
+        margin: 24px 0;
+    }
+
     @@media (max-width: 768px) {
         fluent-dialog.dialog-largo::part(control) {
             --dialog-width: 94vw !important;
@@ -238,6 +437,10 @@
 
         .canvas-container {
             height: 240px;
+        }
+
+        .canvas-container-radar {
+            height: 340px;
         }
     }
 </style>

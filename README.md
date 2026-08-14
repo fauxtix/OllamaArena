@@ -62,13 +62,7 @@ A pasta **`OllamaArena/Docs/`** reúne a documentação técnica do projeto em M
 | `Guia_Testes.md` | Checklist manual de validação (build + testes + smoke test das funcionalidades) |
 | `Guia_Como_Comparar_Modelos.md` | Como usar o laboratório para comparar modelos de forma justa |
 | `Relatorio_Analise.md` | Relatório de análise do código (pontos fortes, bugs, dívida técnica) |
-| `schema.sql` | DDL das 5 tabelas SQLite (executável numa BD nova antes do 1.º arranque) |
-
-Alguns documentos têm também versão **PDF** na mesma pasta, para consulta offline fora da aplicação (`Guia_Como_Comparar_Modelos.pdf`, `Relatorio_Analise.pdf`); para os gerar a partir dos `.md`, pode usar qualquer conversor de Markdown para PDF (ex.: `pandoc`), por exemplo:
-
-```bash
-pandoc OllamaArena/Docs/Relatorio_Analise.md -o Relatorio_Analise.pdf
-```
+| `schema.sql` | DDL de referência (5 tabelas; o runtime cria 7 — adiciona `Configuracoes` e `ModelosJuiz` no arranque) |
 
 ---
 
@@ -106,6 +100,7 @@ Com estes dados recolhidos automaticamente, pode:
 - **Avaliar a qualidade com dois juízes de IA** — atribuir uma nota de 1 a 5 em 12 critérios (factualidade, formatação, clareza, segurança, consistência idiomática, deteção de loop, etc.) às respostas dos seus modelos, através dos juízes **Gemini** e **OpenRouter**, guardando também a **recomendação** de cada juiz;
 - **Analisar os resultados de forma 100% local** — a aplicação gera um resumo inteligente com conclusões e recomendações de desempenho (análise em C# puro, sem depender da nuvem);
 - **Exportar os resultados para Excel**, com relatórios agrupados por pergunta, prontos a partilhar;
+- **Comparar graficamente cada pergunta** — gráficos de desempenho (velocidade, tempos, tokens) e **radares de qualidade por juiz** (Gemini/OpenRouter, 12 métricas, escala 0–5), com download de imagem;
 - Comparar as respostas de **vários modelos lado a lado** para a mesma pergunta, no painel de Qualidade e Métricas;
 - Gerir os seus registos, apagando testes individuais ou todo o histórico quando pretender.
 

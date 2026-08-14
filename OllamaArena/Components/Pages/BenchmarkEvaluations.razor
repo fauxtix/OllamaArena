@@ -104,9 +104,9 @@
             </PropertyColumn>
 
             <TemplateColumn Title="@L["Benchmarks.ColDescription"]" Tooltip="true" Width="200px" Align="Align.Start">
-                <HeaderCellItemTemplate>
+                <HeaderCellTitleTemplate>
                     <span class="header-columns">@L["Benchmarks.ColDescription"]</span>
-                </HeaderCellItemTemplate>
+                </HeaderCellTitleTemplate>
                 <ChildContent Context="context">
                     <div class="prompt-cell">
                         @context.Descricao
@@ -121,7 +121,7 @@
             </PropertyColumn>
             <PropertyColumn Property="@(b => b.GeminiFactualRating)" Title="@L["Benchmarks.ColFactual"]" Align="Align.Center" Width="90px" Sortable="true" />
             <PropertyColumn Property="@(b => b.GeminiFormattingRating)" Title="@L["Benchmarks.ColFormatting"]" Align="Align.Center" Width="90px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.OpenRouterRating)" Title="@L["Benchmarks.ColOpenRouter"]" Align="Align.Center" Width="100px" Sortable="true">
+            <PropertyColumn Property="@(b => b.OpenRouterRating)" Title="@L["Benchmarks.ColOpenRouter"]" Align="Align.Center" Width="140px" Sortable="true">
                 <HeaderCellTitleTemplate>
                     <span class="header-blue">@L["Benchmarks.ColOpenRouter"]</span>
                 </HeaderCellTitleTemplate>
@@ -485,24 +485,24 @@
 
             var relatorio = new
             {
-                titulo = L["Benchmarks.ExportPdfTitle"],
-                geradoEm = L["Benchmarks.ExportPdfGeneratedAt"],
+                titulo = L["Benchmarks.ExportPdfTitle"].Value,
+                geradoEm = L["Benchmarks.ExportPdfGeneratedAt"].Value,
                 data = DateTime.Now.ToString("dd/MM/yyyy HH:mm"),
-                rotuloPrompt = L["Benchmarks.ExportPdfPrompt"],
-                rotuloModelo = L["Benchmarks.ExportPdfModel"],
-                rotuloMetrica = L["Benchmarks.ExportPdfMetric"],
-                rotuloPerformance = L["Benchmarks.ExportPdfPerformance"],
-                rotuloFeedback = L["Benchmarks.ExportPdfFeedback"],
-                rotuloRecomendacao = L["Benchmarks.ExportPdfRecommendation"],
-                rotuloGemini = L["Benchmarks.ColGemini"],
-                rotuloOpenRouter = L["Benchmarks.ColOpenRouter"],
-                rotuloData = L["Benchmarks.ExportPdfDate"],
+                rotuloPrompt = L["Benchmarks.ExportPdfPrompt"].Value,
+                rotuloModelo = L["Benchmarks.ExportPdfModel"].Value,
+                rotuloMetrica = L["Benchmarks.ExportPdfMetric"].Value,
+                rotuloPerformance = L["Benchmarks.ExportPdfPerformance"].Value,
+                rotuloFeedback = L["Benchmarks.ExportPdfFeedback"].Value,
+                rotuloRecomendacao = L["Benchmarks.ExportPdfRecommendation"].Value,
+                rotuloGemini = L["Benchmarks.ColGemini"].Value,
+                rotuloOpenRouter = L["Benchmarks.ColOpenRouter"].Value,
+                rotuloData = L["Benchmarks.ExportPdfDate"].Value,
                 rotulosDesempenho = new[]
                 {
-                    L["Benchmarks.ColTokensPerSecond"],
-                    L["Benchmarks.ColTime"],
-                    L["Benchmarks.ColLoad"],
-                    L["Benchmarks.ColTokens"]
+                    L["Benchmarks.ColTokensPerSecond"].Value,
+                    L["Benchmarks.ColTime"].Value,
+                    L["Benchmarks.ColLoad"].Value,
+                    L["Benchmarks.ColTokens"].Value
                 },
                 grupos = dados
                     .GroupBy(b => b.PromptId)
@@ -516,7 +516,7 @@
                         {
                             var linhas = new List<object>
                             {
-                                new { metrica = L["Evaluation.MetricOverall"], gemini = ValorGlobal(b.GeminiRating), openrouter = ValorGlobal(b.OpenRouterRating) }
+                                new { metrica = L["Evaluation.MetricOverall"].Value, gemini = ValorGlobal(b.GeminiRating), openrouter = ValorGlobal(b.OpenRouterRating) }
                             };
                             linhas.AddRange(metricas.Select(m => new
                             {
@@ -837,6 +837,8 @@
         border-radius: 3px;
         border: 1px solid var(--neutral-stroke-rest);
         align-items: center;
+        padding: 2px 8px;
+        white-space: nowrap;
     }
 
     .header-columns {

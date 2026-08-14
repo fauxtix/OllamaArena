@@ -978,6 +978,21 @@ Deseja continuar?</value>
   <data name="ChartDialog.NoPrompt" xml:space="preserve">
     <value>Nenhum prompt selecionado.</value>
   </data>
+  <data name="ChartDialog.TabPerformance" xml:space="preserve">
+    <value>Desempenho</value>
+  </data>
+  <data name="ChartDialog.TabQuality" xml:space="preserve">
+    <value>Qualidade</value>
+  </data>
+  <data name="ChartDialog.RadarGeminiTitle" xml:space="preserve">
+    <value>Radar de Qualidade (Gemini)</value>
+  </data>
+  <data name="ChartDialog.RadarOpenRouterTitle" xml:space="preserve">
+    <value>Radar de Qualidade (OpenRouter)</value>
+  </data>
+  <data name="ChartDialog.RadarNoData" xml:space="preserve">
+    <value>Sem avaliações para este juiz.</value>
+  </data>
   <data name="GpuDialog.Title" xml:space="preserve">
     <value>Informação do Sistema</value>
   </data>

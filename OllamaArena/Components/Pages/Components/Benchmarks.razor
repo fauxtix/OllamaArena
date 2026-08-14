@@ -132,7 +132,10 @@
                                         <FluentIcon Class="recommendation-box-chevron"
                                                     Value="@(GetPromptChevron(_promptOpen))" />
                                     </div>
-                                    <div class="recommendation-box-text">"@_selectedPrompt.TextoPrompt"</div>
+                                    @if (_promptOpen)
+                                    {
+                                        <div class="recommendation-box-text">"@_selectedPrompt.TextoPrompt"</div>
+                                    }
                                 </div>
                             </div>
                         </div>
@@ -417,15 +420,53 @@
         margin-top: 0;
     }
 
+    /* Caixa de recomendação/colapsável (padrão das recomendações do diálogo de avaliação) */
+    .recommendation-box {
+        background-color: rgba(255, 183, 77, 0.12);
+        border: 1px solid rgba(209, 158, 0, 0.45);
+        border-left: 4px solid #d19e00;
+        border-radius: 4px;
+        padding: 10px 12px;
+    }
+
+        .recommendation-box-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #d19e00;
+            margin-bottom: 0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .recommendation-box-header:focus-visible {
+            outline: 1px solid var(--accent-fill-rest, #0078d4);
+            outline-offset: 2px;
+        }
+
+        .recommendation-box.open .recommendation-box-header {
+            margin-bottom: 6px;
+        }
+
+        .recommendation-box-chevron {
+            margin-left: auto;
+            flex: 0 0 auto;
+        }
+
+        .recommendation-box-text {
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--neutral-foreground-rest);
+            white-space: pre-wrap;
+        }
+
     .prompt-collapse-box .recommendation-box-text {
         white-space: pre-wrap;
         word-break: break-word;
-    }
-
-    @@media (min-width: 769px) {
-        .prompt-collapse-box .recommendation-box-header {
-            display: none;
-        }
     }
 
     .cartao-corpo {
@@ -548,14 +589,6 @@
 
         .card-prompt-footer {
             gap: 8px;
-        }
-
-        .prompt-collapse-box .recommendation-box-text {
-            display: none;
-        }
-
-        .prompt-collapse-box.open .recommendation-box-text {
-            display: block;
         }
     }
 </style>

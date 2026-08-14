@@ -62,13 +62,7 @@ The **`OllamaArena/Docs/`** folder gathers the project's technical documentation
 | `Guia_Testes.md` | Manual validation checklist (build + unit tests + feature smoke tests) |
 | `Guia_Como_Comparar_Modelos.md` | How to use the lab to compare models fairly |
 | `Relatorio_Analise.md` | Code analysis report (strengths, bugs, technical debt) |
-| `schema.sql` | DDL of the 5 SQLite tables (executable on a fresh DB before first run) |
-
-Some documents also ship as **PDF** in the same folder for offline reference outside the app (`Guia_Como_Comparar_Modelos.pdf`, `Relatorio_Analise.pdf`); to regenerate them from the `.md` files, use any Markdown-to-PDF converter (e.g. `pandoc`):
-
-```bash
-pandoc OllamaArena/Docs/Relatorio_Analise.md -o Relatorio_Analise.pdf
-```
+| `schema.sql` | Reference DDL (5 tables; the runtime creates 7 — adding `Configuracoes` and `ModelosJuiz` on startup) |
 
 ---
 
@@ -106,6 +100,7 @@ With this data collected automatically, you can:
 - **Assess quality with two AI judges** — rate your models' responses from 1 to 5 across 12 criteria (factuality, formatting, clarity, safety, language consistency, loop detection, etc.) using the **Gemini** and **OpenRouter** judges, also saving each judge's **recommendation**;
 - **Analyse results 100% locally** — the app produces a smart summary with conclusions and performance recommendations (pure C# analysis, no cloud dependency);
 - **Export results to Excel**, with reports grouped by question, ready to share;
+- **Compare each question graphically** — performance charts (speed, timings, tokens) and **quality radar charts per judge** (Gemini/OpenRouter, 12 metrics, 0–5 scale), with image download;
 - Compare the responses of **several models side by side** for the same question, in the Quality and Metrics panel;
 - Manage your records, deleting individual tests or the entire history whenever you want.
 

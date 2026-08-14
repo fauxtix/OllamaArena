@@ -18,6 +18,10 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
+    // Handlers globais do Dapper para converter valores INTEGER do SQLite
+    // (ex.: Int64 4) em double/float sem InvalidCastException.
+    SqliteTypeHandlers.Register();
+
     var builder = WebApplication.CreateBuilder(args);
 
     // Ficheiro local não versionado para overrides de configuração

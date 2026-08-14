@@ -2,7 +2,7 @@
 
 **Guia de metodologia para tirar o melhor partido do laboratório de benchmarking** · Ollama Chat & Benchmark Laboratory · 10 de agosto de 2026
 
-> **Fonte de verdade** em Markdown; o ficheiro `Docs/Guia_Como_Comparar_Modelos.pdf` é o artefacto de distribuição correspondente.
+> **Fonte de verdade** em Markdown.
 
 ---
 
@@ -70,7 +70,7 @@ Para cada modelo, responda **às mesmas perguntas**, mudando apenas o modelo no 
 ### Passo 5 — Tirar conclusões em três locais
 
 - **Benchmarks** (`/benchmark-evaluations`): tabela consolidada com filtros, export para Excel e análise local automática.
-- **Qualidade e Métricas** (`/benchmarks`): comparação lado a lado por pergunta.
+- **Qualidade e Métricas** (`/benchmarks`): comparação lado a lado por pergunta, com **gráficos por prompt** — tab **Desempenho** (tempos de execução/carga, velocidade e tokens, em barras) e tab **Qualidade** (**radares por juiz** com as 12 métricas na escala 0–5, que mostram o perfil completo de cada modelo de uma só vez) — tudo com download de imagem.
 - **Análise automática** (`LocalAnalysisService`): identifica o mais rápido, o melhor avaliado, o consenso entre juízes e alerta se todos ficarem abaixo de 4.0/5.
 
 ## 3. Como ler os resultados
@@ -81,6 +81,7 @@ Para cada modelo, responda **às mesmas perguntas**, mudando apenas o modelo no 
 4. **Compatibilidade de VRAM** (badge GPU no chat): determina se o candidato corre na sua placa ou no CPU. Um modelo que "cabe na GPU" ganha sempre na prática.
 5. **Alerta de qualidade baixa global.** Se *nenhum* modelo passa de 4/5 numa temática, a decisão correta é mudar de família ou de tamanho — não aceitar o menor dos maus.
 6. **Factual baixo = sinal de alucinação.** Não há métrica dedicada a alucinações: respostas com afirmações inventadas tendem a ter `Factual` baixo. Mas os juízes avaliam apenas contra o **prompt + ano de treino**, sem verificação externa (não há pesquisa/ground truth) — contradições internas e factos claramente falsos são detetados, enquanto detalhes inventados mas plausíveis (citações, estatísticas, URLs) podem passar. Reforce com o consenso entre juízes (item 2): se ambos concordam em `Factual` baixo, é sinal forte.
+7. **O radar vale mais do que a nota única.** No radar por juiz (tab Qualidade), um perfil "quadrado" e equilibrado (todas as métricas altas) é preferível a um com picos e vales; um perfil espetado aponta pontos fracos concretos (ex.: formatação ou raciocínio). O radar complementa a média ponderada do ranking — use-o para decidir entre modelos com pontuações finais próximas.
 
 ## 4. Mapa temática → perfil de modelo
 

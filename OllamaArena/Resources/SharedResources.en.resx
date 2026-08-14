@@ -978,6 +978,21 @@ Do you want to continue?</value>
   <data name="ChartDialog.NoPrompt" xml:space="preserve">
     <value>No prompt selected.</value>
   </data>
+  <data name="ChartDialog.TabPerformance" xml:space="preserve">
+    <value>Performance</value>
+  </data>
+  <data name="ChartDialog.TabQuality" xml:space="preserve">
+    <value>Quality</value>
+  </data>
+  <data name="ChartDialog.RadarGeminiTitle" xml:space="preserve">
+    <value>Quality Radar (Gemini)</value>
+  </data>
+  <data name="ChartDialog.RadarOpenRouterTitle" xml:space="preserve">
+    <value>Quality Radar (OpenRouter)</value>
+  </data>
+  <data name="ChartDialog.RadarNoData" xml:space="preserve">
+    <value>No evaluations for this judge.</value>
+  </data>
   <data name="GpuDialog.Title" xml:space="preserve">
     <value>System Information</value>
   </data>

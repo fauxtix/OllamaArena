@@ -30,7 +30,7 @@ Aplicação **Blazor Server** (.NET 10) que funciona como um **chat local com Ol
 - `Prompts/*.txt` — ficheiros de prompt editáveis em runtime (Content files)
 - `PromptTemplates/` — construtores de prompt em C# (`EvaluatePromptTemplate`, `TranslatePromptTemplate`, `ChatInstructionsPrompt`)
 
-> **Nota de build:** a solução (`OllamaArena.slnx`) é de **projeto único** (`OllamaArena/`) + projeto de **testes** (`OllamaArena.Tests/`, 47 testes de unidade — 43 métodos). Um antigo `Services/Services.csproj` na raiz (refactor abandonado que não compilava) foi **removido**; o build limpo faz-se com `dotnet build OllamaArena.slnx`.
+> **Nota de build:** a solução (`OllamaArena.slnx`) é de **projeto único** (`OllamaArena/`) + projeto de **testes** (`OllamaArena.Tests/`, 55 testes de unidade). Um antigo `Services/Services.csproj` na raiz (refactor abandonado que não compilava) foi **removido**; o build limpo faz-se com `dotnet build OllamaArena.slnx`.
 
 ---
 
@@ -112,13 +112,13 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 - **Propósito:** análise **split-view** por prompt (cards à esquerda) com as respostas de cada modelo avaliadas (à direita), gráficos e edição de avaliações.
 - **Fluxo:**
   1. `GetDataAsync()` → `BenchmarkRepository.GetAllBenchmarksAsync()` (prompts + respostas).
-  2. Esquerda: cards de prompt com badge `#id`, data e nº de modelos; botões **Gráfico** (`BenchmarkChartDialog` — 4 gráficos Chart.js com download de imagem, ver 4.1) e apagar (cascade, com confirmação "Apagar Benchmark", ver 4.2).
+  2. Esquerda: cards de prompt com badge `#id`, data e nº de modelos; botões **Gráfico** (`BenchmarkChartDialog` — 2 tabs: **Desempenho** com 4 gráficos Chart.js e **Qualidade** com 2 radares por juiz, todos com download de imagem, ver 4.1) e apagar (cascade, com confirmação "Apagar Benchmark", ver 4.2).
    3. Direita: card por resposta com badges `Tokens/s`, `Eval`, `Load`, `Tokens`; ratings Gemini/OpenRouter; botões **Avaliação** (`BenchmarkEvaluationDialog` — formulário 12 métricas 1–5 + tradução de feedback, ver 4.1) e **Avaliar automaticamente** (`AvaliarAutomaticamenteAsync` — gera o prompt do juiz com `EvaluatePromptTemplate` + metadados do modelo via `/api/show`, submete-o aos juízes Gemini (`gemini-flash-latest`) e OpenRouter (default `openrouter/free`) via `AutomatedJudgeService`, preenche as métricas com `EvaluationParser` e abre o diálogo já preenchido). As chaves de API dos juízes vêm da **página Settings** (BD, tabela `Configuracoes`; fallback em user-secrets `ApiKeys:Gemini` / `ApiKeys:OpenRouter`); o serviço impõe um **intervalo mínimo entre avaliações** (`AutomatedJudge:MinIntervalSeconds`, default 60 s) marcado **apenas após sucesso** (falhas não bloqueiam novas tentativas) e mostra o diálogo `Benchmarks.QuotaLimitMessage` quando o limite é atingido. Antes de submeter, `AvaliarAutomaticamenteAsync` verifica a ligação à internet via `InternetConnectivityService.HasInternetAsync()` e mostra o erro `Benchmarks.NoInternetError` se não houver (os juízes são serviços em nuvem). O botão **Copiar prompt** (`CopiarPromptAvaliacaoAsync`) mantém o fallback manual (só copia o prompt gerado, sem precisar de internet).
   4. `SaveEvaluationAsync` valida ratings 1–5 (diálogo "Erro de Validação" se fora do intervalo, ver 4.2) e grava com `UpdateResponseEvaluationAsync` (diálogo "Sucesso").
 
 > **Responsividade:** o `FluentSplitter` deteta a largura do viewport via **JS interop** (`appViewport.getWidth` + `subscribeResize` no primeiro render; `unsubscribeResize` em `DisposeAsync`) e aplica `AplicarLayoutCompacto` — em ecrãs **≤768px** a orientação passa a **vertical** (painéis empilhados, `_panel1MinSize` 120px / `_panel2MinSize` 200px), acima disso mantém-se **horizontal** (250px/400px). Se o JS falhar, mantém o estado predefinido (horizontal).
 
-- **Outputs:** cards de prompt; cards de resposta com markdown formatado; diálogo de avaliação com o formulário dos juízes e tradução; 4 gráficos Chart.js por prompt (`BenchmarkChartDialog`): Tempo de Execução/Eval, Tempo de Carga/Load, Velocidade (Tokens/s), Total de Tokens — com download de imagem (conteúdo detalhado na secção 4.1).
+- **Outputs:** cards de prompt; cards de resposta com markdown formatado; diálogo de avaliação com o formulário dos juízes e tradução; `BenchmarkChartDialog` com duas tabs — **Desempenho** (4 gráficos de barras Chart.js: Tempo de Execução/Eval, Tempo de Carga/Load, Velocidade (Tokens/s), Total de Tokens) e **Qualidade** (2 radares por juiz, Gemini/OpenRouter, com as 12 métricas na escala 0–5) — todos com download de imagem (conteúdo detalhado na secção 4.1).
 
 ### 3.5 Modelos Ollama (`/modelos-ollama`)
 
@@ -160,7 +160,7 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 | `BenchmarkEvaluation` | Formulário de avaliação por juiz: 12 métricas (Factual, Formatação, Compliance, Relevância, Tom, Concisão, Clareza, Legibilidade, Efeito Halo, Segurança, **Consistência Idiomática**, **Detecção de Loop**) + **Global**, escala 1–5; parse automático do output bruto com `EvaluationParser` (tags `*_SCORE:`, `FINAL_SCORE:`, `DESCRIPTION:`/`FEEDBACK:`, `RECOMMENDATION:`); caixa de recomendação do juiz (âmbar) quando o campo `RECOMMENDATION` foi preenchido |
 | `BenchmarkEvaluationDialog` | Envelope do formulário + **tradução automática do feedback** via modelo local (`TranslationService`), com pré-visualização (`TranslationPreviewDialog`) — ver 4.1 |
 | `BenchmarkEvaluationDetail` | Diálogo 900px (**95vw em mobile**) com tabs **Métricas** (grelha Gemini vs OpenRouter) e **Feedbacks dos Juízes** — ver 4.1 |
-| `BenchmarkChartDialog` | 4 gráficos Chart.js com download de imagem — ver 4.1 |
+| `BenchmarkChartDialog` | 2 tabs de gráficos Chart.js (4 barras de desempenho + 2 radares de qualidade por juiz) com download de imagem — ver 4.1 |
 | `BenchmarkAnalysisViewer` | Painel de resultado da análise local (estados: vazio / streaming com log / concluído com sumário executivo) — ver 4.1 |
 | `TranslationPreviewDialog` | Pré-visualização de tradução (modelo usado + tempo gasto) — ver 4.1 |
 | `LogDetailDialog` | Detalhe de um log (mensagem + exceção) — ver 4.1 |
@@ -173,11 +173,13 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
   - **Feedbacks dos Juízes** — dois cards lado a lado (Google Gemini / OpenRouter) com o texto do feedback; o conteúdo é carregado assincronamente via `BenchmarkRepository.GetBenchmarkJudgesFeedbackByIdAsync(ResponseId)` (progress ring durante a carga) e mostra "Nenhum feedback registado." se vazio. Quando o juiz devolveu `RECOMMENDATION`, cada card mostra ainda uma **caixa "Recomendação do Juiz"** (fundo âmbar) com o texto da recomendação.
 - **`BenchmarkEvaluationDialog`** (aberto pelo botão "Avaliação" em `/benchmarks`; 1200px, **95vw em mobile**): cabeçalho com ícone `ClipboardCode` e nome do modelo (o prompt não é repetido, pois já é mostrado na página); corpo com o formulário `BenchmarkEvaluation` (12 métricas na escala 1–5, com parse automático do output dos juízes via `EvaluationParser`) e dois botões **Traduzir Feedback (Gemini)** / **Traduzir Feedback (OpenRouter)** que traduzem o feedback para a **língua da sessão** com o modelo local (`TranslationService`, cliente com timeout de 4 min) e abrem `TranslationPreviewDialog`. Rodapé com **Guardar avaliação** (accent; oculto quando a avaliação já está gravada) e **Fechar** (progress ring enquanto traduz).
 - **`TranslationPreviewDialog`**: "Tradução do Feedback (<juiz>)", "Modelo usado", "Tempo gasto" e o texto traduzido num `FluentTextArea` editável; **Aceitar e continuar** aplica o texto ao campo do juiz; **Sair** descarta.
-- **`BenchmarkChartDialog`** (aberto pelo botão "Gráfico" em `/benchmarks`; 50vw×85vh, **94vw em mobile**): cabeçalho "Gráficos de Benchmark do Prompt #<id>"; quatro gráficos de barras Chart.js (cor por modelo; labels partidos em `:` ou `-`):
-  - Tempo de Execução / Eval (ms) — `graficoEval`;
-  - Tempo de Carga do Modelo / Load (ms) — `graficoLoad`;
-  - Velocidade de Geração (Tokens/s) — `graficoVelocidade`;
-  - Total de Tokens Gerados — `graficoTotalTokens`.
+- **`BenchmarkChartDialog`** (aberto pelo botão "Gráfico" em `/benchmarks`; 50vw×85vh, **94vw em mobile**): cabeçalho "Gráficos de Benchmark do Prompt #<id>" com **duas tabs**:
+  - **Desempenho** (`tab-desempenho`) — quatro gráficos de barras Chart.js (cor por modelo; labels partidos em `:` ou `-`):
+    - Tempo de Execução / Eval (ms) — `graficoEval`;
+    - Tempo de Carga do Modelo / Load (ms) — `graficoLoad`;
+    - Velocidade de Geração (Tokens/s) — `graficoVelocidade`;
+    - Total de Tokens Gerados — `graficoTotalTokens`.
+  - **Qualidade** (`tab-qualidade`) — dois **gráficos radar** (escala 0–5) com as 12 métricas de qualidade, um por juiz (`graficoRadarGemini` / `graficoRadarOpenRouter`); cada radar média as notas dos modelos que têm avaliação desse juiz e, sem dados, mostra "Sem avaliações para este juiz." (o radar só é renderizado quando o tab é aberto, com retry de até 8 tentativas enquanto o canvas do tab é montado).
   Cada gráfico tem botão de download da imagem (JS `benchmarkCharts.downloadGrafico`, ficheiro `benchmark_<métrica>_prompt_<id>`).
 - **`LogDetailDialog`** (aberto pelo "olho" em `/system-logs`; 40vw×65vh, **94vw em mobile**): "Detalhes do Registo #<id>" com a caixa **Mensagem** (texto formatado, word-break) e, apenas quando existe, a caixa **Exceção / Erro** (fundo avermelhado, monospace, scroll até 250px).
 - **`GpuInfoDialog`** (aberto pelo "?" de GPU no Chat; 550px, **95vw em mobile** — `width: min(550px, 95vw)`): "Informação do Sistema" com três blocos explicativos — "O que significa 'CPU fallback'?", "VRAM insuficiente" e "Impacto na velocidade" (lista de consequências na performance).
@@ -316,7 +318,7 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 
 ## 8. Base de dados (SQLite — `ollama_benchmark.db`)
 
-Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Serilog), com **migração idempotente em código** no arranque: `DatabaseSchemaInitializer.EnsureSchema(IDapperContext)` (invocado em `Program.cs` após `builder.Build()`) executa `CREATE TABLE IF NOT EXISTS` para as 7 tabelas e depois migrações incrementais de colunas via `PRAGMA table_info` — renomeia `ChatGpt*` → `OpenRouter*` (a avaliação passou a ser feita via OpenRouter) e adiciona `GeminiRecommendation`/`OpenRouterRecommendation` + as colunas das novas métricas `LanguageConsistency`/`LoopDetection`. As ligações SQLite são abertas com **`PRAGMA foreign_keys = ON` e `busy_timeout = 5000`** (`DapperContext`), pelo que o `ON DELETE CASCADE` declarado no DDL é respeitado em runtime.
+Sem migrações clássicas — tabelas criadas de forma lazily (Dapper / sink Serilog), com **migração idempotente em código** no arranque: `DatabaseSchemaInitializer.EnsureSchema(IDapperContext)` (invocado em `Program.cs` após `builder.Build()`) executa `CREATE TABLE IF NOT EXISTS` para as 7 tabelas e depois migrações incrementais de colunas via `PRAGMA table_info` — renomeia `ChatGpt*` → `OpenRouter*` (a avaliação passou a ser feita via OpenRouter) e adiciona `GeminiRecommendation`/`OpenRouterRecommendation` + as colunas das novas métricas `LanguageConsistency`/`LoopDetection`. As ligações SQLite são abertas com **`PRAGMA foreign_keys = ON` e `busy_timeout = 5000`** (`DapperContext`), pelo que o `ON DELETE CASCADE` declarado no DDL é respeitado em runtime. Os **handlers globais do Dapper** (`Services/Helpers/SqliteTypeHandlers.cs`, registados em `Program.cs` com `SqliteTypeHandlers.Register()`) convertem os `INTEGER` do SQLite (ex.: 4) em `double`/`float`/nullable sem `InvalidCastException` — o SQLite guarda números como INTEGER mesmo em colunas REAL/NUMERIC (cobertos pelos testes `SqliteTypeHandlersTests`).
 
 | Tabela | Conteúdo (colunas principais) |
 |---|---|
@@ -355,8 +357,9 @@ As **definições dos juízes** (chaves Gemini/OpenRouter, modelo do juiz OpenRo
 | `chat.js` | `window.ollamaHistory` — `addEntry`/`getHistory`/`clear` sobre `localStorage "ollama_history"` | Helper definido mas **sem chamadores** no C# atualmente |
 | | `window.chatInput` — `attachHandlers`/`detachHandlers` (Enter → envia via `invokeMethodAsync('OnEnterPressedFromJs')`; Shift+Enter → nova linha no caret; auto-resize; `resetHeight` com `requestAnimationFrame` ×3) | Input do chat (`chatInputRef`) |
 | | `window.chatScroll` — `getScrollState`, `isAtBottom` (threshold 80px), `scrollToBottom` (duplo `requestAnimationFrame`), `scrollDuringStream` (auto-scroll "sticky" a <120px do fundo) | Auto-scroll do chat (stream e salto ao fundo) |
-| `graficos.js` | `window.benchmarkCharts` — `renderGrafico` (cores do tema via CSS vars `--colorNeutralForeground1`/`--colorNeutralStroke2` com fallbacks, `Chart.defaults`, **destrói o gráfico anterior** em `window["_"+canvasId]`, tooltip `Valor: X <unidade>`, eixo Y com sufixo) e `downloadGrafico` (`canvas.toDataURL("image/png")` + link) | 4 gráficos do `BenchmarkChartDialog` e `Benchmarks` |
+| `graficos.js` | `window.benchmarkCharts` — `renderGrafico` (cores do tema via CSS vars `--colorNeutralForeground1`/`--colorNeutralStroke2` com fallbacks, `Chart.defaults`, **destrói o gráfico anterior** em `window["_"+canvasId]`, tooltip `Valor: X <unidade>`, eixo Y com sufixo; suporta `bar` (padrão) e `radar` — escala 0–5, legenda por modelo; devolve `bool` para retry quando o canvas ainda não está montado) e `downloadGrafico` (`canvas.toDataURL("image/png")` + link) | Gráficos do `BenchmarkChartDialog` (tabs Desempenho/Qualidade) e `Benchmarks` |
 | `excel.js` | `window.downloadFileFromBase64` (data URI base64 `.xlsx`) | Export Excel (`BenchmarkEvaluations.ExportarParaExcel`) |
+| `pdf.js` | `window.gerarRelatorioPDF` (relatório PDF agrupado por prompt com desempenho, métricas, feedbacks e recomendações dos juízes) — usa os **vendors locais** `js/vendor/jspdf.min.js` + `js/vendor/jspdf.plugin.autotable.min.js` (sem CDN) | Export PDF (`BenchmarkEvaluations.ExportarParaPdfAsync`) |
 | `clipboard.js` | `window.copyToClipboard` (`navigator.clipboard` com fallback para textarea + `execCommand('copy')`) | Botão de copiar avaliação (`Benchmarks.razor.cs`) |
 | `viewport.js` | `window.appViewport` — `getWidth` (largura do viewport) / `subscribeResize` (listener `resize` que chama `invokeMethodAsync('OnViewportResized')`) / `unsubscribeResize` (remove o listener) | Splitter responsivo de `/benchmarks` (`AplicarLayoutCompacto`: vertical ≤768px) |
 
@@ -377,11 +380,12 @@ As **definições dos juízes** (chaves Gemini/OpenRouter, modelo do juiz OpenRo
 **Registos de DI relevantes:**
 - `OllamaOptions` (`Configure<OllamaOptions>`, secção `Ollama` do `appsettings.json`), `IDapperContext`, `IOllamaGpuService`, `IBenchmarkRepository` (Scoped), `ISettingsRepository` (Scoped), `IModelosJuizRepository` (Scoped), `ILogRepository` (Scoped), `IConversationRepository` (Scoped)
 - `PromptFilesService`, `ChatComposerService`, `SystemPromptService`, `EvaluatePromptTemplate`, `MarkdownRenderer`, `LocalAnalysisService`, `AutomatedJudgeService`, `InternetConnectivityService`, `ReadMeService`
-- Clientes HTTP: `IAnalysisService/LocalAnalysisService`, `InternetConnectivityService`, `ReadMeService`, `ITranslationService/TranslationService` (**timeout 4 min**, base de `Ollama:BaseUrl`), o cliente nomeado **`"Ollama"`** (**timeout 10 min**, base de `Ollama:BaseUrl`) usado no streaming do chat, e os clientes nomeados **`"Gemini"`** (timeout 30 s) / **`"OpenRouter"`** (timeout 120 s) para os juízes automáticos.
+- Clientes HTTP: `IAnalysisService/LocalAnalysisService`, `InternetConnectivityService`, `ReadMeService`, `ITranslationService/TranslationService` (**timeout 4 min**, base de `Ollama:BaseUrl`), o cliente nomeado **`"Ollama"`** (**timeout 10 min**, base de `Ollama:BaseUrl`) usado no streaming do chat, e os clientes nomeados **`"Gemini"`** / **`"OpenRouter"`** (**timeout 120 s** cada) para os juízes automáticos.
+- Arranque: `SqliteTypeHandlers.Register()` (handlers Dapper de conversão numérica, antes da primeira query) e `DatabaseSchemaInitializer.EnsureSchema` (schema das 7 tabelas).
 - Configuração: `appsettings.Local.json` opcional (não versionado) para overrides locais — incluindo `Security:EnableHttpsRedirection` (`false` para deploys HTTP-only, ver secção 12); chaves de API dos juízes **recomendadas via página Settings** (BD, tabela `Configuracoes`), com fallback para **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`) ou `appsettings.Local.json`.
 - Localização: PT (`pt`) por defeito + `en`; cookie `RequestCultureProvider`. A **tradução de feedbacks** e a **análise local de resultados** seguem a língua da sessão (o system-prompt do chat mantém-se neutro).
 
-**Requisitos de runtime:** `ollama serve` ativo na base configurada (`Ollama:BaseUrl`); projeto de testes `OllamaArena.Tests` com **47 testes de unidade** (43 métodos: ScoreCalculator, EvaluationParser, ChatMeasureTemperature, ChatComposerService, LocalAnalysisService) — `dotnet test`; validação = build + testes + execução manual.
+**Requisitos de runtime:** `ollama serve` ativo na base configurada (`Ollama:BaseUrl`); projeto de testes `OllamaArena.Tests` com **55 testes de unidade** (ScoreCalculator, EvaluationParser, ChatMeasureTemperature, ChatComposerService, LocalAnalysisService, SqliteTypeHandlers) — `dotnet test`; validação = build + testes + execução manual.
 
 ---
 
