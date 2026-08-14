@@ -168,8 +168,6 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // O conteúdo do tab "Qualidade" só está montado no DOM depois da re-renderização
-        // que se segue ao OnTabChanged — por isso o render do radar é feito aqui.
         if (_renderizarRadarPendente && Visible && Prompt != null)
         {
             _renderizarRadarPendente = false;

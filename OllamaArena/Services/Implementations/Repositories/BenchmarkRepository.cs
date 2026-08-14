@@ -489,6 +489,99 @@ public class BenchmarkRepository : IBenchmarkRepository
         return ranking.OrderByDescending(r => r.Score).ToList();
     }
 
+    /// <summary>
+    /// Dados agregados por modelo para os gráficos do Dashboard: score ponderado,
+    /// média de tokens/s e médias das 12 métricas por juiz (radar e scatter).
+    /// </summary>
+    public async Task<List<ModelChartData>> GetModelChartDataAsync()
+    {
+        var sql = @"SELECT NomeModelo,
+            GeminiFactualRating, GeminiFormattingRating, GeminiComplianceRating, GeminiRelevanceRating,
+            GeminiToneRating, GeminiConcisenessRating, GeminiClarityRating, GeminiReadabilityRating,
+            GeminiHaloEffectRating, GeminiSafetyRating, GeminiLanguageConsistencyRating, GeminiLoopDetectionRating,
+            CAST(GeminiRating AS REAL) AS GeminiRating,
+            OpenRouterFactualRating, OpenRouterFormattingRating, OpenRouterComplianceRating, OpenRouterRelevanceRating,
+            OpenRouterToneRating, OpenRouterConcisenessRating, OpenRouterClarityRating, OpenRouterReadabilityRating,
+            OpenRouterHaloEffectRating, OpenRouterSafetyRating, OpenRouterLanguageConsistencyRating, OpenRouterLoopDetectionRating,
+            CAST(OpenRouterRating AS REAL) AS OpenRouterRating,
+            TokensPorSegundo
+            FROM Respostas;";
+
+        using var connection = _context.CreateConnection();
+        var rows = (await connection.QueryAsync<BenchmarkResponse>(sql)).ToList();
+
+        var pesos = new JudgeScoreWeights();
+        var resultado = new List<ModelChartData>();
+
+        foreach (var grupo in rows.GroupBy(r => r.NomeModelo))
+        {
+            double somaGemini = 0, somaOpenRouter = 0;
+            int contagemGemini = 0, contagemOpenRouter = 0;
+
+            foreach (var resposta in grupo)
+            {
+                var geminiScore = ScoreCalculator.CalcularScoreFinal(ToInput(resposta, juizGemini: true), pesos)
+                                  ?? resposta.GeminiRating;
+                if (geminiScore.HasValue)
+                {
+                    somaGemini += geminiScore.Value;
+                    contagemGemini++;
+                }
+
+                var openRouterScore = ScoreCalculator.CalcularScoreFinal(ToInput(resposta, juizGemini: false), pesos)
+                                      ?? resposta.OpenRouterRating;
+                if (openRouterScore.HasValue)
+                {
+                    somaOpenRouter += openRouterScore.Value;
+                    contagemOpenRouter++;
+                }
+            }
+
+            int totalAvaliadas = contagemGemini + contagemOpenRouter;
+            if (totalAvaliadas == 0)
+                continue;
+
+            resultado.Add(new ModelChartData
+            {
+                Model = grupo.Key,
+                Score = Math.Round((somaGemini + somaOpenRouter) / totalAvaliadas, 2),
+                TokensPorSegundo = Math.Round(grupo.Average(r => r.TokensPorSegundo), 2),
+                GeminiCount = contagemGemini,
+                OpenRouterCount = contagemOpenRouter,
+                GeminiMetrics = MediarMetricas(grupo, juizGemini: true),
+                OpenRouterMetrics = MediarMetricas(grupo, juizGemini: false)
+            });
+        }
+
+        return resultado.OrderByDescending(r => r.Score).ToList();
+    }
+
+    private static readonly (Func<BenchmarkResponse, int?> Gemini, Func<BenchmarkResponse, int?> OpenRouter)[] MetricasJuiz =
+    [
+        (r => r.GeminiFactualRating, r => r.OpenRouterFactualRating),
+        (r => r.GeminiFormattingRating, r => r.OpenRouterFormattingRating),
+        (r => r.GeminiComplianceRating, r => r.OpenRouterComplianceRating),
+        (r => r.GeminiRelevanceRating, r => r.OpenRouterRelevanceRating),
+        (r => r.GeminiToneRating, r => r.OpenRouterToneRating),
+        (r => r.GeminiConcisenessRating, r => r.OpenRouterConcisenessRating),
+        (r => r.GeminiClarityRating, r => r.OpenRouterClarityRating),
+        (r => r.GeminiReadabilityRating, r => r.OpenRouterReadabilityRating),
+        (r => r.GeminiHaloEffectRating, r => r.OpenRouterHaloEffectRating),
+        (r => r.GeminiSafetyRating, r => r.OpenRouterSafetyRating),
+        (r => r.GeminiLanguageConsistencyRating, r => r.OpenRouterLanguageConsistencyRating),
+        (r => r.GeminiLoopDetectionRating, r => r.OpenRouterLoopDetectionRating)
+    ];
+
+    private static List<double> MediarMetricas(IEnumerable<BenchmarkResponse> respostas, bool juizGemini)
+    {
+        return MetricasJuiz.Select(par =>
+        {
+            var seletor = juizGemini ? par.Gemini : par.OpenRouter;
+            var valores = respostas.Where(r => seletor(r).HasValue).Select(r => (double)seletor(r)!.Value).ToList();
+            return valores.Count > 0 ? Math.Round(valores.Average(), 2) : 0;
+        }).ToList();
+    }
+
     private static JudgeScoreInput ToInput(BenchmarkResponse r, bool juizGemini)
     {
         if (juizGemini)

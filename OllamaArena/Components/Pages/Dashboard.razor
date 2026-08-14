@@ -1,4 +1,4 @@
-@page "/dashboard"
+﻿@page "/dashboard"
 @using Microsoft.Extensions.Localization
 @using Microsoft.FluentUI.AspNetCore.Components
 @using OllamaArena.Models.DTO
@@ -7,6 +7,7 @@
 @rendermode InteractiveServer
 @inject IStringLocalizer<SharedResources> L
 @inject IBenchmarkRepository BenchmarkRepo
+@inject IJSRuntime JS
 
 <PageTitle>@L["Dashboard.PageTitle"]</PageTitle>
 
@@ -42,6 +43,68 @@ else
         </FluentCard>
     </FluentStack>
 
+    @if (_chartData.Count > 0)
+    {
+        <h3 class="fluent-h3" style="margin: 24px 0 4px 0;">@L["Dashboard.QualityTitle"]</h3>
+        <p class="fluent-body" style="margin: 0 0 16px 0; color: var(--neutral-foreground-hint);">
+            @L["Dashboard.ScatterHint"]
+        </p>
+
+        <div class="dashboard-graficos">
+
+            <div class="grafico-card">
+                <div class="grafico-header">
+                    <span class="grafico-titulo">@L["Dashboard.RadarGeminiTitle"]</span>
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                  OnClick="@(() => DownloadGraficoAsync("graficoRadarDashboardGemini", "dashboard_radar_gemini"))" />
+                </div>
+                @if (_chartData.Any(c => c.GeminiCount > 0))
+                {
+                    <div class="canvas-container-radar">
+                        <canvas id="graficoRadarDashboardGemini"></canvas>
+                    </div>
+                }
+                else
+                {
+                    <p class="radar-sem-dados">@L["ChartDialog.RadarNoData"]</p>
+                }
+            </div>
+
+            <div class="grafico-card">
+                <div class="grafico-header">
+                    <span class="grafico-titulo">@L["Dashboard.RadarOpenRouterTitle"]</span>
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                  OnClick="@(() => DownloadGraficoAsync("graficoRadarDashboardOpenRouter", "dashboard_radar_openrouter"))" />
+                </div>
+                @if (_chartData.Any(c => c.OpenRouterCount > 0))
+                {
+                    <div class="canvas-container-radar">
+                        <canvas id="graficoRadarDashboardOpenRouter"></canvas>
+                    </div>
+                }
+                else
+                {
+                    <p class="radar-sem-dados">@L["ChartDialog.RadarNoData"]</p>
+                }
+            </div>
+
+            <div class="grafico-card grafico-card-scatter">
+                <div class="grafico-header">
+                    <span class="grafico-titulo">@L["Dashboard.ScatterTitle"]</span>
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                  OnClick="@(() => DownloadGraficoAsync("graficoScatterTokens", "dashboard_scatter_tokens_score"))" />
+                </div>
+                <div class="canvas-container-scatter">
+                    <canvas id="graficoScatterTokens"></canvas>
+                </div>
+            </div>
+
+        </div>
+    }
+
     @if (_ranking.Count == 0)
     {
         <FluentBadge Appearance="Appearance.Accent">@L["Dashboard.NoEvaluations"]</FluentBadge>
@@ -74,23 +137,164 @@ else
 
 @code {
     private List<ModelRanking> _ranking = new();
+    private List<ModelChartData> _chartData = new();
     private ModelRanking? BestModel => _ranking.FirstOrDefault();
     private bool _isLoading = true;
+    private bool _graficosRenderizados = false;
+    private readonly Dictionary<string, string> _coresDosModelos = new();
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             _ranking = await BenchmarkRepo.GetModelRankingAsync();
+            _chartData = await BenchmarkRepo.GetModelChartDataAsync();
         }
         catch
         {
             _ranking = new();
+            _chartData = new();
         }
         finally
         {
             _isLoading = false;
         }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_isLoading && _chartData.Count > 0 && !_graficosRenderizados)
+        {
+            _graficosRenderizados = true;
+            await Task.Delay(200);
+            await RenderizarGraficosAsync();
+
+            StateHasChanged();
+        }
+    }
+
+    private async Task RenderizarGraficosAsync()
+    {
+        if (_chartData.Count == 0)
+            return;
+
+        _coresDosModelos.Clear();
+        foreach (var modelo in _chartData.Select(c => c.Model))
+        {
+            if (!_coresDosModelos.ContainsKey(modelo))
+                _coresDosModelos[modelo] = GerarCorAleatoria();
+        }
+
+        var radarGemini = GerarDadosRadar(juizGemini: true);
+        if (radarGemini != null)
+            await RenderizarComRetryAsync("graficoRadarDashboardGemini", radarGemini, "pts", "radar");
+
+        var radarOpenRouter = GerarDadosRadar(juizGemini: false);
+        if (radarOpenRouter != null)
+            await RenderizarComRetryAsync("graficoRadarDashboardOpenRouter", radarOpenRouter, "pts", "radar");
+
+        await RenderizarScatterComRetryAsync("graficoScatterTokens", GerarDadosScatter());
+    }
+
+    private string[] MetricasLabels => new[]
+    {
+    L["Evaluation.MetricFactual"].Value,
+    L["Evaluation.MetricFormatting"].Value,
+    L["Evaluation.MetricCompliance"].Value,
+    L["Evaluation.MetricRelevance"].Value,
+    L["Evaluation.MetricTone"].Value,
+    L["Evaluation.MetricConciseness"].Value,
+    L["Evaluation.MetricClarity"].Value,
+    L["Evaluation.MetricReadability"].Value,
+    L["Evaluation.MetricHaloEffect"].Value,
+    L["Evaluation.MetricSafety"].Value,
+    L["Evaluation.MetricLanguageConsistency"].Value,
+    L["Evaluation.MetricLoopDetection"].Value
+};
+
+    private object? GerarDadosRadar(bool juizGemini)
+    {
+        var modelos = _chartData
+            .Where(c => juizGemini ? c.GeminiCount > 0 : c.OpenRouterCount > 0)
+            .ToList();
+
+        if (modelos.Count == 0)
+            return null;
+
+        var datasets = modelos.Select(c =>
+        {
+            var cor = _coresDosModelos[c.Model];
+            return new
+            {
+                label = c.Model,
+                data = juizGemini ? c.GeminiMetrics : c.OpenRouterMetrics,
+                borderColor = cor,
+                backgroundColor = CorPreenchimento(cor),
+                borderWidth = 2,
+                pointBackgroundColor = cor,
+                pointRadius = 3,
+                fill = true
+            };
+        }).ToList();
+
+        return new { labels = MetricasLabels, datasets };
+    }
+
+    private object GerarDadosScatter()
+    {
+        var datasets = _chartData.Select(c =>
+        {
+            var cor = _coresDosModelos[c.Model];
+            return new
+            {
+                label = c.Model,
+                data = new[] { new { x = c.TokensPorSegundo, y = c.Score } },
+                backgroundColor = cor,
+                borderColor = cor,
+                pointRadius = 6,
+                pointHoverRadius = 8
+            };
+        }).ToList();
+
+        return new { datasets };
+    }
+
+    private async Task RenderizarComRetryAsync(string canvasId, object dados, string unidade, string tipo)
+    {
+        for (int tentativa = 0; tentativa < 8; tentativa++)
+        {
+            var renderizado = await JS.InvokeAsync<bool>("benchmarkCharts.renderGrafico", canvasId, dados, unidade, tipo);
+            if (renderizado)
+                return;
+            await Task.Delay(100);
+        }
+    }
+
+    private async Task RenderizarScatterComRetryAsync(string canvasId, object dados)
+    {
+        for (int tentativa = 0; tentativa < 8; tentativa++)
+        {
+            var renderizado = await JS.InvokeAsync<bool>("benchmarkCharts.renderScatter", canvasId, dados, "tokens/s", "pts");
+            if (renderizado)
+                return;
+            await Task.Delay(100);
+        }
+    }
+
+    private async Task DownloadGraficoAsync(string canvasId, string nomeFicheiro)
+    {
+        await JS.InvokeVoidAsync("benchmarkCharts.downloadGrafico", canvasId, nomeFicheiro);
+    }
+
+    private static string GerarCorAleatoria()
+    {
+        var rnd = new Random();
+        return $"rgba({rnd.Next(50, 210)}, {rnd.Next(50, 210)}, {rnd.Next(50, 210)}, 0.85)";
+    }
+
+    private static string CorPreenchimento(string cor)
+    {
+        return cor.Replace("0.85)", "0.18)");
     }
 
     private GridSort<ModelRanking> SortScore => GridSort<ModelRanking>
@@ -106,4 +310,74 @@ else
         .table-scroll fluent-data-grid {
             min-width: 760px;
         }
+
+    .dashboard-graficos {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .grafico-card {
+        background: var(--neutral-layer-1);
+        border: 1px solid var(--neutral-stroke-rest);
+        border-radius: 8px;
+        padding: 20px;
+    }
+
+    .grafico-card-scatter {
+        grid-column: 1 / -1;
+    }
+
+    .grafico-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+
+    .grafico-titulo {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--neutral-foreground-rest);
+    }
+
+    .canvas-container-radar {
+        position: relative;
+        width: 100%;
+        max-width: 480px;
+        height: 400px;
+        margin: 0 auto;
+    }
+
+    .canvas-container-scatter {
+        position: relative;
+        width: 100%;
+        height: 340px;
+    }
+
+    .radar-sem-dados {
+        color: var(--neutral-foreground-hint);
+        font-size: 13px;
+        font-style: italic;
+        margin: 24px 0;
+    }
+
+    @@media (max-width: 768px) {
+        .dashboard-graficos {
+            grid-template-columns: 1fr;
+        }
+
+        .grafico-card-scatter {
+            grid-column: 1;
+        }
+
+        .canvas-container-radar {
+            height: 320px;
+        }
+
+        .canvas-container-scatter {
+            height: 260px;
+        }
+    }
 </style>

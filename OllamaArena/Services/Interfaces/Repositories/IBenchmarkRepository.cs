@@ -17,6 +17,7 @@ public interface IBenchmarkRepository
     Task<IEnumerable<BenchmarkEvaluationModel>> BenchmarkResponseEvaluationAsync();
     Task<string?> GetBestModelAsync();
     Task<List<ModelRanking>> GetModelRankingAsync();
+    Task<List<ModelChartData>> GetModelChartDataAsync();
     Task<bool> DeleteAllPromptsAndHistoryAsync();
     Task<IEnumerable<HistoryResponse>> HistoryResponseAsync();
     Task<PromptFeedback> GetBenchmarkJudgesFeedbackByIdAsync(int promptId);

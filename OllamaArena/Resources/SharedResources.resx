@@ -1308,5 +1308,20 @@ Deseja continuar?</value>
   <data name="Dashboard.ColJudged" xml:space="preserve">
     <value>Avaliadas</value>
   </data>
+  <data name="Dashboard.QualityTitle" xml:space="preserve">
+    <value>Qualidade por modelo</value>
+  </data>
+  <data name="Dashboard.RadarGeminiTitle" xml:space="preserve">
+    <value>Perfil Gemini (média das 12 métricas)</value>
+  </data>
+  <data name="Dashboard.RadarOpenRouterTitle" xml:space="preserve">
+    <value>Perfil OpenRouter (média das 12 métricas)</value>
+  </data>
+  <data name="Dashboard.ScatterTitle" xml:space="preserve">
+    <value>Desempenho vs Qualidade</value>
+  </data>
+  <data name="Dashboard.ScatterHint" xml:space="preserve">
+    <value>Velocidade de geração (tokens/s) vs score global (0–5), por modelo.</value>
+  </data>
 
 </root>

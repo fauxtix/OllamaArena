@@ -173,7 +173,13 @@ namespace OllamaArena.Components.Pages.Components
 
             var dados = new
             {
-                labels = new List<string> { L["Benchmarks.ChartLabelTokensPerSecond"], L["Benchmarks.ChartLabelEval"], L["Benchmarks.ChartLabelLoad"], L["Benchmarks.ChartLabelTokens"] },
+                labels = new List<string>
+                {
+                    L["Benchmarks.ChartLabelTokensPerSecond"],
+                    L["Benchmarks.ChartLabelEval"],
+                    L["Benchmarks.ChartLabelLoad"],
+                    L["Benchmarks.ChartLabelTokens"]
+                },
                 datasets = new List<object>()
             };
 

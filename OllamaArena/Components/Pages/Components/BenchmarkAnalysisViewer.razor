@@ -114,7 +114,7 @@
                     {
                         <div style="padding: 14px; background: var(--neutral-layer-1); border-radius: 6px;">
                             <h5 style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600;">@L["AnalysisViewer.TechnicalAnalysis"]</h5>
-                            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; line-height: 1.5; color: var(--neutral-foreground-rest);">
+                            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; line-height: 1.5; color: var(--neutral-foreground-rest); max-height: 40vh; min-height: 120px; overflow-y: auto; scrollbar-gutter: stable; padding-right: 8px;">
                                 @foreach (var linha in AnaliseResultado.LinhasAnaliseDetalhada)
                                 {
                                     <div>@((MarkupString)linha)</div>

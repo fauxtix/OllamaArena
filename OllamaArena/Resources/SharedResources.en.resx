@@ -1308,5 +1308,20 @@ Do you want to continue?</value>
   <data name="Dashboard.ColJudged" xml:space="preserve">
     <value>Judged</value>
   </data>
+  <data name="Dashboard.QualityTitle" xml:space="preserve">
+    <value>Quality per model</value>
+  </data>
+  <data name="Dashboard.RadarGeminiTitle" xml:space="preserve">
+    <value>Gemini profile (average of 12 metrics)</value>
+  </data>
+  <data name="Dashboard.RadarOpenRouterTitle" xml:space="preserve">
+    <value>OpenRouter profile (average of 12 metrics)</value>
+  </data>
+  <data name="Dashboard.ScatterTitle" xml:space="preserve">
+    <value>Performance vs Quality</value>
+  </data>
+  <data name="Dashboard.ScatterHint" xml:space="preserve">
+    <value>Generation speed (tokens/s) vs overall score (0–5), per model.</value>
+  </data>
 
 </root>
