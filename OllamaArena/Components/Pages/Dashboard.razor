@@ -22,26 +22,50 @@
 }
 else
 {
-    <FluentStack Orientation="Orientation.Horizontal" Style="gap: 16px; flex-wrap: wrap; margin-bottom: 20px;">
-        <FluentCard Style="min-width: 260px; padding: 16px;">
-            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--neutral-foreground-hint);">@L["Dashboard.BestModel"]</div>
-            <div style="font-size: 20px; font-weight: 700; margin-top: 6px;">@(BestModel?.Model ?? L["Dashboard.NoEvaluations"])</div>
-            @if (BestModel is not null)
-            {
-                <div style="color: var(--accent-fill-rest); font-weight: 600; margin-top: 4px;">@L["Dashboard.Score", BestModel.Score.ToString("F1")]</div>
-            }
+    <div class="dashboard-cartoes">
+        <FluentCard Class="cartao cartao-accent">
+            <div class="cartao-barra"></div>
+            <div class="cartao-corpo">
+                <div class="cartao-icone">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Trophy())" Color="Color.Custom" CustomColor="var(--accent-fill-rest)" />
+                </div>
+                <div class="cartao-info">
+                    <div class="cartao-rotulo">@L["Dashboard.BestModel"]</div>
+                    <div class="cartao-valor">@(BestModel?.Model ?? L["Dashboard.NoEvaluations"])</div>
+                    @if (BestModel is not null)
+                    {
+                        <div class="cartao-destaque">@L["Dashboard.Score", BestModel.Score.ToString("F1")]</div>
+                    }
+                </div>
+            </div>
         </FluentCard>
 
-        <FluentCard Style="min-width: 200px; padding: 16px;">
-            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--neutral-foreground-hint);">@L["Dashboard.ModelsCount"]</div>
-            <div style="font-size: 32px; font-weight: 700; margin-top: 6px;">@_ranking.Count</div>
+        <FluentCard Class="cartao cartao-success">
+            <div class="cartao-barra"></div>
+            <div class="cartao-corpo">
+                <div class="cartao-icone">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Database())" Color="Color.Custom" CustomColor="var(--success)" />
+                </div>
+                <div class="cartao-info">
+                    <div class="cartao-rotulo">@L["Dashboard.ModelsCount"]</div>
+                    <div class="cartao-valor">@_ranking.Count</div>
+                </div>
+            </div>
         </FluentCard>
 
-        <FluentCard Style="min-width: 200px; padding: 16px;">
-            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--neutral-foreground-hint);">@L["Dashboard.EvaluationsCount"]</div>
-            <div style="font-size: 32px; font-weight: 700; margin-top: 6px;">@_ranking.Sum(r => r.JudgedResponses)</div>
+        <FluentCard Class="cartao cartao-warning">
+            <div class="cartao-barra"></div>
+            <div class="cartao-corpo">
+                <div class="cartao-icone">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.ClipboardTask())" Color="Color.Custom" CustomColor="var(--warning)" />
+                </div>
+                <div class="cartao-info">
+                    <div class="cartao-rotulo">@L["Dashboard.EvaluationsCount"]</div>
+                    <div class="cartao-valor">@_ranking.Sum(r => r.JudgedResponses)</div>
+                </div>
+            </div>
         </FluentCard>
-    </FluentStack>
+    </div>
 
     @if (_chartData.Count > 0)
     {
@@ -307,6 +331,111 @@ else
         min-width: 0;
     }
 
+    .dashboard-cartoes {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .dashboard-cartoes fluent-card {
+        margin: 0;
+    }
+
+    .dashboard-cartoes .cartao {
+        display: flex;
+        align-items: stretch;
+        padding: 0;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid var(--neutral-stroke-rest);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .dashboard-cartoes .cartao:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .cartao-barra {
+        flex: 0 0 6px;
+        width: 6px;
+        align-self: stretch;
+    }
+
+    .cartao-corpo {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 18px;
+        min-width: 0;
+    }
+
+    .cartao-icone {
+        flex: 0 0 44px;
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .cartao-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .cartao-rotulo {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--neutral-foreground-hint);
+    }
+
+    .cartao-valor {
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .cartao-destaque {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent-fill-rest);
+    }
+
+    .cartao-accent .cartao-barra {
+        background: var(--accent-fill-rest);
+    }
+
+    .cartao-accent .cartao-icone {
+        background: color-mix(in srgb, var(--accent-fill-rest) 14%, transparent);
+    }
+
+    .cartao-success .cartao-barra {
+        background: var(--success);
+    }
+
+    .cartao-success .cartao-icone {
+        background: color-mix(in srgb, var(--success) 16%, transparent);
+    }
+
+    .cartao-warning .cartao-barra {
+        background: var(--warning);
+    }
+
+    .cartao-warning .cartao-icone {
+        background: color-mix(in srgb, var(--warning) 16%, transparent);
+    }
+
         .table-scroll fluent-data-grid {
             min-width: 760px;
         }
@@ -365,6 +494,10 @@ else
 
     @@media (max-width: 768px) {
         .dashboard-graficos {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-cartoes {
             grid-template-columns: 1fr;
         }
 

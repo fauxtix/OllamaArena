@@ -188,8 +188,6 @@ public static class DatabaseSchemaInitializer
             .Select(c => c.Name)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        // Renomeações ChatGpt* → OpenRouter* (a avaliação passou a ser feita via OpenRouter).
-        // Devem correr antes de qualquer ADD COLUMN com o nome de destino, senão o RENAME falha.
         string[] renomeacoesChatGpt =
         [
             "ChatGptRating",
