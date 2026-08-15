@@ -116,6 +116,15 @@
                 </div>
             </FluentCard>
 
+            <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px; padding-top: 8px;">
+                <FluentSwitch @bind-Value="_enableReasoning">
+                    @L["Settings.EnableReasoningLabel"]
+                </FluentSwitch>
+                <FluentLabel Style="color: var(--neutral-foreground-hint); font-size: 12px;">
+                    @L["Settings.EnableReasoningHelper"]
+                </FluentLabel>
+            </FluentStack>
+
             <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
                 <FluentButton Appearance="Appearance.Accent"
                               Disabled="@(!_juizesDirty)"
@@ -141,15 +150,18 @@
     private string _judgeOpenRouterModel = "";
     private string _geminiKey = "";
     private string _openRouterKey = "";
+    private bool _enableReasoning;
 
     private string _baselineOpenRouterModel = "";
     private string _baselineGeminiKey = "";
     private string _baselineOpenRouterKey = "";
+    private bool _baselineEnableReasoning;
 
     private bool _juizesDirty =>
         _judgeOpenRouterModel != _baselineOpenRouterModel
         || _geminiKey != _baselineGeminiKey
-        || _openRouterKey != _baselineOpenRouterKey;
+        || _openRouterKey != _baselineOpenRouterKey
+        || _enableReasoning != _baselineEnableReasoning;
 
     // Catálogo de modelos gratuitos do juiz OpenRouter
     private bool _catalogLoading = true;
@@ -175,12 +187,16 @@
             [
                 "ApiKeys:Gemini",
                 "ApiKeys:OpenRouter",
-                "AutomatedJudge:OpenRouterModel"
+                "AutomatedJudge:OpenRouterModel",
+                "Chat:EnableReasoning"
             ]);
 
             _geminiKey = valores.GetValueOrDefault("ApiKeys:Gemini") ?? string.Empty;
             _openRouterKey = valores.GetValueOrDefault("ApiKeys:OpenRouter") ?? string.Empty;
             _judgeOpenRouterModel = valores.GetValueOrDefault("AutomatedJudge:OpenRouterModel") ?? string.Empty;
+            _enableReasoning = valores.TryGetValue("Chat:EnableReasoning", out var raz)
+                && bool.TryParse(raz, out var razAtivo)
+                && razAtivo;
         }
         catch
         {
@@ -194,6 +210,7 @@
         _baselineGeminiKey = _geminiKey;
         _baselineOpenRouterKey = _openRouterKey;
         _baselineOpenRouterModel = _judgeOpenRouterModel;
+        _baselineEnableReasoning = _enableReasoning;
 
         _manualModelo = _judgeOpenRouterModel;
 
@@ -300,6 +317,13 @@
             alteracoes.Add($"{L["Settings.OpenRouterKeyLabel"]}: {estado}");
         }
 
+        if (_enableReasoning != _baselineEnableReasoning)
+        {
+            string de = _baselineEnableReasoning ? L["Settings.ChangeOn"] : L["Settings.ChangeOff"];
+            string para = _enableReasoning ? L["Settings.ChangeOn"] : L["Settings.ChangeOff"];
+            alteracoes.Add($"{L["Settings.EnableReasoningLabel"]}: {de} → {para}");
+        }
+
         if (alteracoes.Count == 0)
             return;
 
@@ -333,9 +357,12 @@
             else
                 await SettingsRepository.DeleteValueAsync("AutomatedJudge:OpenRouterModel");
 
+            await SettingsRepository.SetValueAsync("Chat:EnableReasoning", _enableReasoning ? "true" : "false");
+
             _baselineOpenRouterModel = _judgeOpenRouterModel;
             _baselineGeminiKey = _geminiKey;
             _baselineOpenRouterKey = _openRouterKey;
+            _baselineEnableReasoning = _enableReasoning;
 
             ToastService.ShowSuccess(L["Settings.JudgesSaved"], timeout: 3000);
         }

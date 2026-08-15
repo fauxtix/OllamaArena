@@ -5,7 +5,7 @@ Checklist manual para validar o estado atual da aplicação (build + testes unit
 ## 0. Pré-requisitos
 
 - `ollama serve` a correr (URL default `http://localhost:11434`; alterável em `appsettings.json` → `Ollama:BaseUrl`).
-- Modelos locais disponíveis. Para testar o **reasoning**, a app deteta automaticamente (via `/api/show`) se o modelo suporta a capacidade `thinking` — use um modelo de reasoning (ex.: `ollama pull deepseek-r1`); com modelos normais o campo `think` é omitido e a app funciona normalmente.
+- Modelos locais disponíveis. Para testar o **reasoning**, a app deteta automaticamente (via `/api/show`) se o modelo suporta a capacidade `thinking` — use um modelo de reasoning (ex.: `ollama pull deepseek-r1`) e **ative o toggle "Ativar reasoning (think)" na página Settings** (default é **desligado**); com modelos normais o campo `think` é omitido e a app funciona normalmente.
 - (Opcional) Chaves dos juízes em user-secrets (a partir de `OllamaArena/`):
   - `dotnet user-secrets init`
   - `dotnet user-secrets set "ApiKeys:Gemini" "<chave>"`
@@ -27,7 +27,7 @@ dotnet build OllamaArena.slnx
 dotnet test OllamaArena.slnx
 ```
 
-Esperado: **55 casos** a passar:
+Esperado: **todos os testes passam** (a contagem varia consoante a versão — `dotnet test OllamaArena.slnx` informa o total):
 
 | Projeto de teste | Cobre |
 | --- | --- |
@@ -37,6 +37,8 @@ Esperado: **55 casos** a passar:
 | `ChatMeasureTemperatureTests` | temperatura factual/criativa/código, remoção de acentos |
 | `LocalAnalysisServiceTests` | listas vazias/nulas sem crash, modelo mais rápido, melhor avaliado, consenso |
 | `SqliteTypeHandlersTests` | conversão de `INTEGER`/`REAL`/`NULL` do SQLite para `double`/`float`/nullable sem `InvalidCastException` |
+| `MessageFormatterTests` | resgate de fences coladas (C#/JS/Python), quebra de código de linha única, `StripTrailingTag`, mascaramento e normalizações |
+| `OpenRouterCatalogServiceTests` | catálogo ao vivo do OpenRouter (modelos gratuitos, `openrouter/free` pinado no topo) |
 
 ## 2. Arranque e smoke test
 
@@ -47,7 +49,7 @@ Esperado: **55 casos** a passar:
 ## 3. Chat (`/chat`)
 
 - [ ] **Streaming + contexto**: enviar prompts; validar barra de contexto (tokens usados/restantes) e etiqueta de temperatura (≈0.3 para factuais).
-- [ ] **Reasoning**: com modelo de reasoning, abrir o bloco "Raciocínio" (captura de `reasoning_content`); confirmar que persiste na conversa.
+- [ ] **Reasoning**: com modelo de reasoning **e o toggle "Ativar reasoning (think)" ligado na Settings** (default é desligado), abrir o bloco "Raciocínio" (captura de `reasoning_content`); confirmar que persiste na conversa. Com o toggle desligado, modelos tipo `deepseek-r1` continuam lentos mas o bloco não aparece nem o reasoning é gravado.
 - [ ] **Cancelar**: durante o streaming, cancelar e confirmar descarga da VRAM (`keep_alive=0` em `/api/generate`).
 - [ ] **Novo Chat**: reset do ID de conversa + descarga da VRAM.
 - [ ] **Web search**: ligar o toggle e perguntar algo factual — Wikipedia deve devolver contexto; DuckDuckGo pode vir vazio (anti-bot, comportamento esperado).
@@ -67,7 +69,9 @@ Esperado: **55 casos** a passar:
   - Com chaves → diálogo preenchido com **12 métricas** por juiz.
 - [ ] **Quota**: segunda avaliação seguida → `QuotaLimitMessage` (intervalo default 60s). Falhas não marcam quota (novas tentativas permitidas de imediato).
 - [ ] **Copiar prompt** (fallback manual, funciona sem internet).
+- [ ] **Falha parcial de juiz**: se um dos juízes falhar (ex.: `Too many requests`/tráfego), confirmar que o aviso identifica qual falhou, que os campos desse juiz ficam editáveis e que dá para: esperar e tentar mais tarde, aproveitar a avaliação do outro juiz e preencher o que falta manualmente, ou fazer toda a avaliação à mão.
 - [ ] **Avaliação manual**: preencher as 12 métricas + Overall, gravar e confirmar no Dashboard.
+- [ ] **Apagar com âmbitos** em `/benchmark-evaluations`: menu "Apagar Benchmarks" com 4 opções (filtrados / por avaliar / avaliados / todos) + contagens; âmbitos vazios desativados; confirmação indica o nº de respostas; após apagar, a grelha atualiza.
 - [ ] **Gráficos por prompt**: abrir o diálogo de gráficos e validar as tabs **Desempenho** (4 gráficos de barras com download) e **Qualidade** (2 radares Gemini/OpenRouter na escala 0–5; sem avaliações de um juiz → "Sem avaliações para este juiz.").
 
 ## 6. Dashboard (`/dashboard`)

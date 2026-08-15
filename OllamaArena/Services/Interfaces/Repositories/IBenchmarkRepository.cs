@@ -7,6 +7,7 @@ public interface IBenchmarkRepository
 {
     Task<bool> DeletePromptAndHistoryAsync(int promptId);
     Task<bool> DeleteSpecificResponseAsync(int responseId);
+    Task<int> DeleteResponsesAsync(IEnumerable<int> responseIds);
     Task<bool> UpdatePromptAsync(int id, string newText);
     Task<bool> UpdateResponseTextAsync(int responseId, string newText);
     Task<int> CreatePromptAsync(string textoPrompt, double temperatura);

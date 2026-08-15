@@ -329,6 +329,50 @@ public class BenchmarkRepository : IBenchmarkRepository
             throw;
         }
     }
+
+    /// <summary>
+    /// Apaga várias respostas numa única transação.
+    /// No final, apaga os Prompts que ficaram sem qualquer resposta (órfãos) entre os afetados.
+    /// </summary>
+    public async Task<int> DeleteResponsesAsync(IEnumerable<int> responseIds)
+    {
+        var ids = responseIds.Distinct().ToList();
+        if (ids.Count == 0) return 0;
+
+        using var connection = _context.CreateConnection();
+        connection.Open();
+        using var transaction = connection.BeginTransaction();
+
+        try
+        {
+            var promptIds = (await connection.QueryAsync<int>(
+                "SELECT DISTINCT PromptId FROM Respostas WHERE Id IN @Ids",
+                new { Ids = ids },
+                transaction)).ToList();
+
+            int affected = await connection.ExecuteAsync(
+                "DELETE FROM Respostas WHERE Id IN @Ids",
+                new { Ids = ids },
+                transaction);
+
+            if (promptIds.Count > 0)
+            {
+                await connection.ExecuteAsync(
+                    "DELETE FROM Prompts WHERE Id IN @PromptIds AND Id NOT IN (SELECT DISTINCT PromptId FROM Respostas)",
+                    new { PromptIds = promptIds },
+                    transaction);
+            }
+
+            transaction.Commit();
+            return affected;
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
     public async Task<bool> UpdateResponseEvaluationAsync(BenchmarkResponse res)
     {
         StringBuilder sb = new();

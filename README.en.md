@@ -102,7 +102,7 @@ With this data collected automatically, you can:
 - **Export results to Excel**, with reports grouped by question, ready to share;
 - **Compare each question graphically** — performance charts (speed, timings, tokens) and **quality radar charts per judge** (Gemini/OpenRouter, 12 metrics, 0–5 scale), with image download;
 - Compare the responses of **several models side by side** for the same question, in the Quality and Metrics panel;
-- Manage your records, deleting individual tests or the entire history whenever you want.
+- Manage your records with **selective deletion** — delete individual tests, only the **pending review**/**reviewed** ones, the **filtered/searched** ones, or the entire history.
 
 ## ⚖️ Evaluation by the Two Judges (Gemini & OpenRouter)
 
@@ -112,7 +112,7 @@ The app integrates a structured external audit process in the **Benchmarks** pan
 2. **Critical Context Injected:** The generated prompt automatically includes smart metadata (such as the local model's training year) under the `[CRITICAL CONTEXT]` marker, instructing the external judge not to penalize the model for lacking knowledge of future events.
 3. **Direct API Calls:** The app sends the prompt to both judges **in parallel** — **Gemini** (`gemini-flash-latest`) and **OpenRouter** (default `openrouter/free`; the model and the keys are configurable on the **Settings** page and persisted in the DB — if the chosen model returns 404, the app automatically falls back to `openrouter/free`). A minimum interval between evaluations (configurable via `AutomatedJudge:MinIntervalSeconds`, 60s by default) protects the free-tier API limits; the judge temperature is **fixed at 0** (deterministic).
 4. **Evaluation Screen Opens Pre-filled:** As soon as the judges reply, the evaluation screen opens **already filled in** with the metrics (1-5 scale), the *Global* score, the feedback and each judge's **RECOMMENDATION** — ready to review and save.
-5. **Partial Failure Handling:** If one of the judges fails (rate limit, network or invalid key), a warning identifies which one failed and that judge's fields remain editable for manual pasting. The **"Copy prompt"** button remains available for the manual process.
+5. **Partial Failure Handling:** If one (or both) judges cannot respond — e.g. `Too many requests`, heavy traffic, network or invalid key — a warning identifies which judge(s) failed and their fields remain editable for manual pasting. The user has **three options**: (1) **wait** and retry the automatic evaluation later; (2) **use the answer from the judge that responded** and fill in only the other judge's fields manually; or (3) **do the entire evaluation manually** — the **"Copy prompt"** button remains available to obtain the evaluation prompt without needing internet.
 6. **Translation and Consolidation:** The user can use the **"Translate Feedback"** option to view a read-only preview of the analyses translated into the language currently active in the interface (Portuguese or English) — the translated text is informational only and does not modify the feedback field. Finally, click **"Save evaluation"** to persist all data permanently in the Database; the button is disabled once the record has already been saved (read-only).
 
 ### 📊 The 12 quality metrics (1–5 scale)

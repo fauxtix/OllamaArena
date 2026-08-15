@@ -149,6 +149,36 @@ code {
     color: #c02d76;
 }
 
+/* Blocos de código nas mensagens do chat */
+.chat-content pre {
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    background-color: var(--neutral-fill-layer-rest);
+    border: 1px solid var(--neutral-stroke-rest, #d1d5db);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 8px 0;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--neutral-foreground-rest);
+}
+
+.chat-content code {
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+    font-size: 0.85em;
+    background-color: var(--neutral-fill-layer-rest);
+    padding: 1px 4px;
+    border-radius: 4px;
+}
+
+    .chat-content pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        color: inherit;
+    }
+
 @media (max-width: 768px) {
     .header-gutters {
         margin: 0.5rem 3rem 0.5rem 1.5rem !important;

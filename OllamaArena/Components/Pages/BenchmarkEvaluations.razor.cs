@@ -21,7 +21,16 @@ namespace OllamaArena.Components.Pages
         private string _streamingLog = "";
 
         private int _quantidadePorAvaliar =>
-            _benchmarks.Count(b => !b.GeminiRating.HasValue || !b.OpenRouterRating.HasValue);
+            _benchmarks.Count(b => !EstaAvaliada(b));
+
+        private int _quantidadeAvaliados =>
+            _benchmarks.Count(b => EstaAvaliada(b));
+
+        private int _quantidadeFiltrados =>
+            FilteredBenchmarks.Count();
+
+        private static bool EstaAvaliada(BenchmarkEvaluationModel b) =>
+            b.GeminiRating.HasValue && b.OpenRouterRating.HasValue;
 
         private bool _podeExportarPdf =>
             _benchmarks.Any() && _quantidadePorAvaliar == 0;
@@ -44,16 +53,41 @@ namespace OllamaArena.Components.Pages
             StateHasChanged();
         }
 
-        private async Task DeleteAllDataAsync()
+        private async Task DeleteByScopeAsync(DeleteScope scope)
         {
             if (DialogService == null) return;
 
             try
             {
+                List<BenchmarkEvaluationModel> alvos;
+                string mensagemChave;
+
+                switch (scope)
+                {
+                    case DeleteScope.Filtrados:
+                        alvos = FilteredBenchmarks.ToList();
+                        mensagemChave = "Benchmarks.DeleteFilteredConfirmMessage";
+                        break;
+                    case DeleteScope.PorAvaliar:
+                        alvos = _benchmarks.Where(b => !EstaAvaliada(b)).ToList();
+                        mensagemChave = "Benchmarks.DeleteUnevaluatedConfirmMessage";
+                        break;
+                    case DeleteScope.Avaliados:
+                        alvos = _benchmarks.Where(b => EstaAvaliada(b)).ToList();
+                        mensagemChave = "Benchmarks.DeleteEvaluatedConfirmMessage";
+                        break;
+                    default:
+                        alvos = _benchmarks.ToList();
+                        mensagemChave = "Benchmarks.DeleteAllConfirmMessage";
+                        break;
+                }
+
+                if (alvos.Count == 0) return;
+
                 string mensagemHtml = $@"
                         <div style='padding: 4px; border-left: 4px solid #e73618;'>
                             <strong style='color: #e73618; font-size: 16px; display: block; margin-bottom: 8px;'>{L["Benchmarks.DeleteAllConfirmTitle"]}</strong>
-                            <span style='color: var(--neutral-foreground-rest);'>{L["Benchmarks.DeleteAllConfirmMessage"]}</span>
+                            <span style='color: var(--neutral-foreground-rest);'>{L[mensagemChave, alvos.Count]}</span>
                         </div>";
 
                 var confirmacao = await DialogService.ShowConfirmationAsync(
@@ -67,14 +101,20 @@ namespace OllamaArena.Components.Pages
 
                 if (resultado != null && !resultado.Cancelled)
                 {
-                    bool eliminados = await BenchmarkRepo.DeleteAllPromptsAndHistoryAsync();
+                    if (scope == DeleteScope.Todos)
+                    {
+                        await BenchmarkRepo.DeleteAllPromptsAndHistoryAsync();
+                    }
+                    else
+                    {
+                        await BenchmarkRepo.DeleteResponsesAsync(alvos.Select(a => a.ResponseId));
+                    }
+
+                    var idsApagar = alvos.Select(a => a.ResponseId).ToHashSet();
                     await InvokeAsync(() =>
                     {
-                        if (eliminados)
-                        {
-                            _benchmarks = Enumerable.Empty<BenchmarkEvaluationModel>().AsQueryable();
-                            StateHasChanged();
-                        }
+                        _benchmarks = _benchmarks.Where(b => !idsApagar.Contains(b.ResponseId)).AsQueryable();
+                        StateHasChanged();
                     });
                 }
             }
@@ -134,11 +174,11 @@ namespace OllamaArena.Components.Pages
 
                 if (_filtroAtual == BenchmarkFilter.PorAvaliar)
                 {
-                    query = query.Where(b => !b.GeminiRating.HasValue && !b.OpenRouterRating.HasValue);
+                    query = query.Where(b => !EstaAvaliada(b));
                 }
                 else if (_filtroAtual == BenchmarkFilter.Avaliados)
                 {
-                    query = query.Where(b => b.GeminiRating.HasValue || b.OpenRouterRating.HasValue);
+                    query = query.Where(b => EstaAvaliada(b));
                 }
 
                 if (!string.IsNullOrWhiteSpace(_search))
@@ -358,6 +398,10 @@ namespace OllamaArena.Components.Pages
 
         private enum BenchmarkFilter { Todos, PorAvaliar, Avaliados }
         private BenchmarkFilter _filtroAtual = BenchmarkFilter.Todos;
+
+        private const string _deleteMenuAnchorId = "delete-benchmarks-menu-anchor";
+
+        private enum DeleteScope { Filtrados, PorAvaliar, Avaliados, Todos }
 
         private Appearance GetAppearance(BenchmarkFilter filtro)
         {

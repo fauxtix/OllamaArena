@@ -102,7 +102,7 @@ Com estes dados recolhidos automaticamente, pode:
 - **Exportar os resultados para Excel**, com relatórios agrupados por pergunta, prontos a partilhar;
 - **Comparar graficamente cada pergunta** — gráficos de desempenho (velocidade, tempos, tokens) e **radares de qualidade por juiz** (Gemini/OpenRouter, 12 métricas, escala 0–5), com download de imagem;
 - Comparar as respostas de **vários modelos lado a lado** para a mesma pergunta, no painel de Qualidade e Métricas;
-- Gerir os seus registos, apagando testes individuais ou todo o histórico quando pretender.
+- Gerir os seus registos com **eliminação seletiva** — apagar testes individuais, apenas os **por avaliar**/**avaliados**, os **filtrados/pesquisados**, ou todo o histórico.
 
 ## ⚖️ Avaliação dos Dois Juízes (Gemini & OpenRouter)
 
@@ -112,7 +112,7 @@ A aplicação integra um processo estruturado de auditoria externa no painel de 
 2. **Contexto Crítico Injetado:** O prompt gerado inclui automaticamente metadados inteligentes (como o ano de treino do modelo local) sob a marca `[CRITICAL CONTEXT]`, instruindo o juiz externo a não penalizar o modelo por falta de conhecimento de eventos futuros.
 3. **Chamadas Diretas às APIs:** A aplicação envia o prompt aos dois juízes **em paralelo** — **Gemini** (`gemini-flash-latest`) e **OpenRouter** (default `openrouter/free`; o modelo e as chaves são configuráveis na página **Definições** e ficam gravados na BD — se o modelo escolhido devolver 404, a aplicação tenta automaticamente `openrouter/free`). Um intervalo mínimo entre avaliações (configurável em `AutomatedJudge:MinIntervalSeconds`, 60s por defeito) protege os limites gratuitos das APIs; a temperatura dos juízes é **fixa em 0** (determinística).
 4. **Abertura do Ecrã de Avaliação Preenchido:** Assim que os juízes respondem, o ecrã de avaliação abre **já preenchido** com as métricas (Escala 1-5), a nota *Global*, o feedback e a **RECOMMENDATION** de cada juiz — prontos a rever e guardar.
-5. **Tratamento de Falhas Parciais:** Se um dos juízes falhar (limite de requisições, rede ou chave inválida), um aviso identifica qual falhou e os campos desse juiz ficam editáveis para colagem manual. O botão **"Copiar prompt"** continua disponível para o processo manual.
+5. **Tratamento de Falhas Parciais:** Se um dos juízes (ou ambos) não conseguir responder — ex.: `Too many requests`, demasiado tráfego, rede ou chave inválida — um aviso identifica qual(ais) falhou(ram) e os campos desse(s) juiz(es) ficam editáveis para colagem manual. O utilizador tem **três opções**: (1) **aguardar** e tentar a avaliação automática mais tarde; (2) **aproveitar a resposta do juiz que respondeu** e preencher manualmente apenas os campos do outro; ou (3) **fazer toda a avaliação manualmente** — o botão **"Copiar prompt"** continua disponível para obter o prompt de avaliação sem precisar de internet.
 6. **Tradução e Consolidação:** O utilizador pode utilizar a opção **"Traduzir Feedback"** para ver uma pré-visualização só-leitura da tradução das análises para a língua ativa na interface (português ou inglês) — o texto traduzido é apenas informativo e não altera o campo de feedback. Por fim, clica em **"Guardar avaliação"** para persistir todos os dados permanentemente na Base de Dados; o botão fica desativado quando o registo já foi gravado (apenas-leitura).
 
 ### 📊 As 12 métricas de qualidade (escala 1–5)

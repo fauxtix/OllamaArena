@@ -279,6 +279,27 @@
   <data name="Benchmarks.DeleteAll" xml:space="preserve">
     <value>Apagar Benchmarks</value>
   </data>
+  <data name="Benchmarks.DeleteFiltered" xml:space="preserve">
+    <value>Apagar filtrados ({0})</value>
+  </data>
+  <data name="Benchmarks.DeleteUnevaluated" xml:space="preserve">
+    <value>Apagar por avaliar ({0})</value>
+  </data>
+  <data name="Benchmarks.DeleteEvaluated" xml:space="preserve">
+    <value>Apagar avaliados ({0})</value>
+  </data>
+  <data name="Benchmarks.DeleteAllWithCount" xml:space="preserve">
+    <value>Apagar todos ({0})</value>
+  </data>
+  <data name="Benchmarks.DeleteFilteredConfirmMessage" xml:space="preserve">
+    <value>Tem a certeza que deseja apagar as {0} respostas filtradas (incluindo os prompts que fiquem sem respostas)? Esta operação não pode ser revertida.</value>
+  </data>
+  <data name="Benchmarks.DeleteUnevaluatedConfirmMessage" xml:space="preserve">
+    <value>Tem a certeza que deseja apagar as {0} respostas por avaliar (incluindo os prompts que fiquem sem respostas)? Esta operação não pode ser revertida.</value>
+  </data>
+  <data name="Benchmarks.DeleteEvaluatedConfirmMessage" xml:space="preserve">
+    <value>Tem a certeza que deseja apagar as {0} respostas avaliadas (incluindo os prompts que fiquem sem respostas)? Esta operação não pode ser revertida.</value>
+  </data>
   <data name="Benchmarks.FilterAll" xml:space="preserve">
     <value>Todos</value>
   </data>
@@ -1238,6 +1259,18 @@ Deseja continuar?</value>
   </data>
   <data name="Settings.ChangeKeyRemoved" xml:space="preserve">
     <value>removida</value>
+  </data>
+  <data name="Settings.ChangeOn" xml:space="preserve">
+    <value>ativado</value>
+  </data>
+  <data name="Settings.ChangeOff" xml:space="preserve">
+    <value>desativado</value>
+  </data>
+  <data name="Settings.EnableReasoningLabel" xml:space="preserve">
+    <value>Ativar reasoning (think)</value>
+  </data>
+  <data name="Settings.EnableReasoningHelper" xml:space="preserve">
+    <value>Mostra o raciocínio de modelos de reasoning (ex.: deepseek-r1, qwq). Só é enviado para modelos compatíveis; pode tornar as respostas mais lentas.</value>
   </data>
   <data name="Reconnect.Joining" xml:space="preserve">
     <value>A religar ao servidor...</value>

@@ -52,13 +52,32 @@
                         @L["Benchmarks.AnalysisLocal"]
                     </FluentButton>
 
-                    <FluentButton Appearance="Appearance.Lightweight"
+                    <FluentButton Id="@_deleteMenuAnchorId"
+                                  Appearance="Appearance.Lightweight"
                                   Disabled="@(_benchmarks.Any() == false)"
                                   Color="rgba(255, 255,255, 1)"
                                   BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
-                                  IconStart="@(new Icons.Regular.Size16.Delete())" OnClick="DeleteAllDataAsync">
+                                  IconStart="@(new Icons.Regular.Size16.Delete())">
                         @L["Benchmarks.DeleteAll"]
                     </FluentButton>
+                    <FluentMenu Anchor="@_deleteMenuAnchorId" Trigger="MouseButton.Left">
+                        <FluentMenuItem OnClick="@(() => DeleteByScopeAsync(DeleteScope.Filtrados))"
+                                        Disabled="@(_quantidadeFiltrados == 0)">
+                            @L["Benchmarks.DeleteFiltered", _quantidadeFiltrados]
+                        </FluentMenuItem>
+                        <FluentMenuItem OnClick="@(() => DeleteByScopeAsync(DeleteScope.PorAvaliar))"
+                                        Disabled="@(_quantidadePorAvaliar == 0)">
+                            @L["Benchmarks.DeleteUnevaluated", _quantidadePorAvaliar]
+                        </FluentMenuItem>
+                        <FluentMenuItem OnClick="@(() => DeleteByScopeAsync(DeleteScope.Avaliados))"
+                                        Disabled="@(_quantidadeAvaliados == 0)">
+                            @L["Benchmarks.DeleteEvaluated", _quantidadeAvaliados]
+                        </FluentMenuItem>
+                        <FluentMenuItem OnClick="@(() => DeleteByScopeAsync(DeleteScope.Todos))"
+                                        Disabled="@(_benchmarks.Any() == false)">
+                            @L["Benchmarks.DeleteAllWithCount", _benchmarks.Count()]
+                        </FluentMenuItem>
+                    </FluentMenu>
 
             </div>
 

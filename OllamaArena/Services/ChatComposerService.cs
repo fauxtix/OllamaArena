@@ -1,18 +1,21 @@
 using Microsoft.Extensions.Options;
 using OllamaArena.Models.DTO;
+using OllamaArena.Services.Interfaces.Repositories;
 
 namespace OllamaArena.Services;
 
 public sealed class ChatComposerService
 {
     private readonly OllamaOptions _options;
+    private readonly ISettingsRepository _settingsRepository;
 
-    public ChatComposerService(IOptions<OllamaOptions> options)
+    public ChatComposerService(IOptions<OllamaOptions> options, ISettingsRepository settingsRepository)
     {
         _options = options.Value;
+        _settingsRepository = settingsRepository;
     }
 
-    public PreparedChatRequest? Prepare(
+    public async Task<PreparedChatRequest?> Prepare(
         IReadOnlyList<ChatMessage> messages,
         string userPrompt,
         string systemInstructions,
@@ -62,14 +65,17 @@ public sealed class ChatComposerService
             maxTokens = Math.Min(maxTokens, availableForOutput);
         }
 
+        bool enableReasoning = await ResolveThinkingAsync();
+
         var payload = new OllamaChatPayload
         {
             Model = modelName,
             Messages = history,
             Stream = true,
-            // Só envia `think` quando o modelo suporta reasoning; em modelos comuns o Ollama
-            // devolve 400 ("does not support thinking") se o campo for true.
-            Think = _options.EnableReasoning && modelSupportsThinking ? true : null,
+            // Para modelos com capacidade `thinking` envia o valor explícito (`true`/`false`):
+            // omitir o campo faz o Ollama pensar por omissão e devolver o reasoning mesmo desativado.
+            // Em modelos comuns o campo é omitido (senão o Ollama devolve 400 "does not support thinking").
+            Think = modelSupportsThinking ? enableReasoning : null,
             Options = new Dictionary<string, object>
             {
                 { "num_ctx", contextLength },
@@ -86,8 +92,29 @@ public sealed class ChatComposerService
             History = history,
             Temperature = temperature,
             MaxTokens = maxTokens,
+            EnableReasoning = enableReasoning,
             Payload = payload
         };
+    }
+
+    /// <summary>
+    /// Resolve se o reasoning (think) está ativo com prioridade: BD (página Settings) →
+    /// configuração (appsettings/user-secrets) → default false. Mesmo padrão do AutomatedJudgeService.
+    /// </summary>
+    private async Task<bool> ResolveThinkingAsync()
+    {
+        try
+        {
+            string? valor = await _settingsRepository.GetValueAsync("Chat:EnableReasoning");
+            if (valor is not null && bool.TryParse(valor, out bool ativo))
+                return ativo;
+        }
+        catch
+        {
+            // Sem BD ou erro: usa a configuração.
+        }
+
+        return _options.EnableReasoning;
     }
 
     public static List<OllamaChatMessage> BuildHistory(
@@ -137,5 +164,6 @@ public sealed class PreparedChatRequest
     public required List<OllamaChatMessage> History { get; init; }
     public required double Temperature { get; init; }
     public required int MaxTokens { get; init; }
+    public required bool EnableReasoning { get; init; }
     public required OllamaChatPayload Payload { get; init; }
 }

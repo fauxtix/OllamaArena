@@ -279,6 +279,27 @@
   <data name="Benchmarks.DeleteAll" xml:space="preserve">
     <value>Delete Benchmarks</value>
   </data>
+  <data name="Benchmarks.DeleteFiltered" xml:space="preserve">
+    <value>Delete filtered ({0})</value>
+  </data>
+  <data name="Benchmarks.DeleteUnevaluated" xml:space="preserve">
+    <value>Delete unevaluated ({0})</value>
+  </data>
+  <data name="Benchmarks.DeleteEvaluated" xml:space="preserve">
+    <value>Delete evaluated ({0})</value>
+  </data>
+  <data name="Benchmarks.DeleteAllWithCount" xml:space="preserve">
+    <value>Delete all ({0})</value>
+  </data>
+  <data name="Benchmarks.DeleteFilteredConfirmMessage" xml:space="preserve">
+    <value>Are you sure you want to delete the {0} filtered responses (including any prompts left without responses)? This operation cannot be undone.</value>
+  </data>
+  <data name="Benchmarks.DeleteUnevaluatedConfirmMessage" xml:space="preserve">
+    <value>Are you sure you want to delete the {0} unevaluated responses (including any prompts left without responses)? This operation cannot be undone.</value>
+  </data>
+  <data name="Benchmarks.DeleteEvaluatedConfirmMessage" xml:space="preserve">
+    <value>Are you sure you want to delete the {0} evaluated responses (including any prompts left without responses)? This operation cannot be undone.</value>
+  </data>
   <data name="Benchmarks.FilterAll" xml:space="preserve">
     <value>All</value>
   </data>
@@ -1238,6 +1259,18 @@ Do you want to continue?</value>
   </data>
   <data name="Settings.ChangeKeyRemoved" xml:space="preserve">
     <value>removed</value>
+  </data>
+  <data name="Settings.ChangeOn" xml:space="preserve">
+    <value>enabled</value>
+  </data>
+  <data name="Settings.ChangeOff" xml:space="preserve">
+    <value>disabled</value>
+  </data>
+  <data name="Settings.EnableReasoningLabel" xml:space="preserve">
+    <value>Enable reasoning (think)</value>
+  </data>
+  <data name="Settings.EnableReasoningHelper" xml:space="preserve">
+    <value>Shows the chain of thought of reasoning models (e.g. deepseek-r1, qwq). Only sent to capable models; may slow down responses.</value>
   </data>
   <data name="Reconnect.Joining" xml:space="preserve">
     <value>Rejoining the server...</value>

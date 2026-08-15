@@ -34,5 +34,5 @@ public sealed class OllamaOptions
 
     public int MaxContextCap { get; set; } = 32768;
 
-    public bool EnableReasoning { get; set; } = true;
+    public bool EnableReasoning { get; set; } = false;
 }

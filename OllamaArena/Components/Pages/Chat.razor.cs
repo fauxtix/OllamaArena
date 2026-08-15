@@ -284,7 +284,7 @@ namespace OllamaArena.Components.Pages
 
                 await EnsureModelSupportsThinkingAsync();
 
-                var prepared = ChatComposer.Prepare(
+                var prepared = await ChatComposer.Prepare(
                     _messages,
                     userPrompt,
                     systemInstructions,
@@ -301,6 +301,10 @@ namespace OllamaArena.Components.Pages
                     StateHasChanged();
                     return;
                 }
+
+                // Quando o reasoning está desativado, não capturamos nem guardamos o raciocínio:
+                // modelos tipo deepseek-r1 geram-no sempre (não respeitam `think: false`).
+                bool capturarReasoning = prepared.EnableReasoning;
 
                 if (_webSearchEnabled)
                 {
@@ -383,7 +387,7 @@ namespace OllamaArena.Components.Pages
                             chunkText = respProp.GetString();
                         }
 
-                        if (!string.IsNullOrWhiteSpace(reasoningText))
+                        if (capturarReasoning && !string.IsNullOrWhiteSpace(reasoningText))
                         {
                             if (aiMessage.Reasoning is null)
                             {
@@ -433,7 +437,8 @@ namespace OllamaArena.Components.Pages
                             }
 
                             // Alguns modelos (ex.: qwq, deepseek-r1) enviam o reasoning apenas na mensagem final
-                            if (root.TryGetProperty("message", out var doneMsg)
+                            if (capturarReasoning
+                                && root.TryGetProperty("message", out var doneMsg)
                                 && (doneMsg.TryGetProperty("reasoning_content", out var doneReasoning)
                                     || doneMsg.TryGetProperty("thinking", out doneReasoning)))
                             {

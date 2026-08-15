@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using OllamaArena.Models.DTO;
 using OllamaArena.Services;
+using OllamaArena.Services.Interfaces.Repositories;
 
 namespace OllamaArena.Tests;
 
@@ -9,7 +10,8 @@ public class ChatComposerServiceTests
     private const string SystemPrompt = "Instruções do sistema";
     private const string Welcome = "Olá!";
 
-    private static ChatComposerService CriarServico() => new(Options.Create(new OllamaOptions()));
+    private static ChatComposerService CriarServico(params (string Chave, string Valor)[] valores) =>
+        new(Options.Create(new OllamaOptions()), new FakeSettingsRepository(valores));
 
     private static ChatMessage Msg(string texto, bool user) => new()
     {
@@ -78,76 +80,101 @@ public class ChatComposerServiceTests
     }
 
     [Fact]
-    public void Prepare_SemPromptUserFinal_DevolveNull()
+    public async Task Prepare_SemPromptUserFinal_DevolveNull()
     {
         var servico = CriarServico();
         var mensagens = Historico(
             Msg("resposta sem pergunta", false));
 
-        var preparado = servico.Prepare(mensagens, "algo", SystemPrompt, Welcome, "modelo", 2048, true);
+        var preparado = await servico.Prepare(mensagens, "algo", SystemPrompt, Welcome, "modelo", 2048, true);
 
         Assert.Null(preparado);
     }
 
     [Fact]
-    public void Prepare_PromptVazio_DevolveNull()
+    public async Task Prepare_PromptVazio_DevolveNull()
     {
         var servico = CriarServico();
 
-        var preparado = servico.Prepare(Historico(), "   ", SystemPrompt, Welcome, "modelo", 2048, true);
+        var preparado = await servico.Prepare(Historico(), "   ", SystemPrompt, Welcome, "modelo", 2048, true);
 
         Assert.Null(preparado);
     }
 
     [Fact]
-    public void Prepare_DevolvePayloadComModeloStreamEContexto()
+    public async Task Prepare_DevolvePayloadComModeloStreamEContexto()
     {
-        var servico = CriarServico();
+        var servico = CriarServico(("Chat:EnableReasoning", "true"));
         var mensagens = Historico(Msg("O que é a inertia?", true));
 
-        var preparado = servico.Prepare(mensagens, "O que é a inertia?", SystemPrompt, Welcome, "qwen2.5", 4096, false, modelSupportsThinking: true);
+        var preparado = await servico.Prepare(mensagens, "O que é a inertia?", SystemPrompt, Welcome, "qwen2.5", 4096, false, modelSupportsThinking: true);
 
         Assert.NotNull(preparado);
         Assert.Equal("qwen2.5", preparado.Payload.Model);
         Assert.True(preparado.Payload.Stream);
         Assert.Equal(4096, preparado.Payload.Options!["num_ctx"]);
         Assert.Equal(1.1, preparado.Payload.Options["repeat_penalty"]);
+        Assert.True(preparado.EnableReasoning);
         Assert.True(preparado.Payload.Think);
     }
 
     [Fact]
-    public void Prepare_ModeloSemThinking_OmiteCampoThink()
+    public async Task Prepare_ModeloSemThinking_OmiteCampoThink()
     {
-        var servico = CriarServico();
+        var servico = CriarServico(("Chat:EnableReasoning", "true"));
         var mensagens = Historico(Msg("O que é a inertia?", true));
 
-        var preparado = servico.Prepare(mensagens, "O que é a inertia?", SystemPrompt, Welcome, "qwen2.5", 4096, false, modelSupportsThinking: false);
+        var preparado = await servico.Prepare(mensagens, "O que é a inertia?", SystemPrompt, Welcome, "qwen2.5", 4096, false, modelSupportsThinking: false);
 
         Assert.NotNull(preparado);
         Assert.Null(preparado.Payload.Think);
     }
 
     [Fact]
-    public void Prepare_ThinkingDesativadoNaConfiguracao_OmiteCampoThink()
+    public async Task Prepare_ThinkingDesativadoNaBd_EnviaThinkFalse()
     {
-        var opcoes = new OllamaOptions { EnableReasoning = false };
-        var servico = new ChatComposerService(Options.Create(opcoes));
+        var servico = CriarServico(("Chat:EnableReasoning", "false"));
         var mensagens = Historico(Msg("Pergunta", true));
 
-        var preparado = servico.Prepare(mensagens, "Pergunta", SystemPrompt, Welcome, "deepseek-r1", 4096, true, modelSupportsThinking: true);
+        var preparado = await servico.Prepare(mensagens, "Pergunta", SystemPrompt, Welcome, "deepseek-r1", 4096, true, modelSupportsThinking: true);
+
+        Assert.NotNull(preparado);
+        Assert.False(preparado.EnableReasoning);
+        Assert.Equal(false, preparado.Payload.Think);
+    }
+
+    [Fact]
+    public async Task Prepare_ThinkingPorDefeito_EnviaThinkFalse()
+    {
+        var servico = CriarServico();
+        var mensagens = Historico(Msg("Pergunta", true));
+
+        var preparado = await servico.Prepare(mensagens, "Pergunta", SystemPrompt, Welcome, "deepseek-r1", 4096, true, modelSupportsThinking: true);
+
+        Assert.NotNull(preparado);
+        Assert.Equal(false, preparado.Payload.Think);
+    }
+
+    [Fact]
+    public async Task Prepare_ThinkingAtivoEmModeloSemCapacidade_OmiteCampoThink()
+    {
+        var servico = CriarServico(("Chat:EnableReasoning", "true"));
+        var mensagens = Historico(Msg("Pergunta", true));
+
+        var preparado = await servico.Prepare(mensagens, "Pergunta", SystemPrompt, Welcome, "qwen2.5", 4096, true, modelSupportsThinking: false);
 
         Assert.NotNull(preparado);
         Assert.Null(preparado.Payload.Think);
     }
 
     [Fact]
-    public void Prepare_OpcoesDeAmostragemSeguemTemperaturaRecomendada()
+    public async Task Prepare_OpcoesDeAmostragemSeguemTemperaturaRecomendada()
     {
         var servico = CriarServico();
         var prompt = "Traduz para português: hello world";
         double temp = ChatMeasureTemperature.ObterTemperaturaRecomendada(prompt);
 
-        var preparado = servico.Prepare(Historico(Msg(prompt, true)), prompt, SystemPrompt, Welcome, "modelo", 2048, true);
+        var preparado = await servico.Prepare(Historico(Msg(prompt, true)), prompt, SystemPrompt, Welcome, "modelo", 2048, true);
 
         Assert.NotNull(preparado);
         Assert.Equal(Math.Round(temp, 2), preparado.Payload.Options!["temperature"]);
@@ -156,13 +183,13 @@ public class ChatComposerServiceTests
     }
 
     [Fact]
-    public void Prepare_MaxTokensVariaComFitInGpu()
+    public async Task Prepare_MaxTokensVariaComFitInGpu()
     {
         var servico = CriarServico();
         var prompt = "Conta-me uma história criativa longa.";
 
-        var semGpu = servico.Prepare(Historico(Msg(prompt, true)), prompt, SystemPrompt, Welcome, "modelo", 0, false);
-        var comGpu = servico.Prepare(Historico(Msg(prompt, true)), prompt, SystemPrompt, Welcome, "modelo", 0, true);
+        var semGpu = await servico.Prepare(Historico(Msg(prompt, true)), prompt, SystemPrompt, Welcome, "modelo", 0, false);
+        var comGpu = await servico.Prepare(Historico(Msg(prompt, true)), prompt, SystemPrompt, Welcome, "modelo", 0, true);
 
         Assert.NotNull(semGpu);
         Assert.NotNull(comGpu);
@@ -170,26 +197,26 @@ public class ChatComposerServiceTests
     }
 
     [Fact]
-    public void Prepare_MaxTokensNuncaExcedeContexto()
+    public async Task Prepare_MaxTokensNuncaExcedeContexto()
     {
         var servico = CriarServico();
         const int contexto = 512;
         var prompt = new string('a', 2000);
 
-        var preparado = servico.Prepare(Historico(Msg(prompt, true)), prompt, SystemPrompt, Welcome, "modelo", contexto, true);
+        var preparado = await servico.Prepare(Historico(Msg(prompt, true)), prompt, SystemPrompt, Welcome, "modelo", contexto, true);
 
         Assert.NotNull(preparado);
         Assert.True(preparado.MaxTokens <= contexto);
     }
 
     [Fact]
-    public void Prepare_ComContextoReservadoClampaMaxTokensNoMinimo32()
+    public async Task Prepare_ComContextoReservadoClampaMaxTokensNoMinimo32()
     {
         var servico = CriarServico();
         const int contexto = 512;
         var prompt = new string('a', 2000);
 
-        var preparado = servico.Prepare(Historico(Msg(prompt, true)), prompt, SystemPrompt, Welcome, "modelo", contexto, true);
+        var preparado = await servico.Prepare(Historico(Msg(prompt, true)), prompt, SystemPrompt, Welcome, "modelo", contexto, true);
 
         Assert.NotNull(preparado);
         Assert.Equal(32, preparado.MaxTokens);
@@ -207,5 +234,43 @@ public class ChatComposerServiceTests
     {
         Assert.Equal(1, ChatComposerService.EstimateTokens("ab"));
         Assert.Equal(2, ChatComposerService.EstimateTokens("abcdefgh"));
+    }
+}
+
+/// <summary>
+/// Repositório de definições em memória (substitui a BD SQLite nos testes).
+/// </summary>
+public sealed class FakeSettingsRepository : ISettingsRepository
+{
+    private readonly Dictionary<string, string> _valores = new(StringComparer.OrdinalIgnoreCase);
+
+    public FakeSettingsRepository(params (string Chave, string Valor)[] valores)
+    {
+        foreach (var (chave, valor) in valores)
+            _valores[chave] = valor;
+    }
+
+    public Task<string?> GetValueAsync(string chave) =>
+        Task.FromResult(_valores.TryGetValue(chave, out var valor) ? valor : null);
+
+    public Task<Dictionary<string, string>> GetValuesAsync(IEnumerable<string> chaves)
+    {
+        var resultado = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var chave in chaves)
+            if (_valores.TryGetValue(chave, out var valor))
+                resultado[chave] = valor;
+        return Task.FromResult(resultado);
+    }
+
+    public Task SetValueAsync(string chave, string valor)
+    {
+        _valores[chave] = valor;
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteValueAsync(string chave)
+    {
+        _valores.Remove(chave);
+        return Task.CompletedTask;
     }
 }
