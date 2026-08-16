@@ -61,8 +61,18 @@ The **`OllamaArena/Docs/`** folder gathers the project's technical documentation
 | `Funcionalidades.md` | Full technical documentation (stack, pages, services, DB, configuration, deployment) |
 | `Guia_Testes.md` | Manual validation checklist (build + unit tests + feature smoke tests) |
 | `Guia_Como_Comparar_Modelos.md` | How to use the lab to compare models fairly |
+| `Guia_Apresentacao.md` | How to generate the `OllamaArena.pptx` presentation from the screenshots in `OllamaArena/Screenshots/` |
 | `Relatorio_Analise.md` | Code analysis report (strengths, bugs, technical debt) |
 | `schema.sql` | Reference DDL (5 tables; the runtime creates 7 — adding `Configuracoes` and `ModelosJuiz` on startup) |
+
+### 📸 Screenshots and presentation
+The **`OllamaArena/Screenshots/`** folder holds screenshots of the main pages and the **`OllamaArena.pptx`** (16:9) presentation that organizes them into a deck with a **professional IT template** (dark blue background, Fluent accent), **modern transitions** and **advance by click or after 10 s**. To regenerate (e.g. after adding captures), run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "OllamaArena\Screenshots\gerar_apresentacao.ps1"
+```
+
+Requires **Windows with PowerPoint 2016+** (COM automation). Details in `OllamaArena/Docs/Guia_Apresentacao.md`.
 
 ---
 

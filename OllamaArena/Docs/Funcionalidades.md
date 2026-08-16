@@ -29,6 +29,7 @@ Aplicação **Blazor Server** (.NET 10) que funciona como um **chat local com Ol
 - `Models/DTO` — shapes da API; `Models/Entities` — mapeamento SQLite (Dapper)
 - `Prompts/*.txt` — ficheiros de prompt editáveis em runtime (Content files)
 - `PromptTemplates/` — construtores de prompt em C# (`EvaluatePromptTemplate`, `TranslatePromptTemplate`, `ChatInstructionsPrompt`)
+- `Screenshots/` — capturas de ecrã da app (PNG) + apresentação gerada `OllamaArena.pptx` + script `gerar_apresentacao.ps1` (COM do PowerPoint; ver `Guia_Apresentacao.md`)
 
 > **Nota de build:** a solução (`OllamaArena.slnx`) é de **projeto único** (`OllamaArena/`) + projeto de **testes** (`OllamaArena.Tests/`, 55 testes de unidade). Um antigo `Services/Services.csproj` na raiz (refactor abandonado que não compilava) foi **removido**; o build limpo faz-se com `dotnet build OllamaArena.slnx`.
 

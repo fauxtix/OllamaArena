@@ -61,8 +61,18 @@ A pasta **`OllamaArena/Docs/`** reúne a documentação técnica do projeto em M
 | `Funcionalidades.md` | Documentação técnica completa (stack, páginas, serviços, BD, configuração, deploy) |
 | `Guia_Testes.md` | Checklist manual de validação (build + testes + smoke test das funcionalidades) |
 | `Guia_Como_Comparar_Modelos.md` | Como usar o laboratório para comparar modelos de forma justa |
+| `Guia_Apresentacao.md` | Como gerar a apresentação `OllamaArena.pptx` a partir das screenshots em `OllamaArena/Screenshots/` |
 | `Relatorio_Analise.md` | Relatório de análise do código (pontos fortes, bugs, dívida técnica) |
 | `schema.sql` | DDL de referência (5 tabelas; o runtime cria 7 — adiciona `Configuracoes` e `ModelosJuiz` no arranque) |
+
+### 📸 Screenshots e apresentação
+A pasta **`OllamaArena/Screenshots/`** guarda capturas de ecrã das principais páginas e a apresentação **`OllamaArena.pptx`** (16:9) que as organiza num deck com **template profissional IT** (fundo azul-escuro, acento Fluent), **transições modernas** e **avanço por clique ou após 10 s**. Para regenerar (ex.: depois de adicionar capturas), corra:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "OllamaArena\Screenshots\gerar_apresentacao.ps1"
+```
+
+Requer **Windows com PowerPoint 2016+** (automação COM). Detalhes em `OllamaArena/Docs/Guia_Apresentacao.md`.
 
 ---
 
