@@ -49,6 +49,10 @@
                     <div class="conv-row" @onclick="() => LoadConversation(conv.Id)">
                         <div class="conv-info">
                             <span class="conv-title">@conv.Titulo</span>
+                            @if (!string.IsNullOrWhiteSpace(conv.Descricao))
+                            {
+                                <span class="conv-descricao">@conv.Descricao</span>
+                            }
                             <span class="conv-meta">@conv.NomeModelo · @conv.DataUltimaAtividadeFormatada</span>
                         </div>
                         <FluentButton Appearance="Appearance.Stealth" Icon="@(new Icons.Regular.Size20.ArrowClockwise())" Title="@L["HistoryPanel.LoadConversation"]"></FluentButton>
@@ -259,6 +263,15 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        .history-aside .conv-descricao {
+            font-size: 12px;
+            color: var(--neutral-foreground-hint);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-style: italic;
         }
 
         .history-aside .conv-meta {

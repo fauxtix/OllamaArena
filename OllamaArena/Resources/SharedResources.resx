@@ -270,6 +270,30 @@
   <data name="Chat.WebSearchTooltip" xml:space="preserve">
     <value>Pesquisa web limitada: a Wikipedia devolve contexto, mas o DuckDuckGo usa proteção anti-bot e pode não devolver resultados.</value>
   </data>
+  <data name="ConfirmSaveDialog.Title" xml:space="preserve">
+    <value>Guardar registo</value>
+  </data>
+  <data name="ConfirmSaveDialog.Message" xml:space="preserve">
+    <value>Deseja guardar esta conversa na base de dados? Introduza uma descrição resumida para identificar este registo.</value>
+  </data>
+  <data name="ConfirmSaveDialog.DescriptionPlaceholder" xml:space="preserve">
+    <value>Descrição do registo...</value>
+  </data>
+  <data name="SaveResultDialog.TitleSuccess" xml:space="preserve">
+    <value>Registo guardado</value>
+  </data>
+  <data name="SaveResultDialog.TitleError" xml:space="preserve">
+    <value>Erro ao guardar</value>
+  </data>
+  <data name="SaveResultDialog.SuccessMessage" xml:space="preserve">
+    <value>O registo foi guardado com sucesso na base de dados.</value>
+  </data>
+  <data name="SaveResultDialog.ErrorMessage" xml:space="preserve">
+    <value>Ocorreu um erro ao guardar o registo. Tente novamente.</value>
+  </data>
+  <data name="SaveResultDialog.DescriptionLabel" xml:space="preserve">
+    <value>Descrição:</value>
+  </data>
   <data name="Benchmarks.SearchPlaceholder" xml:space="preserve">
     <value>Pesquisa benchmarks (modelo, descrição)</value>
   </data>

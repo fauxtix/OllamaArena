@@ -10,7 +10,9 @@ public interface IBenchmarkRepository
     Task<int> DeleteResponsesAsync(IEnumerable<int> responseIds);
     Task<bool> UpdatePromptAsync(int id, string newText);
     Task<bool> UpdateResponseTextAsync(int responseId, string newText);
-    Task<int> CreatePromptAsync(string textoPrompt, double temperatura);
+    Task<int> CreatePromptAsync(string textoPrompt, double temperatura, string descricao);
+    Task<(int PromptId, string Descricao)> GetOrCreatePromptIdAsync(string textoPrompt, string descricao);
+    Task<string?> FindDescriptionByTextAsync(string textoPrompt);
     Task CreateResponseAsync(BenchmarkResponse response);
     Task<BenchmarkPrompt?> GetBenchmarkByIdAsync(int promptId);
     Task<List<BenchmarkPrompt>> GetAllBenchmarksAsync();

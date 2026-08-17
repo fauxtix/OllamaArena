@@ -17,11 +17,11 @@ public class ConversationRepository : IConversationRepository
         _logger = logger;
     }
 
-    public async Task<int> CreateConversationAsync(string titulo, string nomeModelo)
+    public async Task<int> CreateConversationAsync(string titulo, string nomeModelo, string? descricao = null)
     {
         var sql = @"
-                INSERT INTO Conversas (Titulo, NomeModelo, DataCriacao, DataUltimaAtividade)
-                VALUES (@Titulo, @NomeModelo, @DataCriacao, @DataUltimaAtividade);
+                INSERT INTO Conversas (Titulo, Descricao, NomeModelo, DataCriacao, DataUltimaAtividade)
+                VALUES (@Titulo, @Descricao, @NomeModelo, @DataCriacao, @DataUltimaAtividade);
                 SELECT last_insert_rowid();";
 
         try
@@ -31,6 +31,7 @@ public class ConversationRepository : IConversationRepository
             return await connection.ExecuteScalarAsync<int>(sql, new
             {
                 Titulo = titulo,
+                Descricao = descricao,
                 NomeModelo = nomeModelo,
                 DataCriacao = now,
                 DataUltimaAtividade = now
@@ -40,6 +41,26 @@ public class ConversationRepository : IConversationRepository
         {
             _logger.LogError(ex, "Falha ao criar conversa");
             return 0;
+        }
+    }
+
+    public async Task<bool> UpdateDescricaoAsync(int conversationId, string descricao)
+    {
+        var sql = "UPDATE Conversas SET Descricao = @Descricao WHERE Id = @Id;";
+        try
+        {
+            using var connection = _context.CreateConnection();
+            int affected = await connection.ExecuteAsync(sql, new
+            {
+                Id = conversationId,
+                Descricao = descricao
+            });
+            return affected > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falha ao atualizar descrição da conversa {ConversationId}", conversationId);
+            return false;
         }
     }
 
@@ -94,7 +115,7 @@ public class ConversationRepository : IConversationRepository
     public async Task<List<ChatConversation>> GetConversationsAsync()
     {
         var sql = @"
-                SELECT Id, Titulo, NomeModelo, DataCriacao, DataUltimaAtividade
+                SELECT Id, Titulo, Descricao, NomeModelo, DataCriacao, DataUltimaAtividade
                 FROM Conversas
                 ORDER BY DataUltimaAtividade DESC;";
 
@@ -136,7 +157,7 @@ public class ConversationRepository : IConversationRepository
     {
         var resultado = new List<ConversationExportItem>();
         var sqlConversas = @"
-                SELECT Id, Titulo, NomeModelo, DataCriacao, DataUltimaAtividade
+                SELECT Id, Titulo, Descricao, NomeModelo, DataCriacao, DataUltimaAtividade
                 FROM Conversas
                 ORDER BY DataCriacao ASC;";
 
@@ -151,6 +172,7 @@ public class ConversationRepository : IConversationRepository
                 resultado.Add(new ConversationExportItem
                 {
                     Titulo = conversa.Titulo,
+                    Descricao = conversa.Descricao,
                     NomeModelo = conversa.NomeModelo,
                     DataCriacao = conversa.DataCriacao,
                     DataUltimaAtividade = conversa.DataUltimaAtividade,
@@ -181,13 +203,14 @@ public class ConversationRepository : IConversationRepository
             foreach (var item in itens)
             {
                 var sqlConversa = @"
-                        INSERT INTO Conversas (Titulo, NomeModelo, DataCriacao, DataUltimaAtividade)
-                        VALUES (@Titulo, @NomeModelo, @DataCriacao, @DataUltimaAtividade);
+                        INSERT INTO Conversas (Titulo, Descricao, NomeModelo, DataCriacao, DataUltimaAtividade)
+                        VALUES (@Titulo, @Descricao, @NomeModelo, @DataCriacao, @DataUltimaAtividade);
                         SELECT last_insert_rowid();";
 
                 int novoId = await connection.ExecuteScalarAsync<int>(sqlConversa, new
                 {
                     Titulo = item.Titulo,
+                    Descricao = item.Descricao,
                     NomeModelo = item.NomeModelo,
                     DataCriacao = item.DataCriacao.ToString("o"),
                     DataUltimaAtividade = item.DataUltimaAtividade.ToString("o")

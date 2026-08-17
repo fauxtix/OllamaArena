@@ -22,10 +22,8 @@ public class BenchmarkRepository : IBenchmarkRepository
     /// <summary>
     /// Insere um novo prompt e retorna o ID gerado pelo SQLite.
     /// </summary>
-    public async Task<int> CreatePromptAsync(string textoPrompt, double temperatura)
+    public async Task<int> CreatePromptAsync(string textoPrompt, double temperatura, string descricao)
     {
-        var description = PromptSummarizer.ExtractDescription(textoPrompt);
-
         var sql = @"
                 INSERT INTO Prompts (Descricao, TextoPrompt, DataCriacao, Temperatura ) 
                 VALUES (@Descricao, @TextoPrompt, @DataCriacao, @Temperatura);
@@ -34,11 +32,52 @@ public class BenchmarkRepository : IBenchmarkRepository
 
         return await connection.ExecuteScalarAsync<int>(sql, new
         {
-            Descricao = description,
+            Descricao = descricao,
             TextoPrompt = textoPrompt,
             DataCriacao = DateTime.UtcNow.ToString("o"),
             Temperatura = temperatura
         });
+    }
+
+    /// <summary>
+    /// Procura um prompt existente pelo texto. Se não existe, cria um novo.
+    /// Retorna o ID e a descrição efectivamente guardada.
+    /// </summary>
+    public async Task<(int PromptId, string Descricao)> GetOrCreatePromptIdAsync(string textoPrompt, string descricao)
+    {
+        using var connection = _context.CreateConnection();
+
+        var existing = await connection.QueryFirstOrDefaultAsync<(int Id, string Descricao)?>(
+            "SELECT Id, Descricao FROM Prompts WHERE TextoPrompt = @TextoPrompt LIMIT 1",
+            new { TextoPrompt = textoPrompt });
+
+        if (existing.HasValue)
+            return (existing.Value.Id, existing.Value.Descricao ?? string.Empty);
+
+        var sql = @"
+            INSERT INTO Prompts (Descricao, TextoPrompt, DataCriacao, Temperatura)
+            VALUES (@Descricao, @TextoPrompt, @DataCriacao, 0);
+            SELECT last_insert_rowid();";
+
+        var newId = await connection.ExecuteScalarAsync<int>(sql, new
+        {
+            Descricao = descricao,
+            TextoPrompt = textoPrompt,
+            DataCriacao = DateTime.UtcNow.ToString("o")
+        });
+
+        return (newId, descricao);
+    }
+
+    /// <summary>
+    /// Procura a descrição de um prompt existente pelo texto. Retorna null se não existe.
+    /// </summary>
+    public async Task<string?> FindDescriptionByTextAsync(string textoPrompt)
+    {
+        using var connection = _context.CreateConnection();
+        return await connection.QueryFirstOrDefaultAsync<string?>(
+            "SELECT Descricao FROM Prompts WHERE TextoPrompt = @TextoPrompt LIMIT 1",
+            new { TextoPrompt = textoPrompt });
     }
 
     /// <summary>
@@ -217,10 +256,9 @@ public class BenchmarkRepository : IBenchmarkRepository
     /// </summary>
     public async Task<bool> UpdatePromptAsync(int id, string novoTexto)
     {
-        var description = PromptSummarizer.ExtractDescription(novoTexto);
-        var sql = "UPDATE Prompts SET Descricao = @Descricao, TextoPrompt = @TextoPrompt WHERE Id = @Id;";
+        var sql = "UPDATE Prompts SET TextoPrompt = @TextoPrompt WHERE Id = @Id;";
         using var connection = _context.CreateConnection();
-        int AffectedLines = await connection.ExecuteAsync(sql, new { Descricao = description, TextoPrompt = novoTexto, Id = id });
+        int AffectedLines = await connection.ExecuteAsync(sql, new { TextoPrompt = novoTexto, Id = id });
         return AffectedLines > 0;
     }
 

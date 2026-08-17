@@ -1,0 +1,132 @@
+@using Microsoft.Extensions.Localization
+@using OllamaArena.Resources
+@inject IStringLocalizer<SharedResources> L
+
+<FluentDialog Hidden="@(!Visible)"
+              Modal="true"
+              Width="480px"
+              Class="confirm-save-dialog">
+
+    <FluentDialogHeader Visible="true">
+        <FluentStack VerticalAlignment="VerticalAlignment.Center" Gap="10">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Save())" Color="Color.Accent" />
+            <FluentLabel Size="IconSize.Large"><b>@L["ConfirmSaveDialog.Title"]</b></FluentLabel>
+        </FluentStack>
+    </FluentDialogHeader>
+
+    <FluentDialogBody>
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <p style="margin: 0;">@L["ConfirmSaveDialog.Message"]</p>
+
+            @if (_readOnly)
+            {
+                <FluentTextField Value="@_descricao"
+                                 Style="width: 100%;"
+                                 ReadOnly="true"
+                                 Disabled="true" />
+            }
+            else
+            {
+                <FluentTextField Value="@_descricao"
+                                 ValueChanged="OnDescricaoChanged"
+                                 Placeholder="@L["ConfirmSaveDialog.DescriptionPlaceholder"]"
+                                 Style="width: 100%;"
+                                 Autofocus="true"
+                                 Immediate="true"
+                                 @onkeydown="OnKeyDown" />
+            }
+        </div>
+    </FluentDialogBody>
+
+    <FluentDialogFooter>
+        <FluentStack HorizontalAlignment="HorizontalAlignment.End" Gap="8">
+            <FluentButton Appearance="Appearance.Stealth"
+                          OnClick="Cancel">
+                @L["Common.Cancel"]
+            </FluentButton>
+            <FluentButton Appearance="Appearance.Accent"
+                          OnClick="Confirm"
+                          Disabled="@(_readOnly ? false : string.IsNullOrWhiteSpace(_descricao))">
+                @L["Common.Save"]
+            </FluentButton>
+        </FluentStack>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    private string _descricao = string.Empty;
+    private bool _readOnly;
+
+    protected override void OnParametersSet()
+    {
+        _readOnly = !string.IsNullOrEmpty(DescricaoExistente);
+
+        if (_readOnly)
+        {
+            _descricao = DescricaoExistente!;
+        }
+        else if (Visible)
+        {
+            _descricao = string.Empty;
+        }
+    }
+
+    private void OnDescricaoChanged(string value)
+    {
+        _descricao = value;
+        StateHasChanged();
+    }
+
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> VisibleChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnConfirm { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public string? DescricaoExistente { get; set; }
+
+    private async Task Confirm()
+    {
+        if (!_readOnly && string.IsNullOrWhiteSpace(_descricao)) return;
+        await OnConfirm.InvokeAsync(_descricao);
+        _descricao = string.Empty;
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    private async Task Cancel()
+    {
+        _descricao = string.Empty;
+        await OnCancel.InvokeAsync();
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && _readOnly)
+        {
+            await Confirm();
+        }
+        else if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(_descricao))
+        {
+            await Confirm();
+        }
+        else if (e.Key == "Escape")
+        {
+            await Cancel();
+        }
+    }
+}
+
+<style>
+    fluent-dialog.confirm-save-dialog::part(control) {
+        max-width: 95vw !important;
+        width: min(480px, 95vw) !important;
+    }
+</style>

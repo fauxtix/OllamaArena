@@ -4,7 +4,6 @@ namespace OllamaArena.Models.Entities
     {
         public int Id { get; set; }
         public int PromptId { get; set; }
-        public string Descricao { get; set; } = string.Empty;
         public string NomeModelo { get; set; } = string.Empty;
         public string TextoResposta { get; set; } = string.Empty;
         public double TokensPorSegundo { get; set; }

@@ -76,6 +76,23 @@ namespace OllamaArena.Components.Pages
 
         private bool showOllamaError = false;
 
+        // Estado pendente para confirmação de gravação (1ª troca)
+        private bool _awaitingConfirmation;
+        private string _pendingUserPrompt = string.Empty;
+        private Models.DTO.ChatMessage? _pendingAiMessage;
+        private double _pendingTemperature;
+        private string _pendingTempoFinal = string.Empty;
+        private long _pendingEvalCount;
+        private long _pendingEvalDurationNs;
+        private long _pendingLoadDurationNs;
+        private double _pendingStopwatchMs;
+
+        private bool _showSaveResult;
+        private bool _saveSuccess;
+        private string _saveResultDescricao = string.Empty;
+        private string _descricaoAtual = string.Empty;
+        private bool _isFirstExchange;
+
         private string ModelName
         {
             get => _modelName;
@@ -230,8 +247,6 @@ namespace OllamaArena.Components.Pages
             };
             _messages.Add(userMessage);
 
-            await PersistUserMessageAsync(userPrompt);
-
             _currentMessage = string.Empty;
             _inputKey++;
             _isThinking = true;
@@ -277,6 +292,7 @@ namespace OllamaArena.Components.Pages
             long loadDurationNs = 0;
             long evalDurationNs = 0;
             int evalCount = 0;
+            string? errorMessage = null;
 
             try
             {
@@ -463,17 +479,19 @@ namespace OllamaArena.Components.Pages
             catch (OperationCanceledException ocEx)
             {
                 _logger?.LogError(ocEx, "O streaming da resposta foi cancelado.");
+                errorMessage = aiMessage.Text == "..." ? L["Chat.ResponseTimeout"] : L["Chat.ResponseCancelled"];
                 aiMessage.Text = aiMessage.Text == "..." ? L["Chat.ResponseTimeout"] : aiMessage.Text + L["Chat.ResponseCancelled"];
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Erro inesperado durante o streaming da resposta.");
+                errorMessage = L["Chat.UnexpectedError", ex.Message];
                 aiMessage.Text = L["Chat.UnexpectedError", ex.Message];
             }
             finally
             {
                 stopwatch.Stop();
-                timer?.Dispose(); 
+                timer?.Dispose();
 
                 string tempoFinal = stopwatch.Elapsed.TotalSeconds < 10
                     ? $"{stopwatch.Elapsed.TotalSeconds:F2}s"
@@ -481,47 +499,12 @@ namespace OllamaArena.Components.Pages
 
                 aiMessage.ElapsedTime = tempoFinal;
 
-                if (evalCount > 0 && evalDurationNs > 0)
+                if (errorMessage is null)
                 {
-                    try
-                    {
-                        if (BenchmarkRepo != null)
-                        {
-                            if (_currentPromptId == 0)
-                            {
-                                _currentPromptId = await BenchmarkRepo.CreatePromptAsync(userPrompt, temperature);
-                            }
-
-                            double evalSeconds = evalDurationNs / 1_000_000_000.0;
-                            double tokensPerSecond = evalCount / evalSeconds;
-
-                            var newResponse = new BenchmarkResponse
-                            {
-                                PromptId = _currentPromptId,
-                                NomeModelo = ModelName,
-                                TextoResposta = aiMessage.Text,
-                                TokensPorSegundo = Math.Round(tokensPerSecond, 1),
-                                TempoPuroMs = evalDurationNs / 1_000_000.0,
-                                TempoCargaMs = loadDurationNs / 1_000_000.0,
-                                TempoProcessamento = stopwatch.Elapsed.TotalMilliseconds,
-                                TamanhoTokens = evalCount
-                            };
-
-                            await BenchmarkRepo.CreateResponseAsync(newResponse);
-                        }
-                    }
-                    catch (Exception dbEx)
-                    {
-                        _logger?.LogError(dbEx, "[SQLITE ERROR] Falha ao gravar dados: {Message}", dbEx.Message);
-                    }
+                    await HandlePostStreamAsync(userPrompt, aiMessage, temperature,
+                        evalCount, evalDurationNs, loadDurationNs,
+                        stopwatch.Elapsed.TotalMilliseconds, tempoFinal);
                 }
-                else
-                {
-                    _currentPromptId = 0;
-                    _logger?.LogInformation("[BENCHMARK] Teste descartado para o modelo {ModelName}. Prompt incompleto.", ModelName);
-                }
-
-                await PersistAssistantMessageAsync(aiMessage, temperature, tempoFinal);
 
                 _isThinking = false;
                 try { _cts?.Dispose(); } catch { }
@@ -674,6 +657,13 @@ namespace OllamaArena.Components.Pages
             _showContextBar = false;
 
             _conversationId = 0;
+            _currentPromptId = 0;
+            _awaitingConfirmation = false;
+            ClearPendingState();
+            _showSaveResult = false;
+            _saveResultDescricao = string.Empty;
+            _descricaoAtual = string.Empty;
+            _isFirstExchange = false;
 
             // --- AÇÃO PARA O BENCHMARK: Descarregar o modelo da VRAM ---
             _ = Task.Run(async () =>
@@ -804,6 +794,233 @@ namespace OllamaArena.Components.Pages
             {
                 _logger?.LogError(dbEx, "[SQLITE ERROR] Falha ao gravar resposta do assistente: {Message}", dbEx.Message);
             }
+        }
+
+        private async Task PersistBenchmarkAsync(string userPrompt, Models.DTO.ChatMessage aiMessage, double temp, long evalCount, long evalDurationNs, long loadDurationNs, double totalMs, string descricao)
+        {
+            if (evalCount <= 0 || evalDurationNs <= 0) return;
+
+            try
+            {
+                if (BenchmarkRepo == null) return;
+
+                if (_currentPromptId == 0)
+                {
+                    var (promptId, descGuardada) = await BenchmarkRepo.GetOrCreatePromptIdAsync(userPrompt, descricao);
+                    _currentPromptId = promptId;
+                    _descricaoAtual = descGuardada;
+                }
+
+                double evalSeconds = evalDurationNs / 1_000_000_000.0;
+                double tokensPerSecond = evalCount / evalSeconds;
+
+                var newResponse = new BenchmarkResponse
+                {
+                    PromptId = _currentPromptId,
+                    NomeModelo = ModelName,
+                    TextoResposta = aiMessage.Text,
+                    TokensPorSegundo = Math.Round(tokensPerSecond, 1),
+                    TempoPuroMs = evalDurationNs / 1_000_000.0,
+                    TempoCargaMs = loadDurationNs / 1_000_000.0,
+                    TempoProcessamento = totalMs,
+                    TamanhoTokens = (int)evalCount
+                };
+
+                await BenchmarkRepo.CreateResponseAsync(newResponse);
+            }
+            catch (Exception dbEx)
+            {
+                _logger?.LogError(dbEx, "[SQLITE ERROR] Falha ao gravar benchmark: {Message}", dbEx.Message);
+            }
+        }
+
+        private async Task HandlePostStreamAsync(
+            string userPrompt,
+            Models.DTO.ChatMessage aiMessage,
+            double temperature,
+            long evalCount,
+            long evalDurationNs,
+            long loadDurationNs,
+            double totalMs,
+            string tempoFinal)
+        {
+            _pendingUserPrompt = userPrompt;
+            _pendingAiMessage = aiMessage;
+            _pendingTemperature = temperature;
+            _pendingTempoFinal = tempoFinal;
+            _pendingEvalCount = evalCount;
+            _pendingEvalDurationNs = evalDurationNs;
+            _pendingLoadDurationNs = loadDurationNs;
+            _pendingStopwatchMs = totalMs;
+
+            if (_conversationId != 0)
+            {
+                _isFirstExchange = false;
+            }
+            else
+            {
+                string? descExistente = null;
+                if (BenchmarkRepo != null)
+                {
+                    descExistente = await BenchmarkRepo.FindDescriptionByTextAsync(userPrompt);
+                }
+
+                if (descExistente is not null)
+                {
+                    _descricaoAtual = descExistente;
+                    _isFirstExchange = false;
+                }
+                else
+                {
+                    _isFirstExchange = true;
+                }
+            }
+
+            _awaitingConfirmation = true;
+        }
+
+        private async Task PersistFollowUpExchangeAsync()
+        {
+            if (ConversationRepo == null) return;
+
+            await ConversationRepo.AddMessageAsync(new ChatConversationMessage
+            {
+                ConversationId = _conversationId,
+                Role = "user",
+                Content = _pendingUserPrompt,
+                Temperature = _pendingTemperature,
+                Timestamp = DateTime.UtcNow
+            });
+
+            if (_pendingAiMessage != null)
+            {
+                await PersistAssistantMessageAsync(_pendingAiMessage, _pendingTemperature, _pendingTempoFinal);
+            }
+
+            await PersistBenchmarkAsync(
+                _pendingUserPrompt,
+                _pendingAiMessage!,
+                _pendingTemperature,
+                _pendingEvalCount,
+                _pendingEvalDurationNs,
+                _pendingLoadDurationNs,
+                _pendingStopwatchMs,
+                _descricaoAtual);
+        }
+
+        private async Task<bool> PersistAllWithDescriptionAsync(string descricao)
+        {
+            if (ConversationRepo == null) return false;
+
+            try
+            {
+                string titulo = _pendingUserPrompt.Length > 60 ? _pendingUserPrompt[..60] : _pendingUserPrompt;
+                _conversationId = await ConversationRepo.CreateConversationAsync(titulo, ModelName, descricao);
+
+                if (_conversationId == 0) return false;
+
+                await ConversationRepo.AddMessageAsync(new ChatConversationMessage
+                {
+                    ConversationId = _conversationId,
+                    Role = "user",
+                    Content = _pendingUserPrompt,
+                    Temperature = _pendingTemperature,
+                    Timestamp = DateTime.UtcNow
+                });
+
+                if (_pendingAiMessage != null)
+                {
+                    await PersistAssistantMessageAsync(_pendingAiMessage, _pendingTemperature, _pendingTempoFinal);
+                }
+
+                await PersistBenchmarkAsync(
+                    _pendingUserPrompt,
+                    _pendingAiMessage!,
+                    _pendingTemperature,
+                    _pendingEvalCount,
+                    _pendingEvalDurationNs,
+                    _pendingLoadDurationNs,
+                    _pendingStopwatchMs,
+                    descricao);
+
+                return true;
+            }
+            catch (Exception dbEx)
+            {
+                _logger?.LogError(dbEx, "[SQLITE ERROR] Falha ao gravar conversa com descrição: {Message}", dbEx.Message);
+                return false;
+            }
+        }
+
+        private async Task OnConfirmSaveAsync(string descricao)
+        {
+            _awaitingConfirmation = false;
+
+            if (_conversationId == 0)
+            {
+                _descricaoAtual = descricao;
+                _saveSuccess = await PersistAllWithDescriptionAsync(descricao);
+                _saveResultDescricao = descricao;
+                ClearPendingState();
+                _showSaveResult = true;
+            }
+            else
+            {
+                await PersistFollowUpExchangeAsync();
+                ClearPendingState();
+            }
+
+            StateHasChanged();
+        }
+
+        private void OnCancelSaveAsync()
+        {
+            _awaitingConfirmation = false;
+
+            if (_conversationId == 0)
+            {
+                ClearPendingState();
+                _messages.Clear();
+                _conversationId = 0;
+                _currentPromptId = 0;
+                _descricaoAtual = string.Empty;
+                _messages.Add(new Models.DTO.ChatMessage
+                {
+                    User = "Ollama",
+                    Text = L["Chat.WelcomeMessage"]
+                });
+            }
+            else
+            {
+                ClearPendingState();
+            }
+
+            StateHasChanged();
+        }
+
+        private void OnDialogVisibleChanged(bool visible)
+        {
+            _awaitingConfirmation = visible;
+            StateHasChanged();
+        }
+
+        private void ClearPendingState()
+        {
+            _pendingUserPrompt = string.Empty;
+            _pendingAiMessage = null;
+            _pendingTemperature = 0;
+            _pendingTempoFinal = string.Empty;
+            _pendingEvalCount = 0;
+            _pendingEvalDurationNs = 0;
+            _pendingLoadDurationNs = 0;
+            _pendingStopwatchMs = 0;
+        }
+
+        private void OnSaveResultClosed()
+        {
+            _showSaveResult = false;
+            _saveResultDescricao = string.Empty;
+            StateHasChanged();
         }
 
         private string FormatMessage(string content)

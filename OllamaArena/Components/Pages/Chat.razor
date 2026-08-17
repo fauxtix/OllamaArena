@@ -208,6 +208,17 @@ else
             </FluentStack>
         </FluentCard>
         <HistoryPanel @ref="historyPanel" OnLoadConversation="@LoadConversationAsync" />
+
+        <ConfirmSaveDialog Visible="@_awaitingConfirmation"
+                           DescricaoExistente="@(_isFirstExchange ? null : _descricaoAtual)"
+                           VisibleChanged="OnDialogVisibleChanged"
+                           OnConfirm="OnConfirmSaveAsync"
+                           OnCancel="OnCancelSaveAsync" />
+
+        <SaveResultDialog Visible="@_showSaveResult"
+                         VisibleChanged="v => { _showSaveResult = v; if (!v) OnSaveResultClosed(); }"
+                         Sucesso="@_saveSuccess"
+                         Descricao="@_saveResultDescricao" />
     </div>
 }
 <style>

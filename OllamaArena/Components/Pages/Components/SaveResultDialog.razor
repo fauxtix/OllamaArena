@@ -1,0 +1,77 @@
+@using Microsoft.Extensions.Localization
+@using OllamaArena.Resources
+@inject IStringLocalizer<SharedResources> L
+
+<FluentDialog Hidden="@(!Visible)"
+              Modal="true"
+              Width="450px"
+              Class="save-result-dialog">
+
+    <FluentDialogHeader Visible="true">
+        <FluentStack VerticalAlignment="VerticalAlignment.Center" Gap="10">
+            @if (Sucesso)
+            {
+                <FluentIcon Value="@(new Icons.Regular.Size24.CheckmarkCircle())" Color="Color.Success" />
+                <FluentLabel Size="IconSize.Large"><b>@L["SaveResultDialog.TitleSuccess"]</b></FluentLabel>
+            }
+            else
+            {
+                <FluentIcon Value="@(new Icons.Regular.Size24.DismissCircle())" Color="Color.Error" />
+                <FluentLabel Size="IconSize.Large"><b>@L["SaveResultDialog.TitleError"]</b></FluentLabel>
+            }
+        </FluentStack>
+    </FluentDialogHeader>
+
+    <FluentDialogBody>
+        @if (Sucesso)
+        {
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <p style="margin: 0;">@L["SaveResultDialog.SuccessMessage"]</p>
+                @if (!string.IsNullOrWhiteSpace(Descricao))
+                {
+                    <div style="padding: 8px 12px; background: var(--neutral-layer-2); border-radius: 6px; border-left: 3px solid var(--accent-fill-rest);">
+                        <span style="font-size: 0.85rem; color: var(--neutral-foreground-hint);">@L["SaveResultDialog.DescriptionLabel"]</span>
+                        <p style="margin: 4px 0 0 0; font-weight: 600;">@Descricao</p>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p style="margin: 0;">@L["SaveResultDialog.ErrorMessage"]</p>
+        }
+    </FluentDialogBody>
+
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent"
+                      OnClick="Close">
+            OK
+        </FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> VisibleChanged { get; set; }
+
+    [Parameter]
+    public bool Sucesso { get; set; }
+
+    [Parameter]
+    public string? Descricao { get; set; }
+
+    private async Task Close()
+    {
+        await VisibleChanged.InvokeAsync(false);
+    }
+}
+
+<style>
+    fluent-dialog.save-result-dialog::part(control) {
+        max-width: 95vw !important;
+        width: min(450px, 95vw) !important;
+    }
+</style>

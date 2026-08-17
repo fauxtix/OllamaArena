@@ -103,6 +103,7 @@ public static class DatabaseSchemaInitializer
             CREATE TABLE IF NOT EXISTS "Conversas" (
                 "Id"                  INTEGER PRIMARY KEY AUTOINCREMENT,
                 "Titulo"              TEXT,
+                "Descricao"           TEXT,
                 "NomeModelo"          TEXT,
                 "DataCriacao"         TEXT,
                 "DataUltimaAtividade" TEXT
@@ -230,6 +231,8 @@ public static class DatabaseSchemaInitializer
         EnsureColumn(connection, "Respostas", "GeminiLoopDetectionRating", "INTEGER");
         EnsureColumn(connection, "Respostas", "OpenRouterLanguageConsistencyRating", "INTEGER");
         EnsureColumn(connection, "Respostas", "OpenRouterLoopDetectionRating", "INTEGER");
+
+        EnsureColumn(connection, "Conversas", "Descricao", "TEXT");
     }
 
     private static void EnsureColumn(IDbConnection connection, string table, string column, string type)

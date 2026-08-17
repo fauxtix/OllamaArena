@@ -5,7 +5,8 @@ namespace OllamaArena.Services.Interfaces.Repositories;
 
 public interface IConversationRepository
 {
-    Task<int> CreateConversationAsync(string titulo, string nomeModelo);
+    Task<int> CreateConversationAsync(string titulo, string nomeModelo, string? descricao = null);
+    Task<bool> UpdateDescricaoAsync(int conversationId, string descricao);
     Task<bool> AddMessageAsync(ChatConversationMessage message);
     Task<bool> TouchConversationAsync(int conversationId);
     Task<List<ChatConversation>> GetConversationsAsync();

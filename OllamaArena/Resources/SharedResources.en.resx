@@ -270,6 +270,30 @@
   <data name="Chat.WebSearchTooltip" xml:space="preserve">
     <value>Web search is limited: Wikipedia returns context, but DuckDuckGo uses anti-bot protection and may return no results.</value>
   </data>
+  <data name="ConfirmSaveDialog.Title" xml:space="preserve">
+    <value>Save record</value>
+  </data>
+  <data name="ConfirmSaveDialog.Message" xml:space="preserve">
+    <value>Do you want to save this conversation to the database? Enter a brief description to identify this record.</value>
+  </data>
+  <data name="ConfirmSaveDialog.DescriptionPlaceholder" xml:space="preserve">
+    <value>Record description...</value>
+  </data>
+  <data name="SaveResultDialog.TitleSuccess" xml:space="preserve">
+    <value>Record saved</value>
+  </data>
+  <data name="SaveResultDialog.TitleError" xml:space="preserve">
+    <value>Save error</value>
+  </data>
+  <data name="SaveResultDialog.SuccessMessage" xml:space="preserve">
+    <value>The record has been successfully saved to the database.</value>
+  </data>
+  <data name="SaveResultDialog.ErrorMessage" xml:space="preserve">
+    <value>An error occurred while saving the record. Please try again.</value>
+  </data>
+  <data name="SaveResultDialog.DescriptionLabel" xml:space="preserve">
+    <value>Description:</value>
+  </data>
   <data name="Benchmarks.SearchPlaceholder" xml:space="preserve">
     <value>Search benchmarks (model, description)</value>
   </data>
