@@ -27,13 +27,13 @@ dotnet build OllamaArena.slnx
 dotnet test OllamaArena.slnx
 ```
 
-Esperado: **todos os testes passam** (a contagem varia consoante a versão — `dotnet test OllamaArena.slnx` informa o total):
+Esperado: **todos os testes passam** (83 testes em 8 classes — `dotnet test OllamaArena.slnx` informa o total):
 
 | Projeto de teste | Cobre |
 | --- | --- |
 | `ScoreCalculatorTests` | renormalização de pesos, mínimo 8 métricas / pesos ≥ 50, HaloEffect com peso 0 |
-| `EvaluationParserTests` | 12 métricas, prefixos hífen/asterisco, `LanguageConsistency` e `LoopDetection` |
-| `ChatComposerServiceTests` | trim do histórico a 60%, fusão de mensagens, remoção do assistant final, `num_predict` ≤ contexto |
+| `EvaluationParserTests` | 12 métricas, prefixos hífen/asterisco, `LanguageConsistency` e `LoopDetection`, cultura pt |
+| `ChatComposerServiceTests` | trim do histórico a 60%, fusão de mensagens, remoção do assistant final, `num_predict` ≤ contexto, reasoning |
 | `ChatMeasureTemperatureTests` | temperatura factual/criativa/código, remoção de acentos |
 | `LocalAnalysisServiceTests` | listas vazias/nulas sem crash, modelo mais rápido, melhor avaliado, consenso |
 | `SqliteTypeHandlersTests` | conversão de `INTEGER`/`REAL`/`NULL` do SQLite para `double`/`float`/nullable sem `InvalidCastException` |
@@ -76,11 +76,15 @@ Esperado: **todos os testes passam** (a contagem varia consoante a versão — `
 
 ## 6. Dashboard (`/dashboard`)
 
-- [ ] Com benchmarks gravados: cards (melhor modelo, nº de modelos, nº de avaliações) + ranking ordenado por score (progresso 0–5, colunas Gemini/OpenRouter).
-- [ ] Com BD vazia: badge "Sem avaliações", sem crash.
+- [ ] Com benchmarks gravados: **3 KPI cards** (Melhor Modelo com score, Modelos avaliados, Avaliações) + **2 radares de qualidade** (Gemini/OpenRouter, Chart.js, escala 0–5, 12 métricas, com download de imagem) + **1 scatter plot** (tokens/s vs. score, com download) + **tabela classificativa** ordenável (Posição, Modelo, Score com barra 0–5, Gemini, OpenRouter, Respostas, Avaliadas).
+- [ ] Sem BD vazia: badge "Sem avaliações", sem crash.
+- [ ] Sem avaliações de um juiz (ex.: só Gemini): radar desse juiz mostra "Sem avaliações para este juiz." sem erro.
 
 ## 7. Settings (`/settings`) e Logs (`/system-logs`)
 
+- [ ] **Chaves de API**: definir chaves Gemini/OpenRouter, guardar — confirmar que o botão só fica ativo com alterações (dirty-tracking) e que abre diálogo de confirmação com resumo (chaves mostradas como "definida/alterada" ou "removida", nunca o valor).
+- [ ] **Modelo OpenRouter**: catálogo ao vivo (radio buttons), `openrouter/free` fixo no topo; campo "ou escreve um ID à mão" para offline/custom; pesquisa no catálogo.
+- [ ] **Reasoning toggle**: ligar/desligar o FluentSwitch "Ativar reasoning (think)" — confirmar que `Chat:EnableReasoning` é gravado em `Configuracoes` e que o chat envia `think: true`/`false` apropriado (modelos com capacidade `thinking` via `/api/show`).
 - [ ] Tema/cor persistem em `localStorage` (chave `theme`); selecionar modelo guarda `ollama_model`.
 - [ ] `/system-logs`: entradas Serilog (batch 100) gravadas na tabela `Logs` da BD.
 

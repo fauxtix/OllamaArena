@@ -1,5 +1,6 @@
 -- Schema SQLite da aplicacao OllamaArena
--- Reune as 5 tabelas usadas pela app: Prompts, Respostas, Conversas, ConversaMensagens e Logs.
+-- Reune as 7 tabelas usadas pela app: Prompts, Respostas, Conversas, ConversaMensagens,
+-- Configuracoes, ModelosJuiz e Logs.
 -- O schema tambem e criado automaticamente no arranque (DatabaseSchemaInitializer.EnsureSchema);
 -- este ficheiro e uma referencia executavel antes da primeira utilizacao.
 
@@ -100,6 +101,27 @@ CREATE TABLE IF NOT EXISTS "ConversaMensagens" (
     "ElapsedTime"    TEXT,
     "Timestamp"      TEXT,
     FOREIGN KEY ("ConversationId") REFERENCES "Conversas" ("Id") ON DELETE CASCADE
+);
+
+-- ---------------------------------------------------------------------------
+-- Configuracoes: deficoes configuraveis pela pagina Settings (chave/valor).
+-- Exemplos: ApiKeys:Gemini, ApiKeys:OpenRouter, AutomatedJudge:OpenRouterModel,
+-- Chat:EnableReasoning.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS "Configuracoes" (
+    "Chave" TEXT PRIMARY KEY,
+    "Valor" TEXT NOT NULL
+);
+
+-- ---------------------------------------------------------------------------
+-- ModelosJuiz: registry de modelos ":free" do OpenRouter para a combo-box
+-- da pagina Settings. Tabela legada — a UI hoje usa o catalogo ao vivo
+-- (OpenRouterCatalogService), mas continua a ser semeada no primeiro arranque.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS "ModelosJuiz" (
+    "Id"          INTEGER PRIMARY KEY AUTOINCREMENT,
+    "Nome"        TEXT NOT NULL UNIQUE,
+    "DataCriacao" TEXT NOT NULL
 );
 
 -- ---------------------------------------------------------------------------

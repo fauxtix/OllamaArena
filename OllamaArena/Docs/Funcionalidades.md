@@ -31,7 +31,7 @@ Aplicação **Blazor Server** (.NET 10) que funciona como um **chat local com Ol
 - `PromptTemplates/` — construtores de prompt em C# (`EvaluatePromptTemplate`, `TranslatePromptTemplate`, `ChatInstructionsPrompt`)
 - `Screenshots/` — capturas de ecrã da app (PNG) + apresentação gerada `OllamaArena.pptx` + script `gerar_apresentacao.ps1` (COM do PowerPoint; ver `Guia_Apresentacao.md`)
 
-> **Nota de build:** a solução (`OllamaArena.slnx`) é de **projeto único** (`OllamaArena/`) + projeto de **testes** (`OllamaArena.Tests/`, 55 testes de unidade). Um antigo `Services/Services.csproj` na raiz (refactor abandonado que não compilava) foi **removido**; o build limpo faz-se com `dotnet build OllamaArena.slnx`.
+> **Nota de build:** a solução (`OllamaArena.slnx`) é de **projeto único** (`OllamaArena/`) + projeto de **testes** (`OllamaArena.Tests/`, 83 testes de unidade — 8 classes: ScoreCalculator, EvaluationParser, ChatComposerService, ChatMeasureTemperature, LocalAnalysisService, SqliteTypeHandlers, MessageFormatter, OpenRouterCatalogService). Um antigo `Services/Services.csproj` na raiz (refactor abandonado que não compilava) foi **removido**; o build limpo faz-se com `dotnet build OllamaArena.slnx`.
 
 ---
 
@@ -52,7 +52,7 @@ O menu lateral (`Components/Layout/NavMenu.razor`) expõe as funcionalidades pri
 
 > **Responsividade:** em ecrãs **≤768px** o `NavMenu` deixa de ocupar o lado esquerdo e passa a ser um **drawer deslizante** (`min(80vw, 280px)`) com overlay escurecido, aberto/fechado pelo ícone de hambúrguer no cabeçalho (`MainLayout`); os links fecham o drawer após a navegação.
 
-Existe ainda uma página auxiliar fora do menu: `/settings` (configuração dos juízes Gemini/OpenRouter).
+Existe ainda uma página auxiliar fora do menu: `/settings` (Definições — configuração dos juízes Gemini/OpenRouter, catálogo OpenRouter ao vivo, toggle de reasoning, chaves de API).
 
 ---
 
@@ -89,7 +89,7 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
   - **Barra de contexto**: `FluentProgress` com `Contexto: X / Y tokens` e "Z restantes" (fica âmbar a ≥90%).
   - Botões **Novo Chat** (descarta a sessão, fecha a conversa ativa e descarrega o modelo com `keep_alive=0`) e **Histórico** (`HistoryPanel` — histórico de execuções + conversas, ver secção 4.1).
   - **Cancelar** durante o streaming (token de cancelamento; mensagem termina com `*(Cancelado)*`).
-   - **Título curto** de cada prompt: gerado automaticamente por `PromptSummarizer.ExtractDescription` (**C# puro, sem chamadas LLM**) no momento em que o prompt é gravado (`CreatePromptAsync`/`UpdatePromptAsync`), e guardado na coluna `Prompts.Descricao` (ver secção 5).
+   - **Título curto** de cada prompt: a descrição é gravada na coluna `Prompts.Descricao` pelo `BenchmarkRepository.CreatePromptAsync` / `GetOrCreatePromptIdAsync` (ver secção 5) e exibida na grelha de `/benchmark-evaluations` e no `HistoryPanel`.
 - **Outputs:** mensagens markdown formatadas (`MessageFormatter.FormatMessagePlus`), tempo decorrido em tempo real (timer de 150 ms até ao 1.º token), badge de temperatura.
 - **Logs técnicos:** tempo até o Ollama começar a responder (time-to-first-byte) e tempo até ao 1.º token.
 
@@ -142,13 +142,17 @@ Chat com streaming em tempo real e recolha automática de métricas de benchmark
 
 ### 3.8 Dashboard (`/dashboard`)
 
-- **Propósito:** ranking agregado por modelo — o melhor modelo geral e a posição relativa de cada um, calculados a partir das avaliações dos juízes.
-- **Fluxo:** `OnInitializedAsync` → `BenchmarkRepository.GetModelRankingAsync()` (agrega por `NomeModelo` e calcula o score com `ScoreCalculator`, ver secção 5); erros silenciados (ranking vazio).
-- **Outputs:** cards de estatística — **Melhor Modelo** (nome + score), **Modelos avaliados** (contagem) e **Avaliações** (total de respostas com juiz) — e `FluentDataGrid` (Posição, Modelo, Score com `FluentProgress` 0–5, Gemini, OpenRouter, Respostas, Avaliadas) com `overflow-x: auto` em mobile.
+- **Propósito:** ranking agregado por modelo com visualizações gráficas — KPI cards, radares de qualidade por juiz, scatter plot de velocidade vs. qualidade e tabela classificativa.
+- **Fluxo:** `OnInitializedAsync` → `BenchmarkRepository.GetModelRankingAsync()` (agrega por `NomeModelo`, calcula o score com `ScoreCalculator`, ver secção 5) + `GetModelChartDataAsync()` (dados para gráficos); erros silenciados (ranking vazio). `OnAfterRenderAsync` renderiza os gráficos Chart.js via JS interop (`benchmarkCharts.renderGrafico`) com retry para aguardar o canvas do DOM.
+- **Outputs:**
+  - **3 KPI cards** com ícones FluentUI: **Melhor Modelo** (nome + score, accent), **Modelos avaliados** (contagem, success) e **Avaliações** (total de respostas com juiz, warning).
+  - **2 radares de qualidade** (Chart.js, escala 0–5, 12 métricas) — um por juiz (`graficoRadarDashboardGemini` / `graficoRadarDashboardOpenRouter`); cada radar média as notas dos modelos que têm avaliação desse juiz; sem dados mostra "Sem avaliações para este juiz."; cada radar tem botão de download de imagem.
+  - **1 scatter plot** (`graficoScatterTokens`) —.tokens/s (eixo X) vs. score (eixo Y), cor por modelo; download de imagem.
+  - **`FluentDataGrid` classificativa** — colunas: #, Modelo (sortable), Score (com `FluentProgress` 0–5 + valor), Gemini, OpenRouter, Respostas, Avaliadas; todas as colunas são ordenáveis; `overflow-x: auto` em mobile.
 
 ### 3.9 Páginas auxiliares (fora do menu)
 
-- **`/settings`** — configuração dos juízes Gemini/OpenRouter: chaves de API, modelo do juiz OpenRouter e temperatura — gravadas na BD (tabela `Configuracoes`). O modelo do juiz é escolhido por **radio buttons** a partir do **catálogo público do OpenRouter** (`OpenRouterCatalogService` → `GET /api/v1/models`, só modelos gratuitos; `openrouter/free` fixo no topo; pesquisa; campo "ou escreve um ID à mão" para casos offline/custom).
+- **`/settings`** — Definições: configuração dos juízes Gemini/OpenRouter (chaves de API), modelo do juiz OpenRouter (escolhido por **radio buttons** a partir do **catálogo público do OpenRouter** — `OpenRouterCatalogService` → `GET /api/v1/models`, só modelos gratuitos; `openrouter/free` fixo no topo; pesquisa; campo "ou escreve um ID à mão" para offline/custom) e toggle **Ativar reasoning (think)** (`Chat:EnableReasoning`, default **false**). Tudo gravado na BD (tabela `Configuracoes`) com dirty-tracking e diálogo de confirmação (resumo das alterações; chaves mostradas apenas como "definida/alterada" ou "removida", nunca o valor).
 
 ---
 
@@ -225,7 +229,6 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 - **`EvaluationParser`** — parse do output estruturado dos juízes (linha-a-linha, com secções `DESCRIPTION`/`FEEDBACK` e `RECOMMENDATION` — corrigido para a `DESCRIPTION` não "engolir" a `RECOMMENDATION`; ver secção 8 para a persistência).
 - **`InternetConnectivityService`** — verificação de ligação à internet; **`ReadMeService`** — leitura do README remoto; **`OllamaChecker`** — health check do Ollama.
 - **`ConversationRepository`** (`IConversationRepository`) — persistência de conversas do chat em **SQLite** (tabelas `Conversas` / `ConversaMensagens`, **registado no DI**): criar/tocar/listar conversas, gravar/ler mensagens (inclui `Reasoning`, `Temperature`, `ElapsedTime`) e **exportar** (`GetAllForExportAsync`) / **importar** (`ImportAsync`, transacional) como JSON (ver `HistoryPanel`).
-- **`PromptSummarizer`** — extrai a descrição curta de cada prompt.
 
 **`MessageFormatter` — pipeline de formatação markdown (`FormatMessagePlus`):**
 1. **Placeholder de digitação** — se o conteúdo for `...`, devolve o HTML dos três pontos animados (`<div class='typing-dots'>`).
@@ -238,12 +241,6 @@ Para além dos diálogos personalizados da secção 4.1, a app usa `IDialogServi
 8. **`ReconstructTables`** — agrupa linhas com `|`, estima o nº de colunas (`EstimateBestColumnCount`: nº de pipes − 1, mínimo 2), normaliza as células por linha e insere o separador `---` se faltar.
 9. **Pipeline Markdig** — `UseAdvancedExtensions`, `UseSoftlineBreakAsHardlineBreak`, `UsePipeTables`, `UseTaskLists`, `UseAutoLinks`, `UseDefinitionLists`, `UseEmphasisExtras`.
 10. **`ConvertParagraphsToDivs`** — converte `<p>...</p>` em `<div>...</div>` para compatibilidade com o CSS da Fluent UI.
-
-**`PromptSummarizer` — descrição curta dos prompts (`ExtractDescription`):**
-- Limpa a pontuação mas **preserva maiúsculas** (acrónimos "API"/"GPT") e termos técnicos ("c#", "c++", "react.js"); filtra com a **união dos dicionários de stopwords PT + EN** (`AllStopWords`, inclui `WeakWords`) — agnóstico ao idioma (a app é bilingue), sem deteção heurística de língua.
-- Gera **bigramas** (bónus posicional `1/(1+índice)` + bónus técnico) e **unigramas** (frequência ×1.8 + posição ×3.2 + bónus técnico); seleciona sem repetir palavras até `maxWords` (padrão 3) e capitaliza.
-- **Bónus técnico** (`GetTechnicalBonus`): palavras ≥7 chars (+1.2), com hífen ou dígitos (+1.8), sufixos técnicos/médicos `ine/oid/osis/itis/emia/vaccine` (+1.5).
-- Usado por `CreatePromptAsync` e `UpdatePromptAsync` (`BenchmarkRepository`) para preencher a coluna `Prompts.Descricao`; a descrição é exibida na grelha de `/benchmark-evaluations` e no `HistoryPanel`.
 
 **`PromptFilesService` — gestão dos ficheiros `Prompts/*.txt`:**
 - `GetPromptsDirectory` — `ContentRootPath/Prompts` (dev) com fallback para `AppContext.BaseDirectory/Prompts` (publish).
@@ -390,7 +387,7 @@ As **definições dos juízes** (chaves Gemini/OpenRouter, modelo do juiz OpenRo
 - Configuração: `appsettings.Local.json` opcional (não versionado) para overrides locais — incluindo `Security:EnableHttpsRedirection` (`false` para deploys HTTP-only, ver secção 12); chaves de API dos juízes **recomendadas via página Settings** (BD, tabela `Configuracoes`), com fallback para **user-secrets** (`ApiKeys:Gemini` / `ApiKeys:OpenRouter`) ou `appsettings.Local.json`.
 - Localização: PT (`pt`) por defeito + `en`; cookie `RequestCultureProvider`. A **tradução de feedbacks** e a **análise local de resultados** seguem a língua da sessão (o system-prompt do chat mantém-se neutro).
 
-**Requisitos de runtime:** `ollama serve` ativo na base configurada (`Ollama:BaseUrl`); projeto de testes `OllamaArena.Tests` com **55 testes de unidade** (ScoreCalculator, EvaluationParser, ChatMeasureTemperature, ChatComposerService, LocalAnalysisService, SqliteTypeHandlers) — `dotnet test`; validação = build + testes + execução manual.
+**Requisitos de runtime:** `ollama serve` ativo na base configurada (`Ollama:BaseUrl`); projeto de testes `OllamaArena.Tests` com **83 testes de unidade** (8 classes: ScoreCalculator, EvaluationParser, ChatComposerService, ChatMeasureTemperature, LocalAnalysisService, SqliteTypeHandlers, MessageFormatter, OpenRouterCatalogService) — `dotnet test`; validação = build + testes + execução manual.
 
 ---
 

@@ -10,7 +10,7 @@ The solution builds as a **single app project** (`OllamaArena/`) plus a **test p
 
 - Run: `dotnet watch run` from `OllamaArena/` (launch profile `https`).
 - Build: `dotnet build OllamaArena.slnx` (solution uses the new XML `.slnx` format).
-- Test: `dotnet test OllamaArena.slnx` (47 cases / 43 methods; no test count guarantees, so don't hardcode a number).
+- Test: `dotnet test OllamaArena.slnx` (83 tests in 8 classes; no test count guarantees, so don't hardcode a number).
 - CI: `.github/workflows/deploy-iis.yml` publishes Release and deploys to the author's self-hosted IIS runner (port 4501); not relevant on other machines.
 - Verification: successful build + passing tests + manual run.
 

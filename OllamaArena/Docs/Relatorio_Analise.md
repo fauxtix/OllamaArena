@@ -82,7 +82,7 @@
 15. ~~Suporte a modelos de reasoning (deepseek-r1, qwq) — mostrar `reasoning_content` separadamente~~ — **concluído** (bloco "Pensamento" colapsável, guardado na conversa).
 16. ~~Persistência real de conversas na BD (deixar de depender de localStorage) com export/import JSON~~ — **concluído** (tabelas `Conversas`/`ConversaMensagens`).
 17. ~~Dashboard agregado de métricas (gráficos por modelo ao longo do tempo) em vez de só tabelas~~ — **concluído** (ranking agregado com score ponderado das 12 métricas).
-18. ~~Testes unitários (`ChatMeasureTemperature`, `EvaluationParser`, `LocalAnalysisService`, repositórios com SQLite in-memory) + CI com GitHub Actions (`dotnet build`)~~ — **concluído** (55 testes, incluindo `SqliteTypeHandlersTests` com SQLite in-memory; CI `deploy-iis.yml`).
+18. ~~Testes unitários (`ChatMeasureTemperature`, `EvaluationParser`, `LocalAnalysisService`, repositórios com SQLite in-memory) + CI com GitHub Actions (`dotnet build`)~~ — **concluído** (83 testes em 8 classes, incluindo `SqliteTypeHandlersTests` com SQLite in-memory e `MessageFormatterTests`/`OpenRouterCatalogServiceTests`; CI `deploy-iis.yml`).
 19. Tornar a recomendação dos juízes contextual por temática — ver secção 6.
 
 ### Fase 4 — UX
