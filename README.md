@@ -10,9 +10,6 @@ A aplicação é mais do que um simples chat: é um **laboratório de experiment
 
 ---
 
-
----
-
 ## 🎯 Motivação, Filosofia e Engenharia de Seleção
 
 Este laboratório nasceu para resolver um desafio prático e diário no ecossistema local: **como escolher o modelo de IA certo para a tarefa certa?** No universo de modelos abertos, o tamanho nem sempre dita a eficácia. Um modelo de `1.5B` ou `3B` pode ter um desempenho factual e de formatação superior ao de um modelo maior para um determinado tipo de prompt. 
