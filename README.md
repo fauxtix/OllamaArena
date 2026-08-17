@@ -10,69 +10,6 @@ A aplicação é mais do que um simples chat: é um **laboratório de experiment
 
 ---
 
-## 🚀 Como executar e testar
-
-### Pré-requisitos
-- **[.NET 10 SDK](https://dotnet.microsoft.com/download)** instalado;
-- **Ollama** a correr localmente (`ollama serve`) — a aplicação liga-se a `http://localhost:11434`.
-
-### Passos
-1. Clonar o repositório;
-2. Instalar os modelos pretendidos: `ollama pull <modelo>` (ex.: `ollama pull llama3.2`);
-3. Executar a partir da pasta do projeto:
-   ```bash
-   cd OllamaArena
-   dotnet watch run
-   ```
-4. Abrir `https://localhost:7175` (ou `http://localhost:5292`). No primeiro arranque, a base de dados SQLite é criada automaticamente.
-
-### Configuração opcional
-- **Juízes de IA (chaves + modelo + temperatura):** a forma mais simples (e a única que funciona em qualquer deploy) é a página **Definições** (`/settings`), com a secção **"Juízes de IA"** — lá pode colar as chaves Gemini/OpenRouter, escolher o modelo do juiz OpenRouter numa **lista de radio buttons** a partir do **catálogo público** (modelos gratuitos; `openrouter/free` é sempre o default e fica fixo no topo) — ou escrever um ID à mão para casos offline/custom — e ajustar a temperatura. A escolha ativa fica na tabela `Configuracoes` (SQLite); tudo se aplica sem reiniciar.
-- Em desenvolvimento, pode configurar as mesmas chaves via user-secrets (ficam fora do repositório); a BD sobrepõe-se sempre à configuração:
-  ```bash
-  dotnet user-secrets set "ApiKeys:Gemini" "<chave>"
-  dotnet user-secrets set "ApiKeys:OpenRouter" "<chave>"
-  ```
-- O ficheiro `appsettings.Local.json` (não versionado) pode ser usado para overrides locais — por exemplo, desativar o redirect HTTPS num deploy sem certificado:
-  ```json
-  { "Security": { "EnableHttpsRedirection": false } }
-  ```
-
-### Nota sobre o deploy em IIS
-O repositório inclui um workflow GitHub Actions (`deploy-iis.yml`) que publica a aplicação e faz o deploy para um **self-hosted runner registado apenas na máquina do autor** (a app fica em `http://localhost:4501`). Noutras máquinas, ignore o workflow e corra localmente com `dotnet watch run` — não é necessário qualquer token ou credencial para clonar e testar.
-
-#### Chaves de API no IIS
-**Recomendado:** depois do deploy, use a página **Definições** → "Juízes de IA" para colar as chaves — ficam na BD e funcionam sem editar ficheiros. Em alternativa (ou como fallback), configure as chaves no `appsettings.Local.json` do servidor (ex.: `C:\inetpub\wwwroot\OllamaArena\appsettings.Local.json`):
-
-```json
-{
-  "Security": { "EnableHttpsRedirection": false },
-  "ApiKeys": { "Gemini": "<chave>", "OpenRouter": "<chave>" }
-}
-```
-
-Este ficheiro é **preservado pelo workflow em cada deploy** (fica fora do publish e da limpeza do site) e é relido em runtime (`reloadOnChange`), sem reiniciar o site. **Mantenha o bloco `Security`** — o workflow escreve-o automaticamente em cada deploy. Alternativa: variáveis de ambiente no App Pool do IIS (`ApiKeys__Gemini` / `ApiKeys__OpenRouter`, o `__` é convertido em `:`), que também sobrevivem a redeploys.
-
-### 📚 Documentação técnica (pasta `Docs`)
-A pasta **`OllamaArena/Docs/`** reúne a documentação técnica do projeto em Markdown — pode consultá-la no repositório ou, após um clone, diretamente no explorador de ficheiros:
-
-| Ficheiro | Conteúdo |
-|---|---|
-| `Funcionalidades.md` | Documentação técnica completa (stack, páginas, serviços, BD, configuração, deploy) |
-| `Guia_Testes.md` | Checklist manual de validação (build + testes + smoke test das funcionalidades) |
-| `Guia_Como_Comparar_Modelos.md` | Como usar o laboratório para comparar modelos de forma justa |
-| `Guia_Apresentacao.md` | Como gerar a apresentação `OllamaArena.pptx` a partir das screenshots em `OllamaArena/Screenshots/` |
-| `Relatorio_Analise.md` | Relatório de análise do código (pontos fortes, bugs, dívida técnica) |
-| `schema.sql` | DDL de referência (5 tabelas; o runtime cria 7 — adiciona `Configuracoes` e `ModelosJuiz` no arranque) |
-
-### 📸 Screenshots e apresentação
-A pasta **`OllamaArena/Screenshots/`** guarda capturas de ecrã das principais páginas e a apresentação **`OllamaArena.pptx`** (16:9) que as organiza num deck com **template profissional IT** (fundo azul-escuro, acento Fluent), **transições modernas** e **avanço por clique ou após 10 s**. Para regenerar (ex.: depois de adicionar capturas), corra:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "OllamaArena\Screenshots\gerar_apresentacao.ps1"
-```
-
-Requer **Windows com PowerPoint 2016+** (automação COM). Detalhes em `OllamaArena/Docs/Guia_Apresentacao.md`.
 
 ---
 
@@ -197,6 +134,73 @@ A navegação é simples. No menu lateral encontra todas as secções da aplica�
 - **Definições**: aceda à página de Definições (`/settings`) para configurar os **juízes de IA** — chaves de API Gemini/OpenRouter, modelo do juiz OpenRouter (escolhido numa lista de radio buttons com o catálogo gratuito do OpenRouter) e temperatura (gravadas na BD).
 
 Comece por enviar uma mensagem no Chat — a aplicação trata de tudo o resto.
+
+---
+
+## 🚀 Como executar e testar
+
+### Pré-requisitos
+- **[.NET 10 SDK](https://dotnet.microsoft.com/download)** instalado;
+- **Ollama** a correr localmente (`ollama serve`) — a aplicação liga-se a `http://localhost:11434`.
+
+### Passos
+1. Clonar o repositório;
+2. Instalar os modelos pretendidos: `ollama pull <modelo>` (ex.: `ollama pull llama3.2`);
+3. Executar a partir da pasta do projeto:
+   ```bash
+   cd OllamaArena
+   dotnet watch run
+   ```
+4. Abrir `https://localhost:7175` (ou `http://localhost:5292`). No primeiro arranque, a base de dados SQLite é criada automaticamente.
+
+### Configuração opcional
+- **Juízes de IA (chaves + modelo + temperatura):** a forma mais simples (e a única que funciona em qualquer deploy) é a página **Definições** (`/settings`), com a secção **"Juízes de IA"** — lá pode colar as chaves Gemini/OpenRouter, escolher o modelo do juiz OpenRouter numa **lista de radio buttons** a partir do **catálogo público** (modelos gratuitos; `openrouter/free` é sempre o default e fica fixo no topo) — ou escrever um ID à mão para casos offline/custom — e ajustar a temperatura. A escolha ativa fica na tabela `Configuracoes` (SQLite); tudo se aplica sem reiniciar.
+- Em desenvolvimento, pode configurar as mesmas chaves via user-secrets (ficam fora do repositório); a BD sobrepõe-se sempre à configuração:
+  ```bash
+  dotnet user-secrets set "ApiKeys:Gemini" "<chave>"
+  dotnet user-secrets set "ApiKeys:OpenRouter" "<chave>"
+  ```
+- O ficheiro `appsettings.Local.json` (não versionado) pode ser usado para overrides locais — por exemplo, desativar o redirect HTTPS num deploy sem certificado:
+  ```json
+  { "Security": { "EnableHttpsRedirection": false } }
+  ```
+
+### Nota sobre o deploy em IIS
+O repositório inclui um workflow GitHub Actions (`deploy-iis.yml`) que publica a aplicação e faz o deploy para um **self-hosted runner registado apenas na máquina do autor** (a app fica em `http://localhost:4501`). Noutras máquinas, ignore o workflow e corra localmente com `dotnet watch run` — não é necessário qualquer token ou credencial para clonar e testar.
+
+#### Chaves de API no IIS
+**Recomendado:** depois do deploy, use a página **Definições** → "Juízes de IA" para colar as chaves — ficam na BD e funcionam sem editar ficheiros. Em alternativa (ou como fallback), configure as chaves no `appsettings.Local.json` do servidor (ex.: `C:\inetpub\wwwroot\OllamaArena\appsettings.Local.json`):
+
+```json
+{
+  "Security": { "EnableHttpsRedirection": false },
+  "ApiKeys": { "Gemini": "<chave>", "OpenRouter": "<chave>" }
+}
+```
+
+Este ficheiro é **preservado pelo workflow em cada deploy** (fica fora do publish e da limpeza do site) e é relido em runtime (`reloadOnChange`), sem reiniciar o site. **Mantenha o bloco `Security`** — o workflow escreve-o automaticamente em cada deploy. Alternativa: variáveis de ambiente no App Pool do IIS (`ApiKeys__Gemini` / `ApiKeys__OpenRouter`, o `__` é convertido em `:`), que também sobrevivem a redeploys.
+
+### 📚 Documentação técnica (pasta `Docs`)
+A pasta **`OllamaArena/Docs/`** reúne a documentação técnica do projeto em Markdown — pode consultá-la no repositório ou, após um clone, diretamente no explorador de ficheiros:
+
+| Ficheiro | Conteúdo |
+|---|---|
+| `Funcionalidades.md` | Documentação técnica completa (stack, páginas, serviços, BD, configuração, deploy) |
+| `Guia_Testes.md` | Checklist manual de validação (build + testes + smoke test das funcionalidades) |
+| `Guia_Como_Comparar_Modelos.md` | Como usar o laboratório para comparar modelos de forma justa |
+| `Guia_Apresentacao.md` | Como gerar a apresentação `OllamaArena.pptx` a partir das screenshots em `OllamaArena/Screenshots/` |
+| `Relatorio_Analise.md` | Relatório de análise do código (pontos fortes, bugs, dívida técnica) |
+| `schema.sql` | DDL de referência (5 tabelas; o runtime cria 7 — adiciona `Configuracoes` e `ModelosJuiz` no arranque) |
+
+### 📸 Screenshots e apresentação
+A pasta **`OllamaArena/Screenshots/`** guarda capturas de ecrã das principais páginas e a apresentação **`OllamaArena.pptx`** (16:9) que as organiza num deck com **template profissional IT** (fundo azul-escuro, acento Fluent), **transições modernas** e **avanço por clique ou após 10 s**. Para regenerar (ex.: depois de adicionar capturas), corra:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "OllamaArena\Screenshots\gerar_apresentacao.ps1"
+```
+
+Requer **Windows com PowerPoint 2016+** (automação COM). Detalhes em `OllamaArena/Docs/Guia_Apresentacao.md`.
+
 
 ## ℹ️ Nota à navegação
 
