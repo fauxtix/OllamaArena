@@ -139,6 +139,15 @@ else
 
                                 <span>@msg.User</span>
                                 <span class="timestamp">• @msg.Timestamp.ToString("HH:mm")</span>
+
+                                @* --- INÍCIO DA ADIÇÃO --- *@
+                                @if (!string.IsNullOrWhiteSpace(msg.Summary))
+                                {
+                                    <span style="margin-left: 6px; padding: 2px 6px; background-color: var(--neutral-layer-3); border-radius: 4px; font-weight: 600;">
+                                        🏷️ @msg.Summary
+                                    </span>
+                                }
+                                @* --- FIM DA ADIÇÃO --- *@
                                 @if (msg.Temperature > 0)
                                 {
                                     <span class="elapsed-time">• @L["Chat.TemperatureLabel", msg.Temperature]</span>
@@ -208,17 +217,6 @@ else
             </FluentStack>
         </FluentCard>
         <HistoryPanel @ref="historyPanel" OnLoadConversation="@LoadConversationAsync" />
-
-        <ConfirmSaveDialog Visible="@_awaitingConfirmation"
-                           DescricaoExistente="@(_isFirstExchange ? null : _descricaoAtual)"
-                           VisibleChanged="OnDialogVisibleChanged"
-                           OnConfirm="OnConfirmSaveAsync"
-                           OnCancel="OnCancelSaveAsync" />
-
-        <SaveResultDialog Visible="@_showSaveResult"
-                         VisibleChanged="v => { _showSaveResult = v; if (!v) OnSaveResultClosed(); }"
-                         Sucesso="@_saveSuccess"
-                         Descricao="@_saveResultDescricao" />
     </div>
 }
 <style>

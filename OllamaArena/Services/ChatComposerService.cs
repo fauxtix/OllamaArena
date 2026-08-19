@@ -9,6 +9,12 @@ public sealed class ChatComposerService
     private readonly OllamaOptions _options;
     private readonly ISettingsRepository _settingsRepository;
 
+    /// <summary>Marcador que o LLM usa na primeira linha para indicar o resumo.</summary>
+    public const string SummaryMarker = "SUMMARY:";
+
+    /// <summary>Separador entre o resumo e o corpo da resposta.</summary>
+    public const string SummarySeparator = "---";
+
     public ChatComposerService(IOptions<OllamaOptions> options, ISettingsRepository settingsRepository)
     {
         _options = options.Value;
@@ -149,7 +155,80 @@ public sealed class ChatComposerService
             historyPayload.RemoveAt(historyPayload.Count - 1);
         }
 
+        if (historyPayload.Count > 0 && historyPayload[^1].Role == "user")
+        {
+            string promptOriginal = historyPayload[^1].Content;
+            historyPayload[^1].Content =
+                $"[INSTRUCTION: Start your reply with EXACTLY this two-line format:\n{SummaryMarker} <3-5 word summary>\n{SummarySeparator}\nThen answer normally. Do NOT skip these two lines.]\n\n{promptOriginal}";
+        }
+
         return historyPayload;
+    }
+
+    /// <summary>
+    /// Extrai uma descrição inteligente a partir do prompt do utilizador: toma a
+    /// primeira frase significativa (até ao primeiro ponto ou newline) e, se exceder
+    /// maxLength, truncata na fronteira de palavra mais próxima.
+    /// </summary>
+    public static string SmartFallbackDescription(string prompt, int maxLength = 50)
+    {
+        if (string.IsNullOrWhiteSpace(prompt))
+            return string.Empty;
+
+        string cleaned = prompt.Trim();
+
+        // 1. Tomar a primeira linha não-vazia
+        int newLineIdx = cleaned.IndexOf('\n');
+        if (newLineIdx > 0)
+            cleaned = cleaned[..newLineIdx].Trim();
+
+        // 2. Se contiver ponto, tomar até ao primeiro
+        int dotIdx = cleaned.IndexOf('.', StringComparison.Ordinal);
+        if (dotIdx > 0 && dotIdx < cleaned.Length - 1)
+            cleaned = cleaned[..dotIdx].Trim();
+
+        // 3. Se ainda exceder maxLength, truncar na fronteira de palavra
+        if (cleaned.Length <= maxLength)
+            return cleaned;
+
+        int corte = cleaned.LastIndexOf(' ', maxLength);
+        if (corte <= maxLength / 2)
+            corte = maxLength;
+
+        return cleaned[..corte].Trim() + "...";
+    }
+
+    /// <summary>
+    /// Extrai o SUMMARY e o separador --- do início da resposta do LLM,
+    /// devolvendo o resumo (se existir) e o texto limpo sem o prefixo.
+    /// Se o parse falhar, devolve (null, rawText) — fallback seguro.
+    /// </summary>
+    public static (string? summary, string cleanText) ExtractSummaryFromResponse(string rawText)
+    {
+        if (string.IsNullOrWhiteSpace(rawText))
+            return (null, rawText);
+
+        var lines = rawText.Split(["\r\n", "\n", "\r"], StringSplitOptions.None);
+
+        if (lines.Length < 2)
+            return (null, rawText);
+
+        string firstLine = lines[0].TrimStart();
+        string secondLine = lines[1].Trim();
+
+        if (!firstLine.StartsWith(SummaryMarker, StringComparison.OrdinalIgnoreCase))
+            return (null, rawText);
+
+        if (!string.Equals(secondLine, SummarySeparator, StringComparison.OrdinalIgnoreCase))
+            return (null, rawText);
+
+        string summary = firstLine[SummaryMarker.Length..].Trim();
+        string cleanText = string.Join("\n", lines.Skip(2)).TrimStart();
+
+        if (string.IsNullOrWhiteSpace(summary) || string.IsNullOrWhiteSpace(cleanText))
+            return (null, rawText);
+
+        return (summary, cleanText);
     }
 
     public static int EstimateTokens(string? text)

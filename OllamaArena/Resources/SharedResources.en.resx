@@ -270,6 +270,12 @@
   <data name="Chat.WebSearchTooltip" xml:space="preserve">
     <value>Web search is limited: Wikipedia returns context, but DuckDuckGo uses anti-bot protection and may return no results.</value>
   </data>
+  <data name="Chat.AutoSaveError" xml:space="preserve">
+    <value>An error occurred while saving the response automatically. The record may not have been saved.</value>
+  </data>
+  <data name="Chat.AutoSaveErrorTitle" xml:space="preserve">
+    <value>Save error</value>
+  </data>
   <data name="ConfirmSaveDialog.Title" xml:space="preserve">
     <value>Save record</value>
   </data>

@@ -10,5 +10,6 @@ namespace OllamaArena.Models.DTO
         public string? ElapsedTime { get; set; }
         public double Temperature { get; set; }
         public string? Reasoning { get; set; }
+        public string? Summary { get; set; }
     }
 }

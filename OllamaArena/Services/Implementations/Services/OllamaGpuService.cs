@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Options;
+using OllamaArena.Services.Interfaces.Repositories;
 using OllamaArena.Services.Interfaces.Services;
 using System.Management;
+using System.Text;
 using System.Text.Json;
 using static OllamaArena.Models.DTO.OllamaModels;
 
@@ -15,13 +17,16 @@ public class OllamaGpuService : IOllamaGpuService
     private string OllamaPsUrl => $"{_options.BaseUrl}/api/ps";
     private string OllamaChatUrl => $"{_options.BaseUrl}/api/chat";
     private string OllamaShowUrl => $"{_options.BaseUrl}/api/show";
+    private readonly IBenchmarkRepository _benchmarks;
 
 
-    public OllamaGpuService(HttpClient httpClient, ILogger<OllamaGpuService> logger, IOptions<OllamaOptions> options)
+
+    public OllamaGpuService(HttpClient httpClient, ILogger<OllamaGpuService> logger, IOptions<OllamaOptions> options, IBenchmarkRepository benchmarks)
     {
         _httpClient = httpClient;
         _logger = logger;
         _options = options.Value;
+        _benchmarks = benchmarks;
     }
 
     /// <summary>
@@ -479,4 +484,48 @@ public class OllamaGpuService : IOllamaGpuService
         return fallback;
     }
 
+    public async Task<string?> GerarResumoDoPromptAsync(string userPrompt, string activeModel)
+    {
+        try
+        {
+            if (_httpClient == null || string.IsNullOrWhiteSpace(activeModel)) return null;
+
+            var payload = new
+            {
+                model = activeModel, // CORREÇÃO: Usa o modelo que já está na VRAM!
+                messages = new[]
+                {
+                new
+                {
+                    role = "user",
+                    content = $"Cria um título/resumo do seguinte prompt em no máximo 5 palavras. Responde APENAS com o resumo, sem aspas ou pontuação.\n\nPrompt: \"{userPrompt}\""
+                }
+            },
+                stream = false,
+                options = new { temperature = 0.2 }
+            };
+
+            var json = JsonSerializer.Serialize(payload);
+            using var request = new HttpRequestMessage(HttpMethod.Post, OllamaChatUrl);
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            using var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode) return null;
+
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(jsonResponse);
+
+            if (doc.RootElement.TryGetProperty("message", out var msg) &&
+                msg.TryGetProperty("content", out var content))
+            {
+                return content.GetString()?.Trim().Trim('"', '.');
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Falha ao gerar resumo do prompt do utilizador.");
+        }
+
+        return null;
+    }
 }

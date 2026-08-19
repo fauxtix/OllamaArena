@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using Microsoft.FluentUI.AspNetCore.Components;
@@ -76,8 +75,7 @@ namespace OllamaArena.Components.Pages
 
         private bool showOllamaError = false;
 
-        // Estado pendente para confirmação de gravação (1ª troca)
-        private bool _awaitingConfirmation;
+        // Estado pendente para gravação automática
         private string _pendingUserPrompt = string.Empty;
         private Models.DTO.ChatMessage? _pendingAiMessage;
         private double _pendingTemperature;
@@ -87,11 +85,9 @@ namespace OllamaArena.Components.Pages
         private long _pendingLoadDurationNs;
         private double _pendingStopwatchMs;
 
-        private bool _showSaveResult;
         private bool _saveSuccess;
         private string _saveResultDescricao = string.Empty;
         private string _descricaoAtual = string.Empty;
-        private bool _isFirstExchange;
 
         private string ModelName
         {
@@ -247,6 +243,7 @@ namespace OllamaArena.Components.Pages
             };
             _messages.Add(userMessage);
 
+
             _currentMessage = string.Empty;
             _inputKey++;
             _isThinking = true;
@@ -337,6 +334,8 @@ namespace OllamaArena.Components.Pages
 
                 temperature = prepared.Temperature;
                 userMessage.Temperature = Math.Round(temperature, 2);
+
+
 
                 var payload = prepared.Payload;
 
@@ -466,6 +465,7 @@ namespace OllamaArena.Components.Pages
                                         : aiMessage.Reasoning + finalReasoning;
                                 }
                             }
+
                         }
                     }
                     catch (JsonException jex)
@@ -475,6 +475,7 @@ namespace OllamaArena.Components.Pages
                         continue;
                     }
                 }
+
             }
             catch (OperationCanceledException ocEx)
             {
@@ -501,6 +502,13 @@ namespace OllamaArena.Components.Pages
 
                 if (errorMessage is null)
                 {
+                    var (summary, cleanText) = ChatComposerService.ExtractSummaryFromResponse(aiMessage.Text);
+                    if (summary is not null)
+                    {
+                        aiMessage.Summary = summary;
+                        aiMessage.Text = cleanText;
+                    }
+
                     await HandlePostStreamAsync(userPrompt, aiMessage, temperature,
                         evalCount, evalDurationNs, loadDurationNs,
                         stopwatch.Elapsed.TotalMilliseconds, tempoFinal);
@@ -656,15 +664,8 @@ namespace OllamaArena.Components.Pages
             _contextUsedTokens = 0;
             _showContextBar = false;
 
-           
-           // _conversationId = 0;
-            //_currentPromptId = 0;
-            _awaitingConfirmation = false;
             ClearPendingState();
-            _showSaveResult = false;
-            _saveResultDescricao = string.Empty;
             _descricaoAtual = string.Empty;
-            _isFirstExchange = false;
 
             // --- AÇÃO PARA O BENCHMARK: Descarregar o modelo da VRAM ---
             _ = Task.Run(async () =>
@@ -854,49 +855,39 @@ namespace OllamaArena.Components.Pages
             _pendingLoadDurationNs = loadDurationNs;
             _pendingStopwatchMs = totalMs;
 
-            if (_conversationId != 0)
+            string descricao = !string.IsNullOrWhiteSpace(aiMessage.Summary)
+                ? aiMessage.Summary
+                : ChatComposerService.SmartFallbackDescription(userPrompt);
+
+            _descricaoAtual = descricao;
+
+            try
             {
-                _isFirstExchange = false;
-
-                string? descExistente = null;
-                if (BenchmarkRepo != null)
+                if (_conversationId != 0)
                 {
-                    descExistente = await BenchmarkRepo.FindDescriptionByTextAsync(userPrompt);
-                }
-
-                if (descExistente is not null)
-                {
-                    _descricaoAtual = descExistente;
-                    await PersistFollowUpExchangeAsync();
-                    ClearPendingState();
-                    return;
-                }
-
-                _awaitingConfirmation = true;
-            }
-            else
-            {
-                string? descExistente = null;
-                if (BenchmarkRepo != null)
-                {
-                    descExistente = await BenchmarkRepo.FindDescriptionByTextAsync(userPrompt);
-                }
-
-                if (descExistente is not null)
-                {
-                    _descricaoAtual = descExistente;
-                    _isFirstExchange = false;
+                    await PersistFollowUpExchangeAsync(descricao);
                 }
                 else
                 {
-                    _isFirstExchange = true;
+                    _saveSuccess = await PersistAllWithDescriptionAsync(descricao);
+                    _saveResultDescricao = descricao;
                 }
-
-                _awaitingConfirmation = true;
             }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Erro ao gravar resposta automaticamente.");
+                if (DialogService is not null)
+                {
+                    await DialogService.ShowErrorAsync(
+                        L["Chat.AutoSaveError"],
+                        L["Chat.AutoSaveErrorTitle"]);
+                }
+            }
+
+            ClearPendingState();
         }
 
-        private async Task PersistFollowUpExchangeAsync()
+        private async Task PersistFollowUpExchangeAsync(string descricao)
         {
             if (ConversationRepo == null) return;
 
@@ -922,7 +913,7 @@ namespace OllamaArena.Components.Pages
                 _pendingEvalDurationNs,
                 _pendingLoadDurationNs,
                 _pendingStopwatchMs,
-                _descricaoAtual);
+                descricao);
         }
 
         private async Task<bool> PersistAllWithDescriptionAsync(string descricao)
@@ -969,58 +960,6 @@ namespace OllamaArena.Components.Pages
             }
         }
 
-        private async Task OnConfirmSaveAsync(string descricao)
-        {
-            _awaitingConfirmation = false;
-
-            if (_conversationId == 0)
-            {
-                _descricaoAtual = descricao;
-                _saveSuccess = await PersistAllWithDescriptionAsync(descricao);
-                _saveResultDescricao = descricao;
-                ClearPendingState();
-                _showSaveResult = true;
-            }
-            else
-            {
-                await PersistFollowUpExchangeAsync();
-                ClearPendingState();
-            }
-
-            StateHasChanged();
-        }
-
-        private void OnCancelSaveAsync()
-        {
-            _awaitingConfirmation = false;
-
-            if (_conversationId == 0)
-            {
-                ClearPendingState();
-                _messages.Clear();
-                _conversationId = 0;
-                _currentPromptId = 0;
-                _descricaoAtual = string.Empty;
-                _messages.Add(new Models.DTO.ChatMessage
-                {
-                    User = "Ollama",
-                    Text = L["Chat.WelcomeMessage"]
-                });
-            }
-            else
-            {
-                ClearPendingState();
-            }
-
-            StateHasChanged();
-        }
-
-        private void OnDialogVisibleChanged(bool visible)
-        {
-            _awaitingConfirmation = visible;
-            StateHasChanged();
-        }
-
         private void ClearPendingState()
         {
             _pendingUserPrompt = string.Empty;
@@ -1031,13 +970,6 @@ namespace OllamaArena.Components.Pages
             _pendingEvalDurationNs = 0;
             _pendingLoadDurationNs = 0;
             _pendingStopwatchMs = 0;
-        }
-
-        private void OnSaveResultClosed()
-        {
-            _showSaveResult = false;
-            _saveResultDescricao = string.Empty;
-            StateHasChanged();
         }
 
         private string FormatMessage(string content)

@@ -44,7 +44,7 @@ public class ChatComposerServiceTests
 
         Assert.Collection(historico,
             m => { Assert.Equal("system", m.Role); Assert.Equal(SystemPrompt, m.Content); },
-            m => { Assert.Equal("user", m.Role); Assert.Equal("Qual é a capital de Portugal?", m.Content); });
+            m => { Assert.Equal("user", m.Role); Assert.Contains("Qual é a capital de Portugal?", m.Content); });
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public class ChatComposerServiceTests
             m => { Assert.Equal("system", m.Role); Assert.Equal(SystemPrompt, m.Content); },
             m => { Assert.Equal("user", m.Role); Assert.Equal("primeira\nsegunda", m.Content); },
             m => { Assert.Equal("assistant", m.Role); Assert.Equal("resposta", m.Content); },
-            m => { Assert.Equal("user", m.Role); Assert.Equal("pergunta final", m.Content); });
+            m => { Assert.Equal("user", m.Role); Assert.Contains("pergunta final", m.Content); });
     }
 
     [Fact]
@@ -234,6 +234,104 @@ public class ChatComposerServiceTests
     {
         Assert.Equal(1, ChatComposerService.EstimateTokens("ab"));
         Assert.Equal(2, ChatComposerService.EstimateTokens("abcdefgh"));
+    }
+
+    [Fact]
+    public void ExtractSummaryFromResponse_TextoValido_DevolveSummaryELimpaTexto()
+    {
+        var raw = "SUMMARY: Explica SQLite\n---\nSQLite é uma base de dados leve.";
+        var (summary, clean) = ChatComposerService.ExtractSummaryFromResponse(raw);
+
+        Assert.Equal("Explica SQLite", summary);
+        Assert.Equal("SQLite é uma base de dados leve.", clean);
+    }
+
+    [Fact]
+    public void ExtractSummaryFromResponse_SemSummary_DevolveNullETextoOriginal()
+    {
+        var raw = "SQLite é uma base de dados leve.";
+        var (summary, clean) = ChatComposerService.ExtractSummaryFromResponse(raw);
+
+        Assert.Null(summary);
+        Assert.Equal(raw, clean);
+    }
+
+    [Fact]
+    public void ExtractSummaryFromResponse_SemSeparador_DevolveNullETextoOriginal()
+    {
+        var raw = "SUMMARY: Explica SQLite\nSQLite é uma base de dados leve.";
+        var (summary, clean) = ChatComposerService.ExtractSummaryFromResponse(raw);
+
+        Assert.Null(summary);
+        Assert.Equal(raw, clean);
+    }
+
+    [Fact]
+    public void ExtractSummaryFromResponse_TextoVazio_DevolveNullETextoOriginal()
+    {
+        var (summary1, clean1) = ChatComposerService.ExtractSummaryFromResponse("");
+        Assert.Null(summary1);
+        Assert.Equal("", clean1);
+
+        var (summary2, clean2) = ChatComposerService.ExtractSummaryFromResponse(null!);
+        Assert.Null(summary2);
+        Assert.Null(clean2);
+    }
+
+    [Fact]
+    public void ExtractSummaryFromResponse_CaseInsensitive_DevolveSummary()
+    {
+        var raw = "summary: Resumo\n---\nCorpo da resposta.";
+        var (summary, clean) = ChatComposerService.ExtractSummaryFromResponse(raw);
+
+        Assert.Equal("Resumo", summary);
+        Assert.Equal("Corpo da resposta.", clean);
+    }
+
+    [Fact]
+    public void SmartFallbackDescription_PromptComPonto_TomaAteAoPonto()
+    {
+        var prompt = "Explica o que é SQLite. Dá exemplos.";
+        var resultado = ChatComposerService.SmartFallbackDescription(prompt);
+
+        Assert.Equal("Explica o que é SQLite", resultado);
+    }
+
+    [Fact]
+    public void SmartFallbackDescription_PromptComNewline_TomaPrimeiraLinha()
+    {
+        var prompt = "Primeira linha importante\nSegunda linha irrelevante";
+        var resultado = ChatComposerService.SmartFallbackDescription(prompt);
+
+        Assert.Equal("Primeira linha importante", resultado);
+    }
+
+    [Fact]
+    public void SmartFallbackDescription_PromptLongo_TruncNaFronteiraDePalavra()
+    {
+        var prompt = "Provide a concise summary listing the highest maximum temperature recorded in mainland Portugal for each month of the year 2020";
+        var resultado = ChatComposerService.SmartFallbackDescription(prompt);
+
+        Assert.StartsWith("Provide a concise summary listing", resultado);
+        Assert.EndsWith("...", resultado);
+        Assert.True(resultado.Length <= 53); // 50 + "..."
+    }
+
+    [Fact]
+    public void SmartFallbackDescription_PromptCurto_DevolveTalQual()
+    {
+        var prompt = "O que é SQLite?";
+        var resultado = ChatComposerService.SmartFallbackDescription(prompt);
+
+        Assert.Equal("O que é SQLite?", resultado);
+    }
+
+    [Fact]
+    public void SmartFallbackDescription_TextoVazio_DevolveVazio()
+    {
+        Assert.Equal(string.Empty, ChatComposerService.SmartFallbackDescription(""));
+        Assert.Equal(string.Empty, ChatComposerService.SmartFallbackDescription("   "));
+        Assert.Equal(string.Empty, ChatComposerService.SmartFallbackDescription(null!));
     }
 }
 
