@@ -27,7 +27,7 @@ dotnet build OllamaArena.slnx
 dotnet test OllamaArena.slnx
 ```
 
-Esperado: **todos os testes passam** (83 testes em 8 classes — `dotnet test OllamaArena.slnx` informa o total):
+Esperado: **todos os testes passam** (93 testes em 8 classes — `dotnet test OllamaArena.slnx` informa o total):
 
 | Projeto de teste | Cobre |
 | --- | --- |
@@ -49,6 +49,7 @@ Esperado: **todos os testes passam** (83 testes em 8 classes — `dotnet test Ol
 ## 3. Chat (`/chat`)
 
 - [ ] **Streaming + contexto**: enviar prompts; validar barra de contexto (tokens usados/restantes) e etiqueta de temperatura (≈0.3 para factuais).
+- [ ] **Guardar automático**: após a resposta do modelo, confirmar que a conversa é gravada na BD sem diálogos de confirmação; verificar que a descrição do prompt contém o SUMMARY gerado pelo modelo (ou frase de fallback se o SUMMARY não estiver presente).
 - [ ] **Reasoning**: com modelo de reasoning **e o toggle "Ativar reasoning (think)" ligado na Settings** (default é desligado), abrir o bloco "Raciocínio" (captura de `reasoning_content`); confirmar que persiste na conversa. Com o toggle desligado, modelos tipo `deepseek-r1` continuam lentos mas o bloco não aparece nem o reasoning é gravado.
 - [ ] **Cancelar**: durante o streaming, cancelar e confirmar descarga da VRAM (`keep_alive=0` em `/api/generate`).
 - [ ] **Novo Chat**: reset do ID de conversa + descarga da VRAM.
@@ -71,8 +72,10 @@ Esperado: **todos os testes passam** (83 testes em 8 classes — `dotnet test Ol
 - [ ] **Copiar prompt** (fallback manual, funciona sem internet).
 - [ ] **Falha parcial de juiz**: se um dos juízes falhar (ex.: `Too many requests`/tráfego), confirmar que o aviso identifica qual falhou, que os campos desse juiz ficam editáveis e que dá para: esperar e tentar mais tarde, aproveitar a avaliação do outro juiz e preencher o que falta manualmente, ou fazer toda a avaliação à mão.
 - [ ] **Avaliação manual**: preencher as 12 métricas + Overall, gravar e confirmar no Dashboard.
+- [ ] **Análise IA Local**: com benchmarks avaliados, abrir a Análise IA Local e confirmar que a secção "Métricas Fracas" lista métricas com nota ≤3 (≤2 para Segurança) agrupadas por modelo.
 - [ ] **Apagar com âmbitos** em `/benchmark-evaluations`: menu "Apagar Benchmarks" com 4 opções (filtrados / por avaliar / avaliados / todos) + contagens; âmbitos vazios desativados; confirmação indica o nº de respostas; após apagar, a grelha atualiza.
 - [ ] **Gráficos por prompt**: abrir o diálogo de gráficos e validar as tabs **Desempenho** (4 gráficos de barras com download) e **Qualidade** (2 radares Gemini/OpenRouter na escala 0–5; sem avaliações de um juiz → "Sem avaliações para este juiz.").
+- [ ] **Métricas fracas na avaliação**: com avaliações gravadas, abrir o detalhe de uma avaliação e confirmar que as células com nota ≤3 (≤2 para Segurança) têm fundo vermelho (`rating-cell-weak`).
 
 ## 6. Dashboard (`/dashboard`)
 

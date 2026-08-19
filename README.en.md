@@ -152,6 +152,7 @@ The **Overall** score weighs the 12 metrics (**Factual** has the highest weight,
 
 - **Real-time responses (streaming)** — the text appears on screen word by word, as the model generates it;
 - **Formatting** — headings, lists, tables and code blocks are rendered cleanly and legibly;
+- **Auto-save** — each conversation is automatically saved to the database after the response, with no confirmation dialogs; the model generates a short summary (SUMMARY) to describe the prompt, with a smart fallback to significant phrases;
 - **Conversation history** — saves and reopens your previous conversations at any time, with **JSON export/import** for backups or migrating between machines;
 - **New chat with one click** — starts a conversation from scratch instantly, freeing up computer resources;
 - **Built-in stopwatch** — each response shows how long it took, to monitor performance;

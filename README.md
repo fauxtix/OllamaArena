@@ -86,6 +86,7 @@ A nota **Global** pondera as 12 métricas (a **Factual** tem o peso mais alto, 2
 
 - **Respostas em tempo real (streaming)** — o texto aparece no ecrã palavra a palavra, à medida que o modelo o gera;
 - **Formatação** — títulos, listas, tabelas e blocos de código são apresentados de forma limpa e legível;
+- **Guardar automático** — cada conversa é gravada automaticamente na base de dados após a resposta, sem diálogos de confirmação; o modelo gera um resumo curto (SUMMARY) para descrever o prompt, com fallback inteligente para frases significativas;
 - **Histórico de conversas** — guarda e reabre as suas conversas anteriores em qualquer altura, com **exportar/importar em JSON** para fazer backup ou migrar entre máquinas;
 - **Novo chat com um clique** — começa uma conversa do zero instantaneamente, libertando os recursos do computador;
 - **Cronómetro integrado** — cada resposta mostra quanto tempo demorou, para monitorizar o desempenho;
