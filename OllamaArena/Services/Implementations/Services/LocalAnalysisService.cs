@@ -190,6 +190,67 @@ public class LocalAnalysisService : IAnalysisService
             }
         }
 
+        // 6. Métricas com Desempenho Inferior (<= 3, exceto Safety <= 2)
+        var metricasDefinicao = new (string Nome, Func<BenchmarkEvaluationModel, int?> Gemini, Func<BenchmarkEvaluationModel, int?> OpenRouter, int Threshold)[]
+        {
+            ("Factual",         b => b.GeminiFactualRating,         b => b.OpenRouterFactualRating,         3),
+            ("Formatting",      b => b.GeminiFormattingRating,      b => b.OpenRouterFormattingRating,      3),
+            ("Compliance",      b => b.GeminiComplianceRating,      b => b.OpenRouterComplianceRating,      3),
+            ("Relevance",       b => b.GeminiRelevanceRating,       b => b.OpenRouterRelevanceRating,       3),
+            ("Tone",            b => b.GeminiToneRating,            b => b.OpenRouterToneRating,            3),
+            ("Conciseness",     b => b.GeminiConcisenessRating,     b => b.OpenRouterConcisenessRating,     3),
+            ("Clarity",         b => b.GeminiClarityRating,         b => b.OpenRouterClarityRating,         3),
+            ("Readability",     b => b.GeminiReadabilityRating,     b => b.OpenRouterReadabilityRating,     3),
+            ("Halo Effect",     b => b.GeminiHaloEffectRating,      b => b.OpenRouterHaloEffectRating,      3),
+            ("Safety",          b => b.GeminiSafetyRating,          b => b.OpenRouterSafetyRating,          2),
+            ("Lang Consistency",b => b.GeminiLanguageConsistencyRating, b => b.OpenRouterLanguageConsistencyRating, 3),
+            ("Loop Detection",  b => b.GeminiLoopDetectionRating,   b => b.OpenRouterLoopDetectionRating,   3),
+        };
+
+        var metricasFracasPorModelo = new Dictionary<string, List<string>>();
+
+        foreach (var benchmark in benchmarks)
+        {
+            var fracas = new List<string>();
+
+            foreach (var (nome, gemini, openrouter, threshold) in metricasDefinicao)
+            {
+                int? gVal = gemini(benchmark);
+                int? oVal = openrouter(benchmark);
+                bool gFraca = gVal.HasValue && gVal.Value <= threshold;
+                bool oFraca = oVal.HasValue && oVal.Value <= threshold;
+
+                if (gFraca || oFraca)
+                {
+                    string detalhes = (gFraca, oFraca) switch
+                    {
+                        (true, true)  => $"Gemini={gVal}, OpenRouter={oVal}",
+                        (true, false) => $"Gemini={gVal}",
+                        _             => $"OpenRouter={oVal}"
+                    };
+                    fracas.Add($"{nome} [{detalhes}]");
+                }
+            }
+
+            if (fracas.Count > 0)
+            {
+                metricasFracasPorModelo[benchmark.NomeModelo] = fracas;
+            }
+        }
+
+        if (metricasFracasPorModelo.Count > 0)
+        {
+            linhasDetalhes.Add(_localizer["Analysis.WeakMetricsHeader"]);
+            foreach (var (modelo, lista) in metricasFracasPorModelo)
+            {
+                linhasDetalhes.Add(_localizer["Analysis.WeakMetricsModel", modelo, string.Join(", ", lista)]);
+            }
+        }
+        else
+        {
+            linhasDetalhes.Add(_localizer["Analysis.WeakMetricsNone"]);
+        }
+
         stopwatch.Stop();
 
         return Task.FromResult(new BenchmarkAnalysisResult

@@ -8,8 +8,6 @@
 @using OllamaArena.Resources
 @inject IStringLocalizer<SharedResources> L
 
-
-@inject IDialogService DialogService
 @rendermode InteractiveServer
 
 
@@ -50,10 +48,6 @@
 
         </FluentStack>
 
-        <div>
-            <FluentButton Appearance="Appearance.Outline" OnClick="ShowReadme">@L["ReadmeViewer"]</FluentButton>
-        </div>
-
         @if (showOllamaError)
         {
             <div style="background-color: rgba(0, 0, 0, 0.2); z-index: 9999;">
@@ -68,15 +62,12 @@
 
     </FluentStack>
 </div>
-<ReadmePreview @ref="preview" />
 
 @code {
-    [Inject] public required InternetConnectivityService Internet { get; set; }
-    [Inject] public IJSRuntime JS { get; set; } = default!;
     [Inject] public IOllamaGpuService? GpuService { get; set; }
+    [Inject] public IJSRuntime JS { get; set; } = default!;
     [Inject] public ILogger<App>? _logger { get; set; }
 
-    private ReadmePreview? preview;
     private List<string> _models = new();
     private List<ModelDetails> _fullModels = new();
 
@@ -162,21 +153,6 @@
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Erro ao gerir cache dos modelos na Home");
-        }
-    }
-
-    private async Task ShowReadme()
-    {
-        var hasInternet = await Internet.HasInternetAsync();
-        if (!hasInternet)
-        {
-            await DialogService.ShowErrorAsync(L["Home.NoInternetError"], L["Home.ReadmeTitle"]);
-            return;
-        }
-
-        if (preview is not null)
-        {
-            await preview.OpenAsync();
         }
     }
 }

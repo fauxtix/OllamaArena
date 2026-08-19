@@ -112,14 +112,19 @@
                         class="benchmark-grid">
 
 
-            @* <PropertyColumn Property="@(b => b.DataCriacaoFormatada)" Title="@L["Benchmarks.ColCreationDate"]" Width="160px" Align="Align.Center" Sortable="true" /> *@
-            <PropertyColumn Property="@(b => b.NomeModelo)" Title="@L["Benchmarks.ColModel"]" Sortable="true" Width="160px">
+            <PropertyColumn Property="@(b => b.ResponseId)" Width="110px" Align="Align.Center" Sortable="true" >
+                <HeaderCellTitleTemplate>
+                    <span class="header-columns">@L["SystemLogs.ColId"]</span>
+                </HeaderCellTitleTemplate>
+
+            </PropertyColumn>
+            <PropertyColumn Property="@(b => b.NomeModelo)" Title="@L["Benchmarks.ColModel"]" Sortable="true" Width="200px">
                 <HeaderCellTitleTemplate>
                     <span class="header-columns">@L["Benchmarks.ColModel"]</span>
                 </HeaderCellTitleTemplate>
             </PropertyColumn>
 
-            <TemplateColumn Title="@L["Benchmarks.ColDescription"]" Tooltip="true" Width="190px" Align="Align.Start">
+            <TemplateColumn Title="@L["Benchmarks.ColDescription"]" Tooltip="true" Width="290px" Align="Align.Start">
                 <HeaderCellTitleTemplate>
                     <span class="header-columns">@L["Benchmarks.ColDescription"]</span>
                 </HeaderCellTitleTemplate>
@@ -135,15 +140,11 @@
                     <span class="header-blue">@L["Benchmarks.ColGemini"]</span>
                 </HeaderCellTitleTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="@(b => b.GeminiFactualRating)" Title="@L["Benchmarks.ColFactual"]" Align="Align.Center" Width="90px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.GeminiFormattingRating)" Title="@L["Benchmarks.ColFormatting"]" Align="Align.Center" Width="90px" Sortable="true" />
             <PropertyColumn Property="@(b => b.OpenRouterRating)" Title="@L["Benchmarks.ColOpenRouter"]" Align="Align.Center" Width="130px" Sortable="true">
                 <HeaderCellTitleTemplate>
                     <span class="header-blue">@L["Benchmarks.ColOpenRouter"]</span>
                 </HeaderCellTitleTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="@(b => b.OpenRouterFactualRating)" Title="@L["Benchmarks.ColFactual"]" Align="Align.Center" Width="90px" Sortable="true" />
-            <PropertyColumn Property="@(b => b.OpenRouterFormattingRating)" Title="@L["Benchmarks.ColFormatting"]" Align="Align.Center" Width="90px" Sortable="true" />
             <PropertyColumn Property="@(b => b.TokensPorSegundo)" Title="@L["Benchmarks.ColTokensPerSecond"]" Align="Align.Center" Width="110px" Format="F2" Sortable="true">
                 <HeaderCellTitleTemplate>
                     <span class="header-columns">@L["Benchmarks.ColTokensPerSecond"]</span>

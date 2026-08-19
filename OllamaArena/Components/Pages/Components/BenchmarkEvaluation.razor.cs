@@ -93,5 +93,10 @@ namespace OllamaArena.Components.Pages.Components
             StateHasChanged();
             await OnEvaluationChanged.InvokeAsync();
         }
+
+        private static string WeakClass(int? value, int threshold = 3)
+        {
+            return value.HasValue && value.Value <= threshold ? "rating-cell-weak" : string.Empty;
+        }
     }
 }

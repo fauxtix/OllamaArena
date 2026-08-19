@@ -1,6 +1,9 @@
 @using OllamaArena.Components.Pages.Components
+@using OllamaArena.Services.Helpers
 @using OllamaArena.Resources
 @inject IStringLocalizer<SharedResources> L
+@inject IDialogService DialogService
+@inject InternetConnectivityService Internet
 
 @inherits LayoutComponentBase
 
@@ -18,6 +21,13 @@
                 </div>
 
                 <div class="header-actions">
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  OnClick="ShowReadme"
+                                  Title="@L["ReadmeViewer"]"
+                                  Style="font-size: 0.9rem; padding: 4px 10px; gap: 4px;">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.DocumentBulletList())" Slot="start" />
+                        @L["ReadmeViewer"]
+                    </FluentButton>
                     <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="ToggleTheme"
                                   Title="@(Mode == DesignThemeModes.Light ? L["Theme.ToDark"] : L["Theme.ToLight"])"
@@ -58,6 +68,7 @@
                    StorageName="theme" />
 <FluentTooltipProvider />
 <FluentMenuProvider />
+<ReadmePreview @ref="preview" />
 
 <style>
     /* --- TEMA CLARO: canvas ardósia + superfícies brancas ---
@@ -109,10 +120,26 @@
 
 @code {
     public DesignThemeModes Mode { get; set; }
+    private ReadmePreview? preview;
 
     void OnLoaded(LoadedEventArgs e) => Mode = e.Mode;
     void OnLuminanceChanged(LuminanceChangedEventArgs e) => Mode = e.Mode;
 
     void ToggleTheme() =>
         Mode = Mode == DesignThemeModes.Light ? DesignThemeModes.Dark : DesignThemeModes.Light;
+
+    private async Task ShowReadme()
+    {
+        var hasInternet = await Internet.HasInternetAsync();
+        if (!hasInternet)
+        {
+            await DialogService.ShowErrorAsync(L["Home.NoInternetError"], L["Home.ReadmeTitle"]);
+            return;
+        }
+
+        if (preview is not null)
+        {
+            await preview.OpenAsync();
+        }
+    }
 }

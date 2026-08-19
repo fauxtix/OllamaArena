@@ -70,9 +70,9 @@ namespace OllamaArena.Components.Pages
         // usa proteção anti-bot (HTML/JS) e pode devolver resultados vazios. Ver BuscarContextoWebAsync.
         private bool _webSearchEnabled = false;
 
-        private int _currentPromptId;
+        private int _currentPromptId = 0;
 
-        private int _conversationId;
+        private int _conversationId = 0;
 
         private bool showOllamaError = false;
 
@@ -656,8 +656,9 @@ namespace OllamaArena.Components.Pages
             _contextUsedTokens = 0;
             _showContextBar = false;
 
-            _conversationId = 0;
-            _currentPromptId = 0;
+           
+           // _conversationId = 0;
+            //_currentPromptId = 0;
             _awaitingConfirmation = false;
             ClearPendingState();
             _showSaveResult = false;
@@ -856,6 +857,22 @@ namespace OllamaArena.Components.Pages
             if (_conversationId != 0)
             {
                 _isFirstExchange = false;
+
+                string? descExistente = null;
+                if (BenchmarkRepo != null)
+                {
+                    descExistente = await BenchmarkRepo.FindDescriptionByTextAsync(userPrompt);
+                }
+
+                if (descExistente is not null)
+                {
+                    _descricaoAtual = descExistente;
+                    await PersistFollowUpExchangeAsync();
+                    ClearPendingState();
+                    return;
+                }
+
+                _awaitingConfirmation = true;
             }
             else
             {
@@ -874,9 +891,9 @@ namespace OllamaArena.Components.Pages
                 {
                     _isFirstExchange = true;
                 }
-            }
 
-            _awaitingConfirmation = true;
+                _awaitingConfirmation = true;
+            }
         }
 
         private async Task PersistFollowUpExchangeAsync()

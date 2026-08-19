@@ -930,6 +930,15 @@ Deseja continuar?</value>
   <data name="Analysis.DetailSpeedMultiplier" xml:space="preserve">
     <value> ({0}x mais rápido)</value>
   </data>
+  <data name="Analysis.WeakMetricsHeader" xml:space="preserve">
+    <value>• &lt;strong&gt;Métricas com Desempenho Inferior (&amp;le; 3):&lt;/strong&gt;</value>
+  </data>
+  <data name="Analysis.WeakMetricsModel" xml:space="preserve">
+    <value>&lt;strong&gt;{0}:&lt;/strong&gt; {1}</value>
+  </data>
+  <data name="Analysis.WeakMetricsNone" xml:space="preserve">
+    <value>Todas as métricas individuais atingiram nota &amp;ge; 4.</value>
+  </data>
   <data name="AnalysisViewer.Title" xml:space="preserve">
     <value>Análise Analítica do Modelo Local</value>
   </data>

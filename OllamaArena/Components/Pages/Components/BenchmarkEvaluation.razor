@@ -19,51 +19,51 @@
             <div class="ratings-group-container">
                 <div class="ratings-group-header">@L["Evaluation.MetricsHeader"]</div>
                 <div class="ratings-grid">
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.GeminiFactualRating))">
                         <span class="rating-label">@L["Evaluation.MetricFactual"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiFactualRating" ReadOnly="@(Response.GeminiFactualRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.GeminiFormattingRating))">
                         <span class="rating-label">@L["Evaluation.MetricFormatting"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiFormattingRating" ReadOnly="@(Response.GeminiFormattingRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.GeminiComplianceRating))">
                         <span class="rating-label">@L["Evaluation.MetricCompliance"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiComplianceRating" ReadOnly="@(Response.GeminiComplianceRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.GeminiRelevanceRating))">
                         <span class="rating-label">@L["Evaluation.MetricRelevance"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiRelevanceRating" ReadOnly="@(Response.GeminiRelevanceRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.GeminiToneRating))">
                         <span class="rating-label">@L["Evaluation.MetricTone"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiToneRating" ReadOnly="@(Response.GeminiToneRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.GeminiConcisenessRating))">
                         <span class="rating-label">@L["Evaluation.MetricConciseness"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiConcisenessRating" ReadOnly="@(Response.GeminiConcisenessRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.GeminiClarityRating))">
                         <span class="rating-label">@L["Evaluation.MetricClarity"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiClarityRating" ReadOnly="@(Response.GeminiClarityRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.GeminiReadabilityRating))">
                         <span class="rating-label">@L["Evaluation.MetricReadability"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiReadabilityRating" ReadOnly="@(Response.GeminiReadabilityRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.GeminiHaloEffectRating))">
                         <span class="rating-label">@L["Evaluation.MetricHaloEffect"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiHaloEffectRating" ReadOnly="@(Response.GeminiHaloEffectRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.GeminiSafetyRating, 2))">
                         <span class="rating-label">@L["Evaluation.MetricSafety"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiSafetyRating" ReadOnly="@(Response.GeminiSafetyRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.GeminiLanguageConsistencyRating))">
                         <span class="rating-label">@L["Evaluation.MetricLanguageConsistency"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiLanguageConsistencyRating" ReadOnly="@(Response.GeminiLanguageConsistencyRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.GeminiLoopDetectionRating))">
                         <span class="rating-label">@L["Evaluation.MetricLoopDetection"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.GeminiLoopDetectionRating" ReadOnly="@(Response.GeminiLoopDetectionRating != null)" />
                     </div>
@@ -112,51 +112,51 @@
             <div class="ratings-group-container">
                 <div class="ratings-group-header">@L["Evaluation.MetricsHeader"]</div>
                 <div class="ratings-grid">
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.OpenRouterFactualRating))">
                         <span class="rating-label">@L["Evaluation.MetricFactual"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterFactualRating" ReadOnly="@(Response.OpenRouterFactualRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.OpenRouterFormattingRating))">
                         <span class="rating-label">@L["Evaluation.MetricFormatting"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterFormattingRating" ReadOnly="@(Response.OpenRouterFormattingRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.OpenRouterComplianceRating))">
                         <span class="rating-label">@L["Evaluation.MetricCompliance"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterComplianceRating" ReadOnly="@(Response.OpenRouterComplianceRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.OpenRouterRelevanceRating))">
                         <span class="rating-label">@L["Evaluation.MetricRelevance"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterRelevanceRating" ReadOnly="@(Response.OpenRouterRelevanceRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.OpenRouterToneRating))">
                         <span class="rating-label">@L["Evaluation.MetricTone"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterToneRating" ReadOnly="@(Response.OpenRouterToneRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.OpenRouterConcisenessRating))">
                         <span class="rating-label">@L["Evaluation.MetricConciseness"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterConcisenessRating" ReadOnly="@(Response.OpenRouterConcisenessRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.OpenRouterClarityRating))">
                         <span class="rating-label">@L["Evaluation.MetricClarity"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterClarityRating" ReadOnly="@(Response.OpenRouterClarityRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.OpenRouterReadabilityRating))">
                         <span class="rating-label">@L["Evaluation.MetricReadability"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterReadabilityRating" ReadOnly="@(Response.OpenRouterReadabilityRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.OpenRouterHaloEffectRating))">
                         <span class="rating-label">@L["Evaluation.MetricHaloEffect"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterHaloEffectRating" ReadOnly="@(Response.OpenRouterHaloEffectRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.OpenRouterSafetyRating, 2))">
                         <span class="rating-label">@L["Evaluation.MetricSafety"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterSafetyRating" ReadOnly="@(Response.OpenRouterSafetyRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.OpenRouterLanguageConsistencyRating))">
                         <span class="rating-label">@L["Evaluation.MetricLanguageConsistency"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterLanguageConsistencyRating" ReadOnly="@(Response.OpenRouterLanguageConsistencyRating != null)" />
                     </div>
-                    <div class="rating-cell">
+                    <div class="rating-cell @(WeakClass(Response.OpenRouterLoopDetectionRating))">
                         <span class="rating-label">@L["Evaluation.MetricLoopDetection"]</span>
                         <FluentNumberField Min="1" Max="5" @bind-Value="Response.OpenRouterLoopDetectionRating" ReadOnly="@(Response.OpenRouterLoopDetectionRating != null)" />
                     </div>
@@ -282,6 +282,13 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 2px;
+    }
+
+    .rating-cell-weak {
+        background-color: rgba(211, 44, 23, 0.08);
+        border-radius: 4px;
+        padding: 2px 4px;
+        border-left: 2px solid rgba(211, 44, 23, 0.6);
     }
 
     .rating-label {
