@@ -187,6 +187,72 @@
         return true;
     },
 
+    // Linha "Evolução do score" (1 dataset por modelo; labels = datas dos benchmarks)
+    renderLinha: function (canvasId, dados, unidadeY) {
+
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return false;
+
+        // 1. Obtém as cores dinâmicas do tema (Fluent UI)
+        const styles = getComputedStyle(document.documentElement);
+
+        const textColor =
+            styles.getPropertyValue('--colorNeutralForeground1').trim() ||
+            styles.getPropertyValue('--neutral-foreground-rest').trim() ||
+            '#FFFFFF';
+
+        const gridColor =
+            styles.getPropertyValue('--colorNeutralStroke2').trim() ||
+            styles.getPropertyValue('--neutral-stroke-rest').trim() ||
+            'rgba(255,255,255,0.12)';
+
+        // 2. Limpa o cache do gráfico anterior
+        const cacheKey = "_" + canvasId;
+        if (window[cacheKey]) {
+            window[cacheKey].destroy();
+        }
+
+        window[cacheKey] = new Chart(canvas, {
+            type: 'line',
+            data: dados,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                spanGaps: true, // liga pontos mesmo com datas ausentes noutros modelos
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: { color: textColor, boxWidth: 12, font: { size: 12 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return `${context.dataset.label}: ${context.parsed.y} ${unidadeY}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: textColor, padding: 8, maxRotation: 45, autoSkip: true },
+                        grid: { display: false },
+                        border: { color: gridColor }
+                    },
+                    y: {
+                        min: 0,
+                        max: 5,
+                        beginAtZero: true,
+                        ticks: { color: textColor, padding: 8 },
+                        grid: { color: gridColor },
+                        border: { color: gridColor }
+                    }
+                }
+            }
+        });
+
+        return true;
+    },
+
     downloadGrafico: function (canvasId, nomeFicheiro) {
         const canvas = document.getElementById(canvasId);
         if (!canvas) return;

@@ -12,4 +12,12 @@ public sealed class ModelRanking
     public double OpenRouterScore { get; set; }
     public int TotalResponses { get; set; }
     public int JudgedResponses { get; set; }
+
+    // Métricas de desempenho agregadas (médias por modelo)
+    public double TokensPerSecond { get; set; }
+    public double AvgResponseTimeMs { get; set; }
+    public double AvgResponseTokens { get; set; }
+
+    // Divergência entre juízes (|Gemini − OpenRouter|); null quando só um juiz avaliou
+    public double? JudgeDivergence { get; set; }
 }

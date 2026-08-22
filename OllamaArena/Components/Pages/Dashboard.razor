@@ -57,11 +57,66 @@ else
             <div class="cartao-barra"></div>
             <div class="cartao-corpo">
                 <div class="cartao-icone">
-                    <FluentIcon Value="@(new Icons.Regular.Size20.ClipboardTask())" Color="Color.Custom" CustomColor="var(--warning)" />
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Checkmark())" Color="Color.Custom" CustomColor="var(--warning)" />
                 </div>
                 <div class="cartao-info">
-                    <div class="cartao-rotulo">@L["Dashboard.EvaluationsCount"]</div>
-                    <div class="cartao-valor">@_ranking.Sum(r => r.JudgedResponses)</div>
+                    <div class="cartao-rotulo">@L["Dashboard.CoverageLabel"]</div>
+                    <div class="cartao-valor">@(Stats?.CoberturaPercentual is not null ? $"{Stats.CoberturaPercentual.Value}%" : "—")</div>
+                    @if (Stats is not null && Stats.TotalRespostas > 0)
+                    {
+                        <div class="cartao-destaque">@L["Dashboard.CoverageDetail", Stats.RespostasAvaliadasAmbosJuizes, Stats.TotalRespostas]</div>
+                    }
+                </div>
+            </div>
+        </FluentCard>
+
+        <FluentCard Class="cartao cartao-accent">
+            <div class="cartao-barra"></div>
+            <div class="cartao-corpo">
+                <div class="cartao-icone">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.ClipboardCode())" Color="Color.Custom" CustomColor="var(--accent-fill-rest)" />
+                </div>
+                <div class="cartao-info">
+                    <div class="cartao-rotulo">@L["Dashboard.PromptsCount"]</div>
+                    <div class="cartao-valor">@(Stats?.TotalPrompts ?? 0)</div>
+                    @if (Stats?.UltimaAtividade is not null)
+                    {
+                        <div class="cartao-destaque">@L["Dashboard.LastActivity", Stats.UltimaAtividade.Value.ToLocalTime().ToString("g")]</div>
+                    }
+                </div>
+            </div>
+        </FluentCard>
+
+        <FluentCard Class="cartao cartao-success">
+            <div class="cartao-barra"></div>
+            <div class="cartao-corpo">
+                <div class="cartao-icone">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Flash())" Color="Color.Custom" CustomColor="var(--success)" />
+                </div>
+                <div class="cartao-info">
+                    <div class="cartao-rotulo">@L["Dashboard.FastestModel"]</div>
+                    <div class="cartao-valor">@(FastestModel?.Model ?? L["Dashboard.NoEvaluations"])</div>
+                    @if (FastestModel is not null)
+                    {
+                        <div class="cartao-destaque">@L["Dashboard.FastestSpeed", FastestModel.TokensPerSecond.ToString("F1")]</div>
+                    }
+                </div>
+            </div>
+        </FluentCard>
+
+        <FluentCard Class="cartao cartao-warning">
+            <div class="cartao-barra"></div>
+            <div class="cartao-corpo">
+                <div class="cartao-icone">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.ArrowSwap())" Color="Color.Custom" CustomColor="var(--warning)" />
+                </div>
+                <div class="cartao-info">
+                    <div class="cartao-rotulo">@L["Dashboard.JudgeDivergence"]</div>
+                    <div class="cartao-valor">@(MostDivergentModel?.Model ?? L["Dashboard.NoEvaluations"])</div>
+                    @if (MostDivergentModel is not null)
+                    {
+                        <div class="cartao-destaque">@L["Dashboard.DivergenceValue", MostDivergentModel.JudgeDivergence!.Value.ToString("F2")]</div>
+                    }
                 </div>
             </div>
         </FluentCard>
@@ -126,6 +181,21 @@ else
                 </div>
             </div>
 
+            @if (_timeline.Count > 0)
+            {
+                <div class="grafico-card grafico-card-scatter">
+                    <div class="grafico-header">
+                        <span class="grafico-titulo">@L["Dashboard.TimelineTitle"]</span>
+                        <FluentButton Appearance="Appearance.Stealth"
+                                      IconEnd="@(new Icons.Regular.Size16.ArrowDownload())"
+                                      OnClick="@(() => DownloadGraficoAsync("graficoEvolucaoScore", "dashboard_evolucao_score"))" />
+                    </div>
+                    <div class="canvas-container-scatter">
+                        <canvas id="graficoEvolucaoScore"></canvas>
+                    </div>
+                </div>
+            }
+
         </div>
     }
 
@@ -152,8 +222,14 @@ else
 
                 <PropertyColumn Property="@(r => r.GeminiScore)" Title="@L["Dashboard.ColGemini"]" Align="Align.Center" Width="110px" Sortable="true" />
                 <PropertyColumn Property="@(r => r.OpenRouterScore)" Title="@L["Dashboard.ColOpenRouter"]" Align="Align.Center" Width="130px" Sortable="true" />
-                <PropertyColumn Property="@(r => r.TotalResponses)" Title="@L["Dashboard.ColResponses"]" Align="Align.Center" Width="120px" Sortable="true" />
-                <PropertyColumn Property="@(r => r.JudgedResponses)" Title="@L["Dashboard.ColJudged"]" Align="Align.Center" Width="130px" Sortable="true" />
+                <PropertyColumn Property="@(r => r.TokensPerSecond)" Title="@L["Dashboard.ColTokensPerSecond"]" Align="Align.Center" Width="110px" Format="F2" Sortable="true" />
+                <TemplateColumn Title="@L["Dashboard.ColAvgTime"]" Align="Align.Center" Width="110px" SortBy="@(SortAvgTime)">
+                    @FormatarTempoMedio(context.AvgResponseTimeMs)
+                </TemplateColumn>
+                <TemplateColumn Title="@L["Dashboard.ColDivergence"]" Align="Align.Center" Width="120px" SortBy="@(SortDivergence)">
+                    @(context.JudgeDivergence?.ToString("F2") ?? "—")
+                </TemplateColumn>
+                <PropertyColumn Property="@(r => r.AvgResponseTokens)" Title="@L["Dashboard.ColAvgTokens"]" Align="Align.Center" Width="140px" Format="F0" Sortable="true" />
             </FluentDataGrid>
         </div>
     }
@@ -162,7 +238,14 @@ else
 @code {
     private List<ModelRanking> _ranking = new();
     private List<ModelChartData> _chartData = new();
+    private List<ModelScoreTimeline> _timeline = new();
+    private DashboardStats? Stats;
     private ModelRanking? BestModel => _ranking.FirstOrDefault();
+    private ModelRanking? FastestModel => _ranking.OrderByDescending(r => r.TokensPerSecond).FirstOrDefault();
+    private ModelRanking? MostDivergentModel => _ranking
+        .Where(r => r.JudgeDivergence.HasValue)
+        .OrderByDescending(r => r.JudgeDivergence!.Value)
+        .FirstOrDefault();
     private bool _isLoading = true;
     private bool _graficosRenderizados = false;
     private readonly Dictionary<string, string> _coresDosModelos = new();
@@ -173,6 +256,8 @@ else
         {
             _ranking = await BenchmarkRepo.GetModelRankingAsync();
             _chartData = await BenchmarkRepo.GetModelChartDataAsync();
+            Stats = await BenchmarkRepo.GetDashboardStatsAsync();
+            _timeline = await BenchmarkRepo.GetScoreTimelineAsync();
         }
         catch
         {
@@ -218,6 +303,10 @@ else
             await RenderizarComRetryAsync("graficoRadarDashboardOpenRouter", radarOpenRouter, "pts", "radar");
 
         await RenderizarScatterComRetryAsync("graficoScatterTokens", GerarDadosScatter());
+
+        var evolucao = GerarDadosEvolucao();
+        if (evolucao != null)
+            await RenderizarLinhaComRetryAsync("graficoEvolucaoScore", evolucao);
     }
 
     private string[] MetricasLabels => new[]
@@ -283,6 +372,42 @@ else
         return new { datasets };
     }
 
+    // Linha temporal: labels = união das datas de benchmark (todas as séries alinhadas
+    // no mesmo eixo); cada modelo leva null nas datas em que não foi avaliado.
+    private object? GerarDadosEvolucao()
+    {
+        var modelos = _timeline.Where(t => t.Points.Count > 0).ToList();
+        if (modelos.Count == 0)
+            return null;
+
+        var datas = modelos
+            .SelectMany(t => t.Points)
+            .Select(p => p.Data)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
+
+        var datasets = modelos.Select(t =>
+        {
+            var cor = _coresDosModelos[t.Model];
+            var porData = t.Points.GroupBy(p => p.Data).ToDictionary(g => g.Key, g => g.Last().ScoreAcumulado);
+            return new
+            {
+                label = t.Model,
+                data = datas.Select(d => porData.TryGetValue(d, out var v) ? (double?)v : null).ToArray(),
+                borderColor = cor,
+                backgroundColor = cor,
+                borderWidth = 2,
+                pointRadius = 3,
+                pointHoverRadius = 6,
+                tension = 0.3,
+                fill = false
+            };
+        }).ToList();
+
+        return new { labels = datas.Select(d => d.ToLocalTime().ToString("dd/MM HH:mm")).ToList(), datasets };
+    }
+
     private async Task RenderizarComRetryAsync(string canvasId, object dados, string unidade, string tipo)
     {
         for (int tentativa = 0; tentativa < 8; tentativa++)
@@ -299,6 +424,17 @@ else
         for (int tentativa = 0; tentativa < 8; tentativa++)
         {
             var renderizado = await JS.InvokeAsync<bool>("benchmarkCharts.renderScatter", canvasId, dados, "tokens/s", "pts");
+            if (renderizado)
+                return;
+            await Task.Delay(100);
+        }
+    }
+
+    private async Task RenderizarLinhaComRetryAsync(string canvasId, object dados)
+    {
+        for (int tentativa = 0; tentativa < 8; tentativa++)
+        {
+            var renderizado = await JS.InvokeAsync<bool>("benchmarkCharts.renderLinha", canvasId, dados, "pts");
             if (renderizado)
                 return;
             await Task.Delay(100);
@@ -323,6 +459,19 @@ else
 
     private GridSort<ModelRanking> SortScore => GridSort<ModelRanking>
         .ByDescending(r => r.Score);
+
+    private GridSort<ModelRanking> SortAvgTime => GridSort<ModelRanking>
+        .ByDescending(r => r.AvgResponseTimeMs);
+
+    private GridSort<ModelRanking> SortDivergence => GridSort<ModelRanking>
+        .ByDescending(r => r.JudgeDivergence ?? -1);
+
+    // Mesmo formato curto de TempoProcessamentoCurtoFormatado ("96,5s" / "3,42s")
+    private static string FormatarTempoMedio(double ms)
+    {
+        var segundos = ms / 1000.0;
+        return segundos < 10 ? $"{segundos:F2}s" : $"{segundos:F1}s";
+    }
 }
 
 <style>
@@ -437,7 +586,7 @@ else
     }
 
         .table-scroll fluent-data-grid {
-            min-width: 760px;
+            min-width: 1080px;
         }
 
     .dashboard-graficos {
