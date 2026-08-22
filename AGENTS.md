@@ -16,7 +16,7 @@ The solution builds as a **single app project** (`OllamaArena/`) plus a **test p
 
 ## Git & commits
 
-- **Commits and pushes are made by the author, never by the agent** — the agent must not run `git add`, `git commit` or `git push`, not even when asked during a session. The author tests the corrections first and commits when they decide it is time.
+- **Never commit automatically** — after changing code, the agent must not run `git add`, `git commit` or `git push` on its own initiative; the working tree stays ready for the author to review and commit. Commits are only allowed when the author **explicitly asks** during a session (pushes likewise).
 - Agent workflow after finishing code changes: run `dotnet build OllamaArena.slnx` + `dotnet test OllamaArena.slnx`, report what changed (read-only `git status`/`git diff`), and stop — leaving the working tree ready for the author to review and commit.
 - On request, the agent may propose a commit message in Portuguese (PT), concise, matching the existing history style.
 
