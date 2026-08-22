@@ -11,7 +11,7 @@
 - [Como usar](#como-usar)
 - [Casos de teste funcionais](#casos-de-teste-funcionais)
 - [Jailbreak e tentativas de engano](#jailbreak-e-tentativas-de-engano)
-- [Temas e recomendação contextual](#temas-e-recomendação-contextual)
+- [Temas e recomendação contextual](#temas-e-recomendacao-contextual)
 - [Fluxo de teste sugerido](#fluxo-de-teste-sugerido)
 
 ---
