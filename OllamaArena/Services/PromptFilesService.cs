@@ -11,19 +11,22 @@ public class PromptFilesService
         _environment = environment;
     }
 
-    private string GetPromptsDirectory()
+    private const string DefaultFolder = "Prompts";
+
+    private string GetDirectory(string? folderName)
     {
-        var sourceDir = Path.Combine(_environment.ContentRootPath, "Prompts");
+        var folder = string.IsNullOrWhiteSpace(folderName) ? DefaultFolder : folderName;
+        var sourceDir = Path.Combine(_environment.ContentRootPath, folder);
 
         if (Directory.Exists(sourceDir))
             return sourceDir;
 
-        return Path.Combine(AppContext.BaseDirectory, "Prompts");
+        return Path.Combine(AppContext.BaseDirectory, folder);
     }
 
-    public List<string> GetPromptFiles()
+    public List<string> GetPromptFiles(string? folderName = null)
     {
-        var promptsDir = GetPromptsDirectory();
+        var promptsDir = GetDirectory(folderName);
 
         if (!Directory.Exists(promptsDir))
             return new List<string>();
@@ -35,7 +38,7 @@ public class PromptFilesService
             .OfType<string>()];
     }
 
-    public async Task<string?> GetPromptFileContentAsync(string fileName, CancellationToken cancellationToken = default)
+    public async Task<string?> GetPromptFileContentAsync(string fileName, string? folderName = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(fileName))
             throw new ArgumentException("fileName required", nameof(fileName));
@@ -45,7 +48,7 @@ public class PromptFilesService
 
         try
         {
-            var promptsDir = Path.GetFullPath(GetPromptsDirectory());
+            var promptsDir = Path.GetFullPath(GetDirectory(folderName));
             var file = Path.GetFullPath(Path.Combine(promptsDir, fileName));
             string expectedPrefix = promptsDir + Path.DirectorySeparatorChar;
 
@@ -75,7 +78,7 @@ public class PromptFilesService
 
         try
         {
-            var promptsDir = Path.GetFullPath(GetPromptsDirectory());
+            var promptsDir = Path.GetFullPath(GetDirectory(null));
             Directory.CreateDirectory(promptsDir);
 
             var file = Path.GetFullPath(Path.Combine(promptsDir, fileName));

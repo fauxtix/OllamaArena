@@ -4,6 +4,7 @@
 @inject IStringLocalizer<SharedResources> L
 @inject IDialogService DialogService
 @inject InternetConnectivityService Internet
+@inject NavigationManager Navigation
 
 @inherits LayoutComponentBase
 
@@ -27,6 +28,13 @@
                                   Style="font-size: 0.9rem; padding: 4px 10px; gap: 4px;">
                         <FluentIcon Value="@(new Icons.Regular.Size16.DocumentBulletList())" Slot="start" />
                         @L["ReadmeViewer"]
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  OnClick="@(() => Navigation.NavigateTo("/plano-de-testes"))"
+                                  Title="@L["TestPlan"]"
+                                  Style="font-size: 0.9rem; padding: 4px 10px; gap: 4px;">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.DocumentBulletList())" Slot="start" />
+                        @L["TestPlan"]
                     </FluentButton>
                     <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="ToggleTheme"

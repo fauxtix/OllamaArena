@@ -46,13 +46,16 @@
             <FluentNavLink Href="/system-logs"
                            Icon="@(new Icons.Regular.Size20.DocumentText())"
                            IconColor="Color.Accent">@L["SystemLogs"]</FluentNavLink>
-
-            <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
-
-            <FluentNavLink Href="/settings"
-                           Icon="@(new Icons.Regular.Size20.Settings())"
-                           IconColor="Color.Accent">@L["Settings"]</FluentNavLink>
         </FluentNavMenu>
+
+        <div class="navmenu-footer">
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
+            <FluentNavMenu Id="footer-menu" Width="250">
+                <FluentNavLink Href="/settings"
+                               Icon="@(new Icons.Regular.Size20.Settings())"
+                               IconColor="Color.Accent">@L["Settings"]</FluentNavLink>
+            </FluentNavMenu>
+        </div>
     </nav>
 </div>
 
@@ -63,5 +66,33 @@
     .sitenav .nav-link.active {
         background-color: #f0f0f0; /* Change this to your desired highlight color */
         border-style:dotted;
+    }
+
+    .navmenu-footer {
+        margin-top: auto;
+        padding-bottom: 8px;
+    }
+
+    #footer-menu {
+        width: 100% !important;
+    }
+
+    @@media (min-width: 769px) {
+        .navmenu {
+            display: flex;
+            flex-direction: column;
+        }
+
+        nav.sitenav {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+    }
+
+    body:has(#navmenu-toggle:checked) nav.sitenav {
+        display: flex;
+        flex-direction: column;
     }
 </style>
