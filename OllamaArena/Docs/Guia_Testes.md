@@ -79,7 +79,7 @@ Esperado: **todos os testes passam** (93 testes em 8 classes — `dotnet test Ol
 
 ## 6. Dashboard (`/dashboard`)
 
-- [ ] Com benchmarks gravados: **3 KPI cards** (Melhor Modelo com score, Modelos avaliados, Avaliações) + **2 radares de qualidade** (Gemini/OpenRouter, Chart.js, escala 0–5, 12 métricas, com download de imagem) + **1 scatter plot** (tokens/s vs. score, com download) + **tabela classificativa** ordenável (Posição, Modelo, Score com barra 0–5, Gemini, OpenRouter, Respostas, Avaliadas).
+- [ ] Com benchmarks gravados: **6 KPI cards** (Melhor Modelo com score, Modelos avaliados, Cobertura de avaliação em % com fração "x/y respostas com os 2 juízes", Prompts testados com data do último benchmark, Modelo mais rápido com tokens/s, Maior divergência juízes com valor Δ) + **2 radares de qualidade** (Gemini/OpenRouter, Chart.js, escala 0–5, 12 métricas, com download de imagem) + **1 scatter plot** (tokens/s vs. score, com download) + **1 gráfico de linhas "Evolução do score ao longo do tempo"** (média acumulada por modelo, legenda por modelo, com download) + **tabela classificativa** ordenável (Posição, Modelo, Score com barra 0–5, Gemini, OpenRouter, Tokens/s, Tempo médio, Divergência — "—" se só um juiz avaliou, Tokens/resposta).
 - [ ] Sem BD vazia: badge "Sem avaliações", sem crash.
 - [ ] Sem avaliações de um juiz (ex.: só Gemini): radar desse juiz mostra "Sem avaliações para este juiz." sem erro.
 

@@ -148,6 +148,16 @@ The **Overall** score weighs the 12 metrics (**Factual** has the highest weight,
 
 > **A note on "hallucination":** there is no dedicated metric for hallucinations. **Factual** is the closest indicator — responses with invented claims tend to score low on `Factual`. However, the judges evaluate only against the **prompt + training year**, without external verification (no retrieval/ground truth): internal contradictions and clearly false facts are caught, but plausible-sounding invented details (citations, statistics, URLs) may slip through. So a low `Factual` is a strong signal of hallucination; a high `Factual` is no guarantee of its absence.
 
+## 📈 Dashboard
+
+The **Dashboard** panel consolidates everything the judges have evaluated into a single screen:
+
+- **6 summary cards** — Best Model (with score), Evaluated Models, Evaluation Coverage (% of responses with both judges), Prompts Tested (with the date of the last benchmark), Fastest Model (tokens/s) and Highest Judge Divergence (the model Gemini and OpenRouter disagree on the most);
+- **2 quality radars** — one per judge (Gemini/OpenRouter), showing each model's average across the 12 metrics on a 0–5 scale, with image download;
+- **Performance vs Quality** — scatter plot of tokens/s vs overall score, to see at a glance which models are fast *and* good;
+- **Score evolution over time** — line chart with each model's cumulative average score by benchmark date, to spot trends and declines;
+- **Sortable ranking table** — position, model, overall score (0–5 bar), separate Gemini and OpenRouter scores, average Tokens/s, average response time, judge divergence ("—" when only one judge has evaluated) and average tokens per response.
+
 ## 💬 Chat Interface
 
 - **Real-time responses (streaming)** — the text appears on screen word by word, as the model generates it;

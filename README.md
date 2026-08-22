@@ -82,6 +82,16 @@ A nota **Global** pondera as 12 métricas (a **Factual** tem o peso mais alto, 2
 
 > **Nota sobre "alucinação":** não existe uma métrica dedicada a alucinações. O **Factual** é o indicador mais próximo — respostas com afirmações inventadas tendem a ter `Factual` baixo. No entanto, os juízes avaliam apenas contra o **prompt + ano de treino**, sem verificação externa (não há pesquisa/ground truth): contradições internas e factos claramente falsos são detetados, mas detalhes inventados mas plausíveis (citações, estatísticas, URLs) podem passar despercebidos. Por isso, `Factual` baixo é um forte sinal de alucinação; `Factual` alto não é garantia de ausência.
 
+## 📈 Dashboard
+
+O painel **Dashboard** consolida tudo o que os juízes avaliaram num único ecrã:
+
+- **6 cartões de resumo** — Melhor Modelo (com score), Modelos avaliados, Cobertura de avaliação (% de respostas com os dois juízes), Prompts testados (com a data do último benchmark), Modelo mais rápido (tokens/s) e Maior divergência entre juízes (o modelo sobre o qual Gemini e OpenRouter mais discordam);
+- **2 radares de qualidade** — um por juiz (Gemini/OpenRouter), com a média das 12 métricas por modelo em escala 0–5 e download de imagem;
+- **Desempenho vs Qualidade** — gráfico de dispersão tokens/s vs score global, para ver de relance que modelos são rápidos *e* bons;
+- **Evolução do score ao longo do tempo** — gráfico de linhas com a média acumulada do score de cada modelo por data de benchmark, para ver tendências e declínios;
+- **Tabela classificativa ordenável** — posição, modelo, score global (barra 0–5), notas separadas de Gemini e OpenRouter, Tokens/s médios, Tempo médio de resposta, Divergência entre juízes ("—" quando só um juiz avaliou) e Tokens médios por resposta.
+
 ## 💬 Interface de Chat
 
 - **Respostas em tempo real (streaming)** — o texto aparece no ecrã palavra a palavra, à medida que o modelo o gera;
