@@ -293,6 +293,15 @@ namespace OllamaArena.Components.Pages.Components
 
                 if (guardado)
                 {
+                    // A avaliação manual edita uma instância nova vinda da BD (OpenEvaluation);
+                    // substituímos o item correspondente na lista para os badges do rodapé refletirem a nota sem recarregar a página.
+                    var respostas = _selectedPrompt?.Answers;
+                    if (respostas != null)
+                    {
+                        var idx = respostas.FindIndex(a => a.Id == resposta.Id);
+                        if (idx >= 0) respostas[idx] = resposta;
+                    }
+
                     await CloseDialogAsync();
                     await DialogService.ShowInfoAsync(L["Benchmarks.EvaluationSaved", resposta.NomeModelo], L["Common.Success"]);
                     StateHasChanged();
@@ -513,17 +522,32 @@ namespace OllamaArena.Components.Pages.Components
         /// <summary>
         /// Rede de segurança local para o idioma: se a resposta divergir claramente do
         /// idioma esperado (gravado na resposta ou, em falta, o idioma atual do seletor
-        /// PT/EN), limita a nota Language Consistency do juiz e devolve uma nota para
-        /// juntar à recomendação — mesmo quando o juiz LLM foi leniente.
+        /// PT/EN), limita a nota Language Consistency do juiz a 2; se está no idioma
+        /// certo mas mistura línguas, limita a 3. Devolve uma nota para juntar à
+        /// recomendação — mesmo quando o juiz LLM foi leniente.
         /// </summary>
         private string? AplicarGuardaIdioma(BenchmarkResponse resposta, ParsedEvaluationResult parsed)
         {
-            if (!JudgeLanguageGuard.DeveCapar(resposta.TextoResposta, resposta.IdiomaSessao, out var detetado))
-                return null;
+            if (JudgeLanguageGuard.DeveCapar(resposta.TextoResposta, resposta.IdiomaSessao, out var detetado))
+            {
+                parsed.LanguageConsistencyScore = JudgeLanguageGuard.Capar(parsed.LanguageConsistencyScore);
+                return L["Common.LocalLanguageOverride", NomeIdiomaDetetado(detetado), IdiomaEsperado(resposta)].Value;
+            }
 
-            parsed.LanguageConsistencyScore = JudgeLanguageGuard.Capar(parsed.LanguageConsistencyScore);
+            if (JudgeLanguageGuard.DeveCaparPorMistura(resposta.TextoResposta, resposta.IdiomaSessao))
+            {
+                parsed.LanguageConsistencyScore = JudgeLanguageGuard.CaparMistura(parsed.LanguageConsistencyScore);
+                return L["Common.LocalLanguageMixOverride", LinguaIntrusa(resposta), IdiomaEsperado(resposta)].Value;
+            }
 
-            return L["Common.LocalLanguageOverride", NomeIdiomaDetetado(detetado), IdiomaEsperado(resposta)].Value;
+            return null;
+        }
+
+        private string LinguaIntrusa(BenchmarkResponse resposta)
+        {
+            return JudgeLanguageGuard.CodigoEsperado(resposta.IdiomaSessao) == "pt"
+                ? L["Common.DetectedLang.En"].Value
+                : L["Common.DetectedLang.Pt"].Value;
         }
 
         private string NomeIdiomaDetetado(DetectedLanguage detetado)

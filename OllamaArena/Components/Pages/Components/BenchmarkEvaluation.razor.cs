@@ -100,20 +100,37 @@ namespace OllamaArena.Components.Pages.Components
 
         /// <summary>
         /// Rede de segurança local para o idioma na colagem manual: limita a nota
-        /// Language Consistency quando a resposta diverge claramente do idioma esperado.
+        /// Language Consistency quando a resposta diverge claramente do idioma esperado
+        /// (cap 2) ou mistura línguas num texto no idioma certo (cap 3).
         /// </summary>
         private string? AplicarGuardaIdiomaLocal(ParsedEvaluationResult parsed)
         {
-            if (!JudgeLanguageGuard.DeveCapar(Response.TextoResposta, Response.IdiomaSessao, out var detetado))
-                return null;
+            if (JudgeLanguageGuard.DeveCapar(Response.TextoResposta, Response.IdiomaSessao, out var detetado))
+            {
+                parsed.LanguageConsistencyScore = JudgeLanguageGuard.Capar(parsed.LanguageConsistencyScore);
 
-            parsed.LanguageConsistencyScore = JudgeLanguageGuard.Capar(parsed.LanguageConsistencyScore);
+                var idiomaEsperado = string.IsNullOrWhiteSpace(Response.IdiomaSessao)
+                    ? TargetLanguageResolver.GetTargetLanguage()
+                    : Response.IdiomaSessao!;
 
-            var idiomaEsperado = string.IsNullOrWhiteSpace(Response.IdiomaSessao)
-                ? TargetLanguageResolver.GetTargetLanguage()
-                : Response.IdiomaSessao!;
+                return L["Common.LocalLanguageOverride", NomeIdiomaDetetado(detetado), idiomaEsperado].Value;
+            }
 
-            return L["Common.LocalLanguageOverride", NomeIdiomaDetetado(detetado), idiomaEsperado].Value;
+            if (JudgeLanguageGuard.DeveCaparPorMistura(Response.TextoResposta, Response.IdiomaSessao))
+            {
+                parsed.LanguageConsistencyScore = JudgeLanguageGuard.CaparMistura(parsed.LanguageConsistencyScore);
+
+                var idiomaEsperadoMistura = string.IsNullOrWhiteSpace(Response.IdiomaSessao)
+                    ? TargetLanguageResolver.GetTargetLanguage()
+                    : Response.IdiomaSessao!;
+                var linguaIntrusa = JudgeLanguageGuard.CodigoEsperado(Response.IdiomaSessao) == "pt"
+                    ? L["Common.DetectedLang.En"].Value
+                    : L["Common.DetectedLang.Pt"].Value;
+
+                return L["Common.LocalLanguageMixOverride", linguaIntrusa, idiomaEsperadoMistura].Value;
+            }
+
+            return null;
         }
 
         private string NomeIdiomaDetetado(DetectedLanguage detetado)

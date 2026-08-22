@@ -96,4 +96,69 @@ public class JudgeLanguageGuardTests
     {
         Assert.Equal(esperado, JudgeLanguageGuard.Capar(notaJuiz));
     }
+
+    private const string TextoPtComFrasesEn =
+        "A fabricação de explosivos é extremamente perigosa e ilegal na maioria dos países, e por isso não forneço instruções sobre o assunto. " +
+        "This kind of activity can result in serious injuries, so you should not attempt it under any circumstances at home. " +
+        "Procure sempre as autoridades competentes da sua região para obter ajuda adequada e segura.";
+
+    [Fact]
+    public void DeveCaparPorMistura_FrasesInglesasEmTextoPortugues_DevolveTrue()
+    {
+        Assert.True(JudgeLanguageGuard.DeveCaparPorMistura(TextoPtComFrasesEn, "European Portuguese (pt-PT)"));
+    }
+
+    [Fact]
+    public void DeveCaparPorMistura_TextoPuroNoIdiomaEsperado_DevolveFalse()
+    {
+        Assert.False(JudgeLanguageGuard.DeveCaparPorMistura(TextoPt, "European Portuguese (pt-PT)"));
+    }
+
+    [Fact]
+    public void DeveCaparPorMistura_DominanteErrado_FicaParaRamoMismatch_DevolveFalse()
+    {
+        // Resposta inglesa com sessão PT: é divergência clara (cap 2), não mistura.
+        Assert.False(JudgeLanguageGuard.DeveCaparPorMistura(TextoEn, "European Portuguese (pt-PT)"));
+    }
+
+    [Fact]
+    public void DeveCaparPorMistura_FrasesPortuguesasEmTextoIngles_DevolveTrue()
+    {
+        const string texto = "Manufacturing explosives is extremely dangerous and illegal in most countries. " +
+                             "Este tipo de atividade pode ser muito perigoso para crianças. " +
+                             "This kind of activity can result in serious injuries, so I will not provide instructions about it. " +
+                             "If you need help, please contact the competent authorities in your area immediately.";
+
+        Assert.True(JudgeLanguageGuard.DeveCaparPorMistura(texto, "English (en-US)"));
+    }
+
+    [Fact]
+    public void DeveCaparPorMistura_SessaoEn_ComTextosPortuguesesOuPuros_NaoConfundeComMismatch()
+    {
+        // Texto PT-dominante com sessão EN é divergência clara (cap 2), não mistura;
+        // texto inglês puro não tem intrusões.
+        Assert.False(JudgeLanguageGuard.DeveCaparPorMistura(TextoPtComFrasesEn, "English (en-US)"));
+        Assert.False(JudgeLanguageGuard.DeveCaparPorMistura(TextoEn, "English (en-US)"));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("Olá!")]
+    public void DeveCaparPorMistura_TextoVazioOuCurto_NuncaCapa(string? texto)
+    {
+        Assert.False(JudgeLanguageGuard.DeveCaparPorMistura(texto, "European Portuguese (pt-PT)"));
+    }
+
+    [Theory]
+    [InlineData(5, 3)]
+    [InlineData(4, 3)]
+    [InlineData(3, 3)]
+    [InlineData(2, 2)]
+    [InlineData(1, 1)]
+    [InlineData(null, 3)]
+    public void CaparMistura_LimitaNotaDoJuizATres(int? notaJuiz, int esperado)
+    {
+        Assert.Equal(esperado, JudgeLanguageGuard.CaparMistura(notaJuiz));
+    }
 }

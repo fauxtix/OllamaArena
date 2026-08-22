@@ -20,6 +20,12 @@ namespace OllamaArena.Services.Helpers
         private const int PalavrasMinimas = 12;
         private const int MargemMinima = 2;
 
+        /// <summary>Número mínimo de ocorrências da língua intrusa para considerar mistura.</summary>
+        public const int OcorrenciasMinimasMistura = 4;
+
+        /// <summary>Fração mínima do total de palavras que têm de ser da língua intrusa.</summary>
+        public const double FracaoMinimaMistura = 0.08;
+
         [GeneratedRegex("```.*?```", RegexOptions.Singleline)]
         private static partial Regex RegexCodigo();
 
@@ -39,6 +45,13 @@ namespace OllamaArena.Services.Helpers
             "are", "from", "your", "have", "will", "can", "not", "but", "they",
             "which", "their", "there", "would", "should", "about", "into", "than"
         ];
+
+        /// <summary>Intrusões inglesas num texto português; "for" excluída por ser também palavra portuguesa ("se for necessário").</summary>
+        private static readonly HashSet<string> IntrusoesEmTextoPt =
+            StopwordsEn.Where(p => p != "for").ToHashSet(StringComparer.Ordinal);
+
+        /// <summary>Intrusões portuguesas num texto inglês (sem colisões com stopwords EN).</summary>
+        private static readonly HashSet<string> IntrusoesEmTextoEn = StopwordsPt.ToHashSet(StringComparer.Ordinal);
 
         private static readonly char[] DiacriticosPt = ['ã', 'õ', 'ç', 'á', 'é', 'í', 'ó', 'ú', 'â', 'ê', 'ô'];
 
@@ -63,7 +76,7 @@ namespace OllamaArena.Services.Helpers
 
             foreach (string palavraBruta in palavras)
             {
-                string palavra = palavraBruta.Trim().ToLowerInvariant().Trim('.', ',', ';', ':', '!', '?', '"', '\'', '(', ')');
+                string palavra = Normalizar(palavraBruta);
 
                 if (StopwordsPt.Contains(palavra)) pontosPt++;
                 else if (StopwordsEn.Contains(palavra)) pontosEn++;
@@ -76,6 +89,39 @@ namespace OllamaArena.Services.Helpers
 
             return pontosPt > pontosEn ? DetectedLanguage.Portuguese : DetectedLanguage.English;
         }
+
+        /// <summary>
+        /// Indica se um texto contém uma quantidade significativa de stopwords da língua
+        /// oposta a <paramref name="codigoIdiomaBase"/> ("pt"/"en") — mistura de línguas,
+        /// mesmo com o idioma dominante correto (ex.: frases inglesas incrustadas em
+        /// português). Limiar conservador para evitar falsos positivos em textos técnicos.
+        /// </summary>
+        public static bool ContemMisturaSignificativa(string? texto, string? codigoIdiomaBase, out int ocorrenciasIntrusao)
+        {
+            ocorrenciasIntrusao = 0;
+            if (string.IsNullOrWhiteSpace(texto))
+                return false;
+
+            bool basePortuguesa = !string.Equals(codigoIdiomaBase?.Trim(), "en", StringComparison.OrdinalIgnoreCase);
+            var intrusoes = basePortuguesa ? IntrusoesEmTextoPt : IntrusoesEmTextoEn;
+
+            string limpo = RegexUrl().Replace(RegexCodigo().Replace(texto, " "), " ");
+            string[] palavras = limpo.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            if (palavras.Length < PalavrasMinimas)
+                return false;
+
+            foreach (string palavraBruta in palavras)
+            {
+                if (intrusoes.Contains(Normalizar(palavraBruta)))
+                    ocorrenciasIntrusao++;
+            }
+
+            return ocorrenciasIntrusao >= OcorrenciasMinimasMistura
+                && ocorrenciasIntrusao >= palavras.Length * FracaoMinimaMistura;
+        }
+
+        private static string Normalizar(string palavraBruta) =>
+            palavraBruta.Trim().ToLowerInvariant().Trim('.', ',', ';', ':', '!', '?', '"', '\'', '(', ')');
 
         /// <summary>
         /// Indica se o idioma detetado conflita com o idioma esperado da sessão

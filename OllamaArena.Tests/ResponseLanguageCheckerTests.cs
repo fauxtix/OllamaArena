@@ -80,4 +80,55 @@ public class ResponseLanguageCheckerTests
         Assert.True(ResponseLanguageChecker.IsMismatch(DetectedLanguage.English, "fr"));
         Assert.False(ResponseLanguageChecker.IsMismatch(DetectedLanguage.Portuguese, "fr"));
     }
+
+    private const string TextoPtComFrasesEn =
+        "A fabricação de explosivos é extremamente perigosa e ilegal na maioria dos países, e por isso não forneço instruções sobre o assunto. " +
+        "This kind of activity can result in serious injuries, so you should not attempt it under any circumstances at home. " +
+        "Procure sempre as autoridades competentes da sua região para obter ajuda adequada e segura.";
+
+    [Fact]
+    public void ContemMisturaSignificativa_FrasesInglesasEmTextoPt_DevolveTrue()
+    {
+        var mistura = ResponseLanguageChecker.ContemMisturaSignificativa(TextoPtComFrasesEn, "pt", out var ocorrencias);
+
+        Assert.True(mistura);
+        Assert.True(ocorrencias >= ResponseLanguageChecker.OcorrenciasMinimasMistura);
+    }
+
+    [Fact]
+    public void ContemMisturaSignificativa_TextoPuroPortugues_DevolveFalse()
+    {
+        Assert.False(ResponseLanguageChecker.ContemMisturaSignificativa(TextoPt, "pt", out _));
+    }
+
+    [Fact]
+    public void ContemMisturaSignificativa_BaseEnComIntrusoesPt_DevolveTrue()
+    {
+        const string texto = "Manufacturing explosives is extremely dangerous and illegal in most countries around the world today. " +
+                             "Este tipo de atividade pode causar ferimentos muito graves quando não é feita com cuidado adequado. " +
+                             "If you need help, please contact the competent authorities in your area immediately.";
+
+        Assert.True(ResponseLanguageChecker.ContemMisturaSignificativa(texto, "en", out _));
+    }
+
+    [Fact]
+    public void ContemMisturaSignificativa_PalavraForEPortuguesa_NaoContaComoIntrusao()
+    {
+        // "for" é verbo português ("se for necessário"); 4+ ocorrências não podem contar como inglês.
+        const string texto = "Se for necessário, o utilizador será avisado; se for possível, a resposta indica os passos; " +
+                             "quando for pedido um resumo, este aparece no fim; e se for preciso, inclui exemplos práticos " +
+                             "para que ninguém perca tempo com detalhes desnecessários sobre este processo de validação.";
+
+        Assert.False(ResponseLanguageChecker.ContemMisturaSignificativa(texto, "pt", out var ocorrencias));
+        Assert.Equal(0, ocorrencias);
+    }
+
+    [Fact]
+    public void ContemMisturaSignificativa_TextoCurtoOuCodigo_NaoDevolveMistura()
+    {
+        Assert.False(ResponseLanguageChecker.ContemMisturaSignificativa("Olá, tudo bem?", "pt", out _));
+        Assert.False(ResponseLanguageChecker.ContemMisturaSignificativa(
+            "```csharp\nvar theResult = service.GetData();\nif (theResult is not null) { return Ok(theResult); }\n```",
+            "pt", out _));
+    }
 }

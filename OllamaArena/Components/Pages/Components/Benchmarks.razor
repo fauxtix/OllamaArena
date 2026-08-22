@@ -223,6 +223,7 @@
                                                     <FluentSpacer />
                                                     <div>
                                                         <FluentButton Appearance="Appearance.Accent" Color="Color.Success"
+                                                                      Disabled="@isCreatingPrompt"
                                                                       IconStart="@(new Icons.Regular.Size16.Edit())"
                                                                       OnClick="@(() => OpenEvaluation(resp.Id))">
                                                             @L["Benchmarks.Evaluate"]

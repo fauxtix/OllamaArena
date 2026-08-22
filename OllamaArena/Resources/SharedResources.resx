@@ -204,6 +204,9 @@
   <data name="Common.LocalLanguageOverride" xml:space="preserve">
     <value>[Verificação local] Resposta detetada em {0}; idioma esperado: {1}. Language Consistency limitada a 2.</value>
   </data>
+  <data name="Common.LocalLanguageMixOverride" xml:space="preserve">
+    <value>[Verificação local] A resposta mistura {0} num texto maioritariamente noutro idioma; idioma esperado: {1}. Language Consistency limitada a 3.</value>
+  </data>
   <data name="Common.DetectedLang.Pt" xml:space="preserve">
     <value>português</value>
   </data>

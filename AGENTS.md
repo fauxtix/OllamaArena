@@ -14,6 +14,12 @@ The solution builds as a **single app project** (`OllamaArena/`) plus a **test p
 - CI: `.github/workflows/deploy-iis.yml` publishes Release and deploys to the author's self-hosted IIS runner (port 4501); not relevant on other machines.
 - Verification: successful build + passing tests + manual run.
 
+## Git & commits
+
+- **Commits and pushes are made by the author, never by the agent** — the agent must not run `git add`, `git commit` or `git push`, not even when asked during a session. The author tests the corrections first and commits when they decide it is time.
+- Agent workflow after finishing code changes: run `dotnet build OllamaArena.slnx` + `dotnet test OllamaArena.slnx`, report what changed (read-only `git status`/`git diff`), and stop — leaving the working tree ready for the author to review and commit.
+- On request, the agent may propose a commit message in Portuguese (PT), concise, matching the existing history style.
+
 ## Runtime requirements
 
 - Ollama daemon must be running (`ollama serve`); the app hardcodes `http://localhost:11434` (chat, translation, and keep-alive unload requests in `Chat.razor.cs`).
