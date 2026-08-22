@@ -32,7 +32,7 @@ public static class ChatMeasureTemperature
         ("como implementar", 5f), ("como corrigir", 5f), ("passo a passo", 4.5f),
         ("base de dados", 3.5f), ("pull request", 3.5f), ("unit test", 3.5f),
         ("stack trace", 4f), ("por que", 2.5f), ("porquê", 2.5f),
-        ("explica me", 3.5f), ("explica-me", 3.5f), ("mostra me", 2.5f),
+        ("explica me", 3.5f), ("explica-me", 3.5f), ("mostra me", 2.5f), 
 
         // EN
         ("how does", 5f), ("how to", 4.5f), ("step by step", 4.5f),

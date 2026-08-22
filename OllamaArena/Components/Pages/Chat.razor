@@ -97,14 +97,6 @@ else
                               OnClick="@OpenHistory">
                     @L["Chat.History"]
                 </FluentButton>
-
-                @* REMARK: a pesquisa web funciona parcialmente — a Wikipedia devolve contexto, mas o DuckDuckGo
-                   usa proteção anti-bot e pode devolver resultados vazios (ver SearchWebContext_DuckDuckGo_Async). *@
-                @* <FluentSwitch @bind-Value="_webSearchEnabled"
-                              Disabled="@_isThinking"
-                              Label="@L["Chat.WebSearchLabel"]"
-                              Title="@L["Chat.WebSearchTooltip"]"
-                              Style="font-size: 0.8rem;" /> *@
             </FluentStack>
 
             @if (_showContextBar && _contextLength > 0)
@@ -140,14 +132,12 @@ else
                                 <span>@msg.User</span>
                                 <span class="timestamp">• @msg.Timestamp.ToString("HH:mm")</span>
 
-                                @* --- INÍCIO DA ADIÇÃO --- *@
                                 @if (!string.IsNullOrWhiteSpace(msg.Summary))
                                 {
                                     <span style="margin-left: 6px; padding: 2px 6px; background-color: var(--neutral-layer-3); border-radius: 4px; font-weight: 600;">
                                         🏷️ @msg.Summary
                                     </span>
                                 }
-                                @* --- FIM DA ADIÇÃO --- *@
                                 @if (msg.Temperature > 0)
                                 {
                                     <span class="elapsed-time">• @L["Chat.TemperatureLabel", msg.Temperature]</span>
@@ -155,7 +145,13 @@ else
                                 @if (!string.IsNullOrEmpty(msg.ElapsedTime))
                                 {
                                     <span class="elapsed-time">• @msg.ElapsedTime</span>
-                                }                               
+                                }
+                                @if (!string.IsNullOrWhiteSpace(msg.LanguageWarning))
+                                {
+                                    <span class="language-warning" title="@msg.LanguageWarning">
+                                        ⚠ @msg.LanguageWarning
+                                    </span>
+                                }
                             </span>
 
                             <div class="chat-content"
@@ -384,6 +380,21 @@ else
         color: #8b9cb3;
         font-size: 0.85em;
         margin-left: 4px;
+    }
+
+    .language-warning {
+        margin-left: 6px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        font-weight: 600;
+        background-color: rgba(245, 158, 11, 0.15);
+        border: 1px solid rgba(245, 158, 11, 0.6);
+        color: #b45309;
+    }
+
+    body[data-theme="dark"] .language-warning {
+        color: #fbbf24;
     }
 
     .reasoning-block {

@@ -36,6 +36,10 @@ CREATE TABLE IF NOT EXISTS "Respostas" (
     "TempoProcessamento"         REAL,
     "TamanhoTokens"              INTEGER,
 
+    -- Idioma da sessao (seletor PT/EN) ativo na geracao da resposta; usado pelo
+    -- juiz para avaliar a adesao ao idioma esperado. NULL = resposta antiga.
+    "IdiomaSessao"               TEXT,
+
     -- Avaliacao geral / ratings finais
     "GeminiRating"               NUMERIC,
     "GeminiFeedback"             TEXT,
@@ -71,6 +75,12 @@ CREATE TABLE IF NOT EXISTS "Respostas" (
     "OpenRouterSafetyRating"            INTEGER,
     "OpenRouterLanguageConsistencyRating" INTEGER,
     "OpenRouterLoopDetectionRating"     INTEGER,
+
+    -- Flag de recusa correta (REFUSAL_HANDLED devolvido pelo juiz):
+    -- 1 = recusa correta, 0 = nao e recusa, NULL = avaliacao antiga sem o marcador.
+    -- Quando 1, o ScoreCalculator exclui Factual/Compliance/Relevance da ponderacao.
+    "GeminiRefusalHandled"              INTEGER,
+    "OpenRouterRefusalHandled"          INTEGER,
 
     FOREIGN KEY ("PromptId") REFERENCES "Prompts" ("Id") ON DELETE CASCADE
 );

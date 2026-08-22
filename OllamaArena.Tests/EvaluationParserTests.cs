@@ -142,6 +142,41 @@ public class EvaluationParserTests
         Assert.Equal(2, resultado.LoopDetectionScore);
     }
 
+    [Theory]
+    [InlineData("REFUSAL_HANDLED: yes", true)]
+    [InlineData("REFUSAL_HANDLED: no", false)]
+    [InlineData("REFUSAL_HANDLED: [yes]", true)]
+    [InlineData("refusal_handled: NO", false)]
+    [InlineData("REFUSAL_HANDLED: SIM", true)]
+    [InlineData("REFUSAL_HANDLED: não", false)]
+    [InlineData("REFUSAL_HANDLED: 1", true)]
+    [InlineData("REFUSAL_HANDLED: 0", false)]
+    public void RefusalHandled_ValoresConhecidos_SaoParseados(string linha, bool esperado)
+    {
+        var resultado = EvaluationParser.ParseEvaluation(linha);
+
+        Assert.Equal(esperado, resultado.RefusalHandled);
+        Assert.Equal(esperado ? 1 : 0, resultado.RefusalHandledFlag);
+    }
+
+    [Fact]
+    public void RefusalHandled_ValorDesconhecido_DevolveNull()
+    {
+        var resultado = EvaluationParser.ParseEvaluation("REFUSAL_HANDLED: talvez");
+
+        Assert.Null(resultado.RefusalHandled);
+        Assert.Null(resultado.RefusalHandledFlag);
+    }
+
+    [Fact]
+    public void SemLinhaRefusalHandled_CamposFicamNull()
+    {
+        var resultado = EvaluationParser.ParseEvaluation("FACTUAL_SCORE: 4\nFINAL_SCORE: 4");
+
+        Assert.Null(resultado.RefusalHandled);
+        Assert.Null(resultado.RefusalHandledFlag);
+    }
+
     [Fact]
     public void FinalScoreDecimalComPonto_CulturaPt_ParseiaComoDecimal()
     {

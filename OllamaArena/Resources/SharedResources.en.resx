@@ -198,6 +198,9 @@
   <data name="Common.ExportExcel" xml:space="preserve">
     <value>Export to Excel</value>
   </data>
+  <data name="Common.LanguageMismatch" xml:space="preserve">
+    <value>Response possibly not in the selected language ({0})</value>
+  </data>
   <data name="Chat.PageTitle" xml:space="preserve">
     <value>Chat - Ollama</value>
   </data>
@@ -819,6 +822,33 @@ Do you want to continue?</value>
   <data name="EditPrompts.DiscardTitle" xml:space="preserve">
     <value>Unsaved changes</value>
   </data>
+  <data name="TestPlan" xml:space="preserve">
+    <value>Test Plan</value>
+  </data>
+  <data name="TestPlan.PageTitle" xml:space="preserve">
+    <value>Test Plan</value>
+  </data>
+  <data name="TestPlan.Title" xml:space="preserve">
+    <value>Test plan files</value>
+  </data>
+  <data name="TestPlan.ReadOnly" xml:space="preserve">
+    <value>Read-only</value>
+  </data>
+  <data name="TestPlan.Loading" xml:space="preserve">
+    <value>Loading document...</value>
+  </data>
+  <data name="TestPlan.EmptyState" xml:space="preserve">
+    <value>There are no files in the PlanoDeTestes folder.</value>
+  </data>
+  <data name="TestPlan.InitError" xml:space="preserve">
+    <value>Error initializing the test plan file list.</value>
+  </data>
+  <data name="TestPlan.LoadError" xml:space="preserve">
+    <value>Could not load the selected file.</value>
+  </data>
+  <data name="TestPlan.Exit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
   <data name="Modelos.PageTitle" xml:space="preserve">
     <value>Available Models - Ollama</value>
   </data>
@@ -1359,8 +1389,11 @@ Do you want to continue?</value>
   <data name="Dashboard.ModelsCount" xml:space="preserve">
     <value>Evaluated models</value>
   </data>
-  <data name="Dashboard.EvaluationsCount" xml:space="preserve">
-    <value>Evaluations (judge)</value>
+  <data name="Dashboard.CoverageLabel" xml:space="preserve">
+    <value>Evaluation coverage</value>
+  </data>
+  <data name="Dashboard.CoverageDetail" xml:space="preserve">
+    <value>{0}/{1} responses with both judges</value>
   </data>
   <data name="Dashboard.ColModel" xml:space="preserve">
     <value>Model</value>
@@ -1392,8 +1425,41 @@ Do you want to continue?</value>
   <data name="Dashboard.ScatterTitle" xml:space="preserve">
     <value>Performance vs Quality</value>
   </data>
+  <data name="Dashboard.TimelineTitle" xml:space="preserve">
+    <value>Score evolution over time</value>
+  </data>
   <data name="Dashboard.ScatterHint" xml:space="preserve">
     <value>Generation speed (tokens/s) vs overall score (0–5), per model.</value>
+  </data>
+  <data name="Dashboard.ColTokensPerSecond" xml:space="preserve">
+    <value>Tokens/s</value>
+  </data>
+  <data name="Dashboard.ColAvgTime" xml:space="preserve">
+    <value>Avg. time</value>
+  </data>
+  <data name="Dashboard.ColDivergence" xml:space="preserve">
+    <value>Divergence</value>
+  </data>
+  <data name="Dashboard.ColAvgTokens" xml:space="preserve">
+    <value>Tokens/response</value>
+  </data>
+  <data name="Dashboard.PromptsCount" xml:space="preserve">
+    <value>Prompts tested</value>
+  </data>
+  <data name="Dashboard.LastActivity" xml:space="preserve">
+    <value>Last: {0}</value>
+  </data>
+  <data name="Dashboard.FastestModel" xml:space="preserve">
+    <value>Fastest model</value>
+  </data>
+  <data name="Dashboard.FastestSpeed" xml:space="preserve">
+    <value>{0} tokens/s</value>
+  </data>
+  <data name="Dashboard.JudgeDivergence" xml:space="preserve">
+    <value>Highest judge divergence</value>
+  </data>
+  <data name="Dashboard.DivergenceValue" xml:space="preserve">
+    <value>Δ {0} pts</value>
   </data>
 
 </root>

@@ -16,6 +16,10 @@ namespace OllamaArena.Models.Entities
         public double TempoCargaMs { get; set; }
         public int TamanhoTokens { get; set; }
 
+        /// <summary>Idioma da sessão (seletor PT/EN) ativo quando a resposta foi gerada.
+        /// Null em respostas antigas — o juiz avalia só a adesão à língua do prompt.</summary>
+        public string? IdiomaSessao { get; set; }
+
         public float? GeminiRating { get; set; }
         public string GeminiFeedback { get; set; } = string.Empty;
         public string GeminiRecommendation { get; set; } = string.Empty;
@@ -34,6 +38,9 @@ namespace OllamaArena.Models.Entities
         public int? GeminiLanguageConsistencyRating { get; set; }
         public int? GeminiLoopDetectionRating { get; set; }
 
+        // Flag de recusa correta (REFUSAL_HANDLED do juiz): 1/0/null
+        public int? GeminiRefusalHandled { get; set; }
+
         public float? OpenRouterRating { get; set; }
         public string OpenRouterFeedback { get; set; } = string.Empty;
         public string OpenRouterRecommendation { get; set; } = string.Empty;
@@ -51,6 +58,9 @@ namespace OllamaArena.Models.Entities
         public int? OpenRouterSafetyRating { get; set; }
         public int? OpenRouterLanguageConsistencyRating { get; set; }
         public int? OpenRouterLoopDetectionRating { get; set; }
+
+        // Flag de recusa correta (REFUSAL_HANDLED do juiz): 1/0/null
+        public int? OpenRouterRefusalHandled { get; set; }
 
         // PROPRIEDADES DE FORMATAÇÃO PARA A UI
 

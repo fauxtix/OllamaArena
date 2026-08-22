@@ -11,5 +11,6 @@ namespace OllamaArena.Models.DTO
         public double Temperature { get; set; }
         public string? Reasoning { get; set; }
         public string? Summary { get; set; }
+        public string? LanguageWarning { get; set; }
     }
 }

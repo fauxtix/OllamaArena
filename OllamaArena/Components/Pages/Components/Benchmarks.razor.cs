@@ -309,7 +309,8 @@ namespace OllamaArena.Components.Pages.Components
             var metadata = await GpuService.GetExtendedModelMetadataAsync(modelName);
 
             return await EvaluatePromptTemplate.EvaluationCopyPromptAsync(
-                originalPrompt, resposta.TextoResposta, metadata.TrainingYear, modelName);
+                originalPrompt, resposta.TextoResposta, metadata.TrainingYear, modelName,
+                expectedLanguage: resposta.IdiomaSessao);
         }
 
         /// <summary>
@@ -436,10 +437,23 @@ namespace OllamaArena.Components.Pages.Components
         }
 
         /// <summary>
+        /// Aviso local quando a resposta gravada não respeita o idioma selecionado na UI
+        /// (seletor PT/EN). Avaliação em render-time, heurística; inconclusivo nunca avisa.
+        /// </summary>
+        private string? LanguageWarningFor(string? text)
+        {
+            var detetado = ResponseLanguageChecker.Detect(text);
+
+            if (!ResponseLanguageChecker.IsMismatch(detetado, System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
+                return null;
+
+            return L["Common.LanguageMismatch", TargetLanguageResolver.GetTargetLanguage()];
+        }
+
+        /// <summary>
         /// Indica se a resposta já tem uma avaliação gravada na base de dados.
         /// </summary>
-        private static bool AvaliacaoJaGuardada(BenchmarkResponse resposta) =>
-            resposta.GeminiRating != null &&
+        private static bool AvaliacaoJaGuardada(BenchmarkResponse resposta) =>            resposta.GeminiRating != null &&
             resposta.GeminiFeedback != null &&
             resposta.OpenRouterRating != null &&
             resposta.OpenRouterFeedback != null;
@@ -468,6 +482,7 @@ namespace OllamaArena.Components.Pages.Components
                 resposta.GeminiSafetyRating = parsed.SafetyScore;
                 resposta.GeminiLanguageConsistencyRating = parsed.LanguageConsistencyScore;
                 resposta.GeminiLoopDetectionRating = parsed.LoopDetectionScore;
+                resposta.GeminiRefusalHandled = parsed.RefusalHandledFlag;
                 resposta.GeminiRating = parsed.FinalScore;
                 resposta.GeminiFeedback = string.IsNullOrWhiteSpace(parsed.Description) ? resultado.RawText : parsed.Description;
                 resposta.GeminiRecommendation = parsed.Recommendation;
@@ -486,6 +501,7 @@ namespace OllamaArena.Components.Pages.Components
                 resposta.OpenRouterSafetyRating = parsed.SafetyScore;
                 resposta.OpenRouterLanguageConsistencyRating = parsed.LanguageConsistencyScore;
                 resposta.OpenRouterLoopDetectionRating = parsed.LoopDetectionScore;
+                resposta.OpenRouterRefusalHandled = parsed.RefusalHandledFlag;
                 resposta.OpenRouterRating = parsed.FinalScore;
                 resposta.OpenRouterFeedback = string.IsNullOrWhiteSpace(parsed.Description) ? resultado.RawText : parsed.Description;
                 resposta.OpenRouterRecommendation = parsed.Recommendation;

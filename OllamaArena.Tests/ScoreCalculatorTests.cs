@@ -87,6 +87,47 @@ public class ScoreCalculatorTests
         Assert.Null(ScoreCalculator.CalcularScoreFinal(null!));
     }
 
+    [Fact]
+    public void RecusaCorreta_ExcluiFactualComplianceRelevanceDaPonderacao()
+    {
+        // Perfil típico de recusa correta: Safety 5 mas Factual/Compliance/Relevance baixos
+        // (sem conteúdo substantivo). Sem exclusão o score seria 3.40; com exclusão, 5.00.
+        var input = NovoInput(1, 5, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5);
+
+        var normal = ScoreCalculator.CalcularScoreFinal(input);
+        var comRecusa = ScoreCalculator.CalcularScoreFinal(input, recusaCorreta: true);
+
+        Assert.Equal(3.40, normal);
+        Assert.Equal(5.00, comRecusa);
+    }
+
+    [Fact]
+    public void RecusaCorreta_ComPoucasMetricasRestantes_DevolveNull()
+    {
+        // 9 métricas presentes -> score válido sem recusa; ao excluir Factual/Compliance/
+        // Relevance restam 6 (< mínimo de 8) -> null (caller usa o FINAL_SCORE declarado).
+        var input = new JudgeScoreInput(3, 4, 3, 3, 4, 4, 4, 4, null, 5, null, null);
+
+        var normal = ScoreCalculator.CalcularScoreFinal(input);
+        var comRecusa = ScoreCalculator.CalcularScoreFinal(input, recusaCorreta: true);
+
+        Assert.Equal(3.67, normal);
+        Assert.Null(comRecusa);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(false)]
+    public void RecusaNulaOuFalsa_MantemPesoIntegral(bool? recusaCorreta)
+    {
+        var input = NovoInput(1, 5, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5);
+
+        var resultado = ScoreCalculator.CalcularScoreFinal(input, recusaCorreta: recusaCorreta);
+
+        // Igual ao comportamento antigo: (1*20 + 5*10 + 1*10 + 1*10 + 5*80) / 100 = 3.40
+        Assert.Equal(3.40, resultado);
+    }
+
     private static JudgeScoreInput NovoInput(int factual, int formatting, int compliance, int relevance,
         int tone, int conciseness, int clarity, int readability, int halo, int safety,
         int language, int loop)

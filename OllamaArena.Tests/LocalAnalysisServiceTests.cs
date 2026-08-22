@@ -1,8 +1,10 @@
 using System.Globalization;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using OllamaArena.Models.DTO;
 using OllamaArena.Resources;
+using OllamaArena.Services.Helpers;
 using OllamaArena.Services.Implementations.Services;
 
 namespace OllamaArena.Tests;
@@ -10,7 +12,8 @@ namespace OllamaArena.Tests;
 public class LocalAnalysisServiceTests
 {
     private static LocalAnalysisService CriarServico()
-        => new(null!, NullLogger<LocalAnalysisService>.Instance, new FakeLocalizer());
+        => new(null!, NullLogger<LocalAnalysisService>.Instance, new FakeLocalizer(),
+            Options.Create(new JudgeScoreWeights()));
 
     [Fact]
     public async Task ListaVazia_DevolveNoDataSemCrash()

@@ -54,6 +54,7 @@ public static class DatabaseSchemaInitializer
                 "TempoCargaMs"               REAL,
                 "TempoProcessamento"         REAL,
                 "TamanhoTokens"              INTEGER,
+                "IdiomaSessao"               TEXT,
                 "GeminiRating"               NUMERIC,
                 "GeminiFeedback"             TEXT,
                 "GeminiRecommendation"       TEXT,
@@ -84,6 +85,8 @@ public static class DatabaseSchemaInitializer
                 "OpenRouterSafetyRating"     INTEGER,
                 "OpenRouterLanguageConsistencyRating" INTEGER,
                 "OpenRouterLoopDetectionRating" INTEGER,
+                "GeminiRefusalHandled"       INTEGER,
+                "OpenRouterRefusalHandled"   INTEGER,
                 FOREIGN KEY ("PromptId") REFERENCES "Prompts" ("Id") ON DELETE CASCADE
             );
             """);
@@ -231,6 +234,15 @@ public static class DatabaseSchemaInitializer
         EnsureColumn(connection, "Respostas", "GeminiLoopDetectionRating", "INTEGER");
         EnsureColumn(connection, "Respostas", "OpenRouterLanguageConsistencyRating", "INTEGER");
         EnsureColumn(connection, "Respostas", "OpenRouterLoopDetectionRating", "INTEGER");
+
+        // Flag de recusa correta (REFUSAL_HANDLED do juiz): 1 = recusa correta,
+        // 0 = não é recusa, NULL = avaliação antiga sem o marcador.
+        EnsureColumn(connection, "Respostas", "GeminiRefusalHandled", "INTEGER");
+        EnsureColumn(connection, "Respostas", "OpenRouterRefusalHandled", "INTEGER");
+
+        // Idioma da sessão (seletor PT/EN) ativo na geração da resposta; usado pelo
+        // juiz para avaliar a adesão ao idioma esperado. Null = resposta antiga.
+        EnsureColumn(connection, "Respostas", "IdiomaSessao", "TEXT");
 
         EnsureColumn(connection, "Conversas", "Descricao", "TEXT");
     }

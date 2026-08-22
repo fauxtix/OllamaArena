@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
 using OllamaArena.Models.DTO;
+using OllamaArena.Services.Helpers;
 using OllamaArena.Services.Interfaces.Repositories;
 using OllamaArena.Services.Interfaces.Services;
 using System.Diagnostics;
-using System.Globalization;
 using System.Text.Json;
 
 namespace OllamaArena.Services.Implementations.Services
@@ -65,7 +65,7 @@ namespace OllamaArena.Services.Implementations.Services
             {
                 var prompt = await promptFilesService.GetPromptFileContentAsync("translation-prompt.txt");
                 prompt = prompt?.Replace("{{TEXT}}", text)
-                               .Replace("{{TARGET_LANGUAGE}}", GetTargetLanguage());
+                               .Replace(TargetLanguageResolver.Token, TargetLanguageResolver.GetTargetLanguage());
 
                 var body = new
                 {
@@ -115,25 +115,8 @@ namespace OllamaArena.Services.Implementations.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Erro na tradução");
-                return new TranslationResult
-                {
-                    TranslatedText = ex.Message,
-                    Confidence = 0.2,
-                    ModelUsed = model,
-                    TimeSpentMs = sw.ElapsedMilliseconds
-                };
-
+                throw;
             }
-        }
-
-        private static string GetTargetLanguage()
-        {
-            return CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLowerInvariant() switch
-            {
-                "pt" => "European Portuguese (pt-PT)",
-                "en" => "English (en-US)",
-                _ => "European Portuguese (pt-PT)"
-            };
         }
 
         private static string RemoveJsonIfPresent(string text)

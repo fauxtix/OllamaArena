@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Options;
 using OllamaArena.Models.DTO;
 using OllamaArena.Resources;
+using OllamaArena.Services.Helpers;
 using OllamaArena.Services.Interfaces.Repositories;
 using OllamaArena.Services.Interfaces.Services;
 using System.Diagnostics;
@@ -13,10 +15,15 @@ public class LocalAnalysisService : IAnalysisService
     private readonly ILogger<LocalAnalysisService> _logger;
     private readonly IStringLocalizer<SharedResources> _localizer;
 
-    public LocalAnalysisService(HttpClient httpClient, ILogger<LocalAnalysisService> logger, IStringLocalizer<SharedResources> localizer)
+    // Pesos das 12 métricas, configuráveis em appsettings.json (secção JudgeScoreWeights) —
+    // os mesmos usados pelo ranking do Dashboard, para coerência entre análises.
+    private readonly JudgeScoreWeights _pesosJuiz;
+
+    public LocalAnalysisService(HttpClient httpClient, ILogger<LocalAnalysisService> logger, IStringLocalizer<SharedResources> localizer, IOptions<JudgeScoreWeights> pesos)
     {
         _logger = logger;
         _localizer = localizer;
+        _pesosJuiz = pesos?.Value ?? new JudgeScoreWeights();
     }
 
     public Task<BenchmarkAnalysisResult> AnalisarBenchmarksAsync(
@@ -37,29 +44,35 @@ public class LocalAnalysisService : IAnalysisService
         // 1. Métricas de Velocidade
         var modeloMaisRapido = benchmarks
             .OrderByDescending(b => b.TokensPorSegundo)
-            .First();
+            .FirstOrDefault()!;
 
         var modeloMaisLento = benchmarks
             .OrderBy(b => b.TokensPorSegundo)
-            .First();
+            .FirstOrDefault()!;
 
         // 2. Média Global de Qualidade e Consenso
+        // Score ponderado por juiz (mesma metodologia do ScoreCalculator usada no
+        // Dashboard), com fallback ao rating declarado quando as métricas são
+        // insuficientes — substitui a média antiga que contava o factual em duplicado.
         var modelosComAvaliacao = benchmarks.Select(b =>
         {
-            double geminiFactual = Convert.ToDouble(b.GeminiFactualRating);
-            double openRouterFactual = Convert.ToDouble(b.OpenRouterFactualRating);
             double geminiRating = Convert.ToDouble(b.GeminiRating);
             double openRouterRating = Convert.ToDouble(b.OpenRouterRating);
+
+            double geminiScore = ScoreCalculator.CalcularScoreFinal(ParaInputJuiz(b, juizGemini: true), _pesosJuiz)
+                                 ?? geminiRating;
+            double openRouterScore = ScoreCalculator.CalcularScoreFinal(ParaInputJuiz(b, juizGemini: false), _pesosJuiz)
+                                     ?? openRouterRating;
 
             return new
             {
                 Benchmark = b,
-                AvgRating = (geminiRating + geminiFactual + openRouterRating + openRouterFactual) / 4.0,
-                DiferencaFactual = Math.Abs(geminiFactual - openRouterFactual)
+                AvgRating = (geminiScore + openRouterScore) / 2.0,
+                DiferencaFactual = Math.Abs(Convert.ToDouble(b.GeminiFactualRating) - Convert.ToDouble(b.OpenRouterFactualRating))
             };
         }).OrderByDescending(x => x.AvgRating).ToList();
 
-        var modeloMelhorAvaliado = modelosComAvaliacao.First();
+        var modeloMelhorAvaliado = modelosComAvaliacao.FirstOrDefault()!;
         bool existeAvaliacao = modeloMelhorAvaliado.AvgRating > 0;
 
         // 3. Geração do Sumário Executivo
@@ -299,5 +312,22 @@ public class LocalAnalysisService : IAnalysisService
         return ts.TotalSeconds >= 60
             ? $"{ts.Minutes}m {ts.Seconds}s"
             : $"{ts.TotalSeconds:F1}s";
+    }
+
+    /// <summary>Mapeia as métricas de um juiz para o input do ScoreCalculator.</summary>
+    private static JudgeScoreInput ParaInputJuiz(BenchmarkEvaluationModel b, bool juizGemini)
+    {
+        if (juizGemini)
+        {
+            return new JudgeScoreInput(
+                b.GeminiFactualRating, b.GeminiFormattingRating, b.GeminiComplianceRating, b.GeminiRelevanceRating,
+                b.GeminiToneRating, b.GeminiConcisenessRating, b.GeminiClarityRating, b.GeminiReadabilityRating,
+                b.GeminiHaloEffectRating, b.GeminiSafetyRating, b.GeminiLanguageConsistencyRating, b.GeminiLoopDetectionRating);
+        }
+
+        return new JudgeScoreInput(
+            b.OpenRouterFactualRating, b.OpenRouterFormattingRating, b.OpenRouterComplianceRating, b.OpenRouterRelevanceRating,
+            b.OpenRouterToneRating, b.OpenRouterConcisenessRating, b.OpenRouterClarityRating, b.OpenRouterReadabilityRating,
+            b.OpenRouterHaloEffectRating, b.OpenRouterSafetyRating, b.OpenRouterLanguageConsistencyRating, b.OpenRouterLoopDetectionRating);
     }
 }

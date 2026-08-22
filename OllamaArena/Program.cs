@@ -53,12 +53,16 @@ try
     builder.Services.AddFluentUIComponents();
 
     builder.Services.Configure<OllamaOptions>(builder.Configuration.GetSection(OllamaOptions.SectionName));
+
+    // Pesos das 12 métricas dos juízes (ScoreCalculator/ranking), configuráveis
+    // em appsettings.json — permite rebalancear sem alterar código.
+    builder.Services.Configure<JudgeScoreWeights>(builder.Configuration.GetSection(JudgeScoreWeights.SectionName));
+
     var ollamaBaseUrl = builder.Configuration["Ollama:BaseUrl"] ?? "http://localhost:11434";
 
     builder.Services.AddTransient<IDapperContext, DapperContext>();
     builder.Services.AddTransient<IOllamaGpuService, OllamaGpuService>();
 
-    builder.Services.AddTransient<ISystemPromptService, SystemPromptService>();
     builder.Services.AddTransient<IPromptTemplateProvider, PromptTemplateProvider>();
     builder.Services.AddTransient<PromptFilesService>();
     builder.Services.AddTransient<ChatComposerService>();

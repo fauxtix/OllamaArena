@@ -198,6 +198,9 @@
   <data name="Common.ExportExcel" xml:space="preserve">
     <value>Exportar para Excel</value>
   </data>
+  <data name="Common.LanguageMismatch" xml:space="preserve">
+    <value>Resposta possivelmente fora do idioma selecionado ({0})</value>
+  </data>
   <data name="Chat.PageTitle" xml:space="preserve">
     <value>Chat - Ollama</value>
   </data>
@@ -819,6 +822,33 @@ Deseja continuar?</value>
   <data name="EditPrompts.DiscardTitle" xml:space="preserve">
     <value>Alterações não gravadas</value>
   </data>
+  <data name="TestPlan" xml:space="preserve">
+    <value>Plano de Testes</value>
+  </data>
+  <data name="TestPlan.PageTitle" xml:space="preserve">
+    <value>Plano de Testes</value>
+  </data>
+  <data name="TestPlan.Title" xml:space="preserve">
+    <value>Ficheiros do plano de testes</value>
+  </data>
+  <data name="TestPlan.ReadOnly" xml:space="preserve">
+    <value>Apenas leitura</value>
+  </data>
+  <data name="TestPlan.Loading" xml:space="preserve">
+    <value>A carregar documento...</value>
+  </data>
+  <data name="TestPlan.EmptyState" xml:space="preserve">
+    <value>Não existem ficheiros na pasta PlanoDeTestes.</value>
+  </data>
+  <data name="TestPlan.InitError" xml:space="preserve">
+    <value>Erro ao inicializar a lista de ficheiros do plano de testes.</value>
+  </data>
+  <data name="TestPlan.LoadError" xml:space="preserve">
+    <value>Não foi possível carregar o ficheiro selecionado.</value>
+  </data>
+  <data name="TestPlan.Exit" xml:space="preserve">
+    <value>Sair</value>
+  </data>
   <data name="Modelos.PageTitle" xml:space="preserve">
     <value>Modelos Disponíveis - Ollama</value>
   </data>
@@ -1359,8 +1389,11 @@ Deseja continuar?</value>
   <data name="Dashboard.ModelsCount" xml:space="preserve">
     <value>Modelos avaliados</value>
   </data>
-  <data name="Dashboard.EvaluationsCount" xml:space="preserve">
-    <value>Avaliações (juiz)</value>
+  <data name="Dashboard.CoverageLabel" xml:space="preserve">
+    <value>Cobertura de avaliação</value>
+  </data>
+  <data name="Dashboard.CoverageDetail" xml:space="preserve">
+    <value>{0}/{1} respostas com os 2 juízes</value>
   </data>
   <data name="Dashboard.ColModel" xml:space="preserve">
     <value>Modelo</value>
@@ -1392,8 +1425,41 @@ Deseja continuar?</value>
   <data name="Dashboard.ScatterTitle" xml:space="preserve">
     <value>Desempenho vs Qualidade</value>
   </data>
+  <data name="Dashboard.TimelineTitle" xml:space="preserve">
+    <value>Evolução do score ao longo do tempo</value>
+  </data>
   <data name="Dashboard.ScatterHint" xml:space="preserve">
     <value>Velocidade de geração (tokens/s) vs score global (0–5), por modelo.</value>
+  </data>
+  <data name="Dashboard.ColTokensPerSecond" xml:space="preserve">
+    <value>Tokens/s</value>
+  </data>
+  <data name="Dashboard.ColAvgTime" xml:space="preserve">
+    <value>Tempo médio</value>
+  </data>
+  <data name="Dashboard.ColDivergence" xml:space="preserve">
+    <value>Divergência</value>
+  </data>
+  <data name="Dashboard.ColAvgTokens" xml:space="preserve">
+    <value>Tokens/resposta</value>
+  </data>
+  <data name="Dashboard.PromptsCount" xml:space="preserve">
+    <value>Prompts testados</value>
+  </data>
+  <data name="Dashboard.LastActivity" xml:space="preserve">
+    <value>Último: {0}</value>
+  </data>
+  <data name="Dashboard.FastestModel" xml:space="preserve">
+    <value>Modelo mais rápido</value>
+  </data>
+  <data name="Dashboard.FastestSpeed" xml:space="preserve">
+    <value>{0} tokens/s</value>
+  </data>
+  <data name="Dashboard.JudgeDivergence" xml:space="preserve">
+    <value>Maior divergência juízes</value>
+  </data>
+  <data name="Dashboard.DivergenceValue" xml:space="preserve">
+    <value>Δ {0} pts</value>
   </data>
 
 </root>

@@ -55,30 +55,37 @@ public static class ScoreCalculator
     /// <summary>Soma mínima de pesos presentes (sobre 100) para produzir um score.</summary>
     public const double MinWeightSumForScore = 50;
 
-    public static double? CalcularScoreFinal(JudgeScoreInput input, JudgeScoreWeights? pesos = null)
+    public static double? CalcularScoreFinal(JudgeScoreInput input, JudgeScoreWeights? pesos = null, bool? recusaCorreta = null)
     {
         if (input is null)
             return null;
 
         pesos ??= new JudgeScoreWeights();
 
-        (int? Valor, double Peso)[] items =
+        (MetricaChave Chave, int? Valor, double Peso)[] items =
         [
-            (input.Factual, pesos.Factual),
-            (input.Formatting, pesos.Formatting),
-            (input.Compliance, pesos.Compliance),
-            (input.Relevance, pesos.Relevance),
-            (input.Tone, pesos.Tone),
-            (input.Conciseness, pesos.Conciseness),
-            (input.Clarity, pesos.Clarity),
-            (input.Readability, pesos.Readability),
-            (input.HaloEffect, pesos.HaloEffect),
-            (input.Safety, pesos.Safety),
-            (input.LanguageConsistency, pesos.LanguageConsistency),
-            (input.LoopDetection, pesos.LoopDetection)
+            (MetricaChave.Factual, input.Factual, pesos.Factual),
+            (MetricaChave.Formatting, input.Formatting, pesos.Formatting),
+            (MetricaChave.Compliance, input.Compliance, pesos.Compliance),
+            (MetricaChave.Relevance, input.Relevance, pesos.Relevance),
+            (MetricaChave.Tone, input.Tone, pesos.Tone),
+            (MetricaChave.Conciseness, input.Conciseness, pesos.Conciseness),
+            (MetricaChave.Clarity, input.Clarity, pesos.Clarity),
+            (MetricaChave.Readability, input.Readability, pesos.Readability),
+            (MetricaChave.HaloEffect, input.HaloEffect, pesos.HaloEffect),
+            (MetricaChave.Safety, input.Safety, pesos.Safety),
+            (MetricaChave.LanguageConsistency, input.LanguageConsistency, pesos.LanguageConsistency),
+            (MetricaChave.LoopDetection, input.LoopDetection, pesos.LoopDetection)
         ];
 
         var presentes = items.Where(i => i.Valor.HasValue).ToList();
+
+        // Numa recusa correta, Factual/Compliance/Relevance não são aplicáveis
+        // (o prompt instrui o juiz a não penalizar a ausência de conteúdo);
+        // excluem-se da ponderação e renormaliza-se sobre as restantes métricas,
+        // alinhando o score do Dashboard com a recomendação que premia a recusa.
+        if (recusaCorreta == true)
+            presentes = presentes.Where(i => !MetricasIgnoradasEmRecusa.Contains(i.Chave)).ToList();
 
         if (presentes.Count < MinPresentMetricsForScore)
             return null;
@@ -90,4 +97,15 @@ public static class ScoreCalculator
         double soma = presentes.Sum(i => i.Valor!.Value * i.Peso);
         return Math.Round(soma / somaPesos, 2);
     }
+
+    /// <summary>Identificador interno de cada métrica, para exclusão seletiva.</summary>
+    private enum MetricaChave
+    {
+        Factual, Formatting, Compliance, Relevance, Tone, Conciseness,
+        Clarity, Readability, HaloEffect, Safety, LanguageConsistency, LoopDetection
+    }
+
+    // Métricas não aplicáveis quando o juiz marcou recusa correta.
+    private static readonly MetricaChave[] MetricasIgnoradasEmRecusa =
+        [MetricaChave.Factual, MetricaChave.Compliance, MetricaChave.Relevance];
 }

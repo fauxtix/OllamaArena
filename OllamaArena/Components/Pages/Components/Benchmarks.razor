@@ -194,6 +194,11 @@
                                             </div>
 
                                             <div class="cartao-corpo">
+                                                @{ var avisoIdioma = LanguageWarningFor(resp.TextoResposta); }
+                                                @if (!string.IsNullOrWhiteSpace(avisoIdioma))
+                                                {
+                                                    <div class="aviso-idioma" title="@avisoIdioma">⚠ @avisoIdioma</div>
+                                                }
                                                 <div class="texto-resposta-raw">
                                                     @((MarkupString)MessageFormatter.FormatMessagePlus(resp.TextoResposta))
                                                 </div>
@@ -472,6 +477,22 @@
     .cartao-corpo {
         font-size: 13.5px;
         line-height: 1.5;
+    }
+
+    .aviso-idioma {
+        display: inline-block;
+        margin-bottom: 6px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        font-weight: 600;
+        background-color: rgba(245, 158, 11, 0.15);
+        border: 1px solid rgba(245, 158, 11, 0.6);
+        color: #b45309;
+    }
+
+    body[data-theme="dark"] .aviso-idioma {
+        color: #fbbf24;
     }
 
     .texto-resposta-raw {

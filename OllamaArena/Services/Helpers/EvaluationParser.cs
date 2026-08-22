@@ -19,6 +19,16 @@ namespace OllamaArena.Services.Helpers
         public float? FinalScore { get; set; }
         public string Description { get; set; } = string.Empty;
         public string Recommendation { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Indica se o juiz marcou a resposta como recusa correta
+        /// (REFUSAL_HANDLED: yes/no). Null quando o juiz não devolveu a linha
+        /// (avaliações antigas ou manuais sem o marcador).
+        /// </summary>
+        public bool? RefusalHandled { get; set; }
+
+        /// <summary>Flag 0/1/null para persistir em coluna INTEGER do SQLite.</summary>
+        public int? RefusalHandledFlag => RefusalHandled.HasValue ? (RefusalHandled.Value ? 1 : 0) : null;
     }
 
     public static class EvaluationParser
@@ -117,6 +127,12 @@ namespace OllamaArena.Services.Helpers
                     section = Section.None;
                 }
 
+                else if (line.StartsWith("REFUSAL_HANDLED:", StringComparison.OrdinalIgnoreCase))
+                {
+                    result.RefusalHandled = ParseYesNo(ExtractValue(line, "REFUSAL_HANDLED:"));
+                    section = Section.None;
+                }
+
                 else if (line.StartsWith("FINAL_SCORE:", StringComparison.OrdinalIgnoreCase))
                 {
                     string rawValue = ExtractValue(line, "FINAL_SCORE:")
@@ -201,6 +217,21 @@ namespace OllamaArena.Services.Helpers
         private static string ExtractValue(string line, string prefix)
         {
             return line.Replace(prefix, "", StringComparison.OrdinalIgnoreCase).Trim();
+        }
+
+        /// <summary>
+        /// Interpreta o valor de REFUSAL_HANDLED: aceita yes/no, true/false,
+        /// sim/não e 1/0 (com ou sem colchetes). Valor desconhecido devolve null.
+        /// </summary>
+        private static bool? ParseYesNo(string value)
+        {
+            var normalizado = value.Trim().Trim('[', ']').Trim().ToLowerInvariant();
+            return normalizado switch
+            {
+                "yes" or "true" or "sim" or "1" => true,
+                "no" or "false" or "nao" or "não" or "0" => false,
+                _ => null
+            };
         }
     }
 }

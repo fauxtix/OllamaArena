@@ -46,6 +46,7 @@ namespace OllamaArena.Components.Pages.Components
                 Response.GeminiSafetyRating = parsed.SafetyScore;
                 Response.GeminiLanguageConsistencyRating = parsed.LanguageConsistencyScore;
                 Response.GeminiLoopDetectionRating = parsed.LoopDetectionScore;
+                Response.GeminiRefusalHandled = parsed.RefusalHandledFlag;
 
                 Response.GeminiRating = parsed.FinalScore;
                 Response.GeminiFeedback = parsed.Description;
@@ -80,6 +81,7 @@ namespace OllamaArena.Components.Pages.Components
                 Response.OpenRouterSafetyRating = parsed.SafetyScore;
                 Response.OpenRouterLanguageConsistencyRating = parsed.LanguageConsistencyScore;
                 Response.OpenRouterLoopDetectionRating = parsed.LoopDetectionScore;
+                Response.OpenRouterRefusalHandled = parsed.RefusalHandledFlag;
 
                 Response.OpenRouterRating = parsed.FinalScore;
                 Response.OpenRouterFeedback = parsed.Description;

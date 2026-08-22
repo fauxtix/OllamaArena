@@ -11,9 +11,10 @@ using OllamaArena.Services;
 using OllamaArena.Services.Helpers;
 using OllamaArena.Services.Interfaces.Repositories;
 using OllamaArena.Services.Interfaces.Services;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using System.Web;
+
 using static OllamaArena.Models.DTO.OllamaModels;
 
 namespace OllamaArena.Components.Pages
@@ -26,7 +27,6 @@ namespace OllamaArena.Components.Pages
         [Inject] public IConversationRepository? ConversationRepo { get; set; }
         [Inject] public PromptFilesService PromptFilesService { get; set; } = default!;
         [Inject] public ChatComposerService ChatComposer { get; set; } = default!;
-        [Inject] public HttpClient? _httpClient { get; set; }
         [Inject] public IHttpClientFactory? HttpClientFactory { get; set; }
         [Inject] public ILogger<App>? _logger { get; set; }
         [Inject] public IStringLocalizer<SharedResources> L { get; set; } = default!;
@@ -64,10 +64,6 @@ namespace OllamaArena.Components.Pages
         private ElementReference chatInputRef;
 
         private bool isLoadingModels = false;
-
-        // REMARK (web search): toggle com limitações — a Wikipedia (API) devolve contexto, mas o DuckDuckGo
-        // usa proteção anti-bot (HTML/JS) e pode devolver resultados vazios. Ver BuscarContextoWebAsync.
-        private bool _webSearchEnabled = false;
 
         private int _currentPromptId = 0;
 
@@ -293,7 +289,10 @@ namespace OllamaArena.Components.Pages
 
             try
             {
-                string systemInstructions = await PromptFilesService.GetPromptFileContentAsync("system-prompt.txt") ?? string.Empty;
+                // O system prompt pode conter o token {{TARGET_LANGUAGE}}: resolve-o para o
+                // idioma selecionado na UI (seletor PT/EN). Sem token, é no-op.
+                string systemInstructions = (await PromptFilesService.GetPromptFileContentAsync("system-prompt.txt") ?? string.Empty)
+                    .Replace(TargetLanguageResolver.Token, TargetLanguageResolver.GetTargetLanguage());
 
                 await EnsureModelSupportsThinkingAsync();
 
@@ -319,19 +318,6 @@ namespace OllamaArena.Components.Pages
                 // modelos tipo deepseek-r1 geram-no sempre (não respeitam `think: false`).
                 bool capturarReasoning = prepared.EnableReasoning;
 
-                if (_webSearchEnabled)
-                {
-                    string webContext = await BuscarContextoWebAsync(userPrompt);
-                    if (!string.IsNullOrWhiteSpace(webContext))
-                    {
-                        prepared.Payload.Messages.Insert(1, new OllamaChatMessage
-                        {
-                            Role = "system",
-                            Content = $"Contexto pesquisado na web (dados externos atuais):\n{webContext}"
-                        });
-                    }
-                }
-
                 temperature = prepared.Temperature;
                 userMessage.Temperature = Math.Round(temperature, 2);
 
@@ -345,10 +331,14 @@ namespace OllamaArena.Components.Pages
                     : new HttpRequestMessage(HttpMethod.Post, OllamaEndpoint);
                 request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var ollamaClient = HttpClientFactory?.CreateClient("Ollama") ?? _httpClient;
+                var ollamaClient = HttpClientFactory?.CreateClient("Ollama");
                 if (ollamaClient == null)
                 {
                     _logger?.LogError("HttpClient indisponível. Não é possível enviar pedido ao Ollama.");
+                    _isThinking = false;
+                    _cts?.Dispose();
+                    _cts = null;
+                    StateHasChanged();
                     return;
                 }
 
@@ -509,6 +499,8 @@ namespace OllamaArena.Components.Pages
                         aiMessage.Text = cleanText;
                     }
 
+                    aiMessage.LanguageWarning = LanguageWarningFor(aiMessage.Text);
+
                     await HandlePostStreamAsync(userPrompt, aiMessage, temperature,
                         evalCount, evalDurationNs, loadDurationNs,
                         stopwatch.Elapsed.TotalMilliseconds, tempoFinal);
@@ -529,6 +521,7 @@ namespace OllamaArena.Components.Pages
                 {
                     await _cts.CancelAsync();
                     _cts.Dispose();
+                    _cts = null;
 
                     // 2. BENCHMARK: Força o Ollama a libertar a GPU imediatamente
                     _ = Task.Run(async () =>
@@ -721,14 +714,16 @@ namespace OllamaArena.Components.Pages
                 {
                     foreach (var msg in messages)
                     {
+                        bool isUser = msg.Role == "user";
                         _messages.Add(new Models.DTO.ChatMessage
                         {
-                            User = msg.Role == "user" ? L["Chat.UserDisplayName"] : "Ollama",
+                            User = isUser ? L["Chat.UserDisplayName"] : "Ollama",
                             Text = msg.Content,
-                            IsCurrentUser = msg.Role == "user",
+                            IsCurrentUser = isUser,
                             Reasoning = msg.Reasoning,
                             ElapsedTime = msg.ElapsedTime,
-                            Temperature = msg.Temperature
+                            Temperature = msg.Temperature,
+                            LanguageWarning = isUser ? null : LanguageWarningFor(msg.Content)
                         });
                     }
                 }
@@ -740,6 +735,20 @@ namespace OllamaArena.Components.Pages
             {
                 _logger?.LogError(ex, "Falha ao carregar conversa {ConversationId}", conversationId);
             }
+        }
+
+        /// <summary>
+        /// Aviso local quando a resposta do modelo não respeita o idioma selecionado na UI
+        /// (seletor PT/EN). Deteção heurística; inconclusivo nunca gera aviso.
+        /// </summary>
+        private string? LanguageWarningFor(string? text)
+        {
+            var detetado = ResponseLanguageChecker.Detect(text);
+
+            if (!ResponseLanguageChecker.IsMismatch(detetado, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
+                return null;
+
+            return L["Common.LanguageMismatch", TargetLanguageResolver.GetTargetLanguage()];
         }
 
 
@@ -825,7 +834,10 @@ namespace OllamaArena.Components.Pages
                     TempoPuroMs = evalDurationNs / 1_000_000.0,
                     TempoCargaMs = loadDurationNs / 1_000_000.0,
                     TempoProcessamento = totalMs,
-                    TamanhoTokens = (int)evalCount
+                    TamanhoTokens = (int)evalCount,
+                    // Congela o idioma da sessão no momento da geração: o juiz usa este
+                    // valor em reavaliações futuras (respostas antigas ficam null).
+                    IdiomaSessao = TargetLanguageResolver.GetTargetLanguage()
                 };
 
                 await BenchmarkRepo.CreateResponseAsync(newResponse);
@@ -975,242 +987,6 @@ namespace OllamaArena.Components.Pages
         private string FormatMessage(string content)
         {
             return MessageFormatter.FormatMessagePlus(content);
-        }        /// <summary>
-        /// Cria um pedido web com cabeçalhos de browser. Os cabeçalhos vão no pedido
-        /// (não no HttpClient partilhado) para evitar condições de corrida com o chat.
-        /// </summary>
-        private static HttpRequestMessage CriarRequestWeb(Uri uri)
-        {
-            var request = new HttpRequestMessage(HttpMethod.Get, uri);
-            request.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-            request.Headers.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8");
-            request.Headers.Add("Accept-Language", "pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7");
-            request.Headers.Add("Sec-Fetch-Dest", "document");
-            request.Headers.Add("Sec-Fetch-Mode", "navigate");
-            request.Headers.Add("Sec-Fetch-Site", "none");
-            return request;
-        }
-
-        /// <summary>
-        /// Extrai uma query de pesquisa compacta a partir de um prompt: remove markdown/símbolos e
-        /// colapsa espaços, truncando no limite seguro (~280 chars) da API de pesquisa da Wikipedia.
-        /// </summary>
-        private static string CriarQueryWebCompacta(string? prompt, int maxChars = 280)
-        {
-            if (string.IsNullOrWhiteSpace(prompt))
-                return string.Empty;
-
-            string compacta = System.Text.RegularExpressions.Regex.Replace(prompt, @"[\r\n\t]+", " ");
-            compacta = System.Text.RegularExpressions.Regex.Replace(compacta, @"[#*_`>~\[\](){}]|`{3}", " ");
-            compacta = System.Text.RegularExpressions.Regex.Replace(compacta, @"\s+", " ").Trim();
-
-            if (compacta.Length <= maxChars)
-                return compacta;
-
-            int corte = compacta.LastIndexOf(' ', maxChars);
-            if (corte <= maxChars / 2)
-                corte = maxChars;
-
-            return compacta.Substring(0, corte).Trim();
-        }
-
-        private async Task<string> BuscarContextoWebAsync(string query)
-        {
-            try
-            {
-                // REMARK: a API de pesquisa da Wikipedia limita o parâmetro q a ~300 caracteres e o DuckDuckGo
-                // usa anti-bot; por isso extrai-se uma query compacta (sem markdown/espaços) e com tamanho seguro.
-                string webQuery = CriarQueryWebCompacta(query);
-                if (string.IsNullOrWhiteSpace(webQuery))
-                    return string.Empty;
-
-                var duckDuckGoTask = SearchWebContext_DuckDuckGo_Async(webQuery);
-                var wikipediaTask = SearchWebContext_Wikipedia_Async(webQuery);
-
-                await Task.WhenAll(duckDuckGoTask, wikipediaTask);
-
-                var sb = new StringBuilder();
-                string ddg = duckDuckGoTask.Result;
-                string wiki = wikipediaTask.Result;
-
-                if (!string.IsNullOrWhiteSpace(ddg))
-                {
-                    sb.AppendLine("=== Resultados DuckDuckGo ===");
-                    sb.AppendLine(ddg.Trim());
-                }
-
-                if (!string.IsNullOrWhiteSpace(wiki))
-                {
-                    sb.AppendLine("=== Resultados Wikipedia ===");
-                    sb.AppendLine(wiki.Trim());
-                }
-
-                return sb.ToString().Trim();
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "[RAG] Falha ao obter contexto web.");
-                return string.Empty;
-            }
-        }
-
-        private async Task<string> SearchWebContext_DuckDuckGo_Async(string query)
-        {
-            try
-            {
-                if (_httpClient == null)
-                {
-                    throw new InvalidOperationException("HttpClient is not initialized.");
-                }
-
-                string cleanQuery = query?.Trim() ?? string.Empty;
-
-                if (string.IsNullOrEmpty(cleanQuery))
-                    return "Pesquisa vazia.";
-
-                string baseUrl = "https://duckduckgo.com";
-                string queryString = $"?q={Uri.EscapeDataString(cleanQuery)}&v=l&kl=pt-pt";
-                Uri requestUri = new Uri(baseUrl + queryString, UriKind.Absolute);
-
-                using var request = CriarRequestWeb(requestUri);
-                var response = await _httpClient.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-
-                var html = await response.Content.ReadAsStringAsync();
-
-                // REMARK: o DuckDuckGo mudou o HTML e usa mecanismo anti-bot — o seletor 'result-link'
-                // pode não existir e esta função devolve "Não foram encontrados dados externos relevantes."
-                // (comportamento conhecido; a Wikipedia via API é a fonte fiável desta funcionalidade).
-                var doc = new HtmlAgilityPack.HtmlDocument();
-                doc.LoadHtml(html);
-
-                var titleNodes = doc.DocumentNode.SelectNodes("//a[@class='result-link']");
-
-                if (titleNodes == null || !titleNodes.Any())
-                {
-                    titleNodes = doc.DocumentNode.SelectNodes("//td[@class='result-snippet']/preceding::tr//a");
-                }
-
-                if (titleNodes == null || !titleNodes.Any())
-                    return "Não foram encontrados dados externos relevantes.";
-
-                var sb = new StringBuilder();
-                int count = 0;
-
-                foreach (var titleNode in titleNodes)
-                {
-                    if (count >= 3) break;
-
-                    string title = HtmlAgilityPack.HtmlEntity.DeEntitize(titleNode.InnerText.Trim());
-                    string rawUrl = titleNode.GetAttributeValue("href", "");
-
-                    if (string.IsNullOrEmpty(rawUrl) || rawUrl.Contains("://duckduckgo.com"))
-                        continue;
-
-                    string link = rawUrl;
-                    if (link.StartsWith("//"))
-                    {
-                        link = $"https:{link}";
-                    }
-                    else if (link.StartsWith("/"))
-                    {
-                        link = $"https://duckduckgo.com{link}";
-                    }
-
-                    // Extrair o URL real que vem dentro do redirecionamento do DuckDuckGo (parâmetro uddg)
-                    if (link.Contains("uddg="))
-                    {
-                        try
-                        {
-                            var uri = new Uri(link);
-                            var queryParams = HttpUtility.ParseQueryString(uri.Query);
-                            string realUrl = queryParams["uddg"] ?? string.Empty;
-                            if (!string.IsNullOrEmpty(realUrl))
-                            {
-                                link = realUrl;
-                            }
-                        }
-                        catch
-                        {
-                            if (!Uri.IsWellFormedUriString(link, UriKind.Absolute)) continue;
-                        }
-                    }
-
-                    if (!Uri.IsWellFormedUriString(link, UriKind.Absolute))
-                        continue;
-
-                    var parentTr = titleNode.SelectSingleNode("./ancestor::tr");
-                    var nextTr = parentTr?.NextSibling;
-
-                    while (nextTr != null && nextTr.Name != "tr")
-                    {
-                        nextTr = nextTr.NextSibling;
-                    }
-
-                    var snippetNode = nextTr?.SelectSingleNode(".//td[@class='result-snippet']");
-                    string snippet = snippetNode != null
-                        ? HtmlAgilityPack.HtmlEntity.DeEntitize(snippetNode.InnerText.Trim())
-                        : "Sem descrição disponível.";
-
-                    sb.AppendLine($"[Fonte {count + 1}]");
-                    sb.AppendLine($"Título: {title}");
-                    sb.AppendLine($"Link: {link}");
-                    sb.AppendLine($"Contexto: {snippet}");
-                    sb.AppendLine();
-
-                    count++;
-                }
-
-                return sb.ToString();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[RAG ERROR] {ex.Message}");
-                return string.Empty;
-            }
-        }
-        private async Task<string> SearchWebContext_Wikipedia_Async(string query)
-        {
-            try
-            {
-                if (_httpClient == null)
-                {
-                    throw new InvalidOperationException("HttpClient is not initialized.");
-                }
-
-                string cleanQuery = query?.Trim() ?? string.Empty;
-
-                // REMARK: a API de pesquisa da Wikipedia só aceita ~300 caracteres em srsearch (q).
-                if (string.IsNullOrEmpty(cleanQuery))
-                    return string.Empty;
-
-                if (cleanQuery.Length > 300)
-                    cleanQuery = cleanQuery.Substring(0, 300);
-
-                string url = $"https://pt.wikipedia.org/w/api.php?action=query&list=search&srsearch={Uri.EscapeDataString(cleanQuery)}&format=json&origin=*";
-
-                using var request = CriarRequestWeb(new Uri(url, UriKind.Absolute));
-                var response = await _httpClient.SendAsync(request);
-                var html = await response.Content.ReadAsStringAsync();
-                using var jsonDoc = JsonDocument.Parse(html);
-
-                var searchResults = jsonDoc.RootElement.GetProperty("query").GetProperty("search");
-
-                var sb = new StringBuilder();
-                foreach (var item in searchResults.EnumerateArray().Take(4))
-                {
-                    string snippet = item.GetProperty("snippet").GetString() ?? "";
-                    snippet = snippet.Replace("<span class=\"searchmatch\">", "").Replace("</span>", "");
-                    sb.AppendLine(snippet);
-                }
-
-                return sb.ToString();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[RAG FAILURE] {ex.Message}");
-                return string.Empty;
-            }
         }
 
         public void Dispose()
