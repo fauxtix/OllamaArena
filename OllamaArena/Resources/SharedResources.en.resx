@@ -201,6 +201,15 @@
   <data name="Common.LanguageMismatch" xml:space="preserve">
     <value>Response possibly not in the selected language ({0})</value>
   </data>
+  <data name="Common.LocalLanguageOverride" xml:space="preserve">
+    <value>[Local check] Response detected in {0}; expected language: {1}. Language Consistency capped at 2.</value>
+  </data>
+  <data name="Common.DetectedLang.Pt" xml:space="preserve">
+    <value>Portuguese</value>
+  </data>
+  <data name="Common.DetectedLang.En" xml:space="preserve">
+    <value>English</value>
+  </data>
   <data name="Chat.PageTitle" xml:space="preserve">
     <value>Chat - Ollama</value>
   </data>

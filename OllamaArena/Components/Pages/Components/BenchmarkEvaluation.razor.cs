@@ -33,6 +33,7 @@ namespace OllamaArena.Components.Pages.Components
             if (value.Contains("FACTUAL_SCORE:", StringComparison.OrdinalIgnoreCase))
             {
                 var parsed = EvaluationParser.ParseEvaluation(value);
+                var notaIdioma = AplicarGuardaIdiomaLocal(parsed);
 
                 Response.GeminiFactualRating = parsed.FactualScore;
                 Response.GeminiFormattingRating = parsed.FormattingScore;
@@ -50,7 +51,7 @@ namespace OllamaArena.Components.Pages.Components
 
                 Response.GeminiRating = parsed.FinalScore;
                 Response.GeminiFeedback = parsed.Description;
-                Response.GeminiRecommendation = parsed.Recommendation;
+                Response.GeminiRecommendation = CombinarComNotaIdioma(notaIdioma, parsed.Recommendation);
             }
             else
             {
@@ -68,6 +69,7 @@ namespace OllamaArena.Components.Pages.Components
             if (value.Contains("FACTUAL_SCORE:", StringComparison.OrdinalIgnoreCase))
             {
                 var parsed = EvaluationParser.ParseEvaluation(value);
+                var notaIdioma = AplicarGuardaIdiomaLocal(parsed);
 
                 Response.OpenRouterFactualRating = parsed.FactualScore;
                 Response.OpenRouterFormattingRating = parsed.FormattingScore;
@@ -85,7 +87,7 @@ namespace OllamaArena.Components.Pages.Components
 
                 Response.OpenRouterRating = parsed.FinalScore;
                 Response.OpenRouterFeedback = parsed.Description;
-                Response.OpenRouterRecommendation = parsed.Recommendation;
+                Response.OpenRouterRecommendation = CombinarComNotaIdioma(notaIdioma, parsed.Recommendation);
             }
             else
             {
@@ -94,6 +96,38 @@ namespace OllamaArena.Components.Pages.Components
 
             StateHasChanged();
             await OnEvaluationChanged.InvokeAsync();
+        }
+
+        /// <summary>
+        /// Rede de segurança local para o idioma na colagem manual: limita a nota
+        /// Language Consistency quando a resposta diverge claramente do idioma esperado.
+        /// </summary>
+        private string? AplicarGuardaIdiomaLocal(ParsedEvaluationResult parsed)
+        {
+            if (!JudgeLanguageGuard.DeveCapar(Response.TextoResposta, Response.IdiomaSessao, out var detetado))
+                return null;
+
+            parsed.LanguageConsistencyScore = JudgeLanguageGuard.Capar(parsed.LanguageConsistencyScore);
+
+            var idiomaEsperado = string.IsNullOrWhiteSpace(Response.IdiomaSessao)
+                ? TargetLanguageResolver.GetTargetLanguage()
+                : Response.IdiomaSessao!;
+
+            return L["Common.LocalLanguageOverride", NomeIdiomaDetetado(detetado), idiomaEsperado].Value;
+        }
+
+        private string NomeIdiomaDetetado(DetectedLanguage detetado)
+        {
+            return (detetado == DetectedLanguage.Portuguese
+                ? L["Common.DetectedLang.Pt"]
+                : L["Common.DetectedLang.En"]).Value;
+        }
+
+        private static string CombinarComNotaIdioma(string? notaIdioma, string? recomendacao)
+        {
+            if (string.IsNullOrWhiteSpace(notaIdioma)) return recomendacao ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(recomendacao)) return notaIdioma;
+            return $"{notaIdioma} {recomendacao}";
         }
 
         private static string WeakClass(int? value, int threshold = 3)

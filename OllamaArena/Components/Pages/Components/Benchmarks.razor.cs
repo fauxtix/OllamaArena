@@ -461,12 +461,14 @@ namespace OllamaArena.Components.Pages.Components
         /// <summary>
         /// Mapeia o resultado estruturado de um juiz para os campos da resposta.
         /// Se o juiz falhou, os campos ficam vazios/ editáveis para o utilizador colar manualmente.
+        /// Aplica a guarda determinística de idioma (JudgeLanguageGuard) a ambos os juízes.
         /// </summary>
-        private static void PreencherAvaliacao(BenchmarkResponse resposta, JudgeFeedbackResult resultado, bool juizGemini)
+        private void PreencherAvaliacao(BenchmarkResponse resposta, JudgeFeedbackResult resultado, bool juizGemini)
         {
             if (!resultado.Success) return;
 
             var parsed = resultado.Parsed;
+            var notaIdioma = AplicarGuardaIdioma(resposta, parsed);
 
             if (juizGemini)
             {
@@ -485,7 +487,7 @@ namespace OllamaArena.Components.Pages.Components
                 resposta.GeminiRefusalHandled = parsed.RefusalHandledFlag;
                 resposta.GeminiRating = parsed.FinalScore;
                 resposta.GeminiFeedback = string.IsNullOrWhiteSpace(parsed.Description) ? resultado.RawText : parsed.Description;
-                resposta.GeminiRecommendation = parsed.Recommendation;
+                resposta.GeminiRecommendation = CombinarComNotaIdioma(notaIdioma, parsed.Recommendation);
             }
             else
             {
@@ -504,8 +506,45 @@ namespace OllamaArena.Components.Pages.Components
                 resposta.OpenRouterRefusalHandled = parsed.RefusalHandledFlag;
                 resposta.OpenRouterRating = parsed.FinalScore;
                 resposta.OpenRouterFeedback = string.IsNullOrWhiteSpace(parsed.Description) ? resultado.RawText : parsed.Description;
-                resposta.OpenRouterRecommendation = parsed.Recommendation;
+                resposta.OpenRouterRecommendation = CombinarComNotaIdioma(notaIdioma, parsed.Recommendation);
             }
+        }
+
+        /// <summary>
+        /// Rede de segurança local para o idioma: se a resposta divergir claramente do
+        /// idioma esperado (gravado na resposta ou, em falta, o idioma atual do seletor
+        /// PT/EN), limita a nota Language Consistency do juiz e devolve uma nota para
+        /// juntar à recomendação — mesmo quando o juiz LLM foi leniente.
+        /// </summary>
+        private string? AplicarGuardaIdioma(BenchmarkResponse resposta, ParsedEvaluationResult parsed)
+        {
+            if (!JudgeLanguageGuard.DeveCapar(resposta.TextoResposta, resposta.IdiomaSessao, out var detetado))
+                return null;
+
+            parsed.LanguageConsistencyScore = JudgeLanguageGuard.Capar(parsed.LanguageConsistencyScore);
+
+            return L["Common.LocalLanguageOverride", NomeIdiomaDetetado(detetado), IdiomaEsperado(resposta)].Value;
+        }
+
+        private string NomeIdiomaDetetado(DetectedLanguage detetado)
+        {
+            return (detetado == DetectedLanguage.Portuguese
+                ? L["Common.DetectedLang.Pt"]
+                : L["Common.DetectedLang.En"]).Value;
+        }
+
+        private static string IdiomaEsperado(BenchmarkResponse resposta)
+        {
+            return string.IsNullOrWhiteSpace(resposta.IdiomaSessao)
+                ? TargetLanguageResolver.GetTargetLanguage()
+                : resposta.IdiomaSessao!;
+        }
+
+        private static string CombinarComNotaIdioma(string? notaIdioma, string? recomendacao)
+        {
+            if (string.IsNullOrWhiteSpace(notaIdioma)) return recomendacao ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(recomendacao)) return notaIdioma;
+            return $"{notaIdioma} {recomendacao}";
         }
         private async Task OpenEvaluation(int id)
         {

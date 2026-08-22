@@ -76,6 +76,7 @@ Esperado: **todos os testes passam** (93 testes em 8 classes — `dotnet test Ol
 - [ ] **Apagar com âmbitos** em `/benchmark-evaluations`: menu "Apagar Benchmarks" com 4 opções (filtrados / por avaliar / avaliados / todos) + contagens; âmbitos vazios desativados; confirmação indica o nº de respostas; após apagar, a grelha atualiza.
 - [ ] **Gráficos por prompt**: abrir o diálogo de gráficos e validar as tabs **Desempenho** (4 gráficos de barras com download) e **Qualidade** (2 radares Gemini/OpenRouter na escala 0–5; sem avaliações de um juiz → "Sem avaliações para este juiz.").
 - [ ] **Métricas fracas na avaliação**: com avaliações gravadas, abrir o detalhe de uma avaliação e confirmar que as células com nota ≤3 (≤2 para Segurança) têm fundo vermelho (`rating-cell-weak`).
+- [ ] **Guarda de idioma na avaliação**: com a UI em PT, avaliar automaticamente uma resposta claramente escrita em inglês — confirmar que **Language Consistency fica ≤2 nos dois juízes** e que a recomendação começa por "[Verificação local] Resposta detetada em inglês…". Com resposta no idioma certo (ou deteção inconclusiva), o guard não interfere.
 
 ## 6. Dashboard (`/dashboard`)
 

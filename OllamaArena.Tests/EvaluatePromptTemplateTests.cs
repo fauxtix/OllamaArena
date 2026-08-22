@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using OllamaArena.PromptTemplates;
 using OllamaArena.Services;
+using OllamaArena.Services.Helpers;
 
 namespace OllamaArena.Tests;
 
@@ -66,8 +67,35 @@ public class EvaluatePromptTemplateTests : IDisposable
         Assert.Contains("Response: resposta", resultado);
         Assert.Contains("Year: 2024", resultado);
 
-        string blocoEsperado = EvaluatePromptTemplate.ConstruirBlocoIdioma(idioma);
+        // Sem idioma gravado (respostas antigas), o bloco assume o idioma atual da UI.
+        string blocoEsperado = EvaluatePromptTemplate.ConstruirBlocoIdioma(
+            string.IsNullOrWhiteSpace(idioma) ? TargetLanguageResolver.GetTargetLanguage() : idioma,
+            gravadoNaResposta: !string.IsNullOrWhiteSpace(idioma));
         Assert.Contains($"Language: {blocoEsperado}", resultado);
+    }
+
+    [Fact]
+    public void ConstruirBlocoIdioma_SemIdiomaGravado_MarcaComoSuposicao()
+    {
+        var bloco = EvaluatePromptTemplate.ConstruirBlocoIdioma(
+            TargetLanguageResolver.GetTargetLanguage(), gravadoNaResposta: false);
+
+        Assert.Contains("assumed from the current app language", bloco);
+        Assert.Contains(TargetLanguageResolver.GetTargetLanguage(), bloco);
+        Assert.Contains("respond ONLY", bloco);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public async Task EvaluationCopyPromptAsync_SemIdiomaGravado_InjetaIdiomaDaUI(string? idioma)
+    {
+        string resultado = await _template.EvaluationCopyPromptAsync(
+            "pergunta", "resposta", "2024", "llama3", expectedLanguage: idioma);
+
+        Assert.Contains("(assumed from the current app language", resultado);
+        Assert.Contains(TargetLanguageResolver.GetTargetLanguage(), resultado);
+        Assert.DoesNotContain("Not recorded.", resultado, StringComparison.OrdinalIgnoreCase);
     }
 
     public void Dispose()
