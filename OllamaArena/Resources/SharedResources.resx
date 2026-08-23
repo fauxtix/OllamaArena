@@ -672,6 +672,9 @@ Deseja continuar?</value>
   <data name="Benchmarks.ShowPromptLabel" xml:space="preserve">
     <value>Ver prompt</value>
   </data>
+  <data name="Benchmarks.ShowResponseLabel" xml:space="preserve">
+    <value>Ver resposta</value>
+  </data>
   <data name="Benchmarks.NoAnswersWarning" xml:space="preserve">
     <value>Este prompt foi guardado, mas não existem respostas associadas na tabela.</value>
   </data>
@@ -722,6 +725,9 @@ Deseja continuar?</value>
   </data>
   <data name="Benchmarks.AutomatedJudgeError" xml:space="preserve">
     <value>Ocorreu um erro ao executar a avaliação automática. Pode usar 'Copiar prompt' como alternativa manual.</value>
+  </data>
+  <data name="Benchmarks.AutomatedJudgesNoResponseMessage" xml:space="preserve">
+    <value>Nenhum dos juízes devolveu uma avaliação. Detalhes:</value>
   </data>
   <data name="Benchmarks.NoInternetError" xml:space="preserve">
     <value>Sem ligação à internet. A avaliação automática requer acesso aos juízes em nuvem (Gemini e OpenRouter). Pode usar 'Copiar prompt' para avaliação manual.</value>

@@ -672,6 +672,9 @@ Do you want to continue?</value>
   <data name="Benchmarks.ShowPromptLabel" xml:space="preserve">
     <value>View prompt</value>
   </data>
+  <data name="Benchmarks.ShowResponseLabel" xml:space="preserve">
+    <value>View response</value>
+  </data>
   <data name="Benchmarks.NoAnswersWarning" xml:space="preserve">
     <value>This prompt was saved, but there are no associated responses in the table.</value>
   </data>
@@ -722,6 +725,9 @@ Do you want to continue?</value>
   </data>
   <data name="Benchmarks.AutomatedJudgeError" xml:space="preserve">
     <value>An error occurred while running the automatic evaluation. You can use 'Copy prompt' as a manual alternative.</value>
+  </data>
+  <data name="Benchmarks.AutomatedJudgesNoResponseMessage" xml:space="preserve">
+    <value>None of the judges returned an evaluation. Details:</value>
   </data>
   <data name="Benchmarks.NoInternetError" xml:space="preserve">
     <value>No internet connection. Automated evaluation requires access to the cloud judges (Gemini and OpenRouter). Use 'Copy prompt' for manual evaluation.</value>

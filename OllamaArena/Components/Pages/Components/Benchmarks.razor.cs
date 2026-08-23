@@ -41,6 +41,7 @@ namespace OllamaArena.Components.Pages.Components
         private bool _evaluationDialogVisible;
         private bool _evaluationIsSaved;
         private bool _promptOpen;
+        private readonly HashSet<int> _respostasAbertas = new();
         private DotNetObjectReference<Benchmarks>? _viewportDotNetRef;
 
         protected override async Task OnInitializedAsync() => await GetDataAsync();
@@ -142,11 +143,23 @@ namespace OllamaArena.Components.Pages.Components
             _mostrarGrafico = false;
             _selectedPrompt = prompt;
             _promptOpen = false;
+            _respostasAbertas.Clear();
             StateHasChanged();
         }
 
         private static Icon GetPromptChevron(bool open)
             => open ? new Icons.Regular.Size12.ChevronUp() : new Icons.Regular.Size12.ChevronDown();
+
+        private bool RespostaAberta(BenchmarkResponse resp)
+            => resp.Id > 0 && _respostasAbertas.Contains(resp.Id);
+
+        private void AlternarResposta(int id)
+        {
+            if (!_respostasAbertas.Remove(id))
+            {
+                _respostasAbertas.Add(id);
+            }
+        }
 
         private static void TogglePromptTecla(KeyboardEventArgs e, Action toggle)
         {
@@ -375,6 +388,27 @@ namespace OllamaArena.Components.Pages.Components
                         await DialogService.ShowWarningAsync(
                             L["Benchmarks.QuotaLimitMessage", quotaEx.SegundosRestantes],
                             L["Benchmarks.QuotaLimitTitle"]);
+                    }
+                    return;
+                }
+
+                // Nenhum dos juízes devolveu resposta -> alerta o utilizador e não abre o diálogo.
+                if (!resultado.Gemini.Success && !resultado.OpenRouter.Success)
+                {
+                    var errosTotais = new List<string>
+                    {
+                        resultado.Gemini.ErrorMessage,
+                        resultado.OpenRouter.ErrorMessage
+                    };
+                    errosTotais.RemoveAll(string.IsNullOrWhiteSpace);
+
+                    _logger?.LogWarning("Avaliação automática sem resposta de nenhum juiz: {Erros}", string.Join(" | ", errosTotais));
+
+                    if (DialogService != null)
+                    {
+                        await DialogService.ShowErrorAsync(
+                            $"{L["Benchmarks.AutomatedJudgesNoResponseMessage"]}\n{string.Join(Environment.NewLine, errosTotais)}",
+                            L["Benchmarks.AutomatedJudgeErrorTitle"]);
                     }
                     return;
                 }

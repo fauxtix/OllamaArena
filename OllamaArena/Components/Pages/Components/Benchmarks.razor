@@ -199,8 +199,22 @@
                                                 {
                                                     <div class="aviso-idioma" title="@avisoIdioma">⚠ @avisoIdioma</div>
                                                 }
-                                                <div class="texto-resposta-raw">
-                                                    @((MarkupString)MessageFormatter.FormatMessagePlus(resp.TextoResposta))
+                                                <div class="recommendation-box resposta-collapse-box @(RespostaAberta(resp) ? "open" : string.Empty)">
+                                                    <div class="recommendation-box-header" role="button" tabindex="0"
+                                                         aria-expanded="@RespostaAberta(resp)"
+                                                         @onclick="() => AlternarResposta(resp.Id)"
+                                                         @onkeydown="(e) => TogglePromptTecla(e, () => AlternarResposta(resp.Id))">
+                                                        <FluentIcon Value="@(new Icons.Regular.Size16.DocumentText())" Color="Color.Neutral" />
+                                                        <span>@L["Benchmarks.ShowResponseLabel"]</span>
+                                                        <FluentIcon Class="recommendation-box-chevron"
+                                                                    Value="@GetPromptChevron(RespostaAberta(resp))" />
+                                                    </div>
+                                                    @if (RespostaAberta(resp))
+                                                    {
+                                                        <div class="texto-resposta-raw">
+                                                            @((MarkupString)MessageFormatter.FormatMessagePlus(resp.TextoResposta))
+                                                        </div>
+                                                    }
                                                 </div>
                                             </div>
 
@@ -474,6 +488,23 @@
         white-space: pre-wrap;
         word-break: break-word;
     }
+
+    /* Variante neutra para o texto da resposta (a base âmbar é para avisos/recomendações) */
+    .resposta-collapse-box {
+        background-color: var(--neutral-layer-2);
+        border: 1px solid var(--neutral-stroke-rest);
+        border-left: 4px solid var(--accent-fill-rest);
+    }
+
+        .resposta-collapse-box .recommendation-box-header {
+            color: var(--neutral-foreground-hint);
+            transition: color 0.1s ease;
+        }
+
+        .resposta-collapse-box:hover .recommendation-box-header,
+        .resposta-collapse-box.open .recommendation-box-header {
+            color: var(--accent-fill-rest);
+        }
 
     .cartao-corpo {
         font-size: 13.5px;
