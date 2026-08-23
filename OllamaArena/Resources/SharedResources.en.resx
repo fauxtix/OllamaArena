@@ -628,10 +628,10 @@ Do you want to continue?</value>
     <value>Overall</value>
   </data>
   <data name="Evaluation.FeedbackGemini" xml:space="preserve">
-    <value>Feedback (Paste the raw Gemini output here)</value>
+    <value>Feedback </value>
   </data>
   <data name="Evaluation.FeedbackOpenRouter" xml:space="preserve">
-    <value>Feedback (Paste the raw OpenRouter output here)</value>
+    <value>Feedback </value>
   </data>
   <data name="Evaluation.RecommendationLabel" xml:space="preserve">
     <value>Recommendation</value>
@@ -685,10 +685,10 @@ Do you want to continue?</value>
     <value>{0} T/s</value>
   </data>
   <data name="Benchmarks.EvalTime" xml:space="preserve">
-    <value>Eval: {0} m:s</value>
+    <value>Eval: {0}</value>
   </data>
   <data name="Benchmarks.LoadTime" xml:space="preserve">
-    <value>Load: {0} m:s</value>
+    <value>Load: {0}</value>
   </data>
   <data name="Benchmarks.Tokens" xml:space="preserve">
     <value>Tokens: {0}</value>
@@ -757,10 +757,10 @@ Do you want to continue?</value>
     <value>Tokens/s</value>
   </data>
   <data name="Benchmarks.ChartLabelEval" xml:space="preserve">
-    <value>Eval (ms)</value>
+    <value>Eval </value>
   </data>
   <data name="Benchmarks.ChartLabelLoad" xml:space="preserve">
-    <value>Load (ms)</value>
+    <value>Load </value>
   </data>
   <data name="Benchmarks.ChartLabelTokens" xml:space="preserve">
     <value>Tokens</value>
@@ -784,10 +784,10 @@ Do you want to continue?</value>
     <value>Select a prompt from the table above to analyze the models' responses.</value>
   </data>
   <data name="Analise.EvalMs" xml:space="preserve">
-    <value>Eval: {0}ms</value>
+    <value>Eval: {0}</value>
   </data>
   <data name="Analise.LoadMs" xml:space="preserve">
-    <value>Load: {0}ms</value>
+    <value>Load: {0}</value>
   </data>
   <data name="Analise.DeleteConfirmMessage" xml:space="preserve">
     <value>Are you sure you want to delete Prompt #{0}? This will permanently remove all {1} associated responses (Cascading Delete).</value>
@@ -1006,7 +1006,7 @@ Do you want to continue?</value>
     <value>Ready to analyze</value>
   </data>
   <data name="AnalysisViewer.ReadyHint" xml:space="preserve">
-    <value>Click <strong>"Local AI Analysis"</strong> to start processing the benchmarks.</value>
+    <value />
   </data>
   <data name="AnalysisViewer.ProcessingTitle" xml:space="preserve">
     <value>Processing response...</value>
@@ -1363,7 +1363,7 @@ Do you want to continue?</value>
     <value>Rejoining the server...</value>
   </data>
   <data name="Reconnect.Retrying" xml:space="preserve">
-    <value>Rejoin failed... trying again in <span id="components-seconds-to-next-attempt"></span> seconds.</value>
+    <value />
   </data>
   <data name="Reconnect.Failed" xml:space="preserve">
     <value>Failed to rejoin.&lt;br /&gt;Please retry or reload the page.</value>
@@ -1479,5 +1479,4 @@ Do you want to continue?</value>
   <data name="Dashboard.DivergenceValue" xml:space="preserve">
     <value>Δ {0} pts</value>
   </data>
-
 </root>

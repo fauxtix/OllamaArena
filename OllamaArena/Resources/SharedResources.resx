@@ -628,10 +628,10 @@ Deseja continuar?</value>
     <value>Global</value>
   </data>
   <data name="Evaluation.FeedbackGemini" xml:space="preserve">
-    <value>Feedback (Cole aqui o output bruto do Gemini)</value>
+    <value>Feedback </value>
   </data>
   <data name="Evaluation.FeedbackOpenRouter" xml:space="preserve">
-    <value>Feedback (Cole aqui o output bruto do OpenRouter)</value>
+    <value>Feedback </value>
   </data>
   <data name="Evaluation.RecommendationLabel" xml:space="preserve">
     <value>Recomendação</value>
@@ -685,10 +685,10 @@ Deseja continuar?</value>
     <value>{0} T/s</value>
   </data>
   <data name="Benchmarks.EvalTime" xml:space="preserve">
-    <value>Eval: {0} m:s</value>
+    <value>Eval: {0} </value>
   </data>
   <data name="Benchmarks.LoadTime" xml:space="preserve">
-    <value>Load: {0} m:s</value>
+    <value>Load: {0}</value>
   </data>
   <data name="Benchmarks.Tokens" xml:space="preserve">
     <value>Tokens: {0}</value>
@@ -757,10 +757,10 @@ Deseja continuar?</value>
     <value>Tokens/s</value>
   </data>
   <data name="Benchmarks.ChartLabelEval" xml:space="preserve">
-    <value>Eval (ms)</value>
+    <value>Eval </value>
   </data>
   <data name="Benchmarks.ChartLabelLoad" xml:space="preserve">
-    <value>Load (ms)</value>
+    <value>Load </value>
   </data>
   <data name="Benchmarks.ChartLabelTokens" xml:space="preserve">
     <value>Tokens</value>
@@ -784,10 +784,10 @@ Deseja continuar?</value>
     <value>Selecione um prompt na tabela superior para analisar as respostas dos modelos.</value>
   </data>
   <data name="Analise.EvalMs" xml:space="preserve">
-    <value>Eval: {0}ms</value>
+    <value>Eval: {0}</value>
   </data>
   <data name="Analise.LoadMs" xml:space="preserve">
-    <value>Load: {0}ms</value>
+    <value>Load: {0}</value>
   </data>
   <data name="Analise.DeleteConfirmMessage" xml:space="preserve">
     <value>Tem a certeza que deseja apagar o Prompt #{0}? Isto irá remover permanentemente todas as {1} respostas associadas (Cascading Delete).</value>
@@ -1006,7 +1006,7 @@ Deseja continuar?</value>
     <value>Pronto para analisar</value>
   </data>
   <data name="AnalysisViewer.ReadyHint" xml:space="preserve">
-    <value>Clique em <strong>"Análise IA Local"</strong> para iniciar o processamento dos benchmarks.</value>
+    <value />
   </data>
   <data name="AnalysisViewer.ProcessingTitle" xml:space="preserve">
     <value>A processar resposta...</value>
@@ -1363,7 +1363,7 @@ Deseja continuar?</value>
     <value>A religar ao servidor...</value>
   </data>
   <data name="Reconnect.Retrying" xml:space="preserve">
-    <value>Falha na religação... a tentar novamente em <span id="components-seconds-to-next-attempt"></span> segundos.</value>
+    <value />
   </data>
   <data name="Reconnect.Failed" xml:space="preserve">
     <value>Falha ao religar.&lt;br /&gt;Por favor, tente novamente ou recarregue a página.</value>
@@ -1479,5 +1479,4 @@ Deseja continuar?</value>
   <data name="Dashboard.DivergenceValue" xml:space="preserve">
     <value>Δ {0} pts</value>
   </data>
-
 </root>

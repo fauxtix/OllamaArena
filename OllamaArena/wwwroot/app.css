@@ -267,23 +267,17 @@ code {
         padding: 0.5rem 1rem;
     }
 
-    /* Cabeçalho responsivo: título legível em ecrãs pequenos */
+    /* Cabeçalho responsivo: título oculto em ecrãs pequenos (quebrava na vertical) */
     .header-left {
         flex: 1 1 auto;
     }
 
     .app-title {
-        font-size: 0.95rem;
-        line-height: 1.2;
-        white-space: normal !important;
+        display: none;
     }
 
     .header-actions {
         gap: 4px !important;
-    }
-
-    .header-actions fluent-button {
-        padding: 4px 10px !important;
     }
 }
 

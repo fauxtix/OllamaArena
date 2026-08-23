@@ -206,7 +206,7 @@ else
                     <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="@CancelRequest"
                                   Title="@L["Chat.CancelRequest"]"
-                                  Style="min-width: 40px; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; background-color: #dc2626; border-radius: 50%;">
+                                  Class="chat-cancel-button">
                         <FluentIcon Value="@(new Icons.Regular.Size20.Square())" Color="Color.Custom" CustomColor="#ffffff" />
                     </FluentButton>
                 }
@@ -327,6 +327,57 @@ else
             opacity: .5;
             cursor: not-allowed;
         }
+
+    .chat-cancel-button {
+        min-width: 44px;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background-color: #dc2626;
+        border: 1px solid rgba(220, 38, 38, .9);
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(220, 38, 38, .35);
+        transition: transform .15s ease, background-color .2s ease, box-shadow .2s ease;
+        animation: cancelPulse 1.6s infinite ease-out;
+    }
+
+    .chat-cancel-button:hover {
+        background-color: #b91c1c;
+        transform: translateY(-1px) scale(1.05);
+    }
+
+    .chat-cancel-button:active {
+        transform: scale(.95);
+    }
+
+    .chat-cancel-button::part(control) {
+        background-color: transparent;
+        border: none;
+        border-radius: inherit;
+        color: #ffffff;
+    }
+
+    .chat-cancel-button::part(control):hover {
+        background-color: transparent;
+    }
+
+    @@keyframes cancelPulse {
+        0% {
+            box-shadow: 0 2px 6px rgba(220, 38, 38, .35), 0 0 0 0 rgba(220, 38, 38, .45);
+        }
+
+        70% {
+            box-shadow: 0 2px 6px rgba(220, 38, 38, .35), 0 0 0 10px rgba(220, 38, 38, 0);
+        }
+
+        100% {
+            box-shadow: 0 2px 6px rgba(220, 38, 38, .35), 0 0 0 0 rgba(220, 38, 38, 0);
+        }
+    }
 
     .chat-content table {
         width: 100%;

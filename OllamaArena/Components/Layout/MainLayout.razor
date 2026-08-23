@@ -25,16 +25,16 @@
                     <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="ShowReadme"
                                   Title="@L["ReadmeViewer"]"
-                                  Style="font-size: 0.9rem; padding: 4px 10px; gap: 4px;">
-                        <FluentIcon Value="@(new Icons.Regular.Size16.DocumentBulletList())" Slot="start" />
-                        @L["ReadmeViewer"]
+                                  aria-label="@L["ReadmeViewer"]"
+                                  Style="min-width: 32px; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.DocumentBulletList())" />
                     </FluentButton>
                     <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="@(() => Navigation.NavigateTo("/plano-de-testes"))"
                                   Title="@L["TestPlan"]"
-                                  Style="font-size: 0.9rem; padding: 4px 10px; gap: 4px;">
-                        <FluentIcon Value="@(new Icons.Regular.Size16.DocumentBulletList())" Slot="start" />
-                        @L["TestPlan"]
+                                  aria-label="@L["TestPlan"]"
+                                  Style="min-width: 32px; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.CheckmarkCircle())" />
                     </FluentButton>
                     <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="ToggleTheme"
@@ -60,9 +60,11 @@
         </FluentStack>
 
         <FluentFooter Style="background-color: var(--neutral-layer-2); color: var(--neutral-foreground-rest);">
-            <div>
-                <a href="https://github.com/fauxtix/OllamaArena" target="_blank">@L["Repository"]</a>
-                <a href="https://docs.ollama.com/" target="_blank">@L["OllamaDocumentation"]</a>
+            <div class="footer-content">
+                <a href="https://github.com/fauxtix/OllamaArena" target="_blank"
+                   rel="noopener noreferrer" class="footer-link">@L["Repository"]</a>
+                <a href="https://docs.ollama.com/" target="_blank"
+                   rel="noopener noreferrer" class="footer-link">@L["OllamaDocumentation"]</a>
             </div>
         </FluentFooter>
     </FluentLayout>
@@ -122,6 +124,33 @@
         align-items: center;
         gap: 8px;
         flex: 0 0 auto;
+    }
+
+    .footer-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 32px;
+        width: 100%;
+    }
+
+    .footer-link {
+        color: var(--neutral-foreground-hint);
+        text-decoration: none;
+        font-size: .85rem;
+        font-weight: 600;
+        padding: 4px 14px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        transition: color .2s ease, background-color .2s ease, border-color .2s ease;
+    }
+
+    .footer-link:hover,
+    .footer-link:focus-visible {
+        color: var(--accent-fill-rest);
+        background-color: var(--neutral-layer-3);
+        border-color: var(--neutral-stroke-layer-rest);
+        text-decoration: none;
     }
 
 </style>
