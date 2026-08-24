@@ -87,6 +87,8 @@ public static class DatabaseSchemaInitializer
                 "OpenRouterLoopDetectionRating" INTEGER,
                 "GeminiRefusalHandled"       INTEGER,
                 "OpenRouterRefusalHandled"   INTEGER,
+                "Juiz1Origem"                TEXT,
+                "Juiz2Origem"                TEXT,
                 FOREIGN KEY ("PromptId") REFERENCES "Prompts" ("Id") ON DELETE CASCADE
             );
             """);
@@ -243,6 +245,11 @@ public static class DatabaseSchemaInitializer
         // Idioma da sessão (seletor PT/EN) ativo na geração da resposta; usado pelo
         // juiz para avaliar a adesão ao idioma esperado. Null = resposta antiga.
         EnsureColumn(connection, "Respostas", "IdiomaSessao", "TEXT");
+
+        // Origem de cada slot de juiz ('gemini'/'openrouter'/'externo'); null = slot
+        // vazio ("sem resposta") ou registo anterior a esta funcionalidade.
+        EnsureColumn(connection, "Respostas", "Juiz1Origem", "TEXT");
+        EnsureColumn(connection, "Respostas", "Juiz2Origem", "TEXT");
 
         EnsureColumn(connection, "Conversas", "Descricao", "TEXT");
     }

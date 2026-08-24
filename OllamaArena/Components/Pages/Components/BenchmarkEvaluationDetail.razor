@@ -1,6 +1,7 @@
 @using Microsoft.Extensions.Localization
 @using OllamaArena.Models.DTO
 @using OllamaArena.Resources
+@using OllamaArena.Services.Helpers
 @using OllamaArena.Services.Interfaces.Repositories
 @inject IStringLocalizer<SharedResources> L
 @inject IBenchmarkRepository BenchmarkRepo
@@ -49,11 +50,11 @@
                                         <div class="metric-cell header-metric">@L["EvalDetail.Metric"]</div>
                                         <div class="rating-cell header-cell">
                                             <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())" Color="Color.Accent" />
-                                            <span>@L["Evaluation.JudgeGemini"]</span>
+                                            <span class="@(SemRespostaJuiz(true) ? "judge-label-muted" : string.Empty)">@RotuloJuiz(true)</span>
                                         </div>
                                         <div class="rating-cell header-cell">
                                             <FluentIcon Value="@(new Icons.Regular.Size16.Chat())" Color="Color.Accent" />
-                                            <span>@L["Evaluation.JudgeOpenRouter"]</span>
+                                            <span class="@(SemRespostaJuiz(false) ? "judge-label-muted" : string.Empty)">@RotuloJuiz(false)</span>
                                         </div>
                                     </div>
 
@@ -172,7 +173,7 @@
                                             <FluentCard Class="feedback-card">
                                                 <div class="feedback-card-header">
                                                     <FluentIcon Value="@(new Icons.Regular.Size20.Sparkle())" Color="Color.Accent" />
-                                                    <FluentLabel Typo="Typography.H5" Weight="FontWeight.Bold" Style="color: #7B68EE;">@L["Evaluation.JudgeGemini"]</FluentLabel>
+                                                    <FluentLabel Typo="Typography.H5" Weight="FontWeight.Bold" Style="color: #7B68EE;">@RotuloFeedback(true)</FluentLabel>
                                                 </div>
                                                 <div class="feedback-card-body">
                                                     @if (!string.IsNullOrWhiteSpace(Feedback?.GeminiRecommendation))
@@ -202,7 +203,7 @@
                                             <FluentCard Class="feedback-card">
                                                 <div class="feedback-card-header">
                                                     <FluentIcon Value="@(new Icons.Regular.Size20.Chat())" Color="Color.Accent" />
-                                                    <FluentLabel Typo="Typography.H5" Weight="FontWeight.Bold" Style="color: #7B68EE;">@L["Evaluation.JudgeOpenRouter"]</FluentLabel>
+                                                    <FluentLabel Typo="Typography.H5" Weight="FontWeight.Bold" Style="color: #7B68EE;">@RotuloFeedback(false)</FluentLabel>
                                                 </div>
                                                 <div class="feedback-card-body">
                                                     @if (!string.IsNullOrWhiteSpace(Feedback?.OpenRouterRecommendation))
@@ -257,6 +258,21 @@
     protected PromptFeedback Feedback { get; set; } = new();
     private int _lastResponseId;
     private bool _isLoadingFeedback = false;
+
+    private bool TemConteudoJuiz(bool primeiro) => primeiro
+        ? JudgeOriginResolver.TemConteudo(Response?.GeminiFeedback, Response?.GeminiRating)
+        : JudgeOriginResolver.TemConteudo(Response?.OpenRouterFeedback, Response?.OpenRouterRating);
+
+    private string RotuloJuiz(bool primeiro) =>
+        JudgeLabelResolver.Rotulo(L, primeiro ? Response?.Juiz1Origem : Response?.Juiz2Origem, TemConteudoJuiz(primeiro), primeiro);
+
+    private bool SemRespostaJuiz(bool primeiro) =>
+        JudgeLabelResolver.SemResposta(primeiro ? Response?.Juiz1Origem : Response?.Juiz2Origem, TemConteudoJuiz(primeiro));
+
+    private static bool TemConteudoCard(string? feedback) => !string.IsNullOrWhiteSpace(feedback);
+
+    private string RotuloFeedback(bool primeiro) =>
+        JudgeLabelResolver.Rotulo(L, primeiro ? Feedback.Juiz1Origem : Feedback.Juiz2Origem, TemConteudoCard(primeiro ? Feedback.GeminiFeedback : Feedback.OpenRouterFeedback), primeiro);
 
     protected override async Task OnParametersSetAsync()
     {
@@ -478,6 +494,12 @@
     .rating-empty {
         color: var(--neutral-foreground-hint);
         font-size: 14px;
+    }
+
+    .judge-label-muted {
+        opacity: 0.55;
+        font-style: italic;
+        font-weight: 500;
     }
 
     .global-row {

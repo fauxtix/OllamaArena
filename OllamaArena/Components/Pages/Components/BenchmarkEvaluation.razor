@@ -12,7 +12,7 @@
             <div class="judge-header">
                 <div class="judge-label-wrapper">
                     <FluentIcon Value="@(new Icons.Regular.Size20.Sparkle())" Color="Color.Accent" />
-                    <div class="judge-label">@L["Evaluation.JudgeGemini"]</div>
+                    <div class="judge-label @(SemRespostaColuna(true) ? "judge-label-muted" : string.Empty)">@RotuloColuna(true)</div>
                 </div>
             </div>
 
@@ -105,7 +105,7 @@
             <div class="judge-header">
                 <div class="judge-label-wrapper">
                     <FluentIcon Value="@(new Icons.Regular.Size20.Sparkle())" Color="Color.Accent" />
-                    <div class="judge-label">@L["Evaluation.JudgeOpenRouter"]</div>
+                    <div class="judge-label @(SemRespostaColuna(false) ? "judge-label-muted" : string.Empty)">@RotuloColuna(false)</div>
                 </div>
             </div>
 
@@ -240,6 +240,13 @@
         border-radius: 4px;
         font-weight: 600;
         color: var(--neutral-foreground-rest);
+    }
+
+    .judge-label-muted {
+        opacity: 0.55;
+        border-style: dashed;
+        font-weight: 500;
+        font-style: italic;
     }
 
     .judge-header {

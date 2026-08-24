@@ -146,7 +146,9 @@ public class BenchmarkRepository : IBenchmarkRepository
                     r.OpenRouterFormattingRating, 
                     r.OpenRouterRating, 
                     r.OpenRouterFeedback, 
-                    r.OpenRouterRecommendation
+                    r.OpenRouterRecommendation,
+                    r.Juiz1Origem,
+                    r.Juiz2Origem
                 FROM Prompts p
                 LEFT JOIN Respostas r ON p.Id = r.PromptId
                 ORDER BY p.Id DESC, r.TokensPorSegundo DESC;";
@@ -216,7 +218,7 @@ public class BenchmarkRepository : IBenchmarkRepository
     public async Task<PromptFeedback> GetBenchmarkJudgesFeedbackByIdAsync(int Id)
     {
         var sql = @"
-                SELECT GeminiFeedback, OpenRouterFeedback, GeminiRecommendation, OpenRouterRecommendation FROM Respostas 
+                SELECT GeminiFeedback, OpenRouterFeedback, GeminiRecommendation, OpenRouterRecommendation, Juiz1Origem, Juiz2Origem FROM Respostas 
                 WHERE Id = @Id;";
 
         try
@@ -444,7 +446,10 @@ public class BenchmarkRepository : IBenchmarkRepository
         sb.Append("OpenRouterLanguageConsistencyRating = @OpenRouterLanguageConsistencyRating, OpenRouterLoopDetectionRating = @OpenRouterLoopDetectionRating, ");
 
         // Flag de recusa correta (REFUSAL_HANDLED): usado pelo ScoreCalculator
-        sb.Append("GeminiRefusalHandled = @GeminiRefusalHandled, OpenRouterRefusalHandled = @OpenRouterRefusalHandled ");
+        sb.Append("GeminiRefusalHandled = @GeminiRefusalHandled, OpenRouterRefusalHandled = @OpenRouterRefusalHandled, ");
+
+        // Origem de cada slot de juiz ('gemini'/'openrouter'/'externo'/null)
+        sb.Append("Juiz1Origem = @Juiz1Origem, Juiz2Origem = @Juiz2Origem ");
 
         sb.Append("WHERE Id = @Id;");
 
@@ -478,7 +483,8 @@ public class BenchmarkRepository : IBenchmarkRepository
 
         // Métricas de Performance e Datas
         sb.Append("P.DataCriacao, P.Descricao, R.TokensPorSegundo, R.TempoPuroMs, R.TempoCargaMs, R.TamanhoTokens, ");
-        sb.Append("R.GeminiFeedback, R.GeminiRecommendation, R.OpenRouterFeedback, R.OpenRouterRecommendation ");
+        sb.Append("R.GeminiFeedback, R.GeminiRecommendation, R.OpenRouterFeedback, R.OpenRouterRecommendation, ");
+        sb.Append("R.Juiz1Origem, R.Juiz2Origem ");
         sb.Append("FROM Prompts P ");
         sb.Append("LEFT JOIN Respostas R ON R.PromptId = P.Id");
 

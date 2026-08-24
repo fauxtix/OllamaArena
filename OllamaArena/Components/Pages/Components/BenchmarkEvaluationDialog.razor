@@ -1,6 +1,7 @@
 @using Microsoft.Extensions.Localization
 @using OllamaArena.Models.Entities
 @using OllamaArena.Resources
+@using OllamaArena.Services.Helpers
 @using OllamaArena.Services.Interfaces.Services
 @inject IStringLocalizer<SharedResources> L
 
@@ -36,7 +37,7 @@
                                   Disabled="@isTranslating"
                                   OnClick="TraduzirGemini">
                         <FluentIcon Value="@(new Icons.Regular.Size20.Translate())" />
-                        @L["EvalDialog.TranslateGemini"]
+                        @L["EvalDialog.TranslateJudge", NomeJuiz(true)]
                     </FluentButton>
                 </div>
 
@@ -45,7 +46,7 @@
                                   Disabled="@isTranslating"
                                   OnClick="TraduzirOpenRouter">
                         <FluentIcon Value="@(new Icons.Regular.Size20.Translate())" />
-                        @L["EvalDialog.TranslateOpenRouter"]
+                        @L["EvalDialog.TranslateJudge", NomeJuiz(false)]
                     </FluentButton>
                 </div>
 
@@ -110,6 +111,25 @@
 
     private string? modelUsed;
     private string? timeSpent;
+
+    /// <summary>Nome do juiz a exibir nos botões de tradução, conforme a origem do slot.</summary>
+    private string NomeJuiz(bool juizGemini)
+    {
+        if (Response is null)
+        {
+            return juizGemini ? L["Evaluation.JudgeGemini"].Value : L["Evaluation.JudgeOpenRouter"].Value;
+        }
+
+        var temConteudo = juizGemini
+            ? JudgeOriginResolver.TemConteudo(Response.GeminiFeedback, Response.GeminiRating)
+            : JudgeOriginResolver.TemConteudo(Response.OpenRouterFeedback, Response.OpenRouterRating);
+
+        return JudgeLabelResolver.Rotulo(
+            L,
+            juizGemini ? Response.Juiz1Origem : Response.Juiz2Origem,
+            temConteudo,
+            primeiroSlot: juizGemini);
+    }
 
     private async Task Guardar()
     {

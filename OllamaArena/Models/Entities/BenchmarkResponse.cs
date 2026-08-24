@@ -62,6 +62,9 @@ namespace OllamaArena.Models.Entities
         // Flag de recusa correta (REFUSAL_HANDLED do juiz): 1/0/null
         public int? OpenRouterRefusalHandled { get; set; }
 
+        public string? Juiz1Origem { get; set; }
+        public string? Juiz2Origem { get; set; }
+
         // PROPRIEDADES DE FORMATAÇÃO PARA A UI
 
         public string TempoPuroFormatado =>

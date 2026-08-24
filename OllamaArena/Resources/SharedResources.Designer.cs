@@ -1258,7 +1258,7 @@ namespace OllamaArena.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Sem ligação à internet. A avaliação automática requer acesso aos juízes em nuvem (Gemini e OpenRouter). Pode usar &apos;Copiar prompt&apos; para avaliação manual..
+        ///   Looks up a localized string similar to Sem ligação à internet. A avaliação automática requer acesso aos juízes em nuvem (Gemini e OpenRouter)..
         /// </summary>
         public static string Benchmarks_NoInternetError {
             get {

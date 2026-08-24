@@ -30,6 +30,11 @@ namespace OllamaArena.Components.Pages.Components
         {
             if (Response is null) return;
 
+            if (JudgeOriginResolver.Normalizar(Response.Juiz1Origem) is null)
+            {
+                Response.Juiz1Origem = JudgeOriginResolver.Externo;
+            }
+
             if (value.Contains("FACTUAL_SCORE:", StringComparison.OrdinalIgnoreCase))
             {
                 var parsed = EvaluationParser.ParseEvaluation(value);
@@ -65,6 +70,11 @@ namespace OllamaArena.Components.Pages.Components
         private async Task OnOpenRouterInputChanged(string value)
         {
             if (Response is null) return;
+
+            if (JudgeOriginResolver.Normalizar(Response.Juiz2Origem) is null)
+            {
+                Response.Juiz2Origem = JudgeOriginResolver.Externo;
+            }
 
             if (value.Contains("FACTUAL_SCORE:", StringComparison.OrdinalIgnoreCase))
             {
@@ -150,6 +160,31 @@ namespace OllamaArena.Components.Pages.Components
         private static string WeakClass(int? value, int threshold = 3)
         {
             return value.HasValue && value.Value <= threshold ? "rating-cell-weak" : string.Empty;
+        }
+
+        /// <summary>Rótulo do cabeçalho de cada coluna de juiz, refletindo a origem real.</summary>
+        private string RotuloColuna(bool juiz1)
+        {
+            var temConteudo = juiz1
+                ? JudgeOriginResolver.TemConteudo(Response.GeminiFeedback, Response.GeminiRating)
+                : JudgeOriginResolver.TemConteudo(Response.OpenRouterFeedback, Response.OpenRouterRating);
+
+            return JudgeLabelResolver.Rotulo(
+                L,
+                juiz1 ? Response.Juiz1Origem : Response.Juiz2Origem,
+                temConteudo,
+                primeiroSlot: juiz1);
+        }
+
+        private bool SemRespostaColuna(bool juiz1)
+        {
+            var temConteudo = juiz1
+                ? JudgeOriginResolver.TemConteudo(Response.GeminiFeedback, Response.GeminiRating)
+                : JudgeOriginResolver.TemConteudo(Response.OpenRouterFeedback, Response.OpenRouterRating);
+
+            return JudgeLabelResolver.SemResposta(
+                juiz1 ? Response.Juiz1Origem : Response.Juiz2Origem,
+                temConteudo);
         }
     }
 }

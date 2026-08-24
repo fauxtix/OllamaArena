@@ -33,6 +33,8 @@ namespace OllamaArena.Components.Pages.Components
         private BenchmarkPrompt? _promptGrafico;
         private BenchmarkPrompt? _chartPrompt;
         private BenchmarkResponse? _selectedEvaluation;
+        private bool _conteudoAberturaSlot1;
+        private bool _conteudoAberturaSlot2;
 
         private bool _mostrarGrafico = false;
         private bool _chartDialogVisible = false;
@@ -302,6 +304,17 @@ namespace OllamaArena.Components.Pages.Components
                     return;
                 }
 
+                // Origem de cada slot: automático carimba na PreencherAvaliacao;
+                // colagem manual vira 'externo'; slots vazios/legados ficam a null.
+                resposta.Juiz1Origem = JudgeOriginResolver.CalcularOrigemSlot(
+                    JudgeOriginResolver.TemConteudo(resposta.GeminiFeedback, resposta.GeminiRating),
+                    _conteudoAberturaSlot1,
+                    resposta.Juiz1Origem);
+                resposta.Juiz2Origem = JudgeOriginResolver.CalcularOrigemSlot(
+                    JudgeOriginResolver.TemConteudo(resposta.OpenRouterFeedback, resposta.OpenRouterRating),
+                    _conteudoAberturaSlot2,
+                    resposta.Juiz2Origem);
+
                 bool guardado = await BenchmarkRepo.UpdateResponseEvaluationAsync(resposta);
 
                 if (guardado)
@@ -413,9 +426,13 @@ namespace OllamaArena.Components.Pages.Components
                     return;
                 }
 
+                // Snapshot do conteúdo à abertura deste fluxo: slots já preenchidos
+                // sem origem gravada são tratados como legados (não lhes inventamos origem).
+                _conteudoAberturaSlot1 = JudgeOriginResolver.TemConteudo(resposta.GeminiFeedback, resposta.GeminiRating);
+                _conteudoAberturaSlot2 = JudgeOriginResolver.TemConteudo(resposta.OpenRouterFeedback, resposta.OpenRouterRating);
+
                 PreencherAvaliacao(resposta, resultado.Gemini, juizGemini: true);
                 PreencherAvaliacao(resposta, resultado.OpenRouter, juizGemini: false);
-
                 if (resultado.HasErrors)
                 {
                     var erros = new List<string>();
@@ -531,6 +548,7 @@ namespace OllamaArena.Components.Pages.Components
                 resposta.GeminiRating = parsed.FinalScore;
                 resposta.GeminiFeedback = string.IsNullOrWhiteSpace(parsed.Description) ? resultado.RawText : parsed.Description;
                 resposta.GeminiRecommendation = CombinarComNotaIdioma(notaIdioma, parsed.Recommendation);
+                resposta.Juiz1Origem = JudgeOriginResolver.Gemini;
             }
             else
             {
@@ -550,6 +568,7 @@ namespace OllamaArena.Components.Pages.Components
                 resposta.OpenRouterRating = parsed.FinalScore;
                 resposta.OpenRouterFeedback = string.IsNullOrWhiteSpace(parsed.Description) ? resultado.RawText : parsed.Description;
                 resposta.OpenRouterRecommendation = CombinarComNotaIdioma(notaIdioma, parsed.Recommendation);
+                resposta.Juiz2Origem = JudgeOriginResolver.OpenRouter;
             }
         }
 
@@ -608,6 +627,8 @@ namespace OllamaArena.Components.Pages.Components
         {
             var benchmarkEvaluation = await BenchmarkRepo.GetBenchmarkAnswersByIdAsync(id);
             _selectedEvaluation = benchmarkEvaluation;
+            _conteudoAberturaSlot1 = JudgeOriginResolver.TemConteudo(benchmarkEvaluation?.GeminiFeedback, benchmarkEvaluation?.GeminiRating);
+            _conteudoAberturaSlot2 = JudgeOriginResolver.TemConteudo(benchmarkEvaluation?.OpenRouterFeedback, benchmarkEvaluation?.OpenRouterRating);
             _evaluationIsSaved =
                 benchmarkEvaluation?.GeminiRating != null &&
                 benchmarkEvaluation.GeminiFeedback != null &&

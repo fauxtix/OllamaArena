@@ -585,6 +585,15 @@ Do you want to continue?</value>
   <data name="Evaluation.JudgeOpenRouter" xml:space="preserve">
     <value>OpenRouter</value>
   </data>
+  <data name="Evaluation.Judge1" xml:space="preserve">
+    <value>Judge 1</value>
+  </data>
+  <data name="Evaluation.Judge2" xml:space="preserve">
+    <value>Judge 2</value>
+  </data>
+  <data name="Evaluation.NoResponse" xml:space="preserve">
+    <value>No response</value>
+  </data>
   <data name="Evaluation.MetricsHeader" xml:space="preserve">
     <value>Evaluation Metrics (Scale 1-5)</value>
   </data>
@@ -730,7 +739,7 @@ Do you want to continue?</value>
     <value>None of the judges returned an evaluation. Details:</value>
   </data>
   <data name="Benchmarks.NoInternetError" xml:space="preserve">
-    <value>No internet connection. Automated evaluation requires access to the cloud judges (Gemini and OpenRouter). Use 'Copy prompt' for manual evaluation.</value>
+    <value>No internet connection. Automated evaluation requires access to the cloud judges (Gemini and OpenRouter).</value>
   </data>
   <data name="Benchmarks.Evaluate" xml:space="preserve">
     <value>Evaluation</value>
@@ -1046,6 +1055,9 @@ Do you want to continue?</value>
   </data>
   <data name="EvalDialog.TranslateOpenRouter" xml:space="preserve">
     <value>Translate Feedback (OpenRouter)</value>
+  </data>
+  <data name="EvalDialog.TranslateJudge" xml:space="preserve">
+    <value>Translate Feedback ({0})</value>
   </data>
   <data name="EvalDialog.SaveEvaluation" xml:space="preserve">
     <value>Save evaluation</value>

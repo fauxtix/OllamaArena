@@ -53,6 +53,9 @@ public class BenchmarkEvaluationModel
     public string OpenRouterFeedback { get; set; } = string.Empty;
     public string OpenRouterRecommendation { get; set; } = string.Empty;
 
+    public string? Juiz1Origem { get; set; }
+    public string? Juiz2Origem { get; set; }
+
     public string TempoPuroFormatado
     {
         get
