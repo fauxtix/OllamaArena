@@ -110,9 +110,12 @@ With this data collected automatically, you can:
 - **Assess quality with two AI judges** — rate your models' responses from 1 to 5 across 12 criteria (factuality, formatting, clarity, safety, language consistency, loop detection, etc.) using the **Gemini** and **OpenRouter** judges, also saving each judge's **recommendation**;
 - **Analyse results 100% locally** — the app produces a smart summary with conclusions and performance recommendations (pure C# analysis, no cloud dependency);
 - **Export results to Excel**, with reports grouped by question, ready to share;
+- **Export to PDF** with detailed reports per model (metrics, feedback and each judge's recommendations);
 - **Compare each question graphically** — performance charts (speed, timings, tokens) and **quality radar charts per judge** (Gemini/OpenRouter, 12 metrics, 0–5 scale), with image download;
 - Compare the responses of **several models side by side** for the same question, in the Quality and Metrics panel;
 - Manage your records with **selective deletion** — delete individual tests, only the **pending review**/**reviewed** ones, the **filtered/searched** ones, or the entire history.
+
+> **Note:** Exported files (Excel, PDF and chart/radar images) are automatically saved to your browser's **Downloads** folder.
 
 ## ⚖️ Evaluation by the Two Judges (Gemini & OpenRouter)
 

@@ -224,14 +224,14 @@
 
                                                 <div class="avaliacao-footer">
 
-                                                    <div class="rating-box">
+                                                    <div class="rating-box @(SemRespostaColuna(true, resp) ? "judge-label-muted" : string.Empty)">
                                                         <FluentIcon Value="@(new Icons.Regular.Size16.Sparkle())" />
-                                                        <span>@L["Benchmarks.ColGemini"]</span>
+                                                        <span>@RotuloColuna(true, resp)</span>
                                                         <strong>@(resp.GeminiRating > 0 ? resp.GeminiRating : 0)</strong>
                                                     </div>
-                                                    <div class="rating-box">
+                                                    <div class="rating-box @(SemRespostaColuna(false, resp) ? "judge-label-muted" : string.Empty)">
                                                         <FluentIcon Value="@(new Icons.Regular.Size16.Chat())" />
-                                                        <span>@L["Benchmarks.ColOpenRouter"]</span>
+                                                        <span>@RotuloColuna(false, resp)</span>
                                                         <strong>@(resp.OpenRouterRating > 0 ? resp.OpenRouterRating : 0)</strong>
                                                     </div>
                                                     <FluentSpacer />
@@ -605,6 +605,12 @@
         .rating-box strong {
             margin-left: auto;
             color: var(--accent-fill-rest);
+        }
+
+        .rating-box.judge-label-muted {
+            opacity: 0.55;
+            font-style: italic;
+            border-style: dashed;
         }
 
     .loading-state {

@@ -641,5 +641,29 @@ namespace OllamaArena.Components.Pages.Components
             _evaluationDialogVisible = false;
             return Task.CompletedTask;
         }
+
+        private string RotuloColuna(bool juiz1, BenchmarkResponse resp)
+        {
+            var temConteudo = juiz1
+                ? JudgeOriginResolver.TemConteudo(resp.GeminiFeedback, resp.GeminiRating)
+                : JudgeOriginResolver.TemConteudo(resp.OpenRouterFeedback, resp.OpenRouterRating);
+
+            return JudgeLabelResolver.Rotulo(
+                L,
+                juiz1 ? resp.Juiz1Origem : resp.Juiz2Origem,
+                temConteudo,
+                primeiroSlot: juiz1);
+        }
+
+        private bool SemRespostaColuna(bool juiz1, BenchmarkResponse resp)
+        {
+            var temConteudo = juiz1
+                ? JudgeOriginResolver.TemConteudo(resp.GeminiFeedback, resp.GeminiRating)
+                : JudgeOriginResolver.TemConteudo(resp.OpenRouterFeedback, resp.OpenRouterRating);
+
+            return JudgeLabelResolver.SemResposta(
+                juiz1 ? resp.Juiz1Origem : resp.Juiz2Origem,
+                temConteudo);
+        }
     }
 }

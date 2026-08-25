@@ -202,8 +202,8 @@ namespace OllamaArena.Components.Pages
             var worksheet = workbook.Worksheets.Add("Benchmarks");
 
             worksheet.Cell(1, 2).Value = "Modelo";
-            worksheet.Cell(1, 3).Value = "Gemini";
-            worksheet.Cell(1, 4).Value = "OpenRouter";
+            worksheet.Cell(1, 3).Value = L["Evaluation.Judge1"].Value;
+            worksheet.Cell(1, 4).Value = L["Evaluation.Judge2"].Value;
             worksheet.Cell(1, 5).Value = "Tokens/s";
             worksheet.Cell(1, 6).Value = "Tempo";
             worksheet.Cell(1, 7).Value = "Tokens";
@@ -337,8 +337,8 @@ namespace OllamaArena.Components.Pages
                     rotuloPerformance = L["Benchmarks.ExportPdfPerformance"].Value,
                     rotuloFeedback = L["Benchmarks.ExportPdfFeedback"].Value,
                     rotuloRecomendacao = L["Benchmarks.ExportPdfRecommendation"].Value,
-                    rotuloGemini = L["Benchmarks.ColGemini"].Value,
-                    rotuloOpenRouter = L["Benchmarks.ColOpenRouter"].Value,
+                    rotuloGemini = L["Evaluation.Judge1"].Value,
+                    rotuloOpenRouter = L["Evaluation.Judge2"].Value,
                     rotuloData = L["Benchmarks.ExportPdfDate"].Value,
                     rotulosDesempenho = new[]
                     {

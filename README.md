@@ -44,9 +44,12 @@ Com estes dados recolhidos automaticamente, pode:
 - **Avaliar a qualidade com dois juízes de IA** — atribuir uma nota de 1 a 5 em 12 critérios (factualidade, formatação, clareza, segurança, consistência idiomática, deteção de loop, etc.) às respostas dos seus modelos, através dos juízes **Gemini** e **OpenRouter**, guardando também a **recomendação** de cada juiz;
 - **Analisar os resultados de forma 100% local** — a aplicação gera um resumo inteligente com conclusões e recomendações de desempenho (análise em C# puro, sem depender da nuvem);
 - **Exportar os resultados para Excel**, com relatórios agrupados por pergunta, prontos a partilhar;
+- **Exportar para PDF** com relatórios detalhados por modelo (métricas, feedback e recomendações de cada juiz);
 - **Comparar graficamente cada pergunta** — gráficos de desempenho (velocidade, tempos, tokens) e **radares de qualidade por juiz** (Gemini/OpenRouter, 12 métricas, escala 0–5), com download de imagem;
 - Comparar as respostas de **vários modelos lado a lado** para a mesma pergunta, no painel de Qualidade e Métricas;
 - Gerir os seus registos com **eliminação seletiva** — apagar testes individuais, apenas os **por avaliar**/**avaliados**, os **filtrados/pesquisados**, ou todo o histórico.
+
+> **Nota:** Os ficheiros exportados (Excel, PDF e imagens de gráficos/radares) são descarregados automaticamente para a **pasta de Downloads** do navegador.
 
 ## ⚖️ Avaliação dos Dois Juízes (Gemini & OpenRouter)
 
