@@ -246,13 +246,14 @@
 
     private async Task RenderizarRadarComRetryAsync(string canvasId, object dados)
     {
-        // Garante o render mesmo que o canvas ainda esteja a ser montado pelo FluentTabs
-        for (int tentativa = 0; tentativa < 8; tentativa++)
+        // Garante o render mesmo que o canvas ainda esteja a ser montado pelo FluentTabs.
+        // O JS só devolve true quando o canvas está visível e com dimensões reais.
+        for (int tentativa = 0; tentativa < 20; tentativa++)
         {
             var renderizado = await JS.InvokeAsync<bool>("benchmarkCharts.renderGrafico", canvasId, dados, "pts", "radar");
             if (renderizado)
                 return;
-            await Task.Delay(100);
+            await Task.Delay(150);
         }
     }
 

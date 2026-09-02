@@ -72,6 +72,45 @@ public class BenchmarkRepositoryIdiomaSessaoTests : IDisposable
         IdiomaSessao = idiomaSessao
     };
 
+    [Fact]
+    public async Task GetAllBenchmarks_CarregaAs12MetricasE_RefusalHandled()
+    {
+        int promptId = await CriarPromptAsync();
+
+        // Semeia diretamente via SQL (o CreateResponseAsync só persiste Factual/Formatting).
+        using (var ligacao = NovaLigacao(_connectionString))
+        {
+            ligacao.Execute("""
+                INSERT INTO Respostas
+                (PromptId, NomeModelo, TextoResposta,
+                 GeminiFactualRating, GeminiFormattingRating, GeminiComplianceRating, GeminiRelevanceRating,
+                 GeminiToneRating, GeminiConcisenessRating, GeminiClarityRating, GeminiReadabilityRating,
+                 GeminiHaloEffectRating, GeminiSafetyRating, GeminiLanguageConsistencyRating, GeminiLoopDetectionRating,
+                 GeminiRefusalHandled, GeminiRating,
+                 OpenRouterFactualRating, OpenRouterFormattingRating, OpenRouterComplianceRating, OpenRouterRelevanceRating,
+                 OpenRouterToneRating, OpenRouterConcisenessRating, OpenRouterClarityRating, OpenRouterReadabilityRating,
+                 OpenRouterHaloEffectRating, OpenRouterSafetyRating, OpenRouterLanguageConsistencyRating, OpenRouterLoopDetectionRating,
+                 OpenRouterRefusalHandled, OpenRouterRating)
+                VALUES
+                (@PromptId, 'modelo-grafico', 'resposta',
+                 4, 5, 4, 3, 5, 4, 5, 4, 4, 5, 3, 5, 0, 4,
+                 5, 4, 4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 1, 4);
+                """, new { PromptId = promptId });
+        }
+
+        var lida = await LerUnicaRespostaAsync(promptId);
+
+        Assert.Equal(5, lida.GeminiFormattingRating);
+        Assert.Equal(3, lida.GeminiRelevanceRating);
+        Assert.Equal(5, lida.GeminiLoopDetectionRating);
+        Assert.Equal(0, lida.GeminiRefusalHandled);
+        Assert.Equal(3, lida.GeminiLanguageConsistencyRating);
+        Assert.Equal(5, lida.OpenRouterFactualRating);
+        Assert.Equal(3, lida.OpenRouterClarityRating);
+        Assert.Equal(4, lida.OpenRouterComplianceRating);
+        Assert.Equal(1, lida.OpenRouterRefusalHandled);
+    }
+
     private async Task<int> CriarPromptAsync()
     {
         var (promptId, _) = await _repo.GetOrCreatePromptIdAsync("Prompt de teste único.", "Teste");

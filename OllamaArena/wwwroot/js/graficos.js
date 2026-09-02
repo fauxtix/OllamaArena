@@ -9,6 +9,13 @@
         tipo = tipo || "bar";
         const ehRadar = tipo === "radar";
 
+        // No radar, durante a troca de tabs do FluentTabs o canvas pode existir
+        // mas ainda estar com 0x0 (invisível). Só devolve sucesso quando estiver
+        // com dimensões reais, para o caller poder voltar a tentar.
+        if (ehRadar && (canvas.clientWidth === 0 || canvas.clientHeight === 0)) {
+            return false;
+        }
+
         // 1. Obtém as cores dinâmicas do tema (Fluent UI)
         const styles = getComputedStyle(document.documentElement);
 
