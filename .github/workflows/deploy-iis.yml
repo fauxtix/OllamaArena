@@ -51,8 +51,10 @@ jobs:
           Get-Item "$oldPath\appsettings.Local.json" -EA SilentlyContinue | Copy-Item -Destination $bk -Force
           Get-Item "$oldPath\web.config"             -EA SilentlyContinue | Copy-Item -Destination $bk -Force
           Write-Host "[migrate] backup DB+Local+cfg -> $bk"
-          Stop-WebAppPool -Name $oldPool -ErrorAction SilentlyContinue
-          Stop-Website   -Name $oldName -ErrorAction SilentlyContinue
+          $poolState = (Get-WebAppPoolState -Name $oldPool -ErrorAction SilentlyContinue).Value
+          if ($poolState -eq 'Started') { Stop-WebAppPool -Name $oldPool }
+          $siteState = (Get-WebsiteState -Name $oldName -ErrorAction SilentlyContinue).Value
+          if ($siteState -eq 'Started') { Stop-Website -Name $oldName }
           Start-Sleep -Seconds 2
           if (Test-Path $target) { throw "Destino ja existe: $target" }
           Move-Item -LiteralPath $oldPath -Destination $target
@@ -83,8 +85,10 @@ jobs:
             $oldPool = $site.applicationPool
             $oldPath = $site.physicalPath
             Write-Host "[migrate] Site:$oldName pool:$oldPool path:$oldPath"
-            Stop-WebAppPool -Name $oldPool -ErrorAction SilentlyContinue
-            Stop-WebSite -Name $oldName -ErrorAction SilentlyContinue
+            $poolState = (Get-WebAppPoolState -Name $oldPool -ErrorAction SilentlyContinue).Value
+            if ($poolState -eq 'Started') { Stop-WebAppPool -Name $oldPool }
+            $siteState = (Get-WebsiteState -Name $oldName -ErrorAction SilentlyContinue).Value
+            if ($siteState -eq 'Started') { Stop-WebSite -Name $oldName }
             Start-Sleep -Seconds 2
             if (-not (Test-Path $target)) {
               Move-Item -LiteralPath $oldPath -Destination $target
@@ -105,7 +109,8 @@ jobs:
       - name: Take site offline
         run: |
           Import-Module WebAdministration
-          Stop-WebAppPool -Name $env:IIS_APP_POOL
+          $poolState = (Get-WebAppPoolState -Name $env:IIS_APP_POOL -ErrorAction SilentlyContinue).Value
+          if ($poolState -eq 'Started') { Stop-WebAppPool -Name $env:IIS_APP_POOL }
           Write-Host "App pool stopped: $env:IIS_APP_POOL"
 
       - name: Deploy files (preserving DB and local config)
