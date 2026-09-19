@@ -177,7 +177,7 @@ Comece por enviar uma mensagem no Chat — a aplicação trata de tudo o resto.
   ```
 
 ### Nota sobre o deploy em IIS
-O repositório inclui um workflow GitHub Actions (`deploy-iis.yml`) que publica a aplicação e faz o deploy para um **self-hosted runner registado apenas na máquina do autor** (a app fica em `http://localhost:4501`). Noutras máquinas, ignore o workflow e corra localmente com `dotnet watch run` — não é necessário qualquer token ou credencial para clonar e testar.
+O repositório inclui um workflow GitHub Actions (`deploy-iis.yml`) que publica a aplicação e faz o deploy para um **self-hosted runner registado apenas na máquina do autor** (a app fica em `http://localhost:4800`). Noutras máquinas, ignore o workflow e corra localmente com `dotnet watch run` — não é necessário qualquer token ou credencial para clonar e testar.
 
 #### Chaves de API no IIS
 **Recomendado:** depois do deploy, use a página **Definições** → "Juízes de IA" para colar as chaves — ficam na BD e funcionam sem editar ficheiros. Em alternativa (ou como fallback), configure as chaves no `appsettings.Local.json` do servidor (ex.: `C:\inetpub\wwwroot\OllamaArena\appsettings.Local.json`):

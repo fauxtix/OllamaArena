@@ -405,13 +405,13 @@ As **definições dos juízes** (chaves Gemini/OpenRouter, modelo do juiz OpenRo
 
 ## 12. Deploy em IIS (GitHub Actions)
 
-O repositório inclui um workflow GitHub Actions (`.github/workflows/deploy-iis.yml`) que publica a aplicação e faz o deploy para um **self-hosted runner** registado apenas na máquina do autor (a app fica em `http://localhost:4501`):
+O repositório inclui um workflow GitHub Actions (`.github/workflows/deploy-iis.yml`) que publica a aplicação e faz o deploy para um **self-hosted runner** registado apenas na máquina do autor (a app fica em `http://localhost:4800`):
 
 - **Triggers:** `push` para `master` ou `workflow_dispatch`.
 - **Publicação:** `dotnet publish OllamaArena.csproj -c Release` (SDK .NET 10).
 - **Deploy:** para `C:\inetpub\wwwroot\OllamaArena` (site) + app pool `OllamaArena` (configuráveis via secrets `IIS_SITE_PATH`/`IIS_APP_POOL`/`SITE_PORT`).
 - **Sem interrupção de dados:** o app pool é parado antes da substituição dos ficheiros (evita DLLs bloqueadas) e re-iniciado no fim; a BD `ollama_benchmark.db` (e `-shm`/`-wal`/`-journal`) e o `appsettings.Local.json` são **preservados** entre deploys.
 - **HTTP-only:** o workflow garante `Security:EnableHttpsRedirection = false` no `appsettings.Local.json` do site (sem certificado não há redirect/HSTS).
-- **Smoke test:** após o arranque, valida `HTTP 200` em `http://localhost:4501`.
+- **Smoke test:** após o arranque, valida `HTTP 200` em `http://localhost:4800`.
 
 Em máquinas sem o runner, o workflow é irrelevante — a app corre localmente com `dotnet watch run` (ver README), sem tokens ou credenciais.

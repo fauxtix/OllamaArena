@@ -14,7 +14,7 @@ jobs:
     env:
       IIS_SITE_PATH: ${{ vars.IIS_SITE_PATH || 'C:\inetpub\wwwroot\OllamaArena' }}
       IIS_APP_POOL: ${{ vars.IIS_APP_POOL || 'OllamaArena' }}
-      SITE_PORT: ${{ vars.IIS_SITE_PORT || '4501' }}
+      SITE_PORT: ${{ vars.IIS_SITE_PORT || '4800' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,6 +27,80 @@ jobs:
       - name: Publish (Release)
         run: |
           dotnet publish "$env:GITHUB_WORKSPACE\OllamaArena\OllamaArena.csproj" -c Release -o "$env:RUNNER_TEMP\publish" --nologo
+
+      - name: Migrate IIS site/pool/path -> OllamaArena (once, idempotent)
+        if: always()
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module WebAdministration
+          $newSite = 'OllamaArena'
+          $target = "C:\inetpub\wwwroot\$newSite"
+          $old = Get-Website | Where-Object { $_.physicalPath -like '*OllamaFluent*' -or $_.physicalPath -like "*$newSite*" }
+          if (-not $old -or (Get-Website -Name $newSite)) {
+            Write-Host '[migrate] skip - OllamaArena ja existente'
+            exit 0
+          }
+          $st = @($old)
+          if ($st.Count -gt 1) { throw "Multiplos sites candidatos: " + (($st | ForEach-Object Name) -join ', ') }
+          $oldName   = $old.Name
+          $oldPool   = $old.applicationPool
+          $oldPath   = $old.physicalPath
+          $bk = Join-Path $env:RUNNER_TEMP ('BackupIIS_' + (Get-Date -Format yyyyMMdd_HHmmss))
+          New-Item -ItemType Directory -Path $bk -Force | Out-Null
+          Get-Item "$oldPath\ollama_benchmark.db*" -EA SilentlyContinue | Copy-Item -Destination $bk -Force
+          Get-Item "$oldPath\appsettings.Local.json" -EA SilentlyContinue | Copy-Item -Destination $bk -Force
+          Get-Item "$oldPath\web.config"             -EA SilentlyContinue | Copy-Item -Destination $bk -Force
+          Write-Host "[migrate] backup DB+Local+cfg -> $bk"
+          Stop-WebAppPool -Name $oldPool -ErrorAction SilentlyContinue
+          Stop-Website   -Name $oldName -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 2
+          if (Test-Path $target) { throw "Destino ja existe: $target" }
+          Move-Item -LiteralPath $oldPath -Destination $target
+          Rename-Item "IIS:\AppPools\$oldPool" -NewName $newSite
+          Rename-Item "IIS:\Sites\$oldName"    -NewName $newSite
+          Set-ItemProperty "IIS:\Sites\$newSite" physicalPath   $target
+          Set-ItemProperty "IIS:\Sites\$newSite" applicationPool $newSite
+          Get-WebBinding -Name $newSite | ForEach-Object { Remove-WebBinding -Name $newSite -Protocol $_.protocol -BindingInformation $_.bindingInformation }
+          New-WebBinding -Name $newSite -Protocol http -Port 4800
+          icacls $target /grant "IIS AppPool\$newSite:(OI)(CI)M" | Out-Null
+          Start-WebAppPool -Name $newSite
+          Start-WebSite   -Name $newSite
+          Write-Host '[migrate] concluido: site+pool+pasta -> OllamaArena, binding http *:4800'
+
+      - name: Migrate IIS OllamaFluentUIChat -> OllamaArena (idempotente, roda como SYSTEM)
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module WebAdministration
+          $target = 'C:\inetpub\wwwroot\OllamaArena'
+          $newSite = 'OllamaArena'
+          $newPool = 'OllamaArena'
+          if (Get-Website -Name $newSite) {
+            Write-Host '[migrate] Ja migrado - skip'
+          } else {
+            $site = Get-Website | Where-Object { $_.physicalPath -like '*OllamaFluent*' }
+            if (-not $site) { Write-Host '[migrate] Site antigo nao encontrado - skip'; exit 0 }
+            $oldName = $site.Name
+            $oldPool = $site.applicationPool
+            $oldPath = $site.physicalPath
+            Write-Host "[migrate] Site:$oldName pool:$oldPool path:$oldPath"
+            Stop-WebAppPool -Name $oldPool -ErrorAction SilentlyContinue
+            Stop-WebSite -Name $oldName -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+            if (-not (Test-Path $target)) {
+              Move-Item -LiteralPath $oldPath -Destination $target
+              Write-Host "[migrate] pasta movida -> $target"
+            } else {
+              Write-Host '[migrate] destino ja existe (mantem DB/chaves)'
+            }
+            Rename-Item "IIS:\AppPools\$oldPool" -NewName $newPool
+            Rename-Item "IIS:\Sites\$oldName"    -NewName $newSite
+            Set-ItemProperty "IIS:\Sites\$newSite" physicalPath   -Value $target
+            Set-ItemProperty "IIS:\Sites\$newSite" applicationPool -Value $newPool
+            New-WebBinding -Name $newSite -Protocol http -Port 4800
+            Write-Host '[migrate] site/pool -> OllamaArena @ :4800'
+            Start-WebAppPool -Name $newPool
+            Start-WebSite -Name $newSite
+          }
 
       - name: Take site offline
         run: |

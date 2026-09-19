@@ -39,7 +39,7 @@ This application is more than a simple chat: it's an **experimentation laborator
   ```
 
 ### A note on the IIS deployment
-The repository includes a GitHub Actions workflow (`deploy-iis.yml`) that publishes the app and deploys it to a **self-hosted runner registered only on the author's machine** (the app runs on `http://localhost:4501`). On any other machine, ignore the workflow and run locally with `dotnet watch run` — no token or credential is needed to clone and test.
+The repository includes a GitHub Actions workflow (`deploy-iis.yml`) that publishes the app and deploys it to a **self-hosted runner registered only on the author's machine** (the app runs on `http://localhost:4800`). On any other machine, ignore the workflow and run locally with `dotnet watch run` — no token or credential is needed to clone and test.
 
 #### API keys on IIS
 **Recommended:** after deployment, use the **Settings** page → "AI Judges" to paste the keys — they are stored in the DB and work without editing files. Alternatively (or as a fallback), configure the keys in `appsettings.Local.json` on the server (e.g. `C:\inetpub\wwwroot\OllamaArena\appsettings.Local.json`):
