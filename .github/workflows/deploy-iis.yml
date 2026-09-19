@@ -1,4 +1,4 @@
-name: Deploy IIS
+﻿name: Deploy IIS
 
 on:
   push:
@@ -62,7 +62,7 @@ jobs:
           Set-ItemProperty "IIS:\Sites\$newSite" applicationPool $newSite
           Get-WebBinding -Name $newSite | ForEach-Object { Remove-WebBinding -Name $newSite -Protocol $_.protocol -BindingInformation $_.bindingInformation }
           New-WebBinding -Name $newSite -Protocol http -Port 4800
-          icacls $target /grant "IIS AppPool\$newSite:(OI)(CI)M" | Out-Null
+          icacls $target /grant "IIS AppPool\${newSite}:(OI)(CI)M" | Out-Null
           Start-WebAppPool -Name $newSite
           Start-WebSite   -Name $newSite
           Write-Host '[migrate] concluido: site+pool+pasta -> OllamaArena, binding http *:4800'
