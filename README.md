@@ -41,7 +41,7 @@ Transforme cada conversa num teste científico. Sempre que envia uma mensagem, a
 Com estes dados recolhidos automaticamente, pode:
 
 - Consultar o **histórico completo de todos os testes** numa tabela organizada, com pesquisa e filtros (Todos, Por Avaliar, Avaliados);
-- **Avaliar a qualidade com dois juízes de IA** — atribuir uma nota de 1 a 5 em 12 critérios (factualidade, formatação, clareza, segurança, consistência idiomática, deteção de loop, etc.) às respostas dos seus modelos, através dos juízes **Gemini** e **OpenRouter**, guardando também a **recomendação** de cada juiz;
+- **Avaliar a qualidade com dois juízes de IA** — atribuir uma nota de 1 a 5 em 12 critérios (factualidade, formatação, clareza, segurança, consistência idiomática, deteção de loop, etc.) às respostas dos seus modelos, através dos juízes externos (**Gemini** e **ChatGpt**, por exemplo), guardando também a **recomendação** de cada juiz;
 - **Analisar os resultados de forma 100% local** — a aplicação gera um resumo inteligente com conclusões e recomendações de desempenho (análise em C# puro, sem depender da nuvem);
 - **Exportar os resultados para Excel**, com relatórios agrupados por pergunta, prontos a partilhar;
 - **Exportar para PDF** com relatórios detalhados por modelo (métricas, feedback e recomendações de cada juiz);
