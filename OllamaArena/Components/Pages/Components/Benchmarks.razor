@@ -148,7 +148,51 @@
                         }
                         else
                         {
-                            @if (isCreatingPrompt)
+                            @if (_avaliacaoEmCurso is not null)
+                            {
+                                var progresso = _avaliacaoEmCurso;
+                                <div class="barra-avaliacao" role="status" aria-live="polite">
+                                    <FluentProgressRing Class="barra-avaliacao-ring" />
+
+                                    <div class="barra-avaliacao-conteudo">
+                                        <div class="barra-avaliacao-titulo">
+                                            <span>@L["Benchmarks.ProgressTitle", progresso.Modelo]</span>
+                                            <span class="barra-avaliacao-tempo">@L["Benchmarks.ProgressElapsed", progresso.Segundos]</span>
+                                        </div>
+
+                                        <ol class="barra-avaliacao-passos">
+                                            @foreach (var passo in progresso.Passos)
+                                            {
+                                                <li class="passo passo-@passo.Estado.ToString().ToLowerInvariant()"
+                                                    title="@passo.Detalhe">
+                                                    <span class="passo-marca">@MarcadorPasso(passo.Estado)</span>
+                                                    <span class="passo-rotulo">@passo.Rotulo</span>
+                                                    <span class="passo-estado">
+                                                        @TextoPasso(passo.Estado)@if (!string.IsNullOrWhiteSpace(passo.DetalheResumido))
+                                                        {
+                                                            <span class="passo-detalhe">— @passo.DetalheResumido</span>
+                                                        }
+                                                    </span>
+                                                    @if (passo.MostrarTempo)
+                                                    {
+                                                        <span class="passo-tempo">@L["Benchmarks.ProgressElapsed", passo.Segundos]</span>
+                                                    }
+                                                </li>
+                                            }
+                                        </ol>
+                                    </div>
+
+                                    <FluentButton Class="barra-avaliacao-cancelar"
+                                                  Appearance="Appearance.Outline"
+                                                  Color="Color.Error"
+                                                  Disabled="@progresso.ACancelar"
+                                                  OnClick="CancelarAvaliacao"
+                                                  Title="@L["Benchmarks.CancelEvaluationTitle"]">
+                                        @(progresso.ACancelar ? L["Benchmarks.CancellingEvaluation"] : L["Benchmarks.CancelEvaluation"])
+                                    </FluentButton>
+                                </div>
+                            }
+                            else if (isCreatingPrompt)
                             {
                                 <div class="loading-state">
                                     <FluentProgressRing></FluentProgressRing>
@@ -160,7 +204,8 @@
                                 <div class="cartoes-respostas-container">
                                     @foreach (var resp in _selectedPrompt.Answers)
                                     {
-                                        <div class="cartao-resposta">
+                                        var avaliando = AvaliacaoDesteModelo(resp.Id);
+                                        <div class="cartao-resposta @(avaliando ? "cartao-avaliando" : "")">
                                             <div class="cartao-header">
                                                 <div class="modelo-info">
                                                     <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" Color="Color.Neutral" />
@@ -174,17 +219,25 @@
                                                 </div>
                                                 <div style="display: flex; gap: 4px; align-items: center;padding:2px;">
                                                     <FluentButton Appearance="Appearance.Accent"
-                                                                  Disabled="@isCreatingPrompt"
-                                                                  IconStart="@(new Icons.Regular.Size20.Sparkle())"
+                                                                  Disabled="@OperacaoEmCurso"
+                                                                  IconStart="@(avaliando ? null : new Icons.Regular.Size20.Sparkle())"
                                                                   OnClick="() => AvaliarAutomaticamenteAsync(resp, _selectedPrompt.TextoPrompt, resp.NomeModelo)"
                                                                   Title="@L["Benchmarks.AutomateEvaluationTitle"]"
                                                                   Color="rgba(255,255,255, 0.9)"
                                                                   BackgroundColor="rgba(25, 116, 210, 1.0)">
-                                                        @L["Benchmarks.AutomateEvaluation"]
+                                                        @if (avaliando)
+                                                        {
+                                                            <FluentProgressRing Class="botao-avaliando-ring" />
+                                                            @L["Benchmarks.EvaluatingNow"]
+                                                        }
+                                                        else
+                                                        {
+                                                            @L["Benchmarks.AutomateEvaluation"]
+                                                        }
                                                     </FluentButton>
 
                                                     <FluentButton Appearance="Appearance.Stealth"
-                                                                  Disabled="@isCreatingPrompt"
+                                                                  Disabled="@OperacaoEmCurso"
                                                                   IconStart="@(new Icons.Regular.Size20.ClipboardCode())"
                                                                   OnClick="() => CopiarPromptAvaliacaoAsync(resp, _selectedPrompt.TextoPrompt, resp.NomeModelo)"
                                                                   Title="@L["Benchmarks.CopyPromptTitle"]">
@@ -236,8 +289,8 @@
                                                     </div>
                                                     <FluentSpacer />
                                                     <div>
-                                                        <FluentButton Appearance="Appearance.Accent" Color="Color.Success"
-                                                                      Disabled="@isCreatingPrompt"
+                                                    <FluentButton Appearance="Appearance.Accent" Color="Color.Success"
+                                                                      Disabled="@OperacaoEmCurso"
                                                                       IconStart="@(new Icons.Regular.Size16.Edit())"
                                                                       OnClick="@(() => OpenEvaluation(resp.Id))">
                                                             @L["Benchmarks.Evaluate"]
@@ -622,12 +675,147 @@
         text-align: center;
     }
 
+    /* Feedback de progresso da avaliação automática (3 fases + tempo decorrido) */
+    .barra-avaliacao {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 10px 12px;
+        margin-bottom: 12px;
+        border: 1px solid var(--accent-stroke-rest);
+        border-left-width: 3px;
+        border-radius: 6px;
+        background-color: var(--neutral-layer-1);
+    }
+
+    .barra-avaliacao-ring {
+        flex: 0 0 auto;
+        width: 18px;
+        height: 18px;
+    }
+
+    .barra-avaliacao-conteudo {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .barra-avaliacao-titulo {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .barra-avaliacao-tempo {
+        flex: 0 0 auto;
+        font-variant-numeric: tabular-nums;
+        font-weight: 400;
+        color: var(--neutral-foreground-hint);
+    }
+
+    .barra-avaliacao-passos {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        margin: 6px 0 0;
+        padding: 0;
+        list-style: none;
+        font-size: 0.75rem;
+        color: var(--neutral-foreground-hint);
+    }
+
+    .barra-avaliacao-passos .passo {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+    }
+
+    .barra-avaliacao-passos .passo-marca {
+        flex: 0 0 auto;
+        width: 12px;
+        text-align: center;
+    }
+
+    .barra-avaliacao-passos .passo-rotulo {
+        flex: 0 0 auto;
+        min-width: 130px;
+        color: var(--neutral-foreground-rest);
+    }
+
+    .barra-avaliacao-passos .passo-estado {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .barra-avaliacao-passos .passo-detalhe {
+        opacity: 0.85;
+    }
+
+    .barra-avaliacao-passos .passo-tempo {
+        flex: 0 0 auto;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .barra-avaliacao-passos .passo-ativo .passo-marca,
+    .barra-avaliacao-passos .passo-ativo .passo-estado {
+        color: var(--accent-foreground-rest);
+        font-weight: 600;
+    }
+
+    .barra-avaliacao-passos .passo-ativo .passo-marca {
+        display: inline-block;
+        animation: passo-girar 1.2s linear infinite;
+    }
+
+    .barra-avaliacao-passos .passo-concluido .passo-marca {
+        color: var(--success-foreground-rest, #107c10);
+    }
+
+    .barra-avaliacao-passos .passo-falhou .passo-marca,
+    .barra-avaliacao-passos .passo-falhou .passo-detalhe {
+        color: var(--danger-foreground-rest, #d32f2f);
+    }
+
+    @@keyframes passo-girar {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .barra-avaliacao-cancelar {
+        flex: 0 0 auto;
+    }
+
+    /* Card da resposta atualmente em avaliação */
+    .cartao-resposta.cartao-avaliando {
+        border-left: 3px solid var(--accent-stroke-rest);
+        background-color: var(--neutral-layer-1);
+    }
+
+    .botao-avaliando-ring {
+        width: 14px;
+        height: 14px;
+        margin-right: 6px;
+    }
+
     .benchmarks-splitter {
         height: calc(100vh - 120px);
         width: 100%;
     }
 
     @@media (max-width: 768px) {
+        .barra-avaliacao {
+            flex-wrap: wrap;
+        }
+
         .benchmarks-splitter {
             height: calc(100dvh - 130px);
         }

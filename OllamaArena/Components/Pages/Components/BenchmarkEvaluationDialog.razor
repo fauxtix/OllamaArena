@@ -1,14 +1,16 @@
+@using System.Globalization
 @using Microsoft.Extensions.Localization
 @using OllamaArena.Models.Entities
 @using OllamaArena.Resources
 @using OllamaArena.Services.Helpers
 @using OllamaArena.Services.Interfaces.Services
+@implements IDisposable
 @inject IStringLocalizer<SharedResources> L
 
 <FluentDialog Hidden="@(!Visible)"
               Modal="true"
               Class="evaluation-dialogue-benchmark"
-              Style="--dialog-width: 1200px; --dialog-height: min(calc(100vh - 64px), 760px);"
+              Style="--dialog-width: 1200px; --dialog-height: min(calc(100vh - 48px), 920px);"
               TrapFocus="true"
               AriaLabel="@L["EvalDialog.AriaLabel"]">
 
@@ -30,48 +32,91 @@
         @if (Response != null)
         {
             <BenchmarkEvaluation Response="Response" OnEvaluationChanged="StateHasChanged" />
-            <div class="grelha-botoes-traducao">
 
-                <div>
-                    <FluentButton Appearance="Appearance.Stealth"
-                                  Disabled="@isTranslating"
-                                  OnClick="TraduzirGemini">
-                        <FluentIcon Value="@(new Icons.Regular.Size20.Translate())" />
-                        @L["EvalDialog.TranslateJudge", NomeJuiz(true)]
-                    </FluentButton>
+            <div class="bloco-traducao">
+                <div class="grelha-botoes-traducao">
+
+                    <div>
+                        <FluentButton Appearance="Appearance.Stealth"
+                                      Disabled="@TraducaoIndisponivel(true)"
+                                      Title="@TituloTraducao(true)"
+                                      OnClick="TraduzirGemini">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Translate())" />
+                            @L["EvalDialog.TranslateJudge", NomeJuiz(true)]
+                        </FluentButton>
+                    </div>
+
+                    <div>
+                        <FluentButton Appearance="Appearance.Stealth"
+                                      Disabled="@TraducaoIndisponivel(false)"
+                                      Title="@TituloTraducao(false)"
+                                      OnClick="TraduzirOpenRouter">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Translate())" />
+                            @L["EvalDialog.TranslateJudge", NomeJuiz(false)]
+                        </FluentButton>
+                    </div>
+
                 </div>
 
-                <div>
-                    <FluentButton Appearance="Appearance.Stealth"
-                                  Disabled="@isTranslating"
-                                  OnClick="TraduzirOpenRouter">
-                        <FluentIcon Value="@(new Icons.Regular.Size20.Translate())" />
-                        @L["EvalDialog.TranslateJudge", NomeJuiz(false)]
-                    </FluentButton>
-                </div>
+                @if (MostrarAvisoIdioma)
+                {
+                    <div class="nota-traducao-idioma" role="note">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Info())" />
+                        <span>
+                            @L["EvalDialog.TranslateAlreadyInLanguageHint", TargetLanguageResolver.GetTargetLanguage()]
+                        </span>
+                    </div>
+                }
 
+                @if (traducaoEmCurso)
+                {
+                    <div class="estado-traducao" role="status" aria-live="polite">
+                        <FluentProgressRing Style="width: 18px; height: 18px;" />
+                        <div class="estado-traducao-texto">
+                            <FluentLabel Typo="Typography.Body">
+                                @L["EvalDialog.Translating", _juizTraducao, _tempoDecorrido]
+                            </FluentLabel>
+                            @if (!string.IsNullOrWhiteSpace(_sistemaTraducao))
+                            {
+                                <span class="estado-traducao-sistema">
+                                    @L["EvalDialog.TranslateProvider", _sistemaTraducao, _modeloTraducao ?? string.Empty]
+                                </span>
+                            }
+                            @if (MostrarAvisoFallback)
+                            {
+                                <span class="estado-traducao-aviso">
+                                    @L["EvalDialog.TranslateFallback", _detalheTraducao!]
+                                </span>
+                            }
+                        </div>
+                        <FluentSpacer />
+                        <FluentButton Appearance="Appearance.Stealth"
+                                      Disabled="@traducaoACancelar"
+                                      OnClick="CancelarTraducao">
+                            @(traducaoACancelar
+                                ? L["EvalDialog.Cancelling"]
+                                : L["EvalDialog.CancelTranslation"])
+                        </FluentButton>
+                    </div>
+                }
             </div>
         }
     </FluentDialogBody>
 
     <FluentDialogFooter>
 
-        @if (isTranslating)
-        {
-            <FluentProgressRing  Style="margin-right:12px;" />
-        }
-
         <FluentSpacer />
 
         @if (!IsAlreadySaved)
         {
-            <FluentButton Appearance="Appearance.Accent" Disabled="@isTranslating"
+            <FluentButton Appearance="Appearance.Accent" Disabled="@traducaoEmCurso"
                           OnClick="Guardar">
                 @L["EvalDialog.SaveEvaluation"]
             </FluentButton>
         }
 
         <FluentButton Appearance="Appearance.Stealth"
+                      Disabled="@traducaoEmCurso"
                       OnClick="Fechar">
             @L["Common.Close"]
         </FluentButton>
@@ -84,7 +129,7 @@
 <TranslationPreviewDialog Visible="@showTranslationDialog"
                           VisibleChanged="@(v => showTranslationDialog = v)"
                           TranslatedText="@translatedText"
-                          ModelUsed="@modelUsed" JudgeName="@targetField"
+                          ModelUsed="@modelUsed" JudgeName="@_juizTraducao"
                           TimeSpent="@timeSpent" />
 
 @code {
@@ -107,7 +152,73 @@
     private bool showTranslationDialog;
     private string? translatedText;
     private string? targetField;
-    private bool isTranslating = false;
+
+    private bool traducaoEmCurso;
+    private bool traducaoACancelar;
+    private string _juizTraducao = string.Empty;
+    private string _tempoDecorrido = "00:00";
+
+    // Sistema/modelo em uso na cadeia de tradução e sistema que falhou antes.
+    private string? _sistemaTraducao;
+    private string? _modeloTraducao;
+    private string? _detalheTraducao;
+
+    /// <summary>
+    /// O aviso de fallback só aparece depois de o sistema seguinte ter entrado
+    /// (<see cref="_sistemaTraducao"/> diferente do que falhou); se foi o último
+    /// da cadeia, o erro final é apresentado em diálogo.
+    /// </summary>
+    private bool MostrarAvisoFallback
+        => !string.IsNullOrWhiteSpace(_detalheTraducao) && _detalheTraducao != _sistemaTraducao;
+
+    /// <summary>
+    /// O botão de traduzir fica indisponível sem feedback, durante uma tradução
+    /// em curso, ou quando o feedback do juiz já está no idioma da aplicação —
+    /// traduzi-lo seria chamar um modelo à Vu e devolver o mesmo texto.
+    /// </summary>
+    private bool TraducaoIndisponivel(bool juizGemini)
+        => traducaoEmCurso || string.IsNullOrWhiteSpace(Feedback(juizGemini)) || JaEstaNoIdiomaDaApp(juizGemini);
+
+    /// <summary>
+    /// O texto do juiz a traduzir; <c>null</c> quando não há nada para traduzir.
+    /// Os campos podem ser null em respostas antigas (coluna TEXT sem valor).
+    /// </summary>
+    private string? Feedback(bool juizGemini)
+        => Response is null
+            ? null
+            : juizGemini
+                ? Response.GeminiFeedback
+                : Response.OpenRouterFeedback;
+
+    /// <summary>
+    /// Indica que o feedback está comprovadamente no idioma da aplicação, tornando a
+    /// tradução redundante. A deteção é a heurística determinística de
+    /// <see cref="ResponseLanguageChecker"/> (PT vs EN) contra a cultura atual da UI —
+    /// a mesma para onde <see cref="TargetLanguageResolver"/> manda traduzir.
+    /// Deteção inconclusiva (texto curto ou ambíguo) nunca desabilita: o utilizador
+    /// pode ainda querer o texto normalizado pelo modelo.
+    /// </summary>
+    private bool JaEstaNoIdiomaDaApp(bool juizGemini)
+        => ResponseLanguageChecker.EstaNoIdiomaEsperado(
+            ResponseLanguageChecker.Detect(Feedback(juizGemini)),
+            CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+
+    /// <summary>Motivo apresentado no tooltip quando não há tradução a fazer; vazio caso contrário.</summary>
+    private string TituloTraducao(bool juizGemini)
+    {
+        if (traducaoEmCurso || !JaEstaNoIdiomaDaApp(juizGemini))
+            return string.Empty;
+
+        return L["EvalDialog.TranslateAlreadyInLanguage", TargetLanguageResolver.GetTargetLanguage()];
+    }
+
+    /// <summary>A nota em texto explica o botão desabilitado; só aparece se algum estiver.</summary>
+    private bool MostrarAvisoIdioma
+        => !traducaoEmCurso && (JaEstaNoIdiomaDaApp(true) || JaEstaNoIdiomaDaApp(false));
+
+    private CancellationTokenSource? _ctsTraducao;
+    private CancellationTokenSource? _ctsCronometro;
+    private bool _disposto;
 
     private string? modelUsed;
     private string? timeSpent;
@@ -154,75 +265,181 @@
         await VisibleChanged.InvokeAsync(false);
     }
 
+    private Task TraduzirOpenRouter()
+        => TraduzirAsync(juizGemini: false);
 
-    private async Task TraduzirOpenRouter()
+    private Task TraduzirGemini()
+        => TraduzirAsync(juizGemini: true);
+
+    /// <summary>
+    /// Traduz o feedback do juiz indicado, mostrando estado, cronómetro, o sistema em uso
+    /// (OpenRouter → Gemini → Ollama) e opção de cancelar. Um pedido a um modelo pode demorar
+    /// vários minutos, por isso o botão de fechar fica indisponível enquanto a tradução está em curso.
+    /// </summary>
+    private async Task TraduzirAsync(bool juizGemini)
     {
-        if (Response?.OpenRouterFeedback is null)
+        if (Response is null)
             return;
 
-        targetField = "openrouter";
-        isTranslating = true;
-        StateHasChanged();
+        var feedback = Feedback(juizGemini);
+        if (feedback is null)
+            return;
+
+        targetField = juizGemini ? "gemini" : "openrouter";
+        _juizTraducao = NomeJuiz(juizGemini);
+        _tempoDecorrido = "00:00";
+        _sistemaTraducao = null;
+        _modeloTraducao = null;
+        _detalheTraducao = null;
+        traducaoEmCurso = true;
+        traducaoACancelar = false;
+
+        _ctsTraducao = new CancellationTokenSource();
+        _ctsCronometro = new CancellationTokenSource();
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var tarefaCronometro = AtualizarCronometroAsync(sw, _ctsCronometro.Token);
+
         try
         {
             var result = await TranslationService.TranslateAsync(
-                Response.OpenRouterFeedback,
-                Response.NomeModelo
-            );
+                feedback,
+                ReportarProgressoTraducao,
+                _ctsTraducao.Token);
 
             translatedText = result.TranslatedText;
-            modelUsed = result.ModelUsed;
+            modelUsed = result.EngineDescription;
             timeSpent = result.TimeSpentFormatted;
 
             showTranslationDialog = true;
         }
+        catch (OperationCanceledException)
+        {
+            // Cancelamento pedido pelo utilizador: sem diálogo de erro.
+            Logger.LogInformation("Tradução do feedback ({0}) cancelada pelo utilizador.", targetField);
+        }
         catch (Exception ex)
         {
-            await DialogService.ShowErrorAsync(L["EvalDialog.TranslateOpenRouterError"], L["EvalDialog.TranslateTitle"]);
-            Logger.LogError(ex, "Erro ao traduzir feedback do OpenRouter");
+            var mensagem = juizGemini
+                ? L["EvalDialog.TranslateGeminiError"]
+                : L["EvalDialog.TranslateOpenRouterError"];
+
+            await DialogService.ShowErrorAsync(mensagem, L["EvalDialog.TranslateTitle"]);
+            Logger.LogError(ex, "Erro ao traduzir feedback do {0}", juizGemini ? "Gemini" : "OpenRouter");
         }
         finally
         {
-            isTranslating = false;
-            StateHasChanged();
-        }
+            sw.Stop();
+            traducaoEmCurso = false;
+            traducaoACancelar = false;
 
+            await TerminarCronometroAsync(tarefaCronometro);
+
+            _ctsCronometro?.Dispose();
+            _ctsTraducao?.Dispose();
+            _ctsCronometro = null;
+            _ctsTraducao = null;
+
+            if (!_disposto)
+                await InvokeAsync(StateHasChanged);
+        }
     }
 
-    private async Task TraduzirGemini()
+    /// <summary>
+    /// Recebe o progresso da cadeia de tradução para mostrar o sistema em uso. O serviço
+    /// emite os eventos de vários threads (cada pedido HTTP traz o seu), por isso o estado
+    /// é aplicado dentro de <see cref="InvokeAsync(Action)"/> para respeitar o renderer.
+    /// </summary>
+    private void ReportarProgressoTraducao(TranslationProgressEvent evento)
     {
-        if (Response?.GeminiFeedback is null)
+        if (_disposto)
             return;
 
-        targetField = "gemini";
-        isTranslating = true;
+        _ = InvokeAsync(() => AplicarProgressoTraducao(evento));
+    }
+
+    private void AplicarProgressoTraducao(TranslationProgressEvent evento)
+    {
+        switch (evento.Step)
+        {
+            case TranslationProgressStep.ProvedorIniciado:
+                _sistemaTraducao = evento.Provider;
+                _modeloTraducao = evento.Modelo;
+                break;
+
+            case TranslationProgressStep.ProvedorFalhou:
+                // O sistema seguinte entra logo a seguir; guardamos qual falhou para
+                // o utilizador perceber a mudança (falha ou chave em falta).
+                _detalheTraducao = evento.Provider;
+                break;
+
+            case TranslationProgressStep.ProvedorConcluido:
+                _detalheTraducao = null;
+                break;
+        }
+
         StateHasChanged();
+    }
+
+    private void CancelarTraducao()
+    {
+        if (!traducaoEmCurso)
+            return;
+
+        traducaoACancelar = true;
+        _ctsTraducao?.Cancel();
+    }
+
+    /// <summary>Atualiza o cronómetro a cada segundo até a tradução terminar ou ser cancelada.</summary>
+    private async Task AtualizarCronometroAsync(System.Diagnostics.Stopwatch sw, CancellationToken token)
+    {
         try
         {
-            var result = await TranslationService.TranslateAsync(
-                Response.GeminiFeedback,
-                Response.NomeModelo
-            );
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
 
-            translatedText = result.TranslatedText;
-            modelUsed = result.ModelUsed;
-            timeSpent = result.TimeSpentFormatted;
-
-            showTranslationDialog = true;
+            while (await timer.WaitForNextTickAsync(token))
+            {
+                _tempoDecorrido = sw.Elapsed.ToString(@"m\:ss");
+                await InvokeAsync(StateHasChanged);
+            }
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
         {
-            await DialogService.ShowErrorAsync(L["EvalDialog.TranslateGeminiError"], L["EvalDialog.TranslateTitle"]);
-
-
-            Logger.LogError(ex, "Erro ao traduzir feedback do Gemini");
+            // Final esperado quando a tradução termina ou é cancelada.
         }
-        finally
+    }
+
+    private async Task TerminarCronometroAsync(Task tarefaCronometro)
+    {
+        if (_ctsCronometro is null)
+            return;
+
+        try
         {
-            isTranslating = false;
-            StateHasChanged();
+            await _ctsCronometro.CancelAsync();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Já libertado no Dispose.
         }
 
+        try
+        {
+            await tarefaCronometro;
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignorado: o cronómetro termina em conjunto com a tradução.
+        }
+    }
+
+    public void Dispose()
+    {
+        _disposto = true;
+        _ctsCronometro?.Cancel();
+        _ctsTraducao?.Cancel();
+        _ctsCronometro?.Dispose();
+        _ctsTraducao?.Dispose();
     }
 }
 
@@ -253,11 +470,75 @@
             margin-top: 0;
         }
 
+    /* Barra de tradução fixa no fundo do corpo: os botões de traduzir e o estado
+       ficam sempre visíveis, mesmo com o formulário dos 12 métricas a exigir scroll. */
+    .bloco-traducao {
+        position: sticky;
+        bottom: -16px;
+        margin: 20px -16px -16px;
+        padding: 12px 16px 16px;
+        display: flex;
+        flex-direction: column;
+        background-color: var(--neutral-layer-2);
+        border-top: 1px solid var(--neutral-stroke-divider);
+    }
+
     .grelha-botoes-traducao {
-        margin-top: 20px;
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 24px;
+    }
+
+    .estado-traducao {
+        margin-top: 12px;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background-color: var(--neutral-layer-2);
+        border: 1px solid var(--neutral-stroke-divider);
+        border-radius: 6px;
+    }
+
+    .evaluation-dialogue-benchmark .estado-traducao .fluent-progress-ring {
+        flex: 0 0 auto;
+    }
+
+    .estado-traducao-texto {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .estado-traducao-sistema {
+        font-size: 12px;
+        color: var(--neutral-foreground-secondary);
+        overflow-wrap: anywhere;
+    }
+
+    .estado-traducao-aviso {
+        font-size: 12px;
+        color: var(--warning-foreground-rest, var(--neutral-foreground-secondary));
+        overflow-wrap: anywhere;
+    }
+
+    /* Explica porque é que um dos botões de traduzir está desabilitado. */
+    .nota-traducao-idioma {
+        margin-top: 10px;
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--neutral-foreground-secondary);
+        background-color: var(--neutral-layer-1);
+        border: 1px solid var(--neutral-stroke-divider);
+        border-radius: 6px;
+    }
+
+    .evaluation-dialogue-benchmark .nota-traducao-idioma .fluent-icon {
+        flex: 0 0 auto;
     }
 
     @@media (max-width: 768px) {

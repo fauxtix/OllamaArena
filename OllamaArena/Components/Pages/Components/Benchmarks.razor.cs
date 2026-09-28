@@ -45,6 +45,285 @@ namespace OllamaArena.Components.Pages.Components
         private bool _promptOpen;
         private readonly HashSet<int> _respostasAbertas = new();
         private DotNetObjectReference<Benchmarks>? _viewportDotNetRef;
+        private AvaliacaoProgresso? _avaliacaoEmCurso;
+        private CancellationTokenSource? _ctsCronometro;
+        private CancellationTokenSource? _ctsAvaliacao;
+
+        private const string ChavePassoMetadados = "fase:metadados";
+        private const string ChavePassoValidacao = "fase:validacao";
+        private const string NomeJuizGemini = "Gemini";
+        private const string NomeJuizOpenRouter = "OpenRouter";
+        private static string ChaveJuiz(string juiz) => $"juiz:{juiz}";
+
+        private enum ProgressoEstado { Pendente, Ativo, Concluido, Falhou }
+
+        /// <summary>
+        /// Uma linha do indicador de progresso (uma fase do fluxo ou um juiz).
+        /// O cronómetro só conta enquanto o passo está ativo, para não mostrar
+        /// tempo de espera no passo que ainda não começou.
+        /// </summary>
+        private sealed class PassoProgresso
+        {
+            public string Chave { get; init; } = string.Empty;
+            public string Rotulo { get; init; } = string.Empty;
+            public ProgressoEstado Estado { get; set; } = ProgressoEstado.Pendente;
+            public string? Detalhe { get; set; }
+            public DateTime Inicio { get; set; } = DateTime.Now;
+            public DateTime? Fim { get; set; }
+
+            public int Segundos => (int)(((Fim ?? DateTime.Now) - Inicio).TotalSeconds);
+            public bool MostrarTempo => Estado != ProgressoEstado.Pendente;
+            public string? DetalheResumido => Detalhe is { Length: > 90 } ? string.Concat(Detalhe.AsSpan(0, 90), "…") : Detalhe;
+        }
+
+        /// <summary>
+        /// Estado do indicador de progresso da avaliação automática de uma resposta.
+        /// Só existe para dar feedback ao utilizador: a espera real acontece nos
+        /// juízes em nuvem (em paralelo, e com um intervalo mínimo entre avaliações).
+        /// </summary>
+        private sealed class AvaliacaoProgresso
+        {
+            public int RespostaId { get; init; }
+            public string Modelo { get; init; } = string.Empty;
+            public DateTime Inicio { get; init; } = DateTime.Now;
+            public bool ACancelar { get; set; }
+            public List<PassoProgresso> Passos { get; } = new();
+
+            public int Segundos => (int)(DateTime.Now - Inicio).TotalSeconds;
+
+            public PassoProgresso? PassoPorChave(string chave)
+                => Passos.FirstOrDefault(p => p.Chave == chave);
+        }
+
+        /// <summary>
+        /// Verdadeiro enquanto qualquer operação bloqueante está em curso
+        /// (avaliação automática ou cópia do prompt) — desabilita os botões concorrentes.
+        /// </summary>
+        private bool OperacaoEmCurso => isCreatingPrompt || _avaliacaoEmCurso is not null;
+
+        private bool AvaliacaoDesteModelo(int respostaId) => _avaliacaoEmCurso?.RespostaId == respostaId;
+
+        private void IniciarAvaliacaoProgresso(BenchmarkResponse resposta)
+        {
+            TerminarAvaliacaoProgresso();
+
+            var progresso = new AvaliacaoProgresso
+            {
+                RespostaId = resposta.Id,
+                Modelo = resposta.NomeModelo
+            };
+
+            // Os passos são criados já na ordem real do fluxo, para o utilizador ver
+            // de imediato o que falta (os dois Starts só quando o pedido arranca).
+            progresso.Passos.Add(new PassoProgresso
+            {
+                Chave = ChavePassoMetadados,
+                Rotulo = L["Benchmarks.ProgressStepPreparing"].Value,
+                Estado = ProgressoEstado.Ativo
+            });
+            progresso.Passos.Add(new PassoProgresso
+            {
+                Chave = ChaveJuiz(NomeJuizGemini),
+                Rotulo = L["Benchmarks.ProgressStepJudge", NomeJuizGemini].Value
+            });
+            progresso.Passos.Add(new PassoProgresso
+            {
+                Chave = ChaveJuiz(NomeJuizOpenRouter),
+                Rotulo = L["Benchmarks.ProgressStepJudge", NomeJuizOpenRouter].Value
+            });
+            progresso.Passos.Add(new PassoProgresso
+            {
+                Chave = ChavePassoValidacao,
+                Rotulo = L["Benchmarks.ProgressStepParsing"].Value
+            });
+
+            _avaliacaoEmCurso = progresso;
+            _ctsAvaliacao = new CancellationTokenSource();
+            _ctsCronometro = new CancellationTokenSource();
+            _ = AtualizarCronometroAsync(_ctsCronometro.Token);
+
+            StateHasChanged();
+        }
+
+        /// <summary>
+        /// Cronómetro de 1 s para manter os segundos decorridos visíveis. Corre fora do
+        /// circuito do renderer, por isso a atualização do estado tem de ser marshalled
+        /// com InvokeAsync; cancelado em TerminarAvaliacaoProgresso/DisposeAsync.
+        /// </summary>
+        private async Task AtualizarCronometroAsync(CancellationToken token)
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+            try
+            {
+                while (await timer.WaitForNextTickAsync(token))
+                {
+                    if (_avaliacaoEmCurso is null)
+                        return;
+
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Terminação normal (avaliação concluída ou componente descartado).
+            }
+            catch (ObjectDisposedException)
+            {
+                // Componente já descartado durante o decode.
+            }
+            catch (InvalidOperationException)
+            {
+                // Circuito do renderer indisponível (navegação/reconexão).
+            }
+        }
+
+        /// <summary>
+        /// Os eventos do serviço chegam em threadpool (as chamadas aos juízes são
+        /// paralelas), por isso o estado do componente só é tocado dentro de
+        /// InvokeAsync. O método nunca deixa a exceção escapar para o task fire-and-forget.
+        /// </summary>
+        private async Task ReportarProgressoJuizAsync(JudgeProgressEvent evento)
+        {
+            try
+            {
+                await InvokeAsync(() =>
+                {
+                    if (_avaliacaoEmCurso is null)
+                        return;
+
+                    AplicarEventoJuiz(_avaliacaoEmCurso, evento);
+                    StateHasChanged();
+                });
+            }
+            catch (ObjectDisposedException)
+            {
+                // Componente descartado durante o decode.
+            }
+            catch (InvalidOperationException)
+            {
+                // Circuito do renderer indisponível.
+            }
+            catch (OperationCanceledException)
+            {
+                // Renderer a cancelar o trabalho pendente.
+            }
+        }
+
+        private void AplicarEventoJuiz(AvaliacaoProgresso progresso, JudgeProgressEvent evento)
+        {
+            if (string.IsNullOrEmpty(evento.Juiz))
+                return;
+
+            var passo = progresso.PassoPorChave(ChaveJuiz(evento.Juiz));
+            if (passo is null)
+                return;
+
+            switch (evento.Step)
+            {
+                case JudgeProgressStep.JuizIniciado:
+                    passo.Estado = ProgressoEstado.Ativo;
+                    passo.Inicio = DateTime.Now;
+                    passo.Fim = null;
+                    passo.Detalhe = null;
+                    break;
+
+                case JudgeProgressStep.JuizConcluido:
+                    passo.Estado = ProgressoEstado.Concluido;
+                    passo.Fim = DateTime.Now;
+                    passo.Detalhe = null;
+                    break;
+
+                case JudgeProgressStep.JuizFalhou:
+                    passo.Estado = ProgressoEstado.Falhou;
+                    passo.Fim = DateTime.Now;
+                    passo.Detalhe = evento.Detalhe;
+                    break;
+
+                case JudgeProgressStep.ModeloAlternativo:
+                    // Continua a avaliar, mas com outro modelo (fallback do OpenRouter).
+                    passo.Estado = ProgressoEstado.Ativo;
+                    passo.Detalhe = L["Benchmarks.ProgressStepFallback", evento.Detalhe ?? string.Empty].Value;
+                    break;
+            }
+        }
+
+        private void ConcluirPasso(string chave)
+        {
+            var passo = _avaliacaoEmCurso?.PassoPorChave(chave);
+            if (passo is null)
+                return;
+
+            passo.Estado = ProgressoEstado.Concluido;
+            passo.Fim = DateTime.Now;
+            StateHasChanged();
+        }
+
+        private void IniciarPasso(string chave)
+        {
+            var passo = _avaliacaoEmCurso?.PassoPorChave(chave);
+            if (passo is null)
+                return;
+
+            passo.Estado = ProgressoEstado.Ativo;
+            passo.Inicio = DateTime.Now;
+            passo.Fim = null;
+            StateHasChanged();
+        }
+
+        private void CancelarAvaliacao()
+        {
+            var progresso = _avaliacaoEmCurso;
+            if (progresso is null || progresso.ACancelar)
+                return;
+
+            progresso.ACancelar = true;
+            try
+            {
+                _ctsAvaliacao?.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Avaliação já terminada.
+            }
+
+            StateHasChanged();
+        }
+
+        private void TerminarAvaliacaoProgresso()
+        {
+            try
+            {
+                _ctsCronometro?.Cancel();
+                _ctsCronometro?.Dispose();
+                _ctsAvaliacao?.Cancel();
+                _ctsAvaliacao?.Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Já descartado.
+            }
+
+            _ctsCronometro = null;
+            _ctsAvaliacao = null;
+            _avaliacaoEmCurso = null;
+        }
+
+        private static string MarcadorPasso(ProgressoEstado estado) => estado switch
+        {
+            ProgressoEstado.Concluido => "✓",
+            ProgressoEstado.Falhou => "✗",
+            ProgressoEstado.Ativo => "⟳",
+            _ => "○"
+        };
+
+        private string TextoPasso(ProgressoEstado estado) => estado switch
+        {
+            ProgressoEstado.Ativo => L["Benchmarks.ProgressStateRunning"],
+            ProgressoEstado.Concluido => L["Benchmarks.ProgressStateDone"],
+            ProgressoEstado.Falhou => L["Benchmarks.ProgressStateFailed"],
+            _ => L["Benchmarks.ProgressStatePending"]
+        };
+
 
         protected override async Task OnInitializedAsync() => await GetDataAsync();
 
@@ -95,6 +374,8 @@ namespace OllamaArena.Components.Pages.Components
 
         public async ValueTask DisposeAsync()
         {
+            TerminarAvaliacaoProgresso();
+
             try
             {
                 if (_viewportDotNetRef != null)
@@ -383,16 +664,21 @@ namespace OllamaArena.Components.Pages.Components
             }
 
             isCreatingPrompt = true;
-            StateHasChanged();
+            IniciarAvaliacaoProgresso(resposta);
+            var tokenAvaliacao = _ctsAvaliacao!.Token;
 
             try
             {
                 string formattedPrompt = await BuildPromptDeAvaliacaoAsync(resposta, originalPrompt, modelName);
+                ConcluirPasso(ChavePassoMetadados);
 
                 AutomatedJudgeResult resultado;
                 try
                 {
-                    resultado = await _feedbackService.GetFeedbacksAutomatizadosAsync(formattedPrompt);
+                    resultado = await _feedbackService.GetFeedbacksAutomatizadosAsync(
+                        formattedPrompt,
+                        evento => _ = ReportarProgressoJuizAsync(evento),
+                        tokenAvaliacao);
                 }
                 catch (QuotaLimitException quotaEx)
                 {
@@ -431,6 +717,7 @@ namespace OllamaArena.Components.Pages.Components
                 _conteudoAberturaSlot1 = JudgeOriginResolver.TemConteudo(resposta.GeminiFeedback, resposta.GeminiRating);
                 _conteudoAberturaSlot2 = JudgeOriginResolver.TemConteudo(resposta.OpenRouterFeedback, resposta.OpenRouterRating);
 
+                IniciarPasso(ChavePassoValidacao);
                 PreencherAvaliacao(resposta, resultado.Gemini, juizGemini: true);
                 PreencherAvaliacao(resposta, resultado.OpenRouter, juizGemini: false);
                 if (resultado.HasErrors)
@@ -453,6 +740,12 @@ namespace OllamaArena.Components.Pages.Components
                 _evaluationIsSaved = false;
                 _evaluationDialogVisible = true;
             }
+            catch (OperationCanceledException)
+            {
+                // Cancelado pelo utilizador (botão "Cancelar" na barra de progresso):
+                // não é erro — a resposta fica como estava e o aviso é apenas o log.
+                _logger?.LogInformation("Avaliação automática de {Modelo} cancelada pelo utilizador.", modelName);
+            }
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Erro ao executar avaliação automática.");
@@ -464,7 +757,22 @@ namespace OllamaArena.Components.Pages.Components
             finally
             {
                 isCreatingPrompt = false;
-                StateHasChanged();
+                TerminarAvaliacaoProgresso();
+
+                // Navegar para fora durante a avaliação cancela o pedido em curso e traz
+                // este finally para um componente já descartado: o render não pode explodir.
+                try
+                {
+                    await InvokeAsync(StateHasChanged);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Componente descartado a meio da avaliação.
+                }
+                catch (InvalidOperationException)
+                {
+                    // Circuito do renderer indisponível.
+                }
             }
         }
 

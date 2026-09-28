@@ -5,14 +5,14 @@ Task: Translate the input text into natural, accurate {{TARGET_LANGUAGE}}.
 STRICT OUTPUT FORMAT:
 Return ONLY a valid JSON object with exactly these two keys:
 {
-  ""translatedText"": ""..."",
-  ""confidence"": 0.0
+  "translatedText": "...",
+  "confidence": 0.0
 }
 
 Rules:
 - Output must be pure JSON. No markdown, no comments, no extra text before or after.
-- Use exactly the keys ""translatedText"" and ""confidence"".
-- ""confidence"" is a float between 0.0 and 1.0 (1.0 = completely certain).
+- Use exactly the keys "translatedText" and "confidence".
+- "confidence" is a float between 0.0 and 1.0 (1.0 = completely certain).
 
 Translation rules ({{TARGET_LANGUAGE}} only):
 - Detect the source language of the input text automatically.

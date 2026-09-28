@@ -89,8 +89,14 @@ try
     builder.Services.AddScoped<ILogRepository, LogRepository>();
     builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
 
+    // Credenciais/modelos dos provedores de IA (BD → configuração → default),
+    // partilhados pelos juízes automáticos e pela cadeia de tradução.
+    builder.Services.AddScoped<ApiCredentialsResolver>();
+
     builder.Services.AddHttpClient();
 
+    // Cliente tipado da tradução: apenas para o último recurso (Ollama local).
+    // OpenRouter e Gemini usam os clientes nomeados abaixo.
     builder.Services.AddHttpClient<ITranslationService, TranslationService>(client =>
     {
         client.BaseAddress = new Uri(ollamaBaseUrl);

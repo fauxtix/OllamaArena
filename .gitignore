@@ -70,11 +70,14 @@ ScaffoldingReadMe.txt
 appsettings.Local.json
 
 # Base de dados local (gerada no arranque, schema lazy) e ferramentas
+#inclui copias de segurança com timestamp (ex.: ollama_benchmark-<data>.<hash>.db),
+# que contem a tabela Configuracoes com as chaves de API em texto simples
 ollama_benchmark.db
 ollama_benchmark.db-shm
 ollama_benchmark.db-wal
 ollama_benchmark.db-journal
 *.sqbpro
+ollama_benchmark-*.db
 
 # Ficheiros de rascunho / testes rápidos
 TesteDuckDuckGo.html

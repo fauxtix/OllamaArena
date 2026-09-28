@@ -690,6 +690,48 @@ Do you want to continue?</value>
   <data name="Benchmarks.CreatingPrompt" xml:space="preserve">
     <value>Processing evaluation with Gemini and OpenRouter...</value>
   </data>
+  <data name="Benchmarks.ProgressTitle" xml:space="preserve">
+    <value>Evaluating {0} with the Gemini and OpenRouter judges...</value>
+  </data>
+  <data name="Benchmarks.ProgressElapsed" xml:space="preserve">
+    <value>{0}s</value>
+  </data>
+  <data name="Benchmarks.ProgressStepPreparing" xml:space="preserve">
+    <value>Prepare prompt</value>
+  </data>
+  <data name="Benchmarks.ProgressStepJudge" xml:space="preserve">
+    <value>judge {0}</value>
+  </data>
+  <data name="Benchmarks.ProgressStepFallback" xml:space="preserve">
+    <value>retrying {0}</value>
+  </data>
+  <data name="Benchmarks.ProgressStepParsing" xml:space="preserve">
+    <value>Validate ratings</value>
+  </data>
+  <data name="Benchmarks.ProgressStatePending" xml:space="preserve">
+    <value>waiting</value>
+  </data>
+  <data name="Benchmarks.ProgressStateRunning" xml:space="preserve">
+    <value>processing…</value>
+  </data>
+  <data name="Benchmarks.ProgressStateDone" xml:space="preserve">
+    <value>done</value>
+  </data>
+  <data name="Benchmarks.ProgressStateFailed" xml:space="preserve">
+    <value>failed</value>
+  </data>
+  <data name="Benchmarks.CancelEvaluation" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Benchmarks.CancelEvaluationTitle" xml:space="preserve">
+    <value>Cancel the running automatic evaluation (in-flight judge requests are aborted)</value>
+  </data>
+  <data name="Benchmarks.CancellingEvaluation" xml:space="preserve">
+    <value>Cancelling…</value>
+  </data>
+  <data name="Benchmarks.EvaluatingNow" xml:space="preserve">
+    <value>Evaluating...</value>
+  </data>
   <data name="Benchmarks.TokensPerSecond" xml:space="preserve">
     <value>{0} T/s</value>
   </data>
@@ -1076,6 +1118,27 @@ Do you want to continue?</value>
   </data>
   <data name="EvalDialog.TranslateGeminiError" xml:space="preserve">
     <value>Error translating Gemini feedback. Please check the logs.</value>
+  </data>
+  <data name="EvalDialog.Translating" xml:space="preserve">
+    <value>Translating feedback from {0}… {1}</value>
+  </data>
+  <data name="EvalDialog.CancelTranslation" xml:space="preserve">
+    <value>Cancel translation</value>
+  </data>
+  <data name="EvalDialog.Cancelling" xml:space="preserve">
+    <value>Cancelling…</value>
+  </data>
+  <data name="EvalDialog.TranslateProvider" xml:space="preserve">
+    <value>System: {0} · {1}</value>
+  </data>
+  <data name="EvalDialog.TranslateFallback" xml:space="preserve">
+    <value>{0} failed, using the next system.</value>
+  </data>
+  <data name="EvalDialog.TranslateAlreadyInLanguage" xml:space="preserve">
+    <value>This feedback is already in the app's language ({0}).</value>
+  </data>
+  <data name="EvalDialog.TranslateAlreadyInLanguageHint" xml:space="preserve">
+    <value>This feedback is already in {0}, so translation is not needed.</value>
   </data>
   <data name="ChartDialog.AriaLabel" xml:space="preserve">
     <value>Benchmark Charts</value>

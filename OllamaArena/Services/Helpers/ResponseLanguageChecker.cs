@@ -124,19 +124,32 @@ namespace OllamaArena.Services.Helpers
             palavraBruta.Trim().ToLowerInvariant().Trim('.', ',', ';', ':', '!', '?', '"', '\'', '(', ')');
 
         /// <summary>
-        /// Indica se o idioma detetado conflita com o idioma esperado da sessão
+        /// Indica que o idioma detetado conflita com o idioma esperado da sessão
         /// (<paramref name="expectedTwoLetterCode"/>: "pt"/"en"). Inconclusivo nunca gera conflito.
         /// </summary>
         public static bool IsMismatch(DetectedLanguage detected, string expectedTwoLetterCode)
         {
-            var esperado = expectedTwoLetterCode?.ToLowerInvariant() switch
+            var esperado = Esperado(expectedTwoLetterCode);
+
+            return detected != DetectedLanguage.Inconclusive && detected != esperado;
+        }
+
+        /// <summary>
+        /// Indica que o texto está comprovadamente no idioma esperado — ou seja, traduzi-lo
+        /// devolveria o mesmo texto. É o inverso de <see cref="IsMismatch"/>, mas a deteção
+        /// inconclusiva devolve false: sem conseguir dizer o idioma, nunca se afirma que
+        /// a tradução é redundante, para não bloquear uma tradução legítima.
+        /// </summary>
+        public static bool EstaNoIdiomaEsperado(DetectedLanguage detected, string expectedTwoLetterCode)
+            => detected != DetectedLanguage.Inconclusive && detected == Esperado(expectedTwoLetterCode);
+
+        private static DetectedLanguage Esperado(string expectedTwoLetterCode)
+            => expectedTwoLetterCode?.ToLowerInvariant() switch
             {
                 "pt" => DetectedLanguage.Portuguese,
                 "en" => DetectedLanguage.English,
                 _ => DetectedLanguage.Portuguese
             };
 
-            return detected != DetectedLanguage.Inconclusive && detected != esperado;
-        }
     }
 }

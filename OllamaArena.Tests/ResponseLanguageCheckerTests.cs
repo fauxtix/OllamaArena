@@ -81,6 +81,33 @@ public class ResponseLanguageCheckerTests
         Assert.False(ResponseLanguageChecker.IsMismatch(DetectedLanguage.Portuguese, "fr"));
     }
 
+    [Theory]
+    [InlineData(DetectedLanguage.Portuguese, "pt", true)]
+    [InlineData(DetectedLanguage.English, "en", true)]
+    [InlineData(DetectedLanguage.English, "pt", false)]
+    [InlineData(DetectedLanguage.Portuguese, "en", false)]
+    public void EstaNoIdiomaEsperado_Conclusivo_Confirma(DetectedLanguage detetado, string esperado, bool confirmado)
+    {
+        Assert.Equal(confirmado, ResponseLanguageChecker.EstaNoIdiomaEsperado(detetado, esperado));
+    }
+
+    [Theory]
+    [InlineData("pt")]
+    [InlineData("en")]
+    public void EstaNoIdiomaEsperado_Inconclusivo_NuncaDesabilita(string esperado)
+    {
+        // Sem conseguir detetar o idioma, não se afirma que a tradução é redundante:
+        // o botão de traduzir tem de ficar disponível.
+        Assert.False(ResponseLanguageChecker.EstaNoIdiomaEsperado(DetectedLanguage.Inconclusive, esperado));
+    }
+
+    [Fact]
+    public void EstaNoIdiomaEsperado_CodigoDesconhecido_FazFallbackParaPt()
+    {
+        Assert.True(ResponseLanguageChecker.EstaNoIdiomaEsperado(DetectedLanguage.Portuguese, "fr"));
+        Assert.False(ResponseLanguageChecker.EstaNoIdiomaEsperado(DetectedLanguage.English, "fr"));
+    }
+
     private const string TextoPtComFrasesEn =
         "A fabricação de explosivos é extremamente perigosa e ilegal na maioria dos países, e por isso não forneço instruções sobre o assunto. " +
         "This kind of activity can result in serious injuries, so you should not attempt it under any circumstances at home. " +
