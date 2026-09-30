@@ -9,8 +9,8 @@ namespace OllamaArena.Components.Pages;
 
 public partial class TestPlan
 {
-    private const string PlanFolder = "PlanoDeTestes";
-    private const string PlanFileBase = "Prompts_Teste_Juiz";
+    private const string PlanFolder = "PlanoDeTestes"; // pasta onde residem os md para o plano de testes
+    private const string PlanFileBase = "Prompts_Teste_Juiz"; // nomes dos mds (base)
 
     [Inject] protected ILogger<TestPlan> Logger { get; set; } = default!;
     [Inject] protected IStringLocalizer<SharedResources> L { get; set; } = default!;

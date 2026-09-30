@@ -123,6 +123,9 @@
   <data name="Benchmarks" xml:space="preserve">
     <value>Benchmarks</value>
   </data>
+  <data name="BenchmarkEvaluations.PageTitle" xml:space="preserve">
+    <value>Avaliações de Benchmarks</value>
+  </data>
   <data name="Dashboard" xml:space="preserve">
     <value>Dashboard</value>
   </data>
@@ -585,6 +588,12 @@ Deseja continuar?</value>
   <data name="Evaluation.JudgeOpenRouter" xml:space="preserve">
     <value>OpenRouter</value>
   </data>
+  <data name="Evaluation.JudgeExternal" xml:space="preserve">
+    <value>externo</value>
+  </data>
+  <data name="Evaluation.OriginAutomatic" xml:space="preserve">
+    <value>automático</value>
+  </data>
   <data name="Evaluation.Judge1" xml:space="preserve">
     <value>Juiz 1</value>
   </data>
@@ -968,6 +977,84 @@ Deseja continuar?</value>
   </data>
   <data name="Modelos.ExceedsVram" xml:space="preserve">
     <value>Excede VRAM (~{0} GB)</value>
+  </data>
+  <data name="Modelos.ColReasoning" xml:space="preserve">
+    <value>Raciocínio</value>
+  </data>
+  <data name="Modelos.ReasoningYes" xml:space="preserve">
+    <value>Suporta</value>
+  </data>
+  <data name="Modelos.ReasoningNo" xml:space="preserve">
+    <value>Não suporta</value>
+  </data>
+  <data name="Modelos.ReasoningUnknown" xml:space="preserve">
+    <value>Desconhecido</value>
+  </data>
+  <data name="Modelos.HelpButton" xml:space="preserve">
+    <value>O que significa cada coluna?</value>
+  </data>
+  <data name="Modelos.HelpDialogTitle" xml:space="preserve">
+    <value>O que significa cada coluna?</value>
+  </data>
+  <data name="Modelos.HelpCount" xml:space="preserve">
+    <value>{0} modelo(s) instalado(s)</value>
+  </data>
+  <data name="Modelos.HelpParamsTitle" xml:space="preserve">
+    <value>Parâmetros</value>
+  </data>
+  <data name="Modelos.HelpParamsBody" xml:space="preserve">
+    <value>Número de parâmetros treinados do modelo (B = mil milhões, M = milhões), lido do ficheiro GGUF. É o principal indicador do conhecimento e da capacidade de raciocínio do modelo: mais parâmetros, em geral, melhor qualidade — mas também maior lentidão e mais memória necessária. Na prática, um modelo maior bem quantizado costuma bater um modelo pequeno sem quantização.</value>
+  </data>
+  <data name="Modelos.HelpQuantTitle" xml:space="preserve">
+    <value>Quantização</value>
+  </data>
+  <data name="Modelos.HelpQuantBody" xml:space="preserve">
+    <value>Grau de compressão com que os pesos foram gravados no ficheiro GGUF. Cada peso passa de 32 bits (F32) para 4 bits (Q4), Q5, Q6… — daí nomes como Q4_K_M. Menos bits significam menos tamanho em disco, menos VRAM e mais velocidade, ao custo de alguma qualidade. Q4_K_M é o melhor compromisso habitual para uso geral; Q8 é quase sem perdas de qualidade, mas ocupa o dobro.</value>
+  </data>
+  <data name="Modelos.HelpContextTitle" xml:space="preserve">
+    <value>Contexto Máximo</value>
+  </data>
+  <data name="Modelos.HelpContextBody" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Modelos.HelpContextItem1" xml:space="preserve">
+    <value>Não é o que é efetivamente usado numa conversa: o Ollama reduz a janela consoante a VRAM disponível, e a app calcula esse valor efetivo antes de cada conversa.</value>
+  </data>
+  <data name="Modelos.HelpContextItem2" xml:space="preserve">
+    <value>Quanto maior a janela, mais memória é preciso para o histórico da conversa (chamada KV cache) — daí o limite de 32 768 tokens aplicado pela app.</value>
+  </data>
+  <data name="Modelos.HelpContextItem3" xml:space="preserve">
+    <value>Prompts ou históricos que ultrapassem a janela são truncados, e a qualidade degrada-se antes de se atingir o limite absoluto.</value>
+  </data>
+  <data name="Modelos.HelpReasoningTitle" xml:space="preserve">
+    <value>Raciocínio</value>
+  </data>
+  <data name="Modelos.HelpReasoningBody" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Modelos.HelpReasoningItem1" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Modelos.HelpReasoningItem2" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Modelos.HelpReasoningItem3" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Modelos.HelpGpuTitle" xml:space="preserve">
+    <value>Compatibilidade GPU</value>
+  </data>
+  <data name="Modelos.HelpGpuBody" xml:space="preserve">
+    <value>Estimativa de memória necessária face à VRAM livre da placa gráfica. O cálculo compara o tamanho do modelo multiplicado por um fator de carga (1,2×, para o runtime e o buffer de contexto) com a VRAM livre já descontada da reserva usada pelo sistema operativo no Windows (350 MB).</value>
+  </data>
+  <data name="Modelos.HelpGpuItem1" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Modelos.HelpGpuItem2" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Modelos.HelpGpuItem3" xml:space="preserve">
+    <value />
   </data>
   <data name="Analysis.NoBestRated" xml:space="preserve">
     <value>Nenhuma resposta foi ainda avaliada pelos juízes para determinar o melhor modelo.</value>
@@ -1553,5 +1640,23 @@ Deseja continuar?</value>
   </data>
   <data name="Dashboard.DivergenceValue" xml:space="preserve">
     <value>Δ {0} pts</value>
+  </data>
+  <data name="CompareModels" xml:space="preserve">
+    <value>Comparação de modelos</value>
+  </data>
+  <data name="CompareModels.EmptyState" xml:space="preserve">
+    <value>Não existem ficheiros na pasta ComoCompararModelos.</value>
+  </data>
+  <data name="CompareModels.InitError" xml:space="preserve">
+    <value>Erro ao inicializar a lista de ficheiros do comparador de modelos.</value>
+  </data>
+  <data name="CompareModels.LoadError" xml:space="preserve">
+    <value>Erro ao obter o ficheiro da comparação de modelos.</value>
+  </data>
+  <data name="CompareModels.PageTitle" xml:space="preserve">
+    <value>Comparação de modelos</value>
+  </data>
+  <data name="CompareModels.Title" xml:space="preserve">
+    <value>Plano para comparar modelos</value>
   </data>
 </root>

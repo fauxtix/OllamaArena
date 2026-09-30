@@ -1,0 +1,16 @@
+Editar Prompts — rota /edit-prompts
+Ilustração da funcionalidade Editar Prompts no estilo acordado: o editor das diretrizes que a app usa nas conversas.
+
+PROMPT — copie a partir daqui para o gerador de imagens:
+
+Ilustração vetorial limpa dos principais fluxos de uma aplicação web de secretária chamada "Ollama Arena" — um laboratório local de chat e benchmark de IA com a plataforma Ollama. Tema escuro: fundo azul-marinho (#0F172A), painéis cinza-ardósia (#1E293B), azul de destaque (#3B82F6), verde-esmeralda (#10B981) e âmbar (#F59E0B).
+
+Um portátil com ecrã largo mostrando quatro painéis da funcionalidade "Editar Prompts" dispostos em grelha de fluxo (setas a ligá-los), cada um com uma etiqueta em barra abstrata:
+1. "Ficheiros": uma pasta aberta com três arquivos de texto sem texto legível, um selecionado a azul, e um seletor pendente com uma seta.
+2. "Editor": um grande cartão de edição com uma área de texto com linhas abstratas de comprimentos variados, uma linha em destaque a verde-esmeralda e um cursor a piscar; um pequeno cabeçalho com um símbolo de cabeçalho (#) e de parágrafo (¶).
+3. "Gravar": um painel de ferramentas com um ícone de disquete e um pequeno toast azul de confirmação com um visto, etiqueta "grava no disco".
+4. "Aplicação": um balão de chat discreto com um símbolo de relâmpago e a etiqueta "diretrizes da próxima conversa".
+
+Relações: uma seta deste painel para fora do ecrã com a etiqueta "usadas como system-prompt" apontando para uma miniatura de uma janela de chat.
+
+Design flat, sombras suaves, etiquetas apenas como barras abstratas (sem texto de navegação/menus legível), iluminação subtil e quente, profundidade de campo cinematográfica.

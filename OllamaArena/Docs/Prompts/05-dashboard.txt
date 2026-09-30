@@ -1,0 +1,17 @@
+Dashboard — rota /dashboard
+Ilustração da funcionalidade Dashboard no estilo acordado: o painel de ranking dos modelos, com indicadores, gráficos e classificação.
+
+PROMPT — copie a partir daqui para o gerador de imagens:
+
+Ilustração vetorial limpa dos principais fluxos de uma aplicação web de secretária chamada "Ollama Arena" — um laboratório local de chat e benchmark de IA com a plataforma Ollama. Tema escuro: fundo azul-marinho (#0F172A), painéis cinza-ardósia (#1E293B), azul de destaque (#3B82F6), verde-esmeralda (#10B981) e âmbar (#F59E0B).
+
+Um portátil com ecrã largo mostrando cinco painéis da funcionalidade "Dashboard" dispostos em grelha de fluxo (setas a ligá-los), cada um com uma etiqueta em barra abstrata:
+1. "Indicadores": uma grelha de seis cartões de estatística, cada um com uma barra colorida na borda (azul, verde-esmeralda, âmbar), um ícone (troféu, base de dados, visto, prancheta, relâmpago, setas) e um valor grande com uma linha de destaque pequena.
+2. "Perfis de juízes": dois gráficos de radar lado a lado com polígonos em azul e verde-esmeralda, etiquetas "perfil de qualidade por juiz".
+3. "Desempenho vs qualidade": um gráfico de dispersão (pontos a azul) com eixos cruzados e uma pequena linha de tendência a entrar; ao lado um gráfico de linha ascendente etiquetado "evolução ao longo do tempo".
+4. "Ranking": uma tabela de classificação com uma barra de progresso horizontal a azul em cada linha, crachás dos juízes e setas de ordenação.
+5. "Partilha": um pequeno ícone de descarregamento em cada cartão de gráfico, com a etiqueta "exporta gráficos".
+
+Relações: uma seta a entrar com a etiqueta "lê o que os juízes avaliam e o que o Chat guarda" proveniente de uma miniatura de grelha.
+
+Design flat, sombras suaves, etiquetas apenas como barras abstratas (sem texto de navegação/menus legível), iluminação subtil e quente, profundidade de campo cinematográfica.

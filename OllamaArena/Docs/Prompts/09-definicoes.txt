@@ -1,0 +1,18 @@
+Definições — rota /settings
+Ilustração da funcionalidade Definições no estilo acordado: a configuração dos juízes de IA, o modelo OpenRouter e as chaves de API.
+
+PROMPT — copie a partir daqui para o gerador de imagens:
+
+Ilustração vetorial limpa dos principais fluxos de uma aplicação web de secretária chamada "Ollama Arena" — um laboratório local de chat e benchmark de IA com a plataforma Ollama. Tema escuro: fundo azul-marinho (#0F172A), painéis cinza-ardósia (#1E293B), azul de destaque (#3B82F6), verde-esmeralda (#10B981) e âmbar (#F59E0B).
+
+Um portátil com ecrã largo mostrando seis painéis da funcionalidade "Definições" dispostos em grelha de fluxo (setas a ligá-los), cada um com uma etiqueta em barra abstrata:
+1. "Juízes": um cartão com dois selos geminados — "Gemini" e "OpenRouter" — sob um título abstrato e um ícone de engrenagem.
+2. "Catálogo": uma lista rolável de modelos da nuvem (linhas com um ícone de nuvem), a primeira fixa com crachás "Automático" a azul e "Gratuito" a verde; uma pequena lupa de pesquisa.
+3. "Chaves": um cartão com dois campos de palavra-passe mostrando apenas pontos (••••), cada um com um ícone de olho, e crachás de estado "definida"/"removida".
+4. "Raciocínio": um interruptor (switch) deslizante na posição ativa ao lado de um ícone de cérebro, etiqueta "deixa os modelos pensar".
+5. "Guarda": um botão azul de confirmação com um ícone de disquete e um diálogo discreto com a lista de alterações e os botões "concluir"/"cancelar".
+6. "Uso final": uma seta pequena ligada a uma miniatura de uma janela de avaliação, etiqueta "juízes configurados".
+
+Relações: uma seta a sair com a etiqueta "usada pela avaliação automática (Qualidade e Métricas)".
+
+Design flat, sombras suaves, etiquetas apenas como barras abstratas (sem texto de navegação/menus legível), iluminação subtil e quente, profundidade de campo cinematográfica.

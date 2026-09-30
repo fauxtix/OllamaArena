@@ -27,14 +27,21 @@
                                   Title="@L["ReadmeViewer"]"
                                   aria-label="@L["ReadmeViewer"]"
                                   Style="min-width: 32px; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                        <FluentIcon Value="@(new Icons.Regular.Size16.DocumentBulletList())" />
+                        <FluentIcon Value="@(new Icons.Regular.Size20.DocumentBulletList())" />
                     </FluentButton>
                     <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="@(() => Navigation.NavigateTo("/plano-de-testes"))"
                                   Title="@L["TestPlan"]"
                                   aria-label="@L["TestPlan"]"
                                   Style="min-width: 32px; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                        <FluentIcon Value="@(new Icons.Regular.Size16.CheckmarkCircle())" />
+                        <FluentIcon Value="@(new Icons.Regular.Size20.CheckmarkCircle())" />
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  OnClick="@(() => Navigation.NavigateTo("/comparar-modelos"))"
+                                  Title="@L["CompareModels"]"
+                                  aria-label="@L["CompareModels"]"
+                                  Style="min-width: 32px; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.DocumentBulletList())" />
                     </FluentButton>
                     <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="ToggleTheme"
@@ -179,4 +186,5 @@
             await preview.OpenAsync();
         }
     }
+
 }

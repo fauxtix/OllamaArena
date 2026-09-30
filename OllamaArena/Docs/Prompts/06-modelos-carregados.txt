@@ -1,0 +1,17 @@
+Modelos Carregados — rota /modelos-ollama
+Ilustração da funcionalidade Modelos Carregados no estilo acordado: o inventário de modelos locais e a compatibilidade com a GPU.
+
+PROMPT — copie a partir daqui para o gerador de imagens:
+
+Ilustração vetorial limpa dos principais fluxos de uma aplicação web de secretária chamada "Ollama Arena" — um laboratório local de chat e benchmark de IA com a plataforma Ollama. Tema escuro: fundo azul-marinho (#0F172A), painéis cinza-ardósia (#1E293B), azul de destaque (#3B82F6), verde-esmeralda (#10B981) e âmbar (#F59E0B).
+
+Um portátil com ecrã largo mostrando cinco painéis da funcionalidade "Modelos Carregados" dispostos em grelha de fluxo (setas a ligá-los), cada um com uma etiqueta em barra abstrata:
+1. "Inventário": uma tabela de modelos locais com ícones de robô, colunas de parâmetros, quantização e tamanho; cada linha com um crachá de compatibilidade — verde "Compatível", vermelho "Excede VRAM" ou cinza "indisponível".
+2. "Ficha do modelo": um cartão de detalhe com três campos abstratos (contexto, ano de treino, família) e um pequeno símbolo de lupa de metadados.
+3. "GPU": uma silhueta de placa gráfica com barras de memória horizontais preenchidas, uma em verde e uma em âmbar, etiqueta "consome VRAM".
+4. "Aviso": um chip âmbar alternativo etiquetado "corre no CPU se exceder" ligado por uma seta pequena ao cartão de compatibilidade.
+5. "Origem": um símbolo de dispositivo de armazenamento ligado por uma seta a uma pequena nuvem com a etiqueta "serviço local".
+
+Relações: uma seta a entrar com a etiqueta "catálogo alimentado pela Home".
+
+Design flat, sombras suaves, etiquetas apenas como barras abstratas (sem texto de navegação/menus legível), iluminação subtil e quente, profundidade de campo cinematográfica.

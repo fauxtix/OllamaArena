@@ -1,0 +1,15 @@
+Início (Home) — rota /
+Ilustração da funcionalidade Início no estilo acordado: o que o ecrã apresenta e como dá acesso ao resto da app.
+
+PROMPT — copie a partir daqui para o gerador de imagens:
+
+Ilustração vetorial limpa dos principais fluxos de uma aplicação web de secretária chamada "Ollama Arena" — um laboratório local de chat e benchmark de IA com a plataforma Ollama. Tema escuro: fundo azul-marinho (#0F172A), painéis cinza-ardósia (#1E293B), azul de destaque (#3B82F6), verde-esmeralda (#10B981) e âmbar (#F59E0B).
+
+Um portátil com ecrã largo mostrando três painéis da funcionalidade "Início" dispostos em grelha de fluxo (setas a ligá-los), cada um com uma etiqueta em barra abstrata:
+1. "Apresentação": um grande título estilizado "Ollama Arena" (a palavra "Arena" num gradiente de azul), por baixo dois cartões-hero lado a lado — um robozinho a atuar como juiz com uma balança e um crachá violeta "IA Judge", outro robozinho de perfil com um painel de estatísticas por trás e um crachá "Ollama local" em verde-esmeralda.
+2. "Catálogo de modelos": uma pequena grelha de chips de modelo (ícones de robô) com um pequeno símbolo de ligação a um servidor remoto e a etiqueta "deteção automática do serviço local".
+3. "Ponto de partida": um mini-mapa com o painel "Início" no centro e setas suaves a divergir para miniaturas de ecrã de "Chat" e "Modelos Carregados", com a etiqueta "entra nos fluxos de conversa e de modelos".
+
+Uma seta deste painel para fora do ecrã indica a ligação "carrega e distribui o catálogo de modelos" rumo às opções Chat e Modelos Carregados.
+
+Design flat, sombras suaves, etiquetas apenas como barras abstratas (sem texto de navegação/menus legível), iluminação subtil e quente, profundidade de campo cinematográfica.

@@ -9,6 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="ComoCompararModelos\Guia_Como_Comparar_Modelos.md" />
+    <None Remove="ComoCompararModelos\Guia_Como_Comparar_Modelos.en.md" />
     <None Remove="Prompts\analysis-prompt.txt" />
     <None Remove="Prompts\evaluation_prompt_template.txt" />
     <None Remove="Prompts\system-prompt.txt" />
@@ -17,6 +19,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="ComoCompararModelos\Guia_Como_Comparar_Modelos.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ComoCompararModelos\Guia_Como_Comparar_Modelos.en.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Prompts\analysis-prompt.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

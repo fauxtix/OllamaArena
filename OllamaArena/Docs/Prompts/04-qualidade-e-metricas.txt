@@ -1,0 +1,18 @@
+Qualidade e Métricas — rota /benchmarks
+Ilustração da funcionalidade Qualidade e Métricas no estilo acordado: a análise de respostas com dois juízes automáticos e a tradução do feedback.
+
+PROMPT — copie a partir daqui para o gerador de imagens:
+
+Ilustração vetorial limpa dos principais fluxos de uma aplicação web de secretária chamada "Ollama Arena" — um laboratório local de chat e benchmark de IA com a plataforma Ollama. Tema escuro: fundo azul-marinho (#0F172A), painéis cinza-ardósia (#1E293B), azul de destaque (#3B82F6), verde-esmeralda (#10B981) e âmbar (#F59E0B).
+
+Um portátil com ecrã largo mostrando seis painéis da funcionalidade "Qualidade e Métricas" dispostos em grelha de fluxo (setas a ligá-los), cada um com uma etiqueta em barra abstrata:
+1. "Prompts": uma lista de cartões de prompt com números (#12, #11, #10) e um crachá neutro "N modelos" em cada um; o cartão ativo com uma barra de acento à esquerda.
+2. "Respostas": um cartão de modelo com um ícone de robô e quatro crachás azuis ("T/s", "Eval", "Load", "Tokens") e um botão com um símbolo de brilho.
+3. "Juízes automáticos": duas colunas paralelas com selos gêmeos — um etiquetado "Gemini" e outro "OpenRouter" — escorrendo a sair de um balão de "Avaliar" com um símbolo de faísca; uma pequena linha de passos discreta com marcadores de conclusão.
+4. "Métricas": um cartão com uma grelha de 13 células numeradas de 1 a 5, uma linha "Global" em destaque e uma caixa âmbar de recomendação.
+5. "Tradução": um balão com um ícone PT⇄EN e uma folha de texto com colunas de línguas, etiqueta "traduzir o feedback dos juízes".
+6. "Gráficos": um radar de qualidade com 12 eixos (polígono em azul) e uma etiqueta "desempenho vs qualidade".
+
+Relações: uma seta a entrar com a etiqueta "usa as chaves e o modelo configurados nas Definições"; uma seta a sair com a etiqueta "gravadas para o Dashboard".
+
+Design flat, sombras suaves, etiquetas apenas como barras abstratas (sem texto de navegação/menus legível), iluminação subtil e quente, profundidade de campo cinematográfica.

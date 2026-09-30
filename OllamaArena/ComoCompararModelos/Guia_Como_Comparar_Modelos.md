@@ -2,8 +2,6 @@
 
 **Guia de metodologia para tirar o melhor partido do laboratório de benchmarking** · Ollama Chat & Benchmark Laboratory
 
-> **Fonte de verdade** em Markdown.
-
 ---
 
 Objetivo deste guia: definir um fluxo repetível para responder à pergunta *"qual o melhor modelo para cada temática?"* (história, código, tradução, contos, anedotas...) e decidir quais os modelos que valem a pena manter carregados no Ollama para uso quase exclusivo no dia-a-dia.
@@ -54,17 +52,17 @@ O erro mais comum é comparar respostas a perguntas diferentes. Para que os mode
 
 ### Passo 2 — Carregar o conjunto candidato no Ollama
 
-- Faça `ollama pull <modelo>` para os candidatos. Os modelos instalados aparecem automaticamente no seletor do chat; na página de Definições pode apenas escolher qual é o **modelo predefinido** (não é aí que se adicionam modelos).
+- Faça `ollama pull <modelo>` para os candidatos. Os modelos instalados aparecem automaticamente no seletor do chat; a página de **Definições** (`/settings`) não é onde se adicionam modelos — lá configuram-se apenas os **juízes de IA** (chaves Gemini/OpenRouter, modelo do juiz OpenRouter) e o **toggle de reasoning**.
 - Inclua **a mesma família em tamanhos diferentes** (ex.: `qwen3:4b`, `qwen3:8b`, `qwen3:14b`) — a tese da aplicação é que um modelo pequeno pode superar um maior numa temática específica.
 
 ### Passo 3 — Executar a bateria
 
-Para cada modelo, responda **às mesmas perguntas**, mudando apenas o modelo no seletor do chat. Cada resposta fica registada na base de dados com as métricas de velocidade, agrupada pela mesma pergunta (mesmo `PromptId`).
+Para cada modelo, responda **às mesmas perguntas**, escolhendo a opção 'Novo Chat' emudando o modelo no seletor do chat. Cada resposta fica registada na base de dados com as métricas de velocidade, agrupada pela mesma pergunta (mesmo `PromptId`).
 
 ### Passo 4 — Avaliar cada resposta
 
-- Use **"Avaliar automaticamente"** — submete o prompt de auditoria aos dois juízes (Gemini e OpenRouter) com contexto crítico para não penalizar o modelo por falta de conhecimento pós-treino.
-- Se preferir, use **"Copiar prompt"** e cole o resultado manualmente.
+- Use **"Avaliar automaticamente"** na página **Qualidade e Métricas** (`/benchmarks`) — submete o prompt de auditoria aos dois juízes (Gemini e OpenRouter) com contexto crítico para não penalizar o modelo por falta de conhecimento pós-treino.
+- Se preferir, use **"Copiar prompt"** e cole o resultado manualmente. Os rótulos dos dois juízes mostram sempre a **origem real** de cada avaliação (automática, externa colada por si, ou "sem resposta"), pelo que nunca deve assumir que um campo preenchido veio da API.
 - Avalie **todas** as respostas da bateria, não apenas uma.
 
 ### Passo 5 — Tirar conclusões em três locais

@@ -123,6 +123,9 @@
   <data name="Benchmarks" xml:space="preserve">
     <value>Benchmarks</value>
   </data>
+  <data name="BenchmarkEvaluations.PageTitle" xml:space="preserve">
+    <value>Benchmark Evaluations</value>
+  </data>
   <data name="Dashboard" xml:space="preserve">
     <value>Dashboard</value>
   </data>
@@ -585,6 +588,12 @@ Do you want to continue?</value>
   <data name="Evaluation.JudgeOpenRouter" xml:space="preserve">
     <value>OpenRouter</value>
   </data>
+  <data name="Evaluation.JudgeExternal" xml:space="preserve">
+    <value>external</value>
+  </data>
+  <data name="Evaluation.OriginAutomatic" xml:space="preserve">
+    <value>automatic</value>
+  </data>
   <data name="Evaluation.Judge1" xml:space="preserve">
     <value>Judge 1</value>
   </data>
@@ -968,6 +977,84 @@ Do you want to continue?</value>
   </data>
   <data name="Modelos.ExceedsVram" xml:space="preserve">
     <value>Exceeds VRAM (~{0} GB)</value>
+  </data>
+  <data name="Modelos.ColReasoning" xml:space="preserve">
+    <value>Reasoning</value>
+  </data>
+  <data name="Modelos.ReasoningYes" xml:space="preserve">
+    <value>Supported</value>
+  </data>
+  <data name="Modelos.ReasoningNo" xml:space="preserve">
+    <value>Not supported</value>
+  </data>
+  <data name="Modelos.ReasoningUnknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="Modelos.HelpButton" xml:space="preserve">
+    <value>What does each column mean?</value>
+  </data>
+  <data name="Modelos.HelpDialogTitle" xml:space="preserve">
+    <value>What does each column mean?</value>
+  </data>
+  <data name="Modelos.HelpCount" xml:space="preserve">
+    <value>{0} model(s) installed</value>
+  </data>
+  <data name="Modelos.HelpParamsTitle" xml:space="preserve">
+    <value>Parameters</value>
+  </data>
+  <data name="Modelos.HelpParamsBody" xml:space="preserve">
+    <value>Number of trained parameters in the model (B = billions, M = millions), read from the GGUF file. It is the main indicator of the model's knowledge and reasoning capacity: more parameters generally means better quality — but also slower inference and more memory required. In practice, a larger well-quantised model usually beats a small unquantised one.</value>
+  </data>
+  <data name="Modelos.HelpQuantTitle" xml:space="preserve">
+    <value>Quantization</value>
+  </data>
+  <data name="Modelos.HelpQuantBody" xml:space="preserve">
+    <value>How much the weights were compressed when written to the GGUF file. Each weight goes from 32 bits (F32) down to 4 bits (Q4), Q5, Q6… — hence names like Q4_K_M. Fewer bits mean a smaller file, less VRAM and higher speed, at some cost in quality. Q4_K_M is the usual best compromise for general use; Q8 is nearly lossless but takes twice the space.</value>
+  </data>
+  <data name="Modelos.HelpContextTitle" xml:space="preserve">
+    <value>Max Context</value>
+  </data>
+  <data name="Modelos.HelpContextBody" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Modelos.HelpContextItem1" xml:space="preserve">
+    <value>It is not what is actually used in a conversation: Ollama shrinks the window according to the available VRAM, and the app computes that effective value before each conversation.</value>
+  </data>
+  <data name="Modelos.HelpContextItem2" xml:space="preserve">
+    <value>The larger the window, the more memory the conversation history needs (KV cache) — hence the 32,768-token cap applied by the app.</value>
+  </data>
+  <data name="Modelos.HelpContextItem3" xml:space="preserve">
+    <value>Prompts or histories longer than the window get truncated, and quality degrades before the absolute limit is reached.</value>
+  </data>
+  <data name="Modelos.HelpReasoningTitle" xml:space="preserve">
+    <value>Reasoning</value>
+  </data>
+  <data name="Modelos.HelpReasoningBody" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Modelos.HelpReasoningItem1" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Modelos.HelpReasoningItem2" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Modelos.HelpReasoningItem3" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Modelos.HelpGpuTitle" xml:space="preserve">
+    <value>GPU Compatibility</value>
+  </data>
+  <data name="Modelos.HelpGpuBody" xml:space="preserve">
+    <value>Estimate of the memory required versus the graphics card's free VRAM. The calculation compares the model size multiplied by a load factor (1.2×, for the runtime and the context buffer) with the free VRAM already reduced by the reserve the operating system uses on Windows (350 MB).</value>
+  </data>
+  <data name="Modelos.HelpGpuItem1" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Modelos.HelpGpuItem2" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Modelos.HelpGpuItem3" xml:space="preserve">
+    <value />
   </data>
   <data name="Analysis.NoBestRated" xml:space="preserve">
     <value>No response has been rated by the judges yet to determine the best model.</value>
@@ -1553,5 +1640,23 @@ Do you want to continue?</value>
   </data>
   <data name="Dashboard.DivergenceValue" xml:space="preserve">
     <value>Δ {0} pts</value>
+  </data>
+  <data name="CompareModels" xml:space="preserve">
+    <value>Models comparison</value>
+  </data>
+  <data name="CompareModels.EmptyState" xml:space="preserve">
+    <value>There are no files in the ComoCompararModelos folder.</value>
+  </data>
+  <data name="CompareModels.InitError" xml:space="preserve">
+    <value>Error initializing the model comparison file list.</value>
+  </data>
+  <data name="CompareModels.LoadError" xml:space="preserve">
+    <value>Error getting the model comparison file.</value>
+  </data>
+  <data name="CompareModels.PageTitle" xml:space="preserve">
+    <value>Models comparison</value>
+  </data>
+  <data name="CompareModels.Title" xml:space="preserve">
+    <value>Models comparison plan</value>
   </data>
 </root>

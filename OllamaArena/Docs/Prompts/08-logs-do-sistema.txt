@@ -1,0 +1,17 @@
+Logs do Sistema — rota /system-logs
+Ilustração da funcionalidade Logs do Sistema no estilo acordado: o registo de acontecimentos da aplicação, com filtros e detalhes de erros.
+
+PROMPT — copie a partir daqui para o gerador de imagens:
+
+Ilustração vetorial limpa dos principais fluxos de uma aplicação web de secretária chamada "Ollama Arena" — um laboratório local de chat e benchmark de IA com a plataforma Ollama. Tema escuro: fundo azul-marinho (#0F172A), painéis cinza-ardósia (#1E293B), azul de destaque (#3B82F6), verde-esmeralda (#10B981) e âmbar (#F59E0B).
+
+Um portátil com ecrã largo mostrando cinco painéis da funcionalidade "Logs do Sistema" dispostos em grelha de fluxo (setas a ligá-los), cada um com uma etiqueta em barra abstrata:
+1. "Níveis": quatro pílulas de filtro coloridas — azul com um ícone de "i", âmbar com um ícone de aviso, vermelho com um "X" num círculo e azul de "todos" com um funil.
+2. "Registo": uma tabela de acontecimentos com um crachá de nível colorido em cada linha (azul, âmbar, vermelho), um relógio pequeno e um texto de mensagem em linha abstrata.
+3. "Pesquisa": um campo de pesquisa com uma lupa e um pequeno botão de limpar.
+4. "Detalhe": uma janela aberta por cima da tabela com um bloco de mensagem cinza e um bloco de exceção vermelho com linhas monoespaçadas e quebras de linha.
+5. "Manutenção": um botão vermelho de eliminação com ícone de caixote do lixo e um pequeno diálogo de confirmação com um visto.
+
+Relações: três setas finas a convergir (etiquetadas "fluxo de registos") vindas de miniaturas de "Chat", "Benchmarks" e "Qualidade e Métricas".
+
+Design flat, sombras suaves, etiquetas apenas como barras abstratas (sem texto de navegação/menus legível), iluminação subtil e quente, profundidade de campo cinematográfica.

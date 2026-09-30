@@ -1,0 +1,17 @@
+Chat — rota /chat
+Ilustração da funcionalidade Chat no estilo acordado: a conversa com o modelo local em streaming, com contexto, histórico e a gravação automática.
+
+PROMPT — copie a partir daqui para o gerador de imagens:
+
+Ilustração vetorial limpa dos principais fluxos de uma aplicação web de secretária chamada "Ollama Arena" — um laboratório local de chat e benchmark de IA com a plataforma Ollama. Tema escuro: fundo azul-marinho (#0F172A), painéis cinza-ardósia (#1E293B), azul de destaque (#3B82F6), verde-esmeralda (#10B981) e âmbar (#F59E0B).
+
+Um portátil com ecrã largo mostrando cinco painéis da funcionalidade "Chat" dispostos em grelha de fluxo (setas a ligá-los), cada um com uma etiqueta em barra abstrata:
+1. "Conversa": uma janela de chat com um balão do utilizador à esquerda e um balão do assistente etiquetado "Ollama" a ser gerado em direto com três pontos a piscar e um pequeno anel de progresso; um crachá ao lado do balão com "Temp 0,3" e um minúsculo símbolo de cronómetro.
+2. "Modelo e GPU": um seletor de modelo (chip com ícone de robô) ligado por uma seta a um pequeno chip verde com um símbolo de placa gráfica e a etiqueta "GPU OK"; ao lado, um chip âmbar alternativo etiquetado "CPU Fallback".
+3. "Contexto": uma barra de progresso horizontal com uma fração de tokens (marcador em azul a cerca de 25%, com um pequeno marcador âmbar perto do limite) e a etiqueta "segue o uso de contexto".
+4. "Histórico": uma gaveta lateral a abrir no lado direito do ecrã com uma lista de linhas de conversas e pequenos ícones de exportar/importar JSON.
+5. "Registo": um balão discreto com um ícone de disco e a etiqueta "auto-guarda na base de dados".
+
+Relações: uma seta deste painel para fora do ecrã com a etiqueta "alimenta os Benchmarks e o Dashboard" apontando para uma miniatura de uma grelha de avaliações; uma etiqueta de volta "usa o catálogo da Home" com uma seta pequena a entrar.
+
+Design flat, sombras suaves, etiquetas apenas como barras abstratas (sem texto de navegação/menus legível), iluminação subtil e quente, profundidade de campo cinematográfica.

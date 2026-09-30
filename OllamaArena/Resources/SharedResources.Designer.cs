@@ -511,6 +511,15 @@ namespace OllamaArena.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Avaliações de Benchmarks.
+        /// </summary>
+        public static string BenchmarkEvaluations_PageTitle {
+            get {
+                return ResourceManager.GetString("BenchmarkEvaluations.PageTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Benchmarks.
         /// </summary>
         public static string Benchmarks {
@@ -624,6 +633,33 @@ namespace OllamaArena.Resources {
         public static string Benchmarks_AutomateEvaluationTitle {
             get {
                 return ResourceManager.GetString("Benchmarks.AutomateEvaluationTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cancelar.
+        /// </summary>
+        public static string Benchmarks_CancelEvaluation {
+            get {
+                return ResourceManager.GetString("Benchmarks.CancelEvaluation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cancelar a avaliação automática em curso (os pedidos aos juízes são abortados).
+        /// </summary>
+        public static string Benchmarks_CancelEvaluationTitle {
+            get {
+                return ResourceManager.GetString("Benchmarks.CancelEvaluationTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A cancelar….
+        /// </summary>
+        public static string Benchmarks_CancellingEvaluation {
+            get {
+                return ResourceManager.GetString("Benchmarks.CancellingEvaluation", resourceCulture);
             }
         }
         
@@ -1006,6 +1042,15 @@ namespace OllamaArena.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to A avaliar....
+        /// </summary>
+        public static string Benchmarks_EvaluatingNow {
+            get {
+                return ResourceManager.GetString("Benchmarks.EvaluatingNow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Continuar.
         /// </summary>
         public static string Benchmarks_EvaluationAlreadySavedContinue {
@@ -1290,6 +1335,96 @@ namespace OllamaArena.Resources {
         public static string Benchmarks_PageTitle {
             get {
                 return ResourceManager.GetString("Benchmarks.PageTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} s.
+        /// </summary>
+        public static string Benchmarks_ProgressElapsed {
+            get {
+                return ResourceManager.GetString("Benchmarks.ProgressElapsed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to concluído.
+        /// </summary>
+        public static string Benchmarks_ProgressStateDone {
+            get {
+                return ResourceManager.GetString("Benchmarks.ProgressStateDone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to falhou.
+        /// </summary>
+        public static string Benchmarks_ProgressStateFailed {
+            get {
+                return ResourceManager.GetString("Benchmarks.ProgressStateFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to a aguardar.
+        /// </summary>
+        public static string Benchmarks_ProgressStatePending {
+            get {
+                return ResourceManager.GetString("Benchmarks.ProgressStatePending", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to a processar….
+        /// </summary>
+        public static string Benchmarks_ProgressStateRunning {
+            get {
+                return ResourceManager.GetString("Benchmarks.ProgressStateRunning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to a tentar {0}.
+        /// </summary>
+        public static string Benchmarks_ProgressStepFallback {
+            get {
+                return ResourceManager.GetString("Benchmarks.ProgressStepFallback", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to juiz {0}.
+        /// </summary>
+        public static string Benchmarks_ProgressStepJudge {
+            get {
+                return ResourceManager.GetString("Benchmarks.ProgressStepJudge", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Validar notas.
+        /// </summary>
+        public static string Benchmarks_ProgressStepParsing {
+            get {
+                return ResourceManager.GetString("Benchmarks.ProgressStepParsing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Preparar prompt.
+        /// </summary>
+        public static string Benchmarks_ProgressStepPreparing {
+            get {
+                return ResourceManager.GetString("Benchmarks.ProgressStepPreparing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A avaliar {0} com os judges Gemini e OpenRouter....
+        /// </summary>
+        public static string Benchmarks_ProgressTitle {
+            get {
+                return ResourceManager.GetString("Benchmarks.ProgressTitle", resourceCulture);
             }
         }
         
@@ -1942,6 +2077,51 @@ namespace OllamaArena.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Compação de modelos.
+        /// </summary>
+        public static string CompareModels {
+            get {
+                return ResourceManager.GetString("CompareModels", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Não existem ficheiros na pasta ComoCompararModelos..
+        /// </summary>
+        public static string CompareModels_EmptyState {
+            get {
+                return ResourceManager.GetString("CompareModels.EmptyState", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Erro ao inicializar a lista de ficheiros do comparador de modelos..
+        /// </summary>
+        public static string CompareModels_InitError {
+            get {
+                return ResourceManager.GetString("CompareModels.InitError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Comparação de modelos.
+        /// </summary>
+        public static string CompareModels_PageTitle {
+            get {
+                return ResourceManager.GetString("CompareModels.PageTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Plano para comparar modelos.
+        /// </summary>
+        public static string CompareModels_Title {
+            get {
+                return ResourceManager.GetString("CompareModels.Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Descrição do registo....
         /// </summary>
         public static string ConfirmSaveDialog_DescriptionPlaceholder {
@@ -2527,6 +2707,24 @@ namespace OllamaArena.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to A cancelar….
+        /// </summary>
+        public static string EvalDialog_Cancelling {
+            get {
+                return ResourceManager.GetString("EvalDialog.Cancelling", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cancelar tradução.
+        /// </summary>
+        public static string EvalDialog_CancelTranslation {
+            get {
+                return ResourceManager.GetString("EvalDialog.CancelTranslation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Guardar alterações.
         /// </summary>
         public static string EvalDialog_SaveChanges {
@@ -2563,6 +2761,33 @@ namespace OllamaArena.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to O feedback já está no idioma da aplicação ({0})..
+        /// </summary>
+        public static string EvalDialog_TranslateAlreadyInLanguage {
+            get {
+                return ResourceManager.GetString("EvalDialog.TranslateAlreadyInLanguage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Este feedback já está em {0}, por isso não é necessário traduzi-lo..
+        /// </summary>
+        public static string EvalDialog_TranslateAlreadyInLanguageHint {
+            get {
+                return ResourceManager.GetString("EvalDialog.TranslateAlreadyInLanguageHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} falhou, a usar o sistema seguinte..
+        /// </summary>
+        public static string EvalDialog_TranslateFallback {
+            get {
+                return ResourceManager.GetString("EvalDialog.TranslateFallback", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Traduzir Feedback (Gemini).
         /// </summary>
         public static string EvalDialog_TranslateGemini {
@@ -2577,6 +2802,15 @@ namespace OllamaArena.Resources {
         public static string EvalDialog_TranslateGeminiError {
             get {
                 return ResourceManager.GetString("EvalDialog.TranslateGeminiError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Traduzir Feedback ({0}).
+        /// </summary>
+        public static string EvalDialog_TranslateJudge {
+            get {
+                return ResourceManager.GetString("EvalDialog.TranslateJudge", resourceCulture);
             }
         }
         
@@ -2599,11 +2833,29 @@ namespace OllamaArena.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Sistema: {0} · {1}.
+        /// </summary>
+        public static string EvalDialog_TranslateProvider {
+            get {
+                return ResourceManager.GetString("EvalDialog.TranslateProvider", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Tradução Gemini.
         /// </summary>
         public static string EvalDialog_TranslateTitle {
             get {
                 return ResourceManager.GetString("EvalDialog.TranslateTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A traduzir feedback de {0}… {1}.
+        /// </summary>
+        public static string EvalDialog_Translating {
+            get {
+                return ResourceManager.GetString("EvalDialog.Translating", resourceCulture);
             }
         }
         
@@ -2622,6 +2874,33 @@ namespace OllamaArena.Resources {
         public static string Evaluation_FeedbackOpenRouter {
             get {
                 return ResourceManager.GetString("Evaluation.FeedbackOpenRouter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Juiz 1.
+        /// </summary>
+        public static string Evaluation_Judge1 {
+            get {
+                return ResourceManager.GetString("Evaluation.Judge1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Juiz 2.
+        /// </summary>
+        public static string Evaluation_Judge2 {
+            get {
+                return ResourceManager.GetString("Evaluation.Judge2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to externo.
+        /// </summary>
+        public static string Evaluation_JudgeExternal {
+            get {
+                return ResourceManager.GetString("Evaluation.JudgeExternal", resourceCulture);
             }
         }
         
@@ -2766,6 +3045,24 @@ namespace OllamaArena.Resources {
         public static string Evaluation_MetricTone {
             get {
                 return ResourceManager.GetString("Evaluation.MetricTone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sem resposta.
+        /// </summary>
+        public static string Evaluation_NoResponse {
+            get {
+                return ResourceManager.GetString("Evaluation.NoResponse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to automático.
+        /// </summary>
+        public static string Evaluation_OriginAutomatic {
+            get {
+                return ResourceManager.GetString("Evaluation.OriginAutomatic", resourceCulture);
             }
         }
         
@@ -3121,6 +3418,15 @@ namespace OllamaArena.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Raciocínio.
+        /// </summary>
+        public static string Modelos_ColReasoning {
+            get {
+                return ResourceManager.GetString("Modelos.ColReasoning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Ano de Treino.
         /// </summary>
         public static string Modelos_ColTrainingYear {
@@ -3157,6 +3463,204 @@ namespace OllamaArena.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to O que significa cada coluna?.
+        /// </summary>
+        public static string Modelos_HelpButton {
+            get {
+                return ResourceManager.GetString("Modelos.HelpButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string Modelos_HelpContextBody {
+            get {
+                return ResourceManager.GetString("Modelos.HelpContextBody", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Não é o que é efetivamente usado numa conversa: o Ollama reduz a janela consoante a VRAM disponível, e a app calcula esse valor efetivo antes de cada conversa..
+        /// </summary>
+        public static string Modelos_HelpContextItem1 {
+            get {
+                return ResourceManager.GetString("Modelos.HelpContextItem1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Quanto maior a janela, mais memória é preciso para o histórico da conversa (chamada KV cache) — daí o limite de 32 768 tokens aplicado pela app..
+        /// </summary>
+        public static string Modelos_HelpContextItem2 {
+            get {
+                return ResourceManager.GetString("Modelos.HelpContextItem2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Prompts ou históricos que ultrapassem a janela são truncados, e a qualidade degrada-se antes de se atingir o limite absoluto..
+        /// </summary>
+        public static string Modelos_HelpContextItem3 {
+            get {
+                return ResourceManager.GetString("Modelos.HelpContextItem3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Contexto Máximo.
+        /// </summary>
+        public static string Modelos_HelpContextTitle {
+            get {
+                return ResourceManager.GetString("Modelos.HelpContextTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} modelo(s) instalado(s).
+        /// </summary>
+        public static string Modelos_HelpCount {
+            get {
+                return ResourceManager.GetString("Modelos.HelpCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to O que significa cada coluna?.
+        /// </summary>
+        public static string Modelos_HelpDialogTitle {
+            get {
+                return ResourceManager.GetString("Modelos.HelpDialogTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Estimativa de memória necessária face à VRAM livre da placa gráfica. O cálculo compara o tamanho do modelo multiplicado por um fator de carga (1,2×, para o runtime e o buffer de contexto) com a VRAM livre já descontada da reserva usada pelo sistema operativo no Windows (350 MB)..
+        /// </summary>
+        public static string Modelos_HelpGpuBody {
+            get {
+                return ResourceManager.GetString("Modelos.HelpGpuBody", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string Modelos_HelpGpuItem1 {
+            get {
+                return ResourceManager.GetString("Modelos.HelpGpuItem1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string Modelos_HelpGpuItem2 {
+            get {
+                return ResourceManager.GetString("Modelos.HelpGpuItem2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string Modelos_HelpGpuItem3 {
+            get {
+                return ResourceManager.GetString("Modelos.HelpGpuItem3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Compatibilidade GPU.
+        /// </summary>
+        public static string Modelos_HelpGpuTitle {
+            get {
+                return ResourceManager.GetString("Modelos.HelpGpuTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Número de parâmetros treinados do modelo (B = mil milhões, M = milhões), lido do ficheiro GGUF. É o principal indicador do conhecimento e da capacidade de raciocínio do modelo: mais parâmetros, em geral, melhor qualidade — mas também maior lentidão e mais memória necessária. Na prática, um modelo maior bem quantizado costuma bater um modelo pequeno sem quantização..
+        /// </summary>
+        public static string Modelos_HelpParamsBody {
+            get {
+                return ResourceManager.GetString("Modelos.HelpParamsBody", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Parâmetros.
+        /// </summary>
+        public static string Modelos_HelpParamsTitle {
+            get {
+                return ResourceManager.GetString("Modelos.HelpParamsTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Grau de compressão com que os pesos foram gravados no ficheiro GGUF. Cada peso passa de 32 bits (F32) para 4 bits (Q4), Q5, Q6… — daí nomes como Q4_K_M. Menos bits significam menos tamanho em disco, menos VRAM e mais velocidade, ao custo de alguma qualidade. Q4_K_M é o melhor compromisso habitual para uso geral; Q8 é quase sem perdas de qualidade, mas ocupa o dobro..
+        /// </summary>
+        public static string Modelos_HelpQuantBody {
+            get {
+                return ResourceManager.GetString("Modelos.HelpQuantBody", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Quantização.
+        /// </summary>
+        public static string Modelos_HelpQuantTitle {
+            get {
+                return ResourceManager.GetString("Modelos.HelpQuantTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string Modelos_HelpReasoningBody {
+            get {
+                return ResourceManager.GetString("Modelos.HelpReasoningBody", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string Modelos_HelpReasoningItem1 {
+            get {
+                return ResourceManager.GetString("Modelos.HelpReasoningItem1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string Modelos_HelpReasoningItem2 {
+            get {
+                return ResourceManager.GetString("Modelos.HelpReasoningItem2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string Modelos_HelpReasoningItem3 {
+            get {
+                return ResourceManager.GetString("Modelos.HelpReasoningItem3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Raciocínio.
+        /// </summary>
+        public static string Modelos_HelpReasoningTitle {
+            get {
+                return ResourceManager.GetString("Modelos.HelpReasoningTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Consulte os modelos guardados no seu disco, a capacidade nativa de contexto do ficheiro e a compatibilidade estimada com a sua placa gráfica..
         /// </summary>
         public static string Modelos_IntroText {
@@ -3189,6 +3693,33 @@ namespace OllamaArena.Resources {
         public static string Modelos_PageTitle {
             get {
                 return ResourceManager.GetString("Modelos.PageTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Não suporta.
+        /// </summary>
+        public static string Modelos_ReasoningNo {
+            get {
+                return ResourceManager.GetString("Modelos.ReasoningNo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Desconhecido.
+        /// </summary>
+        public static string Modelos_ReasoningUnknown {
+            get {
+                return ResourceManager.GetString("Modelos.ReasoningUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Suporta.
+        /// </summary>
+        public static string Modelos_ReasoningYes {
+            get {
+                return ResourceManager.GetString("Modelos.ReasoningYes", resourceCulture);
             }
         }
         

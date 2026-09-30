@@ -1,0 +1,17 @@
+Benchmarks (Avaliações) — rota /benchmark-evaluations
+Ilustração da funcionalidade Benchmarks no estilo acordado: o arquivo de avaliações, com filtros, exportação e análise local.
+
+PROMPT — copie a partir daqui para o gerador de imagens:
+
+Ilustração vetorial limpa dos principais fluxos de uma aplicação web de secretária chamada "Ollama Arena" — um laboratório local de chat e benchmark de IA com a plataforma Ollama. Tema escuro: fundo azul-marinho (#0F172A), painéis cinza-ardósia (#1E293B), azul de destaque (#3B82F6), verde-esmeralda (#10B981) e âmbar (#F59E0B).
+
+Um portátil com ecrã largo mostrando cinco painéis da funcionalidade "Benchmarks" dispostos em grelha de fluxo (setas a ligá-los), cada um com uma etiqueta em barra abstrata:
+1. "Arquivo": uma tabela de grelha densa com linhas de resultados de modelos, duas colunas de juízes destacadas em caixas azuis (crachás "Juiz 1" e "Juiz 2") e pequenas notas numéricas; um campo de pesquisa com uma lupa.
+2. "Filtros": três pílulas de filtro (uma preenchida a azul "Todos", "Por Avaliar" e "Avaliados", estas a contorno), com pequenos pontos de cor (âmbar e verde) na etiqueta.
+3. "Exportar": dois documentos estilizados com ícones de descarregamento — um em tons de verde com "XLS", outro com um ícone de PDF — e uma etiqueta "relatórios".
+4. "Análise IA local": um chip com um símbolo de cérebro e uma pequena linha de texto a correr de um lado para o outro, etiqueta "resumo inteligente".
+5. "Detalhe": uma janela aberta por cima da grelha, com duas colunas de feedback dos juízes e uma caixa âmbar "Recomendação do Juiz".
+
+Relações: uma seta a entrar com a etiqueta "recebe as avaliações que o Chat guarda"; uma seta a sair com a etiqueta "alimenta o ranking do Dashboard".
+
+Design flat, sombras suaves, etiquetas apenas como barras abstratas (sem texto de navegação/menus legível), iluminação subtil e quente, profundidade de campo cinematográfica.
