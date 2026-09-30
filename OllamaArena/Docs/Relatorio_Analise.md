@@ -9,7 +9,7 @@
 ## 1. Pontos fortes
 
 - **Conceito diferenciado.** A ideia de "laboratório de benchmark" — medir automaticamente tokens/s, tempo de carga e de processamento em cada resposta, cruzar com avaliação de juízes externos (Gemini/OpenRouter) e gerar análise local — é sólida e bem documentada (README PT/EN, `Funcionalidades.md`, `schema.sql`).
-- **Localização madura.** `SharedResources.resx`/`.en.resx` com 428 chaves cada, paridade total, e ~99% dos textos da interface passam por `L[...]`. Pouco comum.
+- **Localização madura.** `SharedResources.resx`/`.en.resx` com 516 chaves cada, paridade total, e ~99% dos textos da interface passam por `L[...]`. Pouco comum.
 - **SQL seguro.** Todo o acesso a dados usa Dapper com parâmetros `@`; não foi encontrada nenhuma SQL injection.
 - **`ChatMeasureTemperature`** (`Services/ChatMeasureTemperature.cs`) — um dos melhores ficheiros do projeto: heurística lexical PT/EN para temperatura, deteção de código, densidade de perguntas; bem comentado, testável e sem dependências.
 - **Arquitetura em camadas** com interfaces (Repositories/Services e distinção DTO vs Entities) — boa intenção que facilita a correção da dívida.
@@ -39,6 +39,7 @@
 ## 3. Dívida técnica / código morto
 
 - **Páginas mortas removidas**: `Settings2.razor` (refactor abandonado) e `AnaliseBenchmark.razor` (substituída por `/benchmark-evaluations`) já não existem; `Settings.razor` é hoje a página real de configuração dos juízes (chaves, temperatura fixa e catálogo OpenRouter ao vivo).
+- **`OllamaSharp` removido**: o pacote NuGet deixou de estar referenciado no `.csproj`; a API do Ollama é consumida diretamente via `HttpClient` + `System.Text.Json`. Não reintroduzir sem necessidade real.
 - **`ConversationRepository`** já está registado em DI e funciona sobre SQLite (tabelas `Conversas`/`ConversaMensagens`, export/import JSON); o problema reportado (stored procedures SQL Server) foi resolvido no refactor.
 - **DTOs/serviços mortos removidos**: `TranslateClientService`, `ChatMessageDto`, `ChatMessageModel`, `HistoryEntry`, `ConversationItem`, `LanguageDetectionResult`, `TranslateRequest/ResponseDto`, `Entities\ChatMessage`, `QualityAnalysis.resx` (inteiro), `TranslatePromptTemplate.TranslationPrompt`, `SystemPromptService` (DI + implementação), `SharpToken` (NuGet package). Web search backend (~200 linhas: `CriarRequestWeb`, `BuscarContextoWebAsync`, `SearchWebContext_DuckDuckGo_Async`, `SearchWebContext_Wikipedia_Async`) removido — toggle comentado e DuckDuckGo com problemas anti-bot.
 - **`PromptTemplateProvider._cache`** — campo removido; I/O a disco continua em cada chamada (sem cache).
@@ -87,7 +88,7 @@
 15. ~~Suporte a modelos de reasoning (deepseek-r1, qwq) — mostrar `reasoning_content` separadamente~~ — **concluído** (bloco "Pensamento" colapsável, guardado na conversa).
 16. ~~Persistência real de conversas na BD (deixar de depender de localStorage) com export/import JSON~~ — **concluído** (tabelas `Conversas`/`ConversaMensagens`).
 17. ~~Dashboard agregado de métricas (gráficos por modelo ao longo do tempo) em vez de só tabelas~~ — **concluído** (ranking agregado com score ponderado das 12 métricas).
-18. ~~Testes unitários (`ChatMeasureTemperature`, `EvaluationParser`, `LocalAnalysisService`, repositórios com SQLite in-memory) + CI com GitHub Actions (`dotnet build`)~~ — **concluído** (93 testes em 8 classes, incluindo `SqliteTypeHandlersTests` com SQLite in-memory e `MessageFormatterTests`/`OpenRouterCatalogServiceTests`; CI `deploy-iis.yml`).
+18. ~~Testes unitários (`ChatMeasureTemperature`, `EvaluationParser`, `LocalAnalysisService`, repositórios com SQLite in-memory) + CI com GitHub Actions (`dotnet build`)~~ — **concluído** (257 testes em 20 classes, incluindo `SqliteTypeHandlersTests` com SQLite in-memory e `MessageFormatterTests`/`OpenRouterCatalogServiceTests`; CI `deploy-iis.yml`).
 19. ~~Tornar a recomendação dos juízes contextual por temática — ver secção 6.~~ — **concluído** (`PromptThemeClassifier` + tokens `{promptTheme}`/`{themeGuidance}` no template; recusas tratadas no `ScoreCalculator` — ver secção 6).
 
 ### Fase 4 — UX

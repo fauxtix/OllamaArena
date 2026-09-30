@@ -58,7 +58,7 @@ A aplicação integra um processo estruturado de auditoria externa no painel de 
 1. **Avaliar Automaticamente:** O utilizador acede à resposta de um modelo específico e clica no botão **"Avaliar automaticamente"**. A aplicação verifica primeiro a ligação à internet (os juízes são serviços em nuvem) e, de seguida, gera internamente o prompt de auditoria e submete-o aos dois juízes; sem internet, avisa o utilizador e sugere o processo manual com **"Copiar prompt"**.
 2. **Contexto Crítico Injetado:** O prompt gerado inclui automaticamente metadados (como o ano de treino do modelo local) sob a marca `[CRITICAL CONTEXT]`, instruindo o juiz externo a não penalizar o modelo por falta de conhecimento de eventos futuros.
 3. **Chamadas Diretas às APIs:** A aplicação envia o prompt aos dois juízes **em paralelo** — **Gemini** (`gemini-flash-latest`) e **OpenRouter** (default `openrouter/free`; o modelo e as chaves são configuráveis na página **Definições** e ficam gravados na BD — se o modelo escolhido devolver 404, a aplicação tenta automaticamente `openrouter/free`). Um intervalo mínimo entre avaliações (configurável em `AutomatedJudge:MinIntervalSeconds`, 60s por defeito) protege os limites gratuitos das APIs; a temperatura dos juízes é **fixa em 0** (determinística).
-4. **Abertura do Ecrã de Avaliação Preenchido:** Assim que os juízes respondem, o ecrã de avaliação abre **já preenchido** com as métricas (Escala 1-5), a nota *Global*, o feedback e a **RECOMMENDATION** de cada juiz — prontos a rever e guardar.
+4. **Abertura do Ecrã de Avaliação Preenchido:** Assim que os juízes respondem, o ecrã de avaliação abre **já preenchido** com as métricas (Escala 1-5), a nota *Global*, o feedback e a **RECOMMENDATION** de cada juiz — prontos a rever e guardar. Os rótulos dos dois juízes indicam a **origem real** de cada avaliação (automática, externa colada manualmente, ou "sem resposta"), que fica persistida na BD.
 5. **Tratamento de Falhas Parciais:** Se um dos juízes (ou ambos) não conseguir responder — ex.: `Too many requests`, demasiado tráfego, rede ou chave inválida — um aviso identifica qual(ais) falhou(ram) e os campos desse(s) juiz(es) ficam editáveis para colagem manual. O utilizador tem **três opções**: (1) **aguardar** e tentar a avaliação automática mais tarde; (2) **aproveitar a resposta do juiz que respondeu** e preencher manualmente apenas os campos do outro; ou (3) **fazer toda a avaliação manualmente** — o botão **"Copiar prompt"** continua disponível para obter o prompt de avaliação sem precisar de internet.
 6. **Tradução e Consolidação:** O utilizador pode utilizar a opção **"Traduzir Feedback"** para ver uma pré-visualização só-leitura da tradução das análises para a língua ativa na interface (português ou inglês) — o texto traduzido é apenas informativo e não altera o campo de feedback. Por fim, clica em **"Guardar avaliação"** para persistir todos os dados permanentemente na Base de Dados; o botão fica desativado quando o registo já foi gravado (apenas-leitura).
 
@@ -106,14 +106,13 @@ O painel **Dashboard** consolida tudo o que os juízes avaliaram num único ecr�
 - **Cancelamento a qualquer momento** — interromper uma resposta;
 - **Indicador de compatibilidade gráfica** — a aplicação avisa-o se o modelo cabe na memória da sua placa gráfica ou se vai correr mais devagar no processador;
 - **Barra de contexto** — um indicador visual mostra os tokens usados e restantes do contexto do modelo, com aviso quando se aproxima do limite;
-- **Raciocínio visível** — modelos de reasoning (ex.: `deepseek-r1`, `qwq`) mostram o bloco de "Pensamento" com o raciocínio, colapsado por defeito e também guardado na conversa;
-- **Pesquisa web** — o toggle liga a pesquisa na internet (Wikipedia + DuckDuckGo) para dar contexto atualizado ao modelo antes de responder;
+- **Raciocínio (think)** — modelos com capacidade de raciocínio (ex.: `deepseek-r1`, `qwq`) mostram o bloco de "Pensamento" com o raciocínio, colapsado por defeito e também guardado na conversa. **Por defeito está desligado**: active o toggle **"Ativar reasoning (think)"** em **Definições** (`/settings`, gravado na BD como `Chat:EnableReasoning`); enquanto estiver desligado o raciocínio não é capturado, guardado nem mostrado;
 - **Comportamento ajustado automaticamente** — a aplicação deteta o tipo de pedido (criativo, factual, tradução) e afina automaticamente o modelo para obter o melhor resultado em cada situação.
 
 ## 🤖 Gestão de Modelos de IA
 
 - **Alternância instantânea de modelos** — mude de modelo de IA no meio da conversa, diretamente a partir do chat;
-- **Página de Modelos Carregados** — consulte todos os modelos instalados no seu computador, com informação sobre cada um: família, dimensão (parâmetros), nível de quantização, ano de treino, contexto máximo suportado, espaço ocupado no disco e compatibilidade com a sua placa gráfica;
+- **Página de Modelos Carregados** — consulte todos os modelos instalados no seu computador, com informação sobre cada um: família, dimensão (parâmetros), nível de quantização, ano de treino, contexto máximo suportado, espaço ocupado no disco, **badge de raciocínio** (suporta / não suporta / desconhecido) e compatibilidade com a sua placa gráfica. O botão **"O que significa cada coluna?"** explica cada coluna em detalhe;
 
 ## 📝 Gestão e Edição de Prompts
 
@@ -128,7 +127,7 @@ Ajuste o "carácter" e as diretrizes do seu assistente de IA sem sair da aplica�
 
 Poupe tempo em tarefas repetitivas:
 
-- **Tradução automática** — traduza instantaneamente textos e avaliações para a língua ativa na interface (português ou inglês) com um clique, usando o seu modelo local;
+- **Tradução automática** — traduza instantaneamente os feedbacks dos juízes para a língua ativa na interface (português ou inglês) com um clique, através de uma cadeia de sistemas por ordem de preferência **OpenRouter → Gemini → Ollama (local)**. Se o texto já estiver comprovadamente no idioma da aplicação, o botão é desativado (traduzir devolveria o mesmo texto); durante a tradução pode ver o sistema em uso, o tempo decorrido e cancelar;
 - **Otimização automática de texto** — o assistente auxilia na reescrita, resumo e melhoria de conteúdos quando solicitado;
 - **Detecção inteligente de intenção** — a aplicação reconhece quando está a pedir uma tradução ou uma tarefa criativa e ajusta o comportamento do modelo em conformidade, garantindo melhores resultados sem qualquer configuração manual.
 
@@ -136,11 +135,11 @@ Poupe tempo em tarefas repetitivas:
 
 ## 🧭 Experiência do Utilizador
 
-A navegação é simples. No menu lateral encontra todas as secções da aplicação: **Chat**, **Benchmarks**, **Qualidade e Métricas**, **Dashboard**, **Modelos carregados**, **Prompts**, **Logs** e **Definições**.
+A navegação é simples. No menu lateral encontra: **Home**, **Chat**, **Benchmarks** (avaliações), **Qualidade e Métricas**, **Dashboard**, **Modelo Carregados**, **Prompts**, **Logs do sistema** e, no rodapé do menu, **Definições**. No cabeçalho há ainda botões para o **README**, o **Plano de Testes** e o guia **Comparar Modelos** (ambos documentos de leitura, disponíveis em português e inglês).
 
 - **Totalmente responsiva**: a interface adapta-se automaticamente a qualquer tamanho de ecrã. Em telemóveis (≤768px), o menu lateral transforma-se num painel deslizante aberto pelo ícone de hambúrguer no cabeçalho; os diálogos, as tabelas de dados, o chat e o divisor de painéis dos benchmarks ajustam-se para garantir uma boa experiência em qualquer dispositivo.
 - **Conversar**: abra o Chat, escreva a sua mensagem na caixa de texto e prima <kbd>Enter</kbd> ou o botão de envio. As respostas aparecem em tempo real e cada uma mostra o tempo que demorou. Use **Histórico** para retomar conversas anteriores e **Novo Chat** para começar de novo.
-- **Avaliação Automática de Juízes:** Para cada resposta obtida, clique em **"Avaliar automaticamente"** — a aplicação submete o prompt de auditoria ao Gemini e ao OpenRouter, abre o ecrã de avaliação já preenchido e, após a sua revisão, guarda os veredictos na BD. Se preferir avaliar manualmente, use **"Copiar prompt"** para colocar o prompt de auditoria no clipboard.
+- **Avaliação Automática de Juízes:** no painel **Qualidade e Métricas** (`/benchmarks`), para cada resposta obtida, clique em **"Avaliar automaticamente"** — a aplicação submete o prompt de auditoria ao Gemini e ao OpenRouter, mostra o progresso passo a passo (com opção de cancelar) e abre o ecrã de avaliação já preenchido para, após a sua revisão, guardar os veredictos na BD. Se preferir avaliar manualmente, use **"Copiar prompt"**. Os rótulos dos dois juízes refletem sempre a **origem real** de cada avaliação (automática, externa colada por si, ou "sem resposta").
 - **Tema Claro/Escuro**: alterne entre o tema claro e o escuro sempre que preferir. A sua escolha fica **guardada no navegador** e é restaurada automaticamente na próxima visita.
 - **Definições**: aceda à página de Definições (`/settings`) para configurar os **juízes de IA** — chaves de API Gemini/OpenRouter, modelo do juiz OpenRouter (escolhido numa lista de radio buttons com o catálogo gratuito do OpenRouter) e o toggle de **reasoning (think)** para modelos que suportam raciocínio (gravadas na BD).
 
@@ -162,10 +161,10 @@ Comece por enviar uma mensagem no Chat — a aplicação trata de tudo o resto.
    cd OllamaArena
    dotnet watch run
    ```
-4. Abrir `https://localhost:7175` (ou `http://localhost:5292`). No primeiro arranque, a base de dados SQLite é criada automaticamente.
+4. Abrir `http://localhost:5292` (ou `https://localhost:7175`, se iniciar com `dotnet watch run --launch-profile https`). No primeiro arranque, a base de dados SQLite é criada automaticamente.
 
 ### Configuração opcional
-- **Juízes de IA (chaves + modelo + temperatura):** a forma mais simples (e a única que funciona em qualquer deploy) é a página **Definições** (`/settings`), com a secção **"Juízes de IA"** — lá pode colar as chaves Gemini/OpenRouter, escolher o modelo do juiz OpenRouter numa **lista de radio buttons** a partir do **catálogo público** (modelos gratuitos; `openrouter/free` é sempre o default e fica fixo no topo) — ou escrever um ID à mão para casos offline/custom — e ajustar a temperatura. A escolha ativa fica na tabela `Configuracoes` (SQLite); tudo se aplica sem reiniciar.
+- **Juízes de IA (chaves + modelo):** a forma mais simples (e a única que funciona em qualquer deploy) é a página **Definições** (`/settings`), com a secção **"Juízes de IA"** — lá pode colar as chaves Gemini/OpenRouter e escolher o modelo do juiz OpenRouter numa **lista de radio buttons** a partir do **catálogo público** (modelos gratuitos; `openrouter/free` é sempre o default e fica fixo no topo) — ou escrever um ID à mão para casos offline/custom. A escolha ativa fica na tabela `Configuracoes` (SQLite); tudo se aplica sem reiniciar. A temperatura dos juízes é **fixa em 0** (determinística) e por isso não é configurável — o que se ajusta automaticamente é a temperatura do *chat* local, não a dos juízes.
 - Em desenvolvimento, pode configurar as mesmas chaves via user-secrets (ficam fora do repositório); a BD sobrepõe-se sempre à configuração:
   ```bash
   dotnet user-secrets set "ApiKeys:Gemini" "<chave>"
@@ -191,20 +190,20 @@ O repositório inclui um workflow GitHub Actions (`deploy-iis.yml`) que publica 
 
 Este ficheiro é **preservado pelo workflow em cada deploy** (fica fora do publish e da limpeza do site) e é relido em runtime (`reloadOnChange`), sem reiniciar o site. **Mantenha o bloco `Security`** — o workflow escreve-o automaticamente em cada deploy. Alternativa: variáveis de ambiente no App Pool do IIS (`ApiKeys__Gemini` / `ApiKeys__OpenRouter`, o `__` é convertido em `:`), que também sobrevivem a redeploys.
 
-### 📚 Documentação técnica (pasta `Docs`)
-A pasta **`OllamaArena/Docs/`** reúne a documentação técnica do projeto em Markdown — pode consultá-la no repositório ou, após um clone, diretamente no explorador de ficheiros:
+### 📚 Documentação técnica
+A documentação do projeto está em Markdown — pode consultá-la no repositório ou, após um clone, diretamente no explorador de ficheiros:
 
 | Ficheiro | Conteúdo |
 |---|---|
-| `Funcionalidades.md` | Documentação técnica completa (stack, páginas, serviços, BD, configuração, deploy) |
-| `Guia_Testes.md` | Checklist manual de validação (build + testes + smoke test das funcionalidades) |
-| `Guia_Como_Comparar_Modelos.md` | Como usar o laboratório para comparar modelos de forma justa |
-| `Guia_Apresentacao.md` | Como gerar a apresentação `OllamaArena.pptx` a partir das screenshots em `OllamaArena/Screenshots/` |
-| `Relatorio_Analise.md` | Relatório de análise do código (pontos fortes, bugs, dívida técnica) |
-| `schema.sql` | DDL de referência (5 tabelas; o runtime cria 7 — adiciona `Configuracoes` e `ModelosJuiz` no arranque) |
+| `OllamaArena/Docs/Funcionalidades.md` | Documentação técnica completa (stack, páginas, serviços, BD, configuração, deploy) |
+| `OllamaArena/ComoCompararModelos/Guia_Como_Comparar_Modelos.md` | Guia "como comparar modelos" de forma justa (também em inglês, e legível dentro da app em `/comparar-modelos`) |
+| `OllamaArena/PlanoDeTestes/Prompts_Teste_Juiz.md` | Plano de testes com 15 casos para avaliar Bases (também em inglês, e legível em `/plano-de-testes`) |
+| `OllamaArena/Docs/Guia_Apresentacao.md` | Como gerar a apresentação `OllamaArena.pptx` a partir das screenshots em `OllamaArena/Screenshots/` |
+| `OllamaArena/Docs/Relatorio_Analise.md` | Relatório de análise do código (pontos fortes, bugs, dívida técnica) |
+| `OllamaArena/Docs/schema.sql` | DDL de referência — as **7 tabelas** que o runtime cria no arranque (`Prompts`, `Respostas`, `Conversas`, `ConversaMensagens`, `Configuracoes`, `ModelosJuiz`, `Logs`) |
 
 ### 📸 Screenshots e apresentação
-A pasta **`OllamaArena/Screenshots/`** guarda capturas de ecrã das principais páginas e a apresentação **`OllamaArena.pptx`** (16:9) que as organiza num deck com **template profissional IT** (fundo azul-escuro, acento Fluent), **transições modernas** e **avanço por clique ou após 10 s**. Para regenerar (ex.: depois de adicionar capturas), corra:
+A pasta **`OllamaArena/Screenshots/`** guarda capturas de ecrã das principais páginas e a apresentação **`OllamaArena.pptx`** (16:9) que as organiza num deck com **template profissional IT** (fundo azul-escuro, acento Fluent), **transições modernas** e **avanço por clique ou após 10 s**. Existe também uma variante gerada a partir de ilustrações por IA — imagens em `Screenshots/AI_Generated/` (a partir dos briefs em `OllamaArena/Docs/Prompts/`) em `Screenshots/OllamaArena_IA.pptx`, com o respetivo script. Para regenerar a apresentação principal (ex.: depois de adicionar capturas), corra:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File "OllamaArena\Screenshots\gerar_apresentacao.ps1"

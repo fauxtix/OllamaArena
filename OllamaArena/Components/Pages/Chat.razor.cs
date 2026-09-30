@@ -132,7 +132,7 @@ namespace OllamaArena.Components.Pages
                 {
                     _models = localModels;
 
-                    ModelName = _models.First();
+                    ModelName = await ResolverModeloPreferidoAsync(_models);
 
                     var allModels = await GpuService!.GetLocalModelsAsync();
                     var currentModelDetails = allModels?.Models?
@@ -158,7 +158,7 @@ namespace OllamaArena.Components.Pages
 
                     if (_models.Count > 0)
                     {
-                        ModelName = _models.First();
+                        ModelName = await ResolverModeloPreferidoAsync(_models);
                     }
 
                     var currentModelDetails = allModels?.Models?
@@ -200,6 +200,27 @@ namespace OllamaArena.Components.Pages
                 return JsonSerializer.Deserialize<List<string>>(modelsJson) ?? new List<string>();
             }
             return [];
+        }
+
+        // O modelo escolhido pelo utilizador é gravado em "ollama_model"; se já não existir
+        // (modelo removido com ollama rm), cai no primeiro da lista.
+        private async Task<string> ResolverModeloPreferidoAsync(List<string> modelos)
+        {
+            if (modelos.Count == 0) return string.Empty;
+
+            try
+            {
+                var salvo = await JS.InvokeAsync<string?>("localStorage.getItem", "ollama_model");
+
+                if (!string.IsNullOrWhiteSpace(salvo)
+                    && modelos.Any(m => string.Equals(m, salvo, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return salvo;
+                }
+            }
+            catch { }
+
+            return modelos.First();
         }
 
 
@@ -576,6 +597,7 @@ namespace OllamaArena.Components.Pages
 
         private async Task SaveModel()
         {
+            if (string.IsNullOrWhiteSpace(ModelName)) return;
             await JS.InvokeVoidAsync("localStorage.setItem", "ollama_model", ModelName);
 
         }
