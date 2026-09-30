@@ -14,7 +14,10 @@
 @inject IAnalysisService AnalysisService
 @inject IJSRuntime JS
 
+<PageTitle>@L["BenchmarkEvaluations.PageTitle"]</PageTitle>
+
 <div class="page">
+    <PageHeader Title="@L["BenchmarkEvaluations.PageTitle"]" />
 
     <div class="toolbar">
 
@@ -232,6 +235,11 @@
         background: var(--fill-color);
     }
 
+    /* Cabeçalho partilhado: afasta-o das margens da página (a .page não tem padding) */
+    .page > .page-header-block {
+        width: auto;
+        margin: 16px 16px 18px 16px;
+    }
     .toolbar {
         flex: 0 0 auto;
         padding: 10px 12px;

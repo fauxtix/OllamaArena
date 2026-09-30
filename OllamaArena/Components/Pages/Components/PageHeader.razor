@@ -1,0 +1,70 @@
+@* Cabeçalho de página partilhado: título com gradiente moderno, barra de acento
+   e linha divisória, com variante de cor para cada tema.
+   O FluentDesignTheme define document.body.dataset.theme ("light"/"dark"),
+   por isso o tema escuro é o estado base e o claro é o override. *@
+
+<div class="page-header-block">
+    <h2 class="fluent-h2 page-header-title">@Title</h2>
+
+    @if (!string.IsNullOrWhiteSpace(Subtitle))
+    {
+        <p class="page-header-subtitle">@Subtitle</p>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? Subtitle { get; set; }
+}
+<style>
+    .page-header-block {
+        position: relative;
+        width: 100%;
+        margin: 4px 0 30px 0;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--neutral-stroke-rest);
+    }
+
+    .page-header-title {
+        margin: 0;
+        font-size: clamp(1.6rem, 4vw, 2.2rem);
+        font-weight: 800;
+        letter-spacing: .01em;
+        line-height: 1.15;
+        background: linear-gradient(90deg, #38BDF8, #A78BFA);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: transparent;
+    }
+
+    .page-header-subtitle {
+        margin: 10px 0 0 0;
+        max-width: 78ch;
+        font-size: .95rem;
+        line-height: 1.5;
+        color: var(--neutral-foreground-hint);
+    }
+
+    .page-header-block::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -2px;
+        width: 88px;
+        height: 4px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #38BDF8, #A78BFA);
+    }
+
+    body[data-theme="light"] .page-header-title {
+        background: linear-gradient(90deg, #0284C7, #7C3AED);
+    }
+
+    body[data-theme="light"] .page-header-block::after {
+        background: linear-gradient(90deg, #0284C7, #7C3AED);
+    }
+</style>

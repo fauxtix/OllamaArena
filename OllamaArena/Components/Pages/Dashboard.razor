@@ -1,6 +1,7 @@
 ﻿@page "/dashboard"
 @using Microsoft.Extensions.Localization
 @using Microsoft.FluentUI.AspNetCore.Components
+@using OllamaArena.Components.Pages.Components
 @using OllamaArena.Models.DTO
 @using OllamaArena.Resources
 @using OllamaArena.Services.Interfaces.Repositories
@@ -11,10 +12,8 @@
 
 <PageTitle>@L["Dashboard.PageTitle"]</PageTitle>
 
-<h2 class="fluent-h2" style="margin-bottom: 4px;">@L["Dashboard.Title"]</h2>
-<p class="fluent-body" style="margin-bottom: 20px; color: var(--neutral-foreground-hint);">
-    @L["Dashboard.Intro"]
-</p>
+<PageHeader Title="@L["Dashboard.Title"]"
+           Subtitle="@L["Dashboard.Intro"]" />
 
 @if (_isLoading)
 {

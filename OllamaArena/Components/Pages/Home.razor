@@ -110,12 +110,13 @@
             {
                 // Ainda não limpamos → limpar localStorage e marcar a sessão
                 await JS.InvokeVoidAsync("localStorage.removeItem", "ollamaModels");
-                await JS.InvokeVoidAsync("localStorage.removeItem", "ollamaModelsFull");
+                await JS.InvokeVoidAsync("localStorage.removeItem", "ollamaModelsFull"); // cache v1 (sem SupportsThinking)
+                await JS.InvokeVoidAsync("localStorage.removeItem", "ollamaModelsFullV2");
                 await JS.InvokeVoidAsync("sessionStorage.setItem", "ollamaCacheCleared", "1");
             }
 
             // 2. Tentar ler a cache
-            var json = await JS.InvokeAsync<string?>("localStorage.getItem", "ollamaModelsFull");
+            var json = await JS.InvokeAsync<string?>("localStorage.getItem", "ollamaModelsFullV2");
 
             if (!string.IsNullOrEmpty(json))
             {
@@ -136,6 +137,7 @@
                     var metadata = await GpuService.GetExtendedModelMetadataAsync(model.Model);
                     model.ContextLength = metadata.ContextLength;
                     model.TrainingYear = metadata.TrainingYear;
+                    model.SupportsThinking = metadata.SupportsThinking;
                 }
 
                 _models = _fullModels.Select(m => m.Model).ToList();
@@ -144,7 +146,7 @@
                 await JS.InvokeVoidAsync("localStorage.setItem", "ollamaModels",
                     JsonSerializer.Serialize(_models));
 
-                await JS.InvokeVoidAsync("localStorage.setItem", "ollamaModelsFull",
+                await JS.InvokeVoidAsync("localStorage.setItem", "ollamaModelsFullV2",
                     JsonSerializer.Serialize(_fullModels, JsonOptions));
             }
         }

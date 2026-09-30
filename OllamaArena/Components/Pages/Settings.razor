@@ -1,5 +1,6 @@
 @page "/settings"
 @using Microsoft.Extensions.Localization
+@using OllamaArena.Components.Pages.Components
 @using OllamaArena.Models.DTO
 @using OllamaArena.Resources
 @using OllamaArena.Services.Interfaces.Services
@@ -12,7 +13,11 @@
 @inject IToastService ToastService
 @inject IDialogService DialogService
 
+<PageTitle>@L["Settings"]</PageTitle>
+
 <div style="min-height: 250px; padding: 20px; max-width: 960px;">
+    <PageHeader Title="@L["Settings"]" />
+
     <FluentStack Orientation="Orientation.Vertical" Style="gap: 14px;">
         @* Configuração dos Juízes de IA (Gemini/OpenRouter) *@
         <FluentLabel Typo="Typography.H5" Weight="FontWeight.Bold">@L["Settings.JudgesSectionTitle"]</FluentLabel>

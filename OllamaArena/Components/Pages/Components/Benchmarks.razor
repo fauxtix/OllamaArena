@@ -13,8 +13,9 @@
 
 <div class="analise-container-horizontal">
 
+    <PageHeader Title="@L["Benchmarks.PageTitle"]" />
+
     <div class="pagina-header">
-        <h2>@L["Benchmarks.PageTitle"]</h2>
         <!-- Botão de Refrescar aqui -->
         <FluentButton Appearance="Appearance.Outline"
                       IconStart="@(new Icons.Regular.Size24.ArrowClockwise())"
@@ -335,7 +336,7 @@
 
     .pagina-header {
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-end;
         align-items: center;
         padding: 10px 16px;
         background-color: var(--neutral-layer-1);

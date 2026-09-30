@@ -10,7 +10,7 @@ public interface IOllamaGpuService
     Task<bool> UnloadModelFromMemoryAsync(string modelName);
     Task<GpuStatus> CheckGpuCompatibility(long modelSizeInBytes);
     Task<int> GetModelContextLengthAsync(string modelName);
-    Task<(int ContextLength, string TrainingYear)> GetExtendedModelMetadataAsync(string modelName);
+    Task<ModelExtendedMetadata> GetExtendedModelMetadataAsync(string modelName);
     Task<int> GetRecommendedContextLengthAsync(long modelSizeInBytes, string modelName);
     Task<bool> ModelSupportsThinkingAsync(string modelName);
     Task<string?> GerarResumoDoPromptAsync(string userPrompt, string activeModel);

@@ -2,6 +2,7 @@
 @using System.Text.Json
 @using Microsoft.Extensions.Localization
 @using Microsoft.FluentUI.AspNetCore.Components
+@using OllamaArena.Components.Pages.Components
 @using OllamaArena.Resources
 @using OllamaArena.Services.Interfaces.Services
 @using static OllamaArena.Models.DTO.OllamaModels
@@ -13,10 +14,27 @@
 
 <PageTitle>@L["Modelos.PageTitle"]</PageTitle>
 
-<h2 class="fluent-h2" style="margin-bottom: 4px;">@L["Modelos.LocalInstalled"]</h2>
-<p class="fluent-body" style="margin-bottom: 25px; color: var(--neutral-foreground-hint);">
-    @L["Modelos.IntroText"]
-</p>
+<div class="page">
+
+<PageHeader Title="@L["Modelos.LocalInstalled"]"
+             Subtitle="@L["Modelos.IntroText"]" />
+
+<div class="toolbar">
+    <div class="toolbar-content">
+        <div class="toolbar-row">
+            <FluentLabel Typo="Typography.Body"
+                        Style="color: var(--neutral-foreground-hint);">
+                @L["Modelos.HelpCount", _localModels?.Count ?? 0]
+            </FluentLabel>
+            <FluentSpacer />
+            <FluentButton Appearance="Appearance.Outline"
+                          IconStart="@(new Icons.Regular.Size20.Info())"
+                          OnClick="@(() => _showColumnHelp = true)">
+                @L["Modelos.HelpButton"]
+            </FluentButton>
+        </div>
+    </div>
+</div>
 
 <div style="margin-top: 15px;">
     @if (_isLoading)
@@ -66,6 +84,21 @@
                 @L["Modelos.SizeInGB", context.SizeInGB]
             </TemplateColumn>
 
+            <TemplateColumn Title="@L["Modelos.ColReasoning"]" Align="Align.Center" Width="130px">
+                @switch (context.SupportsThinking)
+                {
+                    case true:
+                        <FluentBadge Fill="success">@L["Modelos.ReasoningYes"]</FluentBadge>
+                        break;
+                    case false:
+                        <FluentBadge Appearance="Appearance.Neutral">@L["Modelos.ReasoningNo"]</FluentBadge>
+                        break;
+                    default:
+                        <FluentBadge Appearance="Appearance.Neutral">@L["Modelos.ReasoningUnknown"]</FluentBadge>
+                        break;
+                }
+            </TemplateColumn>
+
             <TemplateColumn Title="@L["Modelos.ColGpuCompat"]" Width="180px">
                 @{
                     if (!_gpuChecks.TryGetValue(context.Name, out var gpuCheck) || gpuCheck.AvailableVramGB == 0)
@@ -91,10 +124,16 @@
     }
 </div>
 
+</div>
+
+<ModelColumnsInfoDialog Visible="@_showColumnHelp"
+                        VisibleChanged="@(v => _showColumnHelp = v)" />
+
 @code {
     private List<ModelDetails>? _localModels;
     private Dictionary<string, GpuStatus> _gpuChecks = new(StringComparer.OrdinalIgnoreCase);
     private bool _isLoading = true;
+    private bool _showColumnHelp = false;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -103,7 +142,7 @@
     };
 
     private const string NamesKey = "ollamaModels"; 
-    private const string FullKey = "ollamaModelsFull"; 
+    private const string FullKey = "ollamaModelsFullV2"; 
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -135,6 +174,7 @@
                         var metadata = await OllamaGpuService.GetExtendedModelMetadataAsync(model.Model);
                         model.ContextLength = metadata.ContextLength;
                         model.TrainingYear = metadata.TrainingYear;
+                        model.SupportsThinking = metadata.SupportsThinking;
                     }
 
                     // Guardar a versão completa para próximas visitas
@@ -194,6 +234,38 @@
 }
 
 <style>
+    .page {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: var(--fill-color);
+    }
+
+    .toolbar {
+        flex: 0 0 auto;
+        padding: 4px 12px;
+        border-bottom: 1px solid var(--neutral-stroke-rest);
+        background: var(--fill-color);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+
+    .toolbar-content {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .toolbar-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        width: 100%;
+        margin: 6px 0;
+        flex-wrap: wrap;
+    }
+
     .loading-state {
         display: flex;
         flex-direction: column;
@@ -222,5 +294,18 @@
         .table-scroll fluent-data-grid {
             min-width: 720px;
         }
+
+    @@media (max-width: 768px) {
+        .toolbar-row {
+            margin: 8px 0 !important;
+            gap: 8px !important;
+        }
+
+        .toolbar-row fluent-spacer,
+        .toolbar-row div.spacer {
+            flex: 0 0 100%;
+            height: 0;
+        }
+    }
 
 </style>

@@ -2,6 +2,7 @@ using ClosedXML.Excel;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.JSInterop;
 using OllamaArena.Models.DTO;
+using OllamaArena.Services.Helpers;
 using System.Globalization;
 
 namespace OllamaArena.Components.Pages
@@ -326,6 +327,21 @@ namespace OllamaArena.Components.Pages
                 string Valor(int? v) =>
                     v.HasValue ? v.Value.ToString(CultureInfo.InvariantCulture) : "—";
 
+                // No PDF indica-se de onde veio cada juiz: API (automático) ouExterno
+                // (preenchido à mão). É por resposta, porque um mesmo slot pode ter
+                // origens diferentes entre respostas.
+                string RotuloJuiz(string? origem, bool primeiroSlot)
+                {
+                    var slot = primeiroSlot ? L["Evaluation.Judge1"].Value : L["Evaluation.Judge2"].Value;
+                    return JudgeOriginResolver.Normalizar(origem) switch
+                    {
+                        JudgeOriginResolver.Gemini => $"{slot} · {L["Evaluation.JudgeGemini"].Value} ({L["Evaluation.OriginAutomatic"].Value})",
+                        JudgeOriginResolver.OpenRouter => $"{slot} · {L["Evaluation.JudgeOpenRouter"].Value} ({L["Evaluation.OriginAutomatic"].Value})",
+                        JudgeOriginResolver.Externo => $"{slot} · {L["Evaluation.JudgeExternal"].Value}",
+                        _ => slot
+                    };
+                }
+
                 var relatorio = new
                 {
                     titulo = L["Benchmarks.ExportPdfTitle"].Value,
@@ -381,7 +397,9 @@ namespace OllamaArena.Components.Pages
                                     feedbackGemini = b.GeminiFeedback,
                                     feedbackOpenRouter = b.OpenRouterFeedback,
                                     recomendacaoGemini = b.GeminiRecommendation,
-                                    recomendacaoOpenRouter = b.OpenRouterRecommendation
+                                    recomendacaoOpenRouter = b.OpenRouterRecommendation,
+                                    rotuloJuiz1 = RotuloJuiz(b.Juiz1Origem, true),
+                                    rotuloJuiz2 = RotuloJuiz(b.Juiz2Origem, false)
                                 };
                             }).ToList()
                         }).ToList()

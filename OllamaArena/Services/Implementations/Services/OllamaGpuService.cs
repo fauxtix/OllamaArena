@@ -255,16 +255,21 @@ public class OllamaGpuService : IOllamaGpuService
 
 
     /// <summary>
-    /// Procura metadados estendidos (Contexto e Ano de Treino) para um modelo específico via /api/show.
+    /// Procura metadados estendidos (Contexto, Ano de Treino e capacidade de reasoning) via /api/show.
     /// </summary>
     /// <summary>
     /// Extrai o contexto e varre dinamicamente as licenças e ficheiros do modelo 
     /// para isolar o ano real de publicação, sem depender de formatos de nomes.
+    /// A mesma resposta traz as capacidades do modelo, por isso verificar "thinking" não custa uma
+    /// segunda chamada a /api/show. SupportsThinking fica a null quando o Ollama não devolve o array
+    /// "capabilities" (versões antigas) ou quando a chamada falha — assim nunca se confunde
+    /// "desconhecido" com "não suporta".
     /// </summary>
-    public async Task<(int ContextLength, string TrainingYear)> GetExtendedModelMetadataAsync(string modelName)
+    public async Task<ModelExtendedMetadata> GetExtendedModelMetadataAsync(string modelName)
     {
         int contextLength = _options.DefaultContextLength; // Valor padrão seguro
         string trainingYear = "2024";
+        bool? supportsThinking = null;
 
         try
         {
@@ -277,6 +282,9 @@ public class OllamaGpuService : IOllamaGpuService
 
                 if (showData != null)
                 {
+                    // 0. Capacidade de reasoning — vem na mesma resposta de /api/show (array "capabilities")
+                    supportsThinking = showData.SupportsThinking;
+
                     // 1. Extração estruturada da janela de contexto (model_info)
                     if (showData.ModelInfo != null)
                     {
@@ -296,7 +304,7 @@ public class OllamaGpuService : IOllamaGpuService
                         if (dateKey != null && showData.ModelInfo.TryGetValue(dateKey, out var dateValue))
                         {
                             var matchDate = System.Text.RegularExpressions.Regex.Match(dateValue.ToString() ?? "", @"\b(202[0-9])\b");
-                            if (matchDate.Success) return (contextLength, matchDate.Value);
+                            if (matchDate.Success) return new ModelExtendedMetadata(contextLength, matchDate.Value, supportsThinking);
                         }
                     }
 
@@ -323,7 +331,7 @@ public class OllamaGpuService : IOllamaGpuService
             _logger.LogError($"Erro ao processar metadados universais para {modelName}: {ex.Message}");
         }
 
-        return (contextLength, trainingYear);
+        return new ModelExtendedMetadata(contextLength, trainingYear, supportsThinking);
     }
 
     /// <summary>

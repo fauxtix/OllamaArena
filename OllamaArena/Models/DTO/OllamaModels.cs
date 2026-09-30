@@ -48,6 +48,10 @@ namespace OllamaArena.Models.DTO
             public int ContextLength { get; set; } = 2048;
 
             public string TrainingYear { get; set; } = "2024"; // 'Desconhecido iria dar errro na execução do prompt de avaliação de modelos, então defini como 2024 por padrão.
+
+            // Capacidade de reasoning declarada pelo Ollama em /api/show (capabilities contém "thinking").
+            // null = desconhecido (Ollama antigo que não devolve o array "capabilities", ou erro ao consultar).
+            public bool? SupportsThinking { get; set; }
         }
 
         public class ModelDetailsInfo
@@ -84,7 +88,18 @@ namespace OllamaArena.Models.DTO
             // se o payload deve incluir `think` sem que modelos que não o suportam rejeitem o pedido.
             [JsonPropertyName("capabilities")]
             public List<string>? Capabilities { get; set; }
+
+            // true/false quando o Ollama devolveu a lista de capacidades; null quando não a devolveu
+            // (versões antigas do Ollama), para nunca confundir "desconhecido" com "não suporta".
+            public bool? SupportsThinking => Capabilities is null
+                ? null
+                : Capabilities.Contains("thinking", StringComparer.OrdinalIgnoreCase);
         }
+
+        /// <summary>
+        /// Metadados estendidos de um modelo, obtidos numa única chamada a POST /api/show.
+        /// </summary>
+        public record ModelExtendedMetadata(int ContextLength, string TrainingYear, bool? SupportsThinking);
 
         public class GpuStatus
         {
