@@ -57,7 +57,7 @@ O erro mais comum é comparar respostas a perguntas diferentes. Para que os mode
 
 ### Passo 3 — Executar a bateria
 
-Para cada modelo, responda **às mesmas perguntas**, escolhendo a opção 'Novo Chat' emudando o modelo no seletor do chat. Cada resposta fica registada na base de dados com as métricas de velocidade, agrupada pela mesma pergunta (mesmo `PromptId`).
+Para cada modelo, responda **às mesmas perguntas**, escolhendo a opção 'Novo Chat' e mudando o modelo no seletor do chat. Cada resposta fica registada na base de dados com as métricas de velocidade, agrupada pela mesma pergunta (mesmo `PromptId`).
 
 ### Passo 4 — Avaliar cada resposta
 
