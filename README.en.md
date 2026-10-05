@@ -1,19 +1,5 @@
 # 🦙 Ollama Chat & Benchmark Laboratory
 
-![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white) ![Blazor Server](https://img.shields.io/badge/Blazor-Server-512BD4?logo=blazor&logoColor=white) ![FluentUI Blazor v4](https://img.shields.io/badge/FluentUI_Blazor-v4.14.2-0078D4?logo=fluentui&logoColor=white) ![SQLite + Dapper](https://img.shields.io/badge/SQLite-Dapper-003B57?logo=sqlite&logoColor=white) ![Ollama](https://img.shields.io/badge/Ollama-Local_LLMs-7499FF?logo=ollama&logoColor=white) ![PT | EN](https://img.shields.io/badge/Lang-PT%20%7C%20EN-00897B) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-2ea44f)
-
-> **PT:** [Ler este documento em português](README.md)
-
-<p align="center">
-  <img src="OllamaArena/Screenshots/2_Chat_1.png" width="32%" alt="Chat with real-time streaming" title="Chat" />
-  <img src="OllamaArena/Screenshots/QualityAndMetrics_1.png" width="32%" alt="Quality and Metrics: every model's answer to the same prompt" title="Quality and Metrics" />
-  <img src="OllamaArena/Screenshots/Dashboard_1.png" width="32%" alt="Dashboard with summary cards, radars and ranking table" title="Dashboard" />
-</p>
-<p align="center">
-  <img src="OllamaArena/Screenshots/LoadedModels.png" width="48%" alt="Loaded models with training year, context, reasoning and GPU compatibility" title="Loaded Models" />
-  <img src="OllamaArena/Screenshots/Benchmarks_LocalAnalysis_Result.png" width="48%" alt="Local C# analysis of the benchmark results" title="Local AI analysis" />
-</p>
-
 Your personal **100% local** artificial intelligence hub. Chat with AI models running on your own computer, benchmark each one's performance and find out which responds fastest and with the best quality — all through a modern, fluid interface available in Portuguese and English.
 
 This application is more than a simple chat: it's an **experimentation laboratory** that helps you choose, compare and fine-tune the AI models already installed on your machine. The chat, the benchmarks, the database and the results analysis run **100% on your computer**, with no external service.
