@@ -1,19 +1,5 @@
 # 🦙 Ollama Chat & Benchmark Laboratory
 
-![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white) ![Blazor Server](https://img.shields.io/badge/Blazor-Server-512BD4?logo=blazor&logoColor=white) ![FluentUI Blazor v4](https://img.shields.io/badge/FluentUI_Blazor-v4.14.2-0078D4?logo=fluentui&logoColor=white) ![SQLite + Dapper](https://img.shields.io/badge/SQLite-Dapper-003B57?logo=sqlite&logoColor=white) ![Ollama](https://img.shields.io/badge/Ollama-Local_LLMs-7499FF?logo=ollama&logoColor=white) ![PT | EN](https://img.shields.io/badge/Lang-PT%20%7C%20EN-00897B) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-2ea44f)
-
-> **EN:** [Read this document in English](README.en.md)
-
-<p align="center">
-  <img src="OllamaArena/Screenshots/2_Chat_1.png" width="32%" alt="Chat com streaming em tempo real" title="Chat" />
-  <img src="OllamaArena/Screenshots/QualityAndMetrics_1.png" width="32%" alt="Qualidade e Métricas: respostas de todos os modelos para a mesma pergunta" title="Qualidade e Métricas" />
-  <img src="OllamaArena/Screenshots/Dashboard_1.png" width="32%" alt="Dashboard com cartões, radares e tabela classificativa" title="Dashboard" />
-</p>
-<p align="center">
-  <img src="OllamaArena/Screenshots/LoadedModels.png" width="48%" alt="Modelos carregados com ano de treino, contexto, raciocínio e compatibilidade GPU" title="Modelos Carregados" />
-  <img src="OllamaArena/Screenshots/Benchmarks_LocalAnalysis_Result.png" width="48%" alt="Análise local dos benchmarks em C#" title="Análise IA local" />
-</p>
-
 Central pessoal de inteligência artificial **100% local**. Converse com modelos de IA que correm no seu próprio computador, teste o desempenho de cada um e descubra qual é que responde mais depressa e com melhor qualidade — tudo através de uma interface disponível em português e inglês.
 
 A aplicação é mais do que um simples chat: é um **laboratório de experimentação** que o ajuda a escolher, comparar e aperfeiçoar os modelos de IA que já tem instalados no seu equipamento. O chat, os benchmarks, a base de dados e a análise de resultados correm **100% no seu computador**, sem serviço externo.
