@@ -334,10 +334,12 @@ Os rótulos dos dois \"juízes\" não são fixos: refletem **de onde veio o cont
 | `POST /api/show` | `OllamaGpuService` | `model_info`: contexto nativo, arquitetura (KV cache), ano de treino |
 | `GET /api/ps` | `OllamaGpuService.GetRunningModelsAsync` | Modelos carregados em RAM/VRAM (`size_vram`) — para o cálculo de contexto |
 | `POST /api/chat` | `Chat` (streaming), `TranslationService` (fallback local) | Chat NDJSON e tradução de feedbacks |
-| `POST https://openrouter.ai/api/v1/chat/completions` | `TranslationService` (1.ª preferência), `AutomatedJudgeService` | Tradução de feedbacks e avaliação automática |
-| `POST https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent` | `TranslationService` (2.ª preferência), `AutomatedJudgeService` | Tradução de feedbacks e avaliação automática |
+| `POST https://openrouter.ai`<br>`/api/v1/chat/completions` | `TranslationService` (1.ª preferência), `AutomatedJudgeService` | Tradução de feedbacks e avaliação automática |
+| `POST https://generativelanguage`<br>`.googleapis.com`<br>`/v1beta/models/{modelo}:generateContent` | `TranslationService` (2.ª preferência), `AutomatedJudgeService` | Tradução de feedbacks e avaliação automática |
 | `POST /api/generate` | `Chat` (unload) | Descarregar modelo (`keep_alive=0`) em "Novo Chat"/cancelamento |
 | `GET /` (health) | `OllamaChecker` | Verificação de que o Ollama está ativo |
+
+> **Leitura da tabela:** os quatro primeiros endpoints e os dois últimos são relativos ao host `Ollama:BaseUrl` (`appsettings.json`, default `http://localhost:11434`); os dois do meio são serviços externos e usam **HTTPS**. Como os URLs externos são longos e não têm espaços, estão partidos com quebras de linha dentro da própria célula — se ficassem numa linha só, a coluna **Endpoint** ficaria tão larga que a coluna **Uso** saía do ecrã.
 
 ---
 
