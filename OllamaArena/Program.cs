@@ -68,7 +68,18 @@ try
     builder.Services.AddTransient<ChatComposerService>();
     builder.Services.AddTransient<EvaluatePromptTemplate>();
 
-    builder.Services.AddHttpClient<IAnalysisService, LocalAnalysisService>();
+    // Chat: streaming e persistência de turnos isolados da página.
+    builder.Services.AddTransient<IChatStreamClient, OllamaChatStreamClient>();
+    builder.Services.AddTransient<IChatTurnWriter, ChatTurnWriter>();
+
+    // Planilha de benchmarks: gera o .xlsx e serve-o por HTTP, para não passar
+    // os bytes em base64 pelo circuito SignalR.
+    builder.Services.AddScoped<IBenchmarkExcelExporter, BenchmarkExcelExporter>();
+
+    // A análise local é 100% CPU/in memória (sem HTTP): registada como serviço
+    // normal, não como cliente tipado — o AddHttpClient anterior injetava um
+    // HttpClient que o serviço nunca usava.
+    builder.Services.AddScoped<IAnalysisService, LocalAnalysisService>();
     builder.Services.AddHttpClient<InternetConnectivityService>();
 
     builder.Services.AddSingleton<MarkdownRenderer>();
@@ -83,7 +94,12 @@ try
     // Clientes nomeados para os juízes automáticos (Gemini e OpenRouter)
     builder.Services.AddHttpClient("Gemini", client => client.Timeout = TimeSpan.FromSeconds(120));
     builder.Services.AddHttpClient("OpenRouter", client => client.Timeout = TimeSpan.FromSeconds(120));
-    builder.Services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
+    // D2: o repositório de benchmarks foi partido em três responsabilidades (comandos,
+// read models e agregações). As três implementações partilham o mesmo IDapperContext
+// e o mesmo lifetime, por isso a ligação continua a ser uma só.
+    builder.Services.AddScoped<IBenchmarkCommandRepository, BenchmarkCommandRepository>();
+    builder.Services.AddScoped<IBenchmarkQueryRepository, BenchmarkQueryRepository>();
+    builder.Services.AddScoped<IBenchmarkStatsRepository, BenchmarkStatsRepository>();
     builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
     builder.Services.AddScoped<IModelosJuizRepository, ModelosJuizRepository>();
     builder.Services.AddScoped<ILogRepository, LogRepository>();
@@ -161,6 +177,45 @@ try
 
     app.MapRazorComponents<App>()
         .AddInteractiveServerRenderMode();
+
+    // ---------- DESCARGA DA PLANILHA DE BENCHMARKS ----------
+    // O .xlsx é gerado pelo componente, gravado numa pasta temporária e servido
+    // daqui. Passar os bytes em base64 pelo circuito SignalR contava com o limite
+    // de 32 MB e rebentava em exportações grandes; por HTTP não há esse teto.
+    const string ExcelMimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    app.MapGet("/api/export/benchmarks/{identificador}", IResult (string identificador, HttpContext http) =>
+    {
+        // O caminho é reconstruído a partir de um Guid validado, nunca a partir do
+        // texto recebido: "../" ou barras não produzem um caminho utilizável.
+        var caminho = BenchmarkExcelExporter.ResolverCaminho(identificador);
+
+        if (caminho is null || !File.Exists(caminho))
+            return Results.NotFound();
+
+        // A exportação é de uso único: o ficheiro apaga-se assim que a resposta
+        // terminar de ser enviada. (.NET 10 removeu deleteAfterSend de Results.File,
+        // por isso a limpeza é feita em OnCompleted.) A varredura por idade do
+        // exportador continua a ser a rede de segurança para ficheiros órfãos.
+        http.Response.OnCompleted(() =>
+        {
+            try
+            {
+                File.Delete(caminho);
+            }
+            catch (IOException)
+            {
+                // Ficheiro preso por outro processo: a limpeza por idade apanha-o.
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+
+            return Task.CompletedTask;
+        });
+
+        return Results.File(caminho, ExcelMimeType);
+    });
 
     app.Run();
 }

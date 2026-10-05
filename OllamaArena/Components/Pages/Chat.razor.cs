@@ -11,31 +11,38 @@ using OllamaArena.Services;
 using OllamaArena.Services.Helpers;
 using OllamaArena.Services.Interfaces.Repositories;
 using OllamaArena.Services.Interfaces.Services;
+using System.Diagnostics;
 using System.Globalization;
-using System.Text;
 using System.Text.Json;
 
 using static OllamaArena.Models.DTO.OllamaModels;
 
 namespace OllamaArena.Components.Pages
 {
-    public partial class Chat : IDisposable
+    /// <summary>
+    /// Página de conversa com o Ollama. A página orquestra a UI e nada mais: o streaming
+    /// vive em <see cref="IChatStreamClient"/>, a persistência em <see cref="IChatTurnWriter"/>
+    /// e a preparação do pedido em <see cref="ChatComposerService"/>.
+    /// </summary>
+    public partial class Chat : IAsyncDisposable
     {
         [Inject] public IOllamaGpuService? GpuService { get; set; }
         [Inject] public IDialogService? DialogService { get; set; }
-        [Inject] public IBenchmarkRepository? BenchmarkRepo { get; set; }
         [Inject] public IConversationRepository? ConversationRepo { get; set; }
+        [Inject] public IChatTurnWriter ChatTurnWriter { get; set; } = default!;
+        [Inject] public IChatStreamClient ChatStream { get; set; } = default!;
         [Inject] public PromptFilesService PromptFilesService { get; set; } = default!;
         [Inject] public ChatComposerService ChatComposer { get; set; } = default!;
-        [Inject] public IHttpClientFactory? HttpClientFactory { get; set; }
-        [Inject] public ILogger<App>? _logger { get; set; }
+        [Inject] public ILogger<Chat> _logger { get; set; } = default!;
         [Inject] public IStringLocalizer<SharedResources> L { get; set; } = default!;
         [Inject] public IOptions<OllamaOptions> OllamaSettings { get; set; } = default!;
 
-        private List<Models.DTO.ChatMessage> _messages = new();
+        private readonly List<ChatMessage> _messages = new();
+        private readonly List<string> _models = new();
+        private readonly SemaphoreSlim _modelChangeGate = new(1, 1);
+
         private string _currentMessage = string.Empty;
-        private int _inputKey = 0;
-        private bool _isThinking = false;
+        private bool _isThinking;
 
         private GpuStatus? _gpuReport;
         private long _modelSizeInBytes;
@@ -45,7 +52,7 @@ namespace OllamaArena.Components.Pages
         private bool _showContextBar;
 
         private bool _modelSupportsThinking;
-        private string _modelSupportsThinkingFor = "";
+        private string _modelSupportsThinkingFor = string.Empty;
 
         private ElementReference messagesDiv;
         private bool userAtBottom = true;
@@ -53,74 +60,90 @@ namespace OllamaArena.Components.Pages
         protected bool GPUDialogVisibility = false;
 
         private HistoryPanel? historyPanel;
-
         private GpuInfoDialog? gpuDialog;
 
-        private CancellationTokenSource? _cts;
+        /// <summary>
+        /// Dono único do cancelamento do turno em curso. Criado e descartado por
+        /// <see cref="SendMessage"/>; os outros pontos só cancelam. Antes o mesmo
+        /// CancellationTokenSource era descartado por <c>CancelRequest</c> e por um
+        /// <c>finally</c>, e o reader do stream continuava a usar o token já libertado.
+        /// </summary>
+        private CancellationTokenSource? _turnCts;
 
-        private string _modelName = "";
+        private string _modelName = string.Empty;
 
         private DotNetObjectReference<Chat>? _dotNetRef;
         private ElementReference chatInputRef;
 
         private bool isLoadingModels = false;
 
-        private int _currentPromptId = 0;
+        /// <summary>
+        /// Sobreposição de erro quando o Ollama não responde. Antes este campo nunca
+        /// passava a <c>true</c>: o overlay estava no markup mas era código morto.
+        /// </summary>
+        private bool showOllamaError;
 
-        private int _conversationId = 0;
+        /// <summary>Prompt de benchmark reutilizado entre turnos da mesma conversa.</summary>
+        private int _currentPromptId;
 
-        private bool showOllamaError = false;
+        /// <summary>0 enquanto a conversa ainda não foi criada na base de dados.</summary>
+        private int _conversationId;
 
-        // Estado pendente para gravação automática
-        private string _pendingUserPrompt = string.Empty;
-        private Models.DTO.ChatMessage? _pendingAiMessage;
-        private double _pendingTemperature;
-        private string _pendingTempoFinal = string.Empty;
-        private long _pendingEvalCount;
-        private long _pendingEvalDurationNs;
-        private long _pendingLoadDurationNs;
-        private double _pendingStopwatchMs;
+        private bool _disposed;
 
-        private bool _saveSuccess;
-        private string _saveResultDescricao = string.Empty;
-        private string _descricaoAtual = string.Empty;
+        /// <summary>Temperatura em vigor no último turno, mostrada no cartão de métricas.</summary>
+        private double temperature;
 
         private string ModelName
         {
             get => _modelName;
             set
             {
-                if (_modelName == value) return;
+                if (string.Equals(_modelName, value, StringComparison.Ordinal)) return;
+
                 _modelName = value;
+
+                // Serializado: o seletor de modelo pode disparar várias vezes seguidas e
+                // antes cada uma corria uma Task independente que escrevia em campos
+                // partilhados (tamanho, GPU, contexto) sem coordenação.
                 _ = OnModelChangedAsync();
             }
         }
-        private string OllamaEndpoint => $"{OllamaSettings.Value.BaseUrl}/api/chat";
 
-        private List<string> _models = new();
+        private int ContextProgressValue => Math.Min(_contextUsedTokens, _contextLength);
+        private int ContextRemaining => Math.Max(0, _contextLength - _contextUsedTokens);
+        private bool ContextNearLimit => _contextLength > 0 && (double)_contextUsedTokens / _contextLength >= 0.9;
 
-        double temperature;
-
-        protected override async Task OnInitializedAsync()
+        protected override void OnInitialized()
         {
-            _messages.Add(new Models.DTO.ChatMessage { User = "Ollama", Text = L["Chat.WelcomeMessage"] });
+            _messages.Add(new ChatMessage { User = "Ollama", Text = L["Chat.WelcomeMessage"] });
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            if (firstRender)
-            {
-                await GetModelsInfoAsync();
+            if (!firstRender || _disposed) return;
 
-                _dotNetRef = DotNetObjectReference.Create(this);
+            await GetModelsInfoAsync();
+
+            _dotNetRef = DotNetObjectReference.Create(this);
+
+            try
+            {
                 await JS.InvokeVoidAsync("chatInput.attachHandlers", chatInputRef, _dotNetRef);
+            }
+            catch (JSException ex)
+            {
+                // Navegador navigated away ou interop ainda não pronto: não é fatal.
+                _logger.LogWarning(ex, "Não foi possível anexar os handlers de input do chat.");
             }
         }
 
+        // ============================================================
+        //  MODELOS
+        // ============================================================
+
         private async Task GetModelsInfoAsync()
         {
-            if (DialogService == null) return;
-
             try
             {
                 isLoadingModels = true;
@@ -128,78 +151,103 @@ namespace OllamaArena.Components.Pages
 
                 var localModels = await LoadModelsFromLocalStorage();
 
-                if (localModels.Count > 0)
+                var allModels = (await GpuService!.GetLocalModelsAsync())?.Models;
+
+                if (allModels is not { Count: > 0 })
                 {
-                    _models = localModels;
+                    _logger.LogWarning("Ollama não devolveu nenhum modelo.");
+                    showOllamaError = true;
+                    return;
+                }
 
-                    ModelName = await ResolverModeloPreferidoAsync(_models);
+                showOllamaError = false;
 
-                    var allModels = await GpuService!.GetLocalModelsAsync();
-                    var currentModelDetails = allModels?.Models?
-                        .FirstOrDefault(m =>
-                            m.Name.Equals(ModelName, StringComparison.OrdinalIgnoreCase) ||
-                            m.Model.Equals(ModelName, StringComparison.OrdinalIgnoreCase));
-
-                    if (currentModelDetails != null)
-                    {
-                        _modelSizeInBytes = currentModelDetails.SizeInBytes;
-                        _gpuReport = await GpuService.CheckGpuCompatibility(currentModelDetails.SizeInBytes);
-                    }
-
-                    StateHasChanged();
+                if (localModels.Count == 0)
+                {
+                    _models.Clear();
+                    _models.AddRange(allModels.Select(m => m.Model));
+                    await SaveModelsToLocalStorage();
                 }
                 else
                 {
-                    var allModels = await GpuService!.GetLocalModelsAsync();
                     _models.Clear();
-                    _models.AddRange(allModels.Models.Select(m => m.Model));
-
-                    await SaveModelsToLocalStorage();
-
-                    if (_models.Count > 0)
-                    {
-                        ModelName = await ResolverModeloPreferidoAsync(_models);
-                    }
-
-                    var currentModelDetails = allModels?.Models?
-                        .FirstOrDefault(m =>
-                            m.Name.Equals(ModelName, StringComparison.OrdinalIgnoreCase) ||
-                            m.Model.Equals(ModelName, StringComparison.OrdinalIgnoreCase));
-
-                    if (currentModelDetails != null)
-                    {
-                        _modelSizeInBytes = currentModelDetails.SizeInBytes;
-                        _gpuReport = await GpuService.CheckGpuCompatibility(currentModelDetails.SizeInBytes);
-                    }
-
-                    StateHasChanged();
+                    _models.AddRange(localModels);
                 }
+
+                ModelName = await ResolverModeloPreferidoAsync(_models);
+
+                await AplicarMetadadosModeloAsync(ModelName);
+            }
+            catch (HttpRequestException ex)
+            {
+                // O daemon do Ollama está em baixo: é o caso que o overlay descreve.
+                _logger.LogError(ex, "Ollama inacessível: {Message}", ex.Message);
+                showOllamaError = true;
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Erro detetado GetModelsInfoAsync");
+                _logger.LogError(ex, "Erro ao carregar a lista de modelos do Ollama.");
             }
             finally
             {
                 isLoadingModels = false;
-                showOllamaError = false;
-                StateHasChanged();
+                await InvokeAsync(StateHasChanged);
             }
         }
+
+        /// <summary>
+        /// Carrega tamanho, compatibilidade GPU e limite de contexto do modelo. Antes esta
+        /// lógica estava copiada em três sítios (arranque, troca de modelo e primeiro envio),
+        /// com oRespectivo bloco de procura repetido.
+        /// </summary>
+        private async Task AplicarMetadadosModeloAsync(string modelName)
+        {
+            if (string.IsNullOrWhiteSpace(modelName)) return;
+
+            try
+            {
+                var allModels = (await GpuService!.GetLocalModelsAsync())?.Models;
+
+                var details = allModels?.FirstOrDefault(m =>
+                    m.Name.Equals(modelName, StringComparison.OrdinalIgnoreCase) ||
+                    m.Model.Equals(modelName, StringComparison.OrdinalIgnoreCase));
+
+                if (details is not null)
+                {
+                    _modelSizeInBytes = details.SizeInBytes;
+                    _gpuReport = await GpuService.CheckGpuCompatibility(details.SizeInBytes);
+                }
+
+                _contextLength = await GetContextLengthAsync(modelName);
+                _contextUsedTokens = 0;
+                _showContextBar = false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao obter metadados do modelo {ModelName}.", modelName);
+            }
+        }
+
         private async Task SaveModelsToLocalStorage()
         {
-            var modelsJson = JsonSerializer.Serialize(_models);
-            await JS.InvokeVoidAsync("localStorage.setItem", "ollamaModels", modelsJson);
+            await JS.InvokeVoidAsync("localStorage.setItem", "ollamaModels", JsonSerializer.Serialize(_models));
         }
 
         private async Task<List<string>> LoadModelsFromLocalStorage()
         {
-            var modelsJson = await JS.InvokeAsync<string>("localStorage.getItem", "ollamaModels");
-            if (!string.IsNullOrEmpty(modelsJson))
+            try
             {
-                return JsonSerializer.Deserialize<List<string>>(modelsJson) ?? new List<string>();
+                var modelsJson = await JS.InvokeAsync<string?>("localStorage.getItem", "ollamaModels");
+
+                return string.IsNullOrEmpty(modelsJson)
+                    ? []
+                    : JsonSerializer.Deserialize<List<string>>(modelsJson) ?? [];
             }
-            return [];
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "Cache local de modelos inválido; a recarregar do Ollama.");
+                return [];
+            }
         }
 
         // O modelo escolhido pelo utilizador é gravado em "ollama_model"; se já não existir
@@ -218,426 +266,57 @@ namespace OllamaArena.Components.Pages
                     return salvo;
                 }
             }
-            catch { }
-
-            return modelos.First();
-        }
-
-
-        protected void OpenHistory()
-        {
-            historyPanel?.Open();
-        }
-
-        private async Task OnScroll()
-        {
-            try
+            catch (JSException)
             {
-                if (messagesDiv.Context != null)
-                {
-                    var state = await JS.InvokeAsync<ScrollState>("chatScroll.getScrollState", messagesDiv);
-                    if (state != null)
-                    {
-                        userAtBottom = (state.ScrollHeight - state.ScrollTop - state.ClientHeight) < 80;
-                    }
-                }
+                // localStorage indisponível: usa o primeiro modelo.
             }
-            catch { }
+
+            return modelos[0];
         }
 
-        private async Task SendMessage()
+        private async Task OnModelChangedAsync()
         {
-            if (string.IsNullOrWhiteSpace(_currentMessage) || _isThinking) return;
-
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            var userPrompt = _currentMessage;
-
-            var userMessage = new Models.DTO.ChatMessage
-            {
-                User = L["Chat.UserDisplayName"],
-                Text = userPrompt,
-                IsCurrentUser = true
-            };
-            _messages.Add(userMessage);
-
-
-            _currentMessage = string.Empty;
-            _inputKey++;
-            _isThinking = true;
-            if (_contextLength == 0)
-                _contextLength = await GetContextLengthAsync(ModelName);
-
-            int previousContextTokens = _contextUsedTokens;
-            int promptTokenEstimate = ChatComposerService.EstimateTokens(userPrompt);
-            int estimatedOutputTokens = 0;
-            _contextUsedTokens = previousContextTokens + promptTokenEstimate;
-            _showContextBar = true;
-            StateHasChanged();
-            await ForceScrollToBottomAsync();
-
-            var aiMessage = new Models.DTO.ChatMessage
-            {
-                User = "Ollama",
-                Text = "...",
-                IsCurrentUser = false,
-                ElapsedTime = "0.00s"
-            };
-
-            _messages.Add(aiMessage);
-            StateHasChanged();
-            await ForceScrollToBottomAsync();
-
-            bool firstChunkReceived = false;
-
-            var timer = new System.Threading.Timer(_ =>
-            {
-                if (firstChunkReceived || !_isThinking) return;
-
-                var elapsed = stopwatch.Elapsed;
-                string tempo = elapsed.TotalSeconds < 10
-                    ? $"{elapsed.TotalSeconds:F2}s"
-                    : $"{elapsed.TotalSeconds:F1}s";
-
-                aiMessage.ElapsedTime = tempo;
-                _ = InvokeAsync(StateHasChanged);
-            }, null, 0, 150);
-
-            _cts = new CancellationTokenSource();
-            long loadDurationNs = 0;
-            long evalDurationNs = 0;
-            int evalCount = 0;
-            string? errorMessage = null;
+            await _modelChangeGate.WaitAsync();
 
             try
             {
-                // O system prompt pode conter o token {{TARGET_LANGUAGE}}: resolve-o para o
-                // idioma selecionado na UI (seletor PT/EN). Sem token, é no-op.
-                string systemInstructions = (await PromptFilesService.GetPromptFileContentAsync("system-prompt.txt") ?? string.Empty)
-                    .Replace(TargetLanguageResolver.Token, TargetLanguageResolver.GetTargetLanguage());
+                await SaveModel();
 
-                await EnsureModelSupportsThinkingAsync();
+                await AplicarMetadadosModeloAsync(ModelName);
 
-                var prepared = await ChatComposer.Prepare(
-                    _messages,
-                    userPrompt,
-                    systemInstructions,
-                    L["Chat.WelcomeMessage"],
-                    ModelName,
-                    _contextLength,
-                    _gpuReport?.FitsInGpu == true,
-                    _modelSupportsThinking);
+                _modelSupportsThinkingFor = string.Empty;
+                _currentPromptId = 0;
 
-                if (prepared is null)
-                {
-                    _isThinking = false;
-                    _messages.Remove(aiMessage);
-                    StateHasChanged();
-                    return;
-                }
-
-                // Quando o reasoning está desativado, não capturamos nem guardamos o raciocínio:
-                // modelos tipo deepseek-r1 geram-no sempre (não respeitam `think: false`).
-                bool capturarReasoning = prepared.EnableReasoning;
-
-                temperature = prepared.Temperature;
-                userMessage.Temperature = Math.Round(temperature, 2);
-
-
-
-                var payload = prepared.Payload;
-
-                var json = JsonSerializer.Serialize(payload);
-                using var request = HttpClientFactory != null
-                    ? new HttpRequestMessage(HttpMethod.Post, "api/chat")
-                    : new HttpRequestMessage(HttpMethod.Post, OllamaEndpoint);
-                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var ollamaClient = HttpClientFactory?.CreateClient("Ollama");
-                if (ollamaClient == null)
-                {
-                    _logger?.LogError("HttpClient indisponível. Não é possível enviar pedido ao Ollama.");
-                    _isThinking = false;
-                    _cts?.Dispose();
-                    _cts = null;
-                    StateHasChanged();
-                    return;
-                }
-
-                using var response = await ollamaClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, _cts.Token);
-                response.EnsureSuccessStatusCode();
-
-                _logger?.LogInformation("Ollama começou a responder após {Seconds:F1}s (modelo {ModelName}, contexto {Context})",
-                    stopwatch.Elapsed.TotalSeconds, ModelName, _contextLength);
-
-                using var stream = await response.Content.ReadAsStreamAsync(_cts.Token);
-                using var reader = new StreamReader(stream, Encoding.UTF8);
-                bool firstChunk = true;
-
-                if (_cts is null) return;
-
-                var cts = _cts;
-
-                while (true)
-                {
-                    string? line = await reader.ReadLineAsync(cts.Token);
-                    if (line is null) break;
-
-                    if (string.IsNullOrWhiteSpace(line)) continue;
-
-                    try
-                    {
-                        using var doc = JsonDocument.Parse(line);
-                        var root = doc.RootElement;
-
-                        string? chunkText = null;
-                        string? reasoningText = null;
-
-                        if (root.TryGetProperty("message", out var msgProp))
-                        {
-                            if (msgProp.TryGetProperty("content", out var contentProp))
-                            {
-                                chunkText = contentProp.GetString();
-                            }
-
-                            if (msgProp.TryGetProperty("reasoning_content", out var reasoningProp))
-                            {
-                                reasoningText = reasoningProp.GetString();
-                            }
-                            else if (msgProp.TryGetProperty("thinking", out var thinkingProp))
-                            {
-                                reasoningText = thinkingProp.GetString();
-                            }
-                        }
-                        else if (root.TryGetProperty("response", out var respProp))
-                        {
-                            chunkText = respProp.GetString();
-                        }
-
-                        if (capturarReasoning && !string.IsNullOrWhiteSpace(reasoningText))
-                        {
-                            if (aiMessage.Reasoning is null)
-                            {
-                                aiMessage.Reasoning = reasoningText;
-                            }
-                            else
-                            {
-                                aiMessage.Reasoning += reasoningText;
-                            }
-                        }
-
-                        if (!string.IsNullOrWhiteSpace(chunkText))
-                        {
-                            if (firstChunk)
-                            {
-                                aiMessage.Text = chunkText;
-                                firstChunk = false;
-                                firstChunkReceived = true;
-                                _logger?.LogInformation("Primeiro token recebido após {Seconds:F1}s (modelo {ModelName})", stopwatch.Elapsed.TotalSeconds, ModelName);
-                            }
-                            else
-                            {
-                                aiMessage.Text += chunkText;
-                            }
-
-                            estimatedOutputTokens += ChatComposerService.EstimateTokens(chunkText);
-                            _contextUsedTokens = previousContextTokens + promptTokenEstimate + estimatedOutputTokens;
-
-                            StateHasChanged();
-                            await StreamScrollAsync();
-                        }
-
-                        if (root.TryGetProperty("done", out var doneProp) && doneProp.GetBoolean() == true)
-                        {
-                            var metrics = JsonSerializer.Deserialize<OllamaMetrics>(line);
-                            if (metrics != null)
-                            {
-                                loadDurationNs = metrics.LoadDuration;
-                                evalDurationNs = metrics.EvalDuration;
-                                evalCount = metrics.PromptEvalCount + metrics.EvalCount;
-
-                                if (evalCount > 0)
-                                {
-                                    _contextUsedTokens = evalCount;
-                                    _showContextBar = true;
-                                }
-                            }
-
-                            // Alguns modelos (ex.: qwq, deepseek-r1) enviam o reasoning apenas na mensagem final
-                            if (capturarReasoning
-                                && root.TryGetProperty("message", out var doneMsg)
-                                && (doneMsg.TryGetProperty("reasoning_content", out var doneReasoning)
-                                    || doneMsg.TryGetProperty("thinking", out doneReasoning)))
-                            {
-                                string? finalReasoning = doneReasoning.GetString();
-                                if (!string.IsNullOrWhiteSpace(finalReasoning))
-                                {
-                                    aiMessage.Reasoning = (aiMessage.Reasoning is null)
-                                        ? finalReasoning
-                                        : aiMessage.Reasoning + finalReasoning;
-                                }
-                            }
-
-                        }
-                    }
-                    catch (JsonException jex)
-                    {
-                        aiMessage.Text += $"\n{L["Chat.OllamaParseError", jex.Message]}";
-                        _logger?.LogWarning("Failed to parse JSON line from Ollama API: {Line}... continuing the process", line);
-                        continue;
-                    }
-                }
-
-            }
-            catch (OperationCanceledException ocEx)
-            {
-                _logger?.LogError(ocEx, "O streaming da resposta foi cancelado.");
-                errorMessage = aiMessage.Text == "..." ? L["Chat.ResponseTimeout"] : L["Chat.ResponseCancelled"];
-                aiMessage.Text = aiMessage.Text == "..." ? L["Chat.ResponseTimeout"] : aiMessage.Text + L["Chat.ResponseCancelled"];
+                await InvokeAsync(StateHasChanged);
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Erro inesperado durante o streaming da resposta.");
-                errorMessage = L["Chat.UnexpectedError", ex.Message];
-                aiMessage.Text = L["Chat.UnexpectedError", ex.Message];
+                _logger.LogError(ex, "Erro ao trocar de modelo para {ModelName}.", ModelName);
             }
             finally
             {
-                stopwatch.Stop();
-                timer?.Dispose();
-
-                string tempoFinal = stopwatch.Elapsed.TotalSeconds < 10
-                    ? $"{stopwatch.Elapsed.TotalSeconds:F2}s"
-                    : $"{stopwatch.Elapsed.TotalSeconds:F1}s";
-
-                aiMessage.ElapsedTime = tempoFinal;
-
-                if (errorMessage is null)
-                {
-                    var (summary, cleanText) = ChatComposerService.ExtractSummaryFromResponse(aiMessage.Text);
-                    if (summary is not null)
-                    {
-                        aiMessage.Summary = summary;
-                        aiMessage.Text = cleanText;
-                    }
-
-                    aiMessage.LanguageWarning = LanguageWarningFor(aiMessage.Text);
-
-                    await HandlePostStreamAsync(userPrompt, aiMessage, temperature,
-                        evalCount, evalDurationNs, loadDurationNs,
-                        stopwatch.Elapsed.TotalMilliseconds, tempoFinal);
-                }
-
-                _isThinking = false;
-                try { _cts?.Dispose(); } catch { }
-                _cts = null;
-                StateHasChanged();
-                await ForceScrollToBottomAsync();
+                _modelChangeGate.Release();
             }
-        }
-        private async Task CancelRequest()
-        {
-            try
-            {
-                if (_cts != null && !_cts.IsCancellationRequested)
-                {
-                    await _cts.CancelAsync();
-                    _cts.Dispose();
-                    _cts = null;
-
-                    // 2. BENCHMARK: Força o Ollama a libertar a GPU imediatamente
-                    _ = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            var unloadPayload = new
-                            {
-                                model = ModelName,
-                                keep_alive = 0
-                            };
-
-                            var unloadJson = JsonSerializer.Serialize(unloadPayload);
-
-                            using var unloadRequest = new HttpRequestMessage(HttpMethod.Post, $"{OllamaSettings.Value.BaseUrl}/api/generate");
-                            unloadRequest.Content = new StringContent(unloadJson, Encoding.UTF8, "application/json");
-
-                            await Http.SendAsync(unloadRequest);
-                        }
-                        catch { }
-                    });
-                }
-            }
-            catch { }
-        }
-
-        private async Task StreamScrollAsync()
-        {
-            try
-            {
-                await Task.Delay(10);
-                if (messagesDiv.Context != null)
-                {
-                    await JS.InvokeVoidAsync("chatScroll.scrollDuringStream", messagesDiv);
-                }
-            }
-            catch { }
-        }
-
-        private async Task ForceScrollToBottomAsync()
-        {
-            try
-            {
-                await Task.Delay(30);
-                if (messagesDiv.Context != null)
-                {
-                    await JS.InvokeVoidAsync("chatScroll.scrollToBottom", messagesDiv);
-                }
-            }
-            catch { }
         }
 
         private async Task SaveModel()
         {
             if (string.IsNullOrWhiteSpace(ModelName)) return;
+
             await JS.InvokeVoidAsync("localStorage.setItem", "ollama_model", ModelName);
-
-        }
-
-        private async Task OnModelChangedAsync()
-        {
-            try
-            {
-                await SaveModel();
-                var allModels = await GpuService!.GetLocalModelsAsync();
-
-                var currentModelDetails = allModels?.Models?
-                    .FirstOrDefault(m =>
-                        m.Name.Equals(ModelName, StringComparison.OrdinalIgnoreCase) ||
-                        m.Model.Equals(ModelName, StringComparison.OrdinalIgnoreCase));
-
-                if (currentModelDetails != null)
-                {
-                    _modelSizeInBytes = currentModelDetails.SizeInBytes;
-                    _gpuReport = await GpuService.CheckGpuCompatibility(currentModelDetails.SizeInBytes);
-                }
-
-                _contextLength = await GetContextLengthAsync(ModelName);
-                _contextUsedTokens = 0;
-                _showContextBar = false;
-
-                StateHasChanged();
-            }
-            catch { }
         }
 
         private async Task<int> GetContextLengthAsync(string modelName)
         {
             try
             {
-                if (GpuService == null) return OllamaSettings.Value.DefaultContextLength;
+                if (GpuService is null) return OllamaSettings.Value.DefaultContextLength;
+
                 return await GpuService.GetRecommendedContextLengthAsync(_modelSizeInBytes, modelName);
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogWarning(ex, "Falha ao obter o contexto de {ModelName}; a usar o por omissão.", modelName);
                 return OllamaSettings.Value.DefaultContextLength;
             }
         }
@@ -646,31 +325,307 @@ namespace OllamaArena.Components.Pages
         {
             try
             {
-                if (GpuService == null || _modelSupportsThinkingFor == ModelName) return;
+                if (GpuService is null) return;
+                if (string.Equals(_modelSupportsThinkingFor, ModelName, StringComparison.Ordinal)) return;
 
                 _modelSupportsThinking = await GpuService.ModelSupportsThinkingAsync(ModelName);
                 _modelSupportsThinkingFor = ModelName;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogWarning(ex, "Falha ao detetar a capacidade de raciocínio de {ModelName}.", ModelName);
                 _modelSupportsThinking = false;
             }
         }
 
-        private int ContextProgressValue => Math.Min(_contextUsedTokens, _contextLength);
-        private int ContextRemaining => Math.Max(0, _contextLength - _contextUsedTokens);
-        private bool ContextNearLimit => _contextLength > 0 && (double)_contextUsedTokens / _contextLength >= 0.9;
+        // ============================================================
+        //  CICLO DE UMA MENSAGEM
+        // ============================================================
 
-        [JSInvokable]
-        public async Task OnEnterPressedFromJs()
+        private async Task SendMessage()
         {
-            if (!_isThinking)
-                await SendMessage();
+            if (_disposed || _isThinking || string.IsNullOrWhiteSpace(_currentMessage)) return;
+
+            var userPrompt = _currentMessage;
+            var stopwatch = Stopwatch.StartNew();
+
+            var userMessage = new ChatMessage
+            {
+                User = L["Chat.UserDisplayName"],
+                Text = userPrompt,
+                IsCurrentUser = true
+            };
+
+            var aiMessage = new ChatMessage
+            {
+                User = "Ollama",
+                Text = ChatMessage.PendingPlaceholder,
+                IsCurrentUser = false,
+                ElapsedTime = "0.00s"
+            };
+
+            _messages.Add(userMessage);
+            _messages.Add(aiMessage);
+
+            _currentMessage = string.Empty;
+            await ReporDimensoesDoPromptAsync();
+            _isThinking = true;
+
+            if (_contextLength == 0)
+                _contextLength = await GetContextLengthAsync(ModelName);
+
+            _contextUsedTokens = _contextUsedTokens + ChatComposerService.EstimateTokens(userPrompt);
+            _showContextBar = true;
+
+            StateHasChanged();
+            await ForceScrollToBottomAsync();
+
+            var elapsedTimer = CriarTemporizadorElapsed(aiMessage, stopwatch);
+
+            // Único dono do CTS: criado e descartado aqui. CancelRequest e Dispose
+            // limitam-se a cancelar, nunca a descartar.
+            using var cts = new CancellationTokenSource();
+            _turnCts = cts;
+
+            ChatTurn? turn = null;
+
+            try
+            {
+                var preparation = await PrepararTurnoAsync(userPrompt);
+
+                switch (preparation.Status)
+                {
+                    case ChatPreparationStatus.EmptyPrompt:
+                        _messages.Remove(aiMessage);
+                        return;
+
+                    case ChatPreparationStatus.PromptTooLong:
+                        _messages.Remove(aiMessage);
+                        await MostrarPromptDemasiadoGrandeAsync(preparation);
+                        return;
+                }
+
+                var prepared = preparation.Request!;
+                temperature = prepared.Temperature;
+                userMessage.Temperature = Math.Round(temperature, 2);
+
+                _logger.LogInformation(
+                    "Ollama começou a responder após {Seconds:F1}s (modelo {ModelName}, contexto {Context})",
+                    stopwatch.Elapsed.TotalSeconds, ModelName, _contextLength);
+
+                var stream = await ChatStream.SendAsync(
+                    prepared.Payload,
+                    prepared.EnableReasoning,
+                    cts.Token,
+                    progress => AplicarProgressoAsync(progress, aiMessage, userPrompt));
+
+                AplicarResultadoStream(stream, aiMessage);
+
+                var (summary, cleanText) = ChatComposerService.ExtractSummaryFromResponse(aiMessage.Text);
+                if (summary is not null)
+                {
+                    aiMessage.Summary = summary;
+                    aiMessage.Text = cleanText;
+                }
+
+                aiMessage.LanguageWarning = LanguageWarningFor(aiMessage.Text);
+
+                turn = new ChatTurn
+                {
+                    UserPrompt = userPrompt,
+                    AssistantText = aiMessage.Text,
+                    Reasoning = aiMessage.Reasoning,
+                    Summary = aiMessage.Summary,
+                    Temperature = temperature,
+                    ElapsedLabel = aiMessage.ElapsedTime ?? string.Empty,
+                    PromptTokens = stream.PromptTokens,
+                    EvalTokens = stream.EvalTokens,
+                    EvalDurationNs = stream.EvalDurationNs,
+                    LoadDurationNs = stream.LoadDurationNs,
+                    TotalMs = stopwatch.Elapsed.TotalMilliseconds,
+                    SessionLanguage = TargetLanguageResolver.GetTargetLanguage(),
+                    Completed = true
+                };
+
+                if (stream.PromptTokens + stream.EvalTokens > 0)
+                {
+                    _contextUsedTokens = (int)(stream.PromptTokens + stream.EvalTokens);
+                    _showContextBar = true;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation("Streaming cancelado pelo utilizador.");
+
+                aiMessage.Text = aiMessage.IsPending
+                    ? L["Chat.ResponseTimeout"]
+                    : aiMessage.Text + L["Chat.ResponseCancelled"];
+            }
+            catch (ChatStreamException ex)
+            {
+                // Falha de comunicação: preserva o que já foi recebido. Antes, qualquer
+                // exceção substituía a resposta inteira por "Ocorreu um erro".
+                _logger.LogError(ex, "Erro de comunicação com o Ollama durante o streaming.");
+                aiMessage.Text = aiMessage.IsPending ? ex.Message : aiMessage.Text + "\n\n" + ex.Message;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro inesperado durante o processing da resposta.");
+                aiMessage.Text = aiMessage.IsPending
+                    ? L["Chat.UnexpectedError", ex.Message]
+                    : aiMessage.Text + "\n\n" + L["Chat.UnexpectedError", ex.Message];
+            }
+            finally
+            {
+                stopwatch.Stop();
+                elapsedTimer?.Dispose();
+
+                aiMessage.ElapsedTime = FormatarTempo(stopwatch.Elapsed);
+
+                _isThinking = false;
+
+                if (ReferenceEquals(_turnCts, cts))
+                    _turnCts = null;
+
+                if (turn is not null)
+                    await GravarTurnoAsync(turn);
+
+                if (!_disposed)
+                {
+                    await InvokeAsync(StateHasChanged);
+                    await ForceScrollToBottomAsync();
+                }
+            }
         }
 
-        private void NewChat()
+        /// <summary>
+        /// Actualiza a mensagem em streaming. Só é chamado com ritmo limitado (80 ms), o
+        /// throttle vive no <see cref="OllamaChatStreamClient"/>. O scroll acompanha cada
+        /// Actualização; quando o cliente deixou de o fazer, a lista só saltava para o fim
+        /// depois da resposta completa.
+        /// </summary>
+        private async Task AplicarProgressoAsync(ChatStreamProgress progress, ChatMessage aiMessage, string userPrompt)
         {
-            try { _cts?.Cancel(); } catch { }
+            aiMessage.Text = progress.Text;
+            aiMessage.Reasoning = progress.Reasoning;
+
+            _contextUsedTokens = ChatComposerService.EstimateTokens(userPrompt)
+                + (int)(progress.PromptTokens + progress.EstimatedOutputTokens);
+
+            await InvokeAsync(StateHasChanged);
+
+            // "stick" só quando já estamos perto do fundo: o JS não rouba o scroll de quem
+            // subiu para reler, tal como antes da extracção do streaming.
+            await StreamScrollAsync();
+        }
+
+        private static void AplicarResultadoStream(ChatStreamResult stream, ChatMessage aiMessage)
+        {
+            if (!string.IsNullOrEmpty(stream.Text))
+                aiMessage.Text = stream.Text;
+
+            // Quando o raciocínio está desativado o cliente não o captura, mesmo que o
+            // modelo o envie (deepseek-r1 ignora `think: false`).
+            if (!string.IsNullOrWhiteSpace(stream.Reasoning))
+                aiMessage.Reasoning = stream.Reasoning;
+        }
+
+        private async Task<ChatPreparationResult> PrepararTurnoAsync(string userPrompt)
+        {
+            // O system prompt pode conter o token {{TARGET_LANGUAGE}}: resolve-o para o
+            // idioma selecionado na UI (seletor PT/EN). Sem token, é no-op.
+            var systemInstructions = (await PromptFilesService.GetPromptFileContentAsync("system-prompt.txt") ?? string.Empty)
+                .Replace(TargetLanguageResolver.Token, TargetLanguageResolver.GetTargetLanguage());
+
+            await EnsureModelSupportsThinkingAsync();
+
+            return await ChatComposer.Prepare(new ChatPrepareRequest
+            {
+                Messages = _messages,
+                UserPrompt = userPrompt,
+                SystemInstructions = systemInstructions,
+                WelcomeMessage = L["Chat.WelcomeMessage"],
+                ModelName = ModelName,
+                ContextLength = _contextLength,
+                FitsInGpu = _gpuReport?.FitsInGpu == true,
+                ModelSupportsThinking = _modelSupportsThinking
+            });
+        }
+
+        private async Task GravarTurnoAsync(ChatTurn turn)
+        {
+            try
+            {
+                var result = await ChatTurnWriter.WriteAsync(turn, ModelName, _conversationId, _currentPromptId);
+
+                _conversationId = result.ConversationId;
+                _currentPromptId = result.PromptId;
+            }
+            catch (ChatTurnPersistenceException ex)
+            {
+                _logger.LogError(ex, "Não foi possível gravar o turno do chat.");
+
+                if (DialogService is not null)
+                {
+                    await DialogService.ShowErrorAsync(
+                        L["Chat.AutoSaveError"],
+                        L["Chat.AutoSaveErrorTitle"]);
+                }
+            }
+        }
+
+        private async Task MostrarPromptDemasiadoGrandeAsync(ChatPreparationResult preparation)
+        {
+            _logger.LogWarning(
+                "Prompt rejeitado: {Tokens} tokens para um contexto de {Context}.",
+                preparation.PromptTokens, preparation.ContextLength);
+
+            if (DialogService is not null)
+            {
+                await DialogService.ShowErrorAsync(
+                    L["Chat.PromptTooLong", preparation.PromptTokens, preparation.ContextLength],
+                    L["Chat.PromptTooLongTitle"]);
+            }
+        }
+
+        private async Task CancelRequest()
+        {
+            // Só cancela: quemDispose é o dono do CTS (SendMessage).
+            try
+            {
+                await (_turnCts?.CancelAsync() ?? Task.CompletedTask);
+            }
+            catch (ObjectDisposedException)
+            {
+                // O turno já terminou entre o clique e o cancelamento.
+            }
+
+            await DescarregarModeloAsync(ModelName);
+        }
+
+        private async Task DescarregarModeloAsync(string modelName)
+        {
+            if (string.IsNullOrWhiteSpace(modelName)) return;
+
+            try
+            {
+                await GpuService!.UnloadModelFromMemoryAsync(modelName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Falha ao descarregar o modelo {ModelName} da memória.", modelName);
+            }
+        }
+
+        // ============================================================
+        //  UI
+        // ============================================================
+
+        protected void OpenHistory() => historyPanel?.Open();
+
+        private async Task NewChat()
+        {
+            CancelarTurnoEmCurso();
 
             _messages.Clear();
             _currentMessage = string.Empty;
@@ -679,65 +634,50 @@ namespace OllamaArena.Components.Pages
             _contextUsedTokens = 0;
             _showContextBar = false;
 
-            ClearPendingState();
-            _descricaoAtual = string.Empty;
+            _conversationId = 0;
+            _currentPromptId = 0;
 
-            // --- AÇÃO PARA O BENCHMARK: Descarregar o modelo da VRAM ---
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    var unloadPayload = new
-                    {
-                        model = ModelName,
-                        keep_alive = 0
-                    };
-
-                    var unloadJson = JsonSerializer.Serialize(unloadPayload);
-
-                    using var unloadRequest = new HttpRequestMessage(HttpMethod.Post, $"{OllamaSettings.Value.BaseUrl}/api/generate");
-                    unloadRequest.Content = new StringContent(unloadJson, Encoding.UTF8, "application/json");
-
-                    await Http.SendAsync(unloadRequest);
-                }
-                catch { /* Ignora erros em background */ }
-            });
-
-            _messages.Add(new Models.DTO.ChatMessage
-            {
-                User = "Ollama",
-                Text = L["Chat.WelcomeMessage"]
-            });
+            _messages.Add(new ChatMessage { User = "Ollama", Text = L["Chat.WelcomeMessage"] });
 
             StateHasChanged();
+
+            // Mesmo que o campo tenha ficado alto com prompts anteriores, "Novo Chat"
+            // repõe a altura de "vazio".
+            await ReporDimensoesDoPromptAsync();
+
+            // Liberta a VRAM sem bloquear a UI: o utilizador vê logo a conversa nova.
+            _ = DescarregarModeloAsync(ModelName);
         }
 
         private async Task LoadConversationAsync(int conversationId)
         {
             try
             {
-                if (ConversationRepo == null) return;
+                if (ConversationRepo is null) return;
+
+                // Carregar histórico substitui o turno em curso; sem isto as mensagens
+                // antigas continuavam a ser acrescentadas ao chat que já foi trocado.
+                CancelarTurnoEmCurso();
 
                 _isThinking = false;
                 _messages.Clear();
 
                 var messages = await ConversationRepo.GetMessagesAsync(conversationId);
+
                 _conversationId = conversationId;
+                _currentPromptId = 0;
 
                 if (messages.Count == 0)
                 {
-                    _messages.Add(new Models.DTO.ChatMessage
-                    {
-                        User = "Ollama",
-                        Text = L["Chat.WelcomeMessage"]
-                    });
+                    _messages.Add(new ChatMessage { User = "Ollama", Text = L["Chat.WelcomeMessage"] });
                 }
                 else
                 {
                     foreach (var msg in messages)
                     {
                         bool isUser = msg.Role == "user";
-                        _messages.Add(new Models.DTO.ChatMessage
+
+                        _messages.Add(new ChatMessage
                         {
                             User = isUser ? L["Chat.UserDisplayName"] : "Ollama",
                             Text = msg.Content,
@@ -750,14 +690,68 @@ namespace OllamaArena.Components.Pages
                     }
                 }
 
-                StateHasChanged();
+                await InvokeAsync(StateHasChanged);
                 await ForceScrollToBottomAsync();
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Falha ao carregar conversa {ConversationId}", conversationId);
+                _logger.LogError(ex, "Falha ao carregar a conversa {ConversationId}.", conversationId);
             }
         }
+
+        [JSInvokable]
+        public async Task OnEnterPressedFromJs()
+        {
+            if (!_isThinking)
+                await SendMessage();
+        }
+
+        private async Task OnScroll()
+        {
+            try
+            {
+                if (messagesDiv.Context is null) return;
+
+                var state = await JS.InvokeAsync<ScrollState>("chatScroll.getScrollState", messagesDiv);
+
+                if (state is not null)
+                    userAtBottom = (state.ScrollHeight - state.ScrollTop - state.ClientHeight) < 80;
+            }
+            catch (JSException)
+            {
+                // Scroll indisponível durante navegação: ignorado.
+            }
+        }
+
+        private async Task StreamScrollAsync()
+        {
+            try
+            {
+                if (messagesDiv.Context is null) return;
+
+                await JS.InvokeVoidAsync("chatScroll.scrollDuringStream", messagesDiv);
+            }
+            catch (JSException)
+            {
+                // Ignorado: o scroll durante o stream é cosmético.
+            }
+        }
+
+        private async Task ForceScrollToBottomAsync()
+        {
+            try
+            {
+                if (messagesDiv.Context is null) return;
+
+                await JS.InvokeVoidAsync("chatScroll.scrollToBottom", messagesDiv);
+            }
+            catch (JSException)
+            {
+                // Ignorado: o scroll é cosmético.
+            }
+        }
+
+        private string FormatMessage(string content) => MessageFormatter.FormatMessagePlus(content);
 
         /// <summary>
         /// Aviso local quando a resposta do modelo não respeita o idioma selecionado na UI
@@ -773,253 +767,108 @@ namespace OllamaArena.Components.Pages
             return L["Common.LanguageMismatch", TargetLanguageResolver.GetTargetLanguage()];
         }
 
+        // ============================================================
+        //  UTILITÁRIOS
+        // ============================================================
 
-        private async Task PersistUserMessageAsync(string userPrompt)
+        private static string FormatarTempo(TimeSpan elapsed)
+            => elapsed.TotalSeconds < 10
+                ? $"{elapsed.TotalSeconds:F2}s"
+                : $"{elapsed.TotalSeconds:F1}s";
+
+        /// <summary>
+        /// Cronómetro de "a gerar" mostrado enquanto o modelo ainda não devolveu o primeiro
+        /// token. Só corre se o <paramref name="aiMessage"/> ainda for o marcador, para não
+        /// competir com o temporizador de 150 ms do componente.
+        /// </summary>
+        private Timer CriarTemporizadorElapsed(ChatMessage aiMessage, Stopwatch stopwatch)
+        {
+            return new Timer(_ =>
+            {
+                if (_disposed || aiMessage.Text != ChatMessage.PendingPlaceholder) return;
+
+                aiMessage.ElapsedTime = FormatarTempo(stopwatch.Elapsed);
+
+                try
+                {
+                    _ = InvokeAsync(StateHasChanged);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Componente já destruído.
+                }
+            }, null, 0, 150);
+        }
+
+        /// <summary>
+        /// Repõe a altura do campo de prompt no valor de "vazio". O <c>autoResize</c> do JS
+        /// (<c>wwwroot/js/chat.js</c>) só corre em eventos <c>input</c> e o Blazor limpa o
+        /// valor ligado sem disparar esse evento, pelo que a altura inline ganha a escrever
+        /// uma linha sobrevivia ao envio. Já existia um helper JS para isto
+        /// (<c>chatInput.resetHeight</c>), que ficou órfão quando o <c>@key</c> do input
+        /// anterior foi removido.
+        /// </summary>
+        private async Task ReporDimensoesDoPromptAsync()
         {
             try
             {
-                if (ConversationRepo == null) return;
-
-                if (_conversationId == 0)
-                {
-                    string titulo = userPrompt.Length > 60 ? userPrompt[..60] : userPrompt;
-                    _conversationId = await ConversationRepo.CreateConversationAsync(titulo, ModelName);
-                }
-
-                if (_conversationId == 0) return;
-
-                await ConversationRepo.AddMessageAsync(new ChatConversationMessage
-                {
-                    ConversationId = _conversationId,
-                    Role = "user",
-                    Content = userPrompt,
-                    Temperature = temperature,
-                    Timestamp = DateTime.UtcNow
-                });
+                await JS.InvokeVoidAsync("chatInput.resetHeight", chatInputRef);
             }
-            catch (Exception dbEx)
+            catch (JSException ex)
             {
-                _logger?.LogError(dbEx, "[SQLITE ERROR] Falha ao gravar mensagem do utilizador: {Message}", dbEx.Message);
+                // Navegação/teardown: é cosmético.
+                _logger.LogDebug(ex, "Não foi possível repor a altura do campo de prompt.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Interop indisponível (render estático): o mesmo.
+                _logger.LogDebug(ex, "Interop indisponível ao repor a altura do campo de prompt.");
             }
         }
 
-        private async Task PersistAssistantMessageAsync(Models.DTO.ChatMessage aiMessage, double temp, string tempoFinal)
+        private void CancelarTurnoEmCurso()
         {
             try
             {
-                if (ConversationRepo == null || _conversationId == 0) return;
-                if (aiMessage.Text == "..." || string.IsNullOrWhiteSpace(aiMessage.Text)) return;
-
-                await ConversationRepo.AddMessageAsync(new ChatConversationMessage
-                {
-                    ConversationId = _conversationId,
-                    Role = "assistant",
-                    Content = aiMessage.Text,
-                    Reasoning = string.IsNullOrWhiteSpace(aiMessage.Reasoning) ? null : aiMessage.Reasoning,
-                    Temperature = temp,
-                    ElapsedTime = tempoFinal,
-                    Timestamp = DateTime.UtcNow
-                });
-
-                await ConversationRepo.TouchConversationAsync(_conversationId);
+                _turnCts?.Cancel();
             }
-            catch (Exception dbEx)
+            catch (ObjectDisposedException)
             {
-                _logger?.LogError(dbEx, "[SQLITE ERROR] Falha ao gravar resposta do assistente: {Message}", dbEx.Message);
+                // O turno já terminou.
             }
         }
 
-        private async Task PersistBenchmarkAsync(string userPrompt, Models.DTO.ChatMessage aiMessage, double temp, long evalCount, long evalDurationNs, long loadDurationNs, double totalMs, string descricao)
+        // ============================================================
+        //  LIBERTAÇÃO DE RECURSOS
+        // ============================================================
+
+        public async ValueTask DisposeAsync()
         {
-            if (evalCount <= 0 || evalDurationNs <= 0) return;
+            if (_disposed) return;
 
-            try
+            _disposed = true;
+
+            CancelarTurnoEmCurso();
+
+            // O DotNetObjectReference tem de sobreviver ao handler que o vai usar:
+            // primeiro desligamos o JS, só depois o libertamos.
+            if (_dotNetRef is not null)
             {
-                if (BenchmarkRepo == null) return;
-
-                if (_currentPromptId == 0)
+                try
                 {
-                    var (promptId, descGuardada) = await BenchmarkRepo.GetOrCreatePromptIdAsync(userPrompt, descricao);
-                    _currentPromptId = promptId;
-                    _descricaoAtual = descGuardada;
+                    await JS.InvokeVoidAsync("chatInput.detachHandlers", chatInputRef);
+                }
+                catch (Exception ex)
+                {
+                    // Já não há circuito (navegação, queda de ligação): nada a fazer.
+                    _logger.LogDebug(ex, "chatInput.detachHandlers não foi executado.");
                 }
 
-                double evalSeconds = evalDurationNs / 1_000_000_000.0;
-                double tokensPerSecond = evalCount / evalSeconds;
-
-                var newResponse = new BenchmarkResponse
-                {
-                    PromptId = _currentPromptId,
-                    NomeModelo = ModelName,
-                    TextoResposta = aiMessage.Text,
-                    TokensPorSegundo = Math.Round(tokensPerSecond, 1),
-                    TempoPuroMs = evalDurationNs / 1_000_000.0,
-                    TempoCargaMs = loadDurationNs / 1_000_000.0,
-                    TempoProcessamento = totalMs,
-                    TamanhoTokens = (int)evalCount,
-                    // Congela o idioma da sessão no momento da geração: o juiz usa este
-                    // valor em reavaliações futuras (respostas antigas ficam null).
-                    IdiomaSessao = TargetLanguageResolver.GetTargetLanguage()
-                };
-
-                await BenchmarkRepo.CreateResponseAsync(newResponse);
-            }
-            catch (Exception dbEx)
-            {
-                _logger?.LogError(dbEx, "[SQLITE ERROR] Falha ao gravar benchmark: {Message}", dbEx.Message);
-            }
-        }
-
-        private async Task HandlePostStreamAsync(
-            string userPrompt,
-            Models.DTO.ChatMessage aiMessage,
-            double temperature,
-            long evalCount,
-            long evalDurationNs,
-            long loadDurationNs,
-            double totalMs,
-            string tempoFinal)
-        {
-            _pendingUserPrompt = userPrompt;
-            _pendingAiMessage = aiMessage;
-            _pendingTemperature = temperature;
-            _pendingTempoFinal = tempoFinal;
-            _pendingEvalCount = evalCount;
-            _pendingEvalDurationNs = evalDurationNs;
-            _pendingLoadDurationNs = loadDurationNs;
-            _pendingStopwatchMs = totalMs;
-
-            string descricao = !string.IsNullOrWhiteSpace(aiMessage.Summary)
-                ? aiMessage.Summary
-                : ChatComposerService.SmartFallbackDescription(userPrompt);
-
-            _descricaoAtual = descricao;
-
-            try
-            {
-                if (_conversationId != 0)
-                {
-                    await PersistFollowUpExchangeAsync(descricao);
-                }
-                else
-                {
-                    _saveSuccess = await PersistAllWithDescriptionAsync(descricao);
-                    _saveResultDescricao = descricao;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Erro ao gravar resposta automaticamente.");
-                if (DialogService is not null)
-                {
-                    await DialogService.ShowErrorAsync(
-                        L["Chat.AutoSaveError"],
-                        L["Chat.AutoSaveErrorTitle"]);
-                }
+                _dotNetRef.Dispose();
+                _dotNetRef = null;
             }
 
-            ClearPendingState();
-        }
-
-        private async Task PersistFollowUpExchangeAsync(string descricao)
-        {
-            if (ConversationRepo == null) return;
-
-            await ConversationRepo.AddMessageAsync(new ChatConversationMessage
-            {
-                ConversationId = _conversationId,
-                Role = "user",
-                Content = _pendingUserPrompt,
-                Temperature = _pendingTemperature,
-                Timestamp = DateTime.UtcNow
-            });
-
-            if (_pendingAiMessage != null)
-            {
-                await PersistAssistantMessageAsync(_pendingAiMessage, _pendingTemperature, _pendingTempoFinal);
-            }
-
-            await PersistBenchmarkAsync(
-                _pendingUserPrompt,
-                _pendingAiMessage!,
-                _pendingTemperature,
-                _pendingEvalCount,
-                _pendingEvalDurationNs,
-                _pendingLoadDurationNs,
-                _pendingStopwatchMs,
-                descricao);
-        }
-
-        private async Task<bool> PersistAllWithDescriptionAsync(string descricao)
-        {
-            if (ConversationRepo == null) return false;
-
-            try
-            {
-                string titulo = _pendingUserPrompt.Length > 60 ? _pendingUserPrompt[..60] : _pendingUserPrompt;
-                _conversationId = await ConversationRepo.CreateConversationAsync(titulo, ModelName, descricao);
-
-                if (_conversationId == 0) return false;
-
-                await ConversationRepo.AddMessageAsync(new ChatConversationMessage
-                {
-                    ConversationId = _conversationId,
-                    Role = "user",
-                    Content = _pendingUserPrompt,
-                    Temperature = _pendingTemperature,
-                    Timestamp = DateTime.UtcNow
-                });
-
-                if (_pendingAiMessage != null)
-                {
-                    await PersistAssistantMessageAsync(_pendingAiMessage, _pendingTemperature, _pendingTempoFinal);
-                }
-
-                await PersistBenchmarkAsync(
-                    _pendingUserPrompt,
-                    _pendingAiMessage!,
-                    _pendingTemperature,
-                    _pendingEvalCount,
-                    _pendingEvalDurationNs,
-                    _pendingLoadDurationNs,
-                    _pendingStopwatchMs,
-                    descricao);
-
-                return true;
-            }
-            catch (Exception dbEx)
-            {
-                _logger?.LogError(dbEx, "[SQLITE ERROR] Falha ao gravar conversa com descrição: {Message}", dbEx.Message);
-                return false;
-            }
-        }
-
-        private void ClearPendingState()
-        {
-            _pendingUserPrompt = string.Empty;
-            _pendingAiMessage = null;
-            _pendingTemperature = 0;
-            _pendingTempoFinal = string.Empty;
-            _pendingEvalCount = 0;
-            _pendingEvalDurationNs = 0;
-            _pendingLoadDurationNs = 0;
-            _pendingStopwatchMs = 0;
-        }
-
-        private string FormatMessage(string content)
-        {
-            return MessageFormatter.FormatMessagePlus(content);
-        }
-
-        public void Dispose()
-        {
-            try
-            {
-                _cts?.Cancel();
-                _cts?.Dispose();
-                _dotNetRef?.Dispose();
-            }
-            catch { }
+            GC.SuppressFinalize(this);
         }
     }
 }

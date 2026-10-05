@@ -203,13 +203,14 @@
 
                             <div class="conteudo-respostas-scroll">
                                 <div class="cartoes-respostas-container">
-                                    @foreach (var resp in _selectedPrompt.Answers)
+                                    @for (var indice = 0; indice < _selectedPrompt.Answers.Count; indice++)
                                     {
+                                        var resp = _selectedPrompt.Answers[indice];
                                         var avaliando = AvaliacaoDesteModelo(resp.Id);
-                                        <div class="cartao-resposta @(avaliando ? "cartao-avaliando" : "")">
+                                        <div class="cartao-resposta tom-@TomCartao(indice) @(avaliando ? "cartao-avaliando" : "")">
                                             <div class="cartao-header">
                                                 <div class="modelo-info">
-                                                    <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" Color="Color.Neutral" />
+                                                    <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" Style="color: var(--tom-cartao);" />
                                                     <h4>@resp.NomeModelo</h4>
                                                 </div>
                                                 <div class="metricas-tags" style="display: flex; justify-content: space-around; align-items: center; gap:8px">
@@ -258,7 +259,7 @@
                                                          aria-expanded="@RespostaAberta(resp)"
                                                          @onclick="() => AlternarResposta(resp.Id)"
                                                          @onkeydown="(e) => TogglePromptTecla(e, () => AlternarResposta(resp.Id))">
-                                                        <FluentIcon Value="@(new Icons.Regular.Size16.DocumentText())" Color="Color.Neutral" />
+                                                        <FluentIcon Value="@(new Icons.Regular.Size16.DocumentText())" />
                                                         <span>@L["Benchmarks.ShowResponseLabel"]</span>
                                                         <FluentIcon Class="recommendation-box-chevron"
                                                                     Value="@GetPromptChevron(RespostaAberta(resp))" />
@@ -355,7 +356,7 @@
     .painel-direito-container {
         display: flex;
         flex-direction: column;
-        height: 100%;
+        height: 90%;
         padding: 16px;
         box-sizing: border-box;
         overflow: hidden;
@@ -445,18 +446,90 @@
         color: var(--neutral-foreground-hint);
     }
 
+    /* Zebra do painel direito: duas faixas que alternam a cada cartão, uma cor por
+       faixa. As cores vivem aqui (uma fonte por tom, com a variante por tema no
+       contentor) e cada cartão escolhe a sua — que é também a cor do separador
+       que sai dele, para a corrente falar do modelo que emite. */
     .cartoes-respostas-container {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 36px;
         margin-top: 4px;
+        --tom-odd: #38BDF8;
+        --tom-even: #A78BFA;
+    }
+
+    body[data-theme="light"] .cartoes-respostas-container {
+        --tom-odd: #0284C7;
+        --tom-even: #7C3AED;
+    }
+
+    .cartao-resposta.tom-odd {
+        --tom-cartao: var(--tom-odd, var(--accent-fill-rest));
+    }
+
+    .cartao-resposta.tom-even {
+        --tom-cartao: var(--tom-even, var(--accent-fill-rest));
     }
 
     .cartao-resposta {
+        position: relative;
         background: var(--neutral-layer-1);
-        border: 1px solid var(--neutral-stroke-rest);
+        border: 1px solid color-mix(in srgb, var(--tom-cartao) 35%, var(--neutral-stroke-rest));
+        border-left: 4px solid var(--tom-cartao);
         border-radius: 4px;
         padding: 16px;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .cartao-resposta:hover {
+        border-color: color-mix(in srgb, var(--tom-cartao) 65%, var(--neutral-stroke-rest));
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--tom-cartao) 45%, transparent);
+    }
+
+    /* Corrente entre cartões: nasce no cartão de cima e vai ter ao de baixo, por
+       isso é um pseudo-elemento do cartão que emite (todos menos o último, que
+       não tem Following para ligar). A linha é a cor do modelo que a emite,
+       a desaparecer nas pontas, com o losango dessa cor como nó. As duas peças
+       ficam a meio do gap (36px => 18px): se mudares o gap, ajusta estes dois
+       valores. */
+    .cartao-resposta:not(:last-child)::before {
+        content: "";
+        position: absolute;
+        bottom: -18px;
+        left: 6px;
+        right: 6px;
+        height: 2px;
+        border-radius: 1px;
+        opacity: 0.75;
+        background: linear-gradient(to right,
+            transparent,
+            var(--tom-cartao) 22%,
+            var(--tom-cartao) 78%,
+            transparent);
+    }
+
+    .cartao-resposta:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        bottom: -24px;
+        left: 50%;
+        width: 12px;
+        height: 12px;
+        margin-left: -6px;
+        transform: rotate(45deg);
+        border: 2px solid var(--tom-cartao);
+        border-radius: 3px;
+        background: transparent;
+        transition: background 0.15s ease;
+    }
+
+    .cartao-resposta:hover::before {
+        opacity: 1;
+    }
+
+    .cartao-resposta:hover::after {
+        background: var(--tom-cartao);
     }
 
     .cartao-header {
@@ -480,8 +553,9 @@
             font-weight: 600;
             border-radius: 9px;
             padding: 4px 10px;
-            background: var(--neutral-fill-secondary);
-            border: 1px solid var(--neutral-stroke-rest);
+            color: var(--tom-cartao);
+            background: color-mix(in srgb, var(--tom-cartao) 12%, var(--neutral-fill-secondary));
+            border: 1px solid color-mix(in srgb, var(--tom-cartao) 45%, transparent);
         }
 
     .metricas-tags {
@@ -543,11 +617,13 @@
         word-break: break-word;
     }
 
-    /* Variante neutra para o texto da resposta (a base âmbar é para avisos/recomendações) */
+    /* Variante neutra para o texto da resposta (a base âmbar é para avisos/recomendações).
+       Herda a cor do cartão: barra lateral, contorno e fundo com um véu do tom,
+       para a colapsável também falar do modelo a que pertence. */
     .resposta-collapse-box {
-        background-color: var(--neutral-layer-2);
-        border: 1px solid var(--neutral-stroke-rest);
-        border-left: 4px solid var(--accent-fill-rest);
+        background-color: color-mix(in srgb, var(--tom-cartao) 6%, var(--neutral-layer-2));
+        border: 1px solid color-mix(in srgb, var(--tom-cartao) 30%, var(--neutral-stroke-rest));
+        border-left: 4px solid var(--tom-cartao);
     }
 
         .resposta-collapse-box .recommendation-box-header {
@@ -557,7 +633,7 @@
 
         .resposta-collapse-box:hover .recommendation-box-header,
         .resposta-collapse-box.open .recommendation-box-header {
-            color: var(--accent-fill-rest);
+            color: var(--tom-cartao);
         }
 
     .cartao-corpo {
@@ -795,10 +871,29 @@
         flex: 0 0 auto;
     }
 
-    /* Card da resposta atualmente em avaliação */
+    /* Card da resposta atualmente em avaliação: a barra de acento era trocada pela
+       cor do modelo para não perder a identidade do cartão; o estado "a avaliar"
+       passa a ser sinalizado por um halo pulsante com o próprio tom. */
     .cartao-resposta.cartao-avaliando {
-        border-left: 3px solid var(--accent-stroke-rest);
         background-color: var(--neutral-layer-1);
+        animation: cartao-pulsar 1.6s ease-in-out infinite;
+    }
+
+    @@keyframes cartao-pulsar {
+        0%, 100% {
+            box-shadow: 0 0 0 1px color-mix(in srgb, var(--tom-cartao) 55%, transparent);
+        }
+
+        50% {
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--tom-cartao) 18%, transparent);
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .cartao-resposta.cartao-avaliando {
+            animation: none;
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--tom-cartao) 45%, transparent);
+        }
     }
 
     .botao-avaliando-ring {

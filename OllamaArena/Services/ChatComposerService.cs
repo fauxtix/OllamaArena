@@ -21,27 +21,21 @@ public sealed class ChatComposerService
         _settingsRepository = settingsRepository;
     }
 
-    public async Task<PreparedChatRequest?> Prepare(
-        IReadOnlyList<ChatMessage> messages,
-        string userPrompt,
-        string systemInstructions,
-        string welcomeMessage,
-        string modelName,
-        int contextLength,
-        bool fitsInGpu,
-        bool modelSupportsThinking = false)
+    public async Task<ChatPreparationResult> Prepare(ChatPrepareRequest request)
     {
-        if (string.IsNullOrWhiteSpace(userPrompt))
-            return null;
+        ArgumentNullException.ThrowIfNull(request);
 
-        var history = BuildHistory(messages, systemInstructions, welcomeMessage);
+        if (string.IsNullOrWhiteSpace(request.UserPrompt))
+            return ChatPreparationResult.EmptyPrompt;
+
+        var history = BuildHistory(request.Messages, request.SystemInstructions, request.WelcomeMessage);
 
         if (history.Count == 0 || history[^1].Role != "user")
-            return null;
+            return ChatPreparationResult.EmptyPrompt;
 
-        if (contextLength > 0)
+        if (request.ContextLength > 0)
         {
-            int historyBudget = (int)(contextLength * _options.HistoryBudgetFraction);
+            int historyBudget = (int)(request.ContextLength * _options.HistoryBudgetFraction);
             int estimatedHistoryTokens = history.Sum(m => EstimateTokens(m.Content));
 
             while (history.Count > 2 && estimatedHistoryTokens > historyBudget)
@@ -52,8 +46,8 @@ public sealed class ChatComposerService
             }
         }
 
-        double temperature = ChatMeasureTemperature.ObterTemperaturaRecomendada(userPrompt);
-        int baseTokens = fitsInGpu ? _options.BaseTokensGpu : _options.BaseTokensCpu;
+        double temperature = ChatMeasureTemperature.ObterTemperaturaRecomendada(request.UserPrompt);
+        int baseTokens = request.FitsInGpu ? _options.BaseTokensGpu : _options.BaseTokensCpu;
         int maxTokens = temperature switch
         {
             <= 0.25 => (int)(baseTokens * 1.15),
@@ -62,11 +56,21 @@ public sealed class ChatComposerService
         };
 
         // Limita o num_predict para caber no contexto (reserva de ContextReserveFraction)
-        if (contextLength > 0)
+        if (request.ContextLength > 0)
         {
             int totalHistoryTokens = history.Sum(m => EstimateTokens(m.Content));
-            int reservedForOutput = (int)(contextLength * _options.ContextReserveFraction);
-            int availableForOutput = contextLength - totalHistoryTokens - reservedForOutput;
+            int reservedForOutput = (int)(request.ContextLength * _options.ContextReserveFraction);
+            int availableForOutput = request.ContextLength - totalHistoryTokens - reservedForOutput;
+
+            // Guarda de tamanho: mesmo depois de aparar o histórico, o prompt actual pode
+            // não caber. Sem esta verificação o Ollama responde 400 e o utilizador vê um
+            // erro de rede em vez de "o teu prompt é grande demais para este modelo".
+            if (totalHistoryTokens + reservedForOutput >= request.ContextLength)
+            {
+                return ChatPreparationResult.PromptTooLong(
+                    totalHistoryTokens, request.ContextLength);
+            }
+
             if (availableForOutput < 32) availableForOutput = 32;
             maxTokens = Math.Min(maxTokens, availableForOutput);
         }
@@ -75,16 +79,16 @@ public sealed class ChatComposerService
 
         var payload = new OllamaChatPayload
         {
-            Model = modelName,
+            Model = request.ModelName,
             Messages = history,
             Stream = true,
             // Para modelos com capacidade `thinking` envia o valor explícito (`true`/`false`):
             // omitir o campo faz o Ollama pensar por omissão e devolver o reasoning mesmo desativado.
             // Em modelos comuns o campo é omitido (senão o Ollama devolve 400 "does not support thinking").
-            Think = modelSupportsThinking ? enableReasoning : null,
+            Think = request.ModelSupportsThinking ? enableReasoning : null,
             Options = new Dictionary<string, object>
             {
-                { "num_ctx", contextLength },
+                { "num_ctx", request.ContextLength },
                 { "temperature", Math.Round(temperature, 2) },
                 { "num_predict", maxTokens },
                 { "repeat_penalty", _options.RepeatPenalty },
@@ -93,14 +97,14 @@ public sealed class ChatComposerService
             }
         };
 
-        return new PreparedChatRequest
+        return ChatPreparationResult.Ready(new PreparedChatRequest
         {
             History = history,
             Temperature = temperature,
             MaxTokens = maxTokens,
             EnableReasoning = enableReasoning,
             Payload = payload
-        };
+        });
     }
 
     /// <summary>
@@ -135,7 +139,7 @@ public sealed class ChatComposerService
 
         foreach (var msg in messages)
         {
-            if (string.IsNullOrWhiteSpace(msg.Text) || msg.Text == "...") continue;
+            if (!msg.HasPersistableContent) continue;
             if (msg.Text.StartsWith(welcomeMessage, StringComparison.OrdinalIgnoreCase)) continue;
 
             string roleAtual = msg.IsCurrentUser ? "user" : "assistant";
@@ -245,4 +249,66 @@ public sealed class PreparedChatRequest
     public required int MaxTokens { get; init; }
     public required bool EnableReasoning { get; init; }
     public required OllamaChatPayload Payload { get; init; }
+}
+
+/// <summary>
+/// Entrada de <see cref="ChatComposerService.Prepare"/>. Um record em vez de 8 parâmetros
+/// posicionais, em que dois <c>bool</c> vizinhos eram trocados à vista.
+/// </summary>
+public sealed record ChatPrepareRequest
+{
+    public required IReadOnlyList<ChatMessage> Messages { get; init; }
+    public required string UserPrompt { get; init; }
+    public required string SystemInstructions { get; init; }
+    public required string WelcomeMessage { get; init; }
+    public required string ModelName { get; init; }
+
+    /// <summary>0 quando o limite de contexto do modelo é desconhecido (sem verificação).</summary>
+    public int ContextLength { get; init; }
+
+    public bool FitsInGpu { get; init; }
+
+    /// <summary>Capacidade "thinking" declarada pelo /api/show do modelo.</summary>
+    public bool ModelSupportsThinking { get; init; }
+}
+
+public enum ChatPreparationStatus
+{
+    Ready,
+
+    /// <summary>Não há prompt válido a enviar.</summary>
+    EmptyPrompt,
+
+    /// <summary>O prompt não cabe no contexto do modelo, mesmo após aparar o histórico.</summary>
+    PromptTooLong
+}
+
+/// <summary>
+/// Resultado da preparação. Antes era <c>PreparedChatRequest?</c>, onde <c>null</c> significava
+/// ao mesmo tempo "prompt vazio" e "não sei porquê" — a página não conseguia distinguir.
+/// </summary>
+public sealed record ChatPreparationResult
+{
+    public required ChatPreparationStatus Status { get; init; }
+
+    public PreparedChatRequest? Request { get; init; }
+
+    /// <summary>Tokens estimados que o histórico já ocupa (para a mensagem de erro).</summary>
+    public int PromptTokens { get; init; }
+
+    public int ContextLength { get; init; }
+
+    public static ChatPreparationResult Ready(PreparedChatRequest request)
+        => new() { Status = ChatPreparationStatus.Ready, Request = request };
+
+    public static ChatPreparationResult EmptyPrompt
+        => new() { Status = ChatPreparationStatus.EmptyPrompt };
+
+    public static ChatPreparationResult PromptTooLong(int promptTokens, int contextLength)
+        => new()
+        {
+            Status = ChatPreparationStatus.PromptTooLong,
+            PromptTokens = promptTokens,
+            ContextLength = contextLength
+        };
 }

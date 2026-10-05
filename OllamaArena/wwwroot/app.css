@@ -331,3 +331,21 @@ table {
     }
 }
 
+/* --- Ordem de empilhamento dos overlays ---
+   A biblioteca FluentUI não atribui z-index ao <fluent-dialog>: o host fica
+   estático e o scrim/`.positioning-region` são `position: fixed` com z-index
+   auto dentro do shadow DOM. Resultado: os diálogos do DialogService ficavam
+   ATRÁS do overlay/painel do HistoryPanel (9998/9999) e apareciam cortados.
+   `position: relative` + z-index cria um contexto de empilhamento no host e
+   coloca o diálogo (e o scrim) acima de todos os painéis. */
+:root {
+    --z-panel-overlay: 9998;  /* overlay escurecido dos painéis laterais */
+    --z-panel: 9999;          /* painel lateral (HistoryPanel) */
+    --z-modal: 10001;         /* diálogos FluentUI */
+}
+
+fluent-dialog {
+    position: relative;
+    z-index: var(--z-modal);
+}
+

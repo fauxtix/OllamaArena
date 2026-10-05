@@ -3,6 +3,7 @@ using OllamaArena.Models.DTO;
 using OllamaArena.Models.Entities;
 using OllamaArena.Services.Interfaces.Repositories;
 using OllamaArena.Services.Interfaces.Services;
+using System.Data;
 
 namespace OllamaArena.Services.Implementations.Repositories;
 
@@ -17,7 +18,8 @@ public class ConversationRepository : IConversationRepository
         _logger = logger;
     }
 
-    public async Task<int> CreateConversationAsync(string titulo, string nomeModelo, string? descricao = null)
+    public async Task<int> CreateConversationAsync(string titulo, string nomeModelo, string? descricao = null,
+        IDbConnection? connection = null, IDbTransaction? transaction = null)
     {
         var sql = @"
                 INSERT INTO Conversas (Titulo, Descricao, NomeModelo, DataCriacao, DataUltimaAtividade)
@@ -26,15 +28,17 @@ public class ConversationRepository : IConversationRepository
 
         try
         {
-            using var connection = _context.CreateConnection();
-            var now = DateTime.UtcNow.ToString("o");
-            return await connection.ExecuteScalarAsync<int>(sql, new
+            return await RepositoryScope.RunAsync(_context, connection, transaction, async (conn, tx) =>
             {
-                Titulo = titulo,
-                Descricao = descricao,
-                NomeModelo = nomeModelo,
-                DataCriacao = now,
-                DataUltimaAtividade = now
+                var now = DateTime.UtcNow.ToString("o");
+                return await conn.ExecuteScalarAsync<int>(new CommandDefinition(sql, new
+                {
+                    Titulo = titulo,
+                    Descricao = descricao,
+                    NomeModelo = nomeModelo,
+                    DataCriacao = now,
+                    DataUltimaAtividade = now
+                }, tx));
             });
         }
         catch (Exception ex)
@@ -64,7 +68,8 @@ public class ConversationRepository : IConversationRepository
         }
     }
 
-    public async Task<bool> AddMessageAsync(ChatConversationMessage message)
+    public async Task<bool> AddMessageAsync(ChatConversationMessage message,
+        IDbConnection? connection = null, IDbTransaction? transaction = null)
     {
         var sql = @"
                 INSERT INTO ConversaMensagens (ConversationId, Role, Content, Reasoning, Temperature, ElapsedTime, Timestamp)
@@ -72,18 +77,20 @@ public class ConversationRepository : IConversationRepository
 
         try
         {
-            using var connection = _context.CreateConnection();
-            await connection.ExecuteAsync(sql, new
+            return await RepositoryScope.RunAsync(_context, connection, transaction, async (conn, tx) =>
             {
-                message.ConversationId,
-                message.Role,
-                message.Content,
-                message.Reasoning,
-                message.Temperature,
-                message.ElapsedTime,
-                Timestamp = message.Timestamp.ToString("o")
+                int affected = await conn.ExecuteAsync(new CommandDefinition(sql, new
+                {
+                    message.ConversationId,
+                    message.Role,
+                    message.Content,
+                    message.Reasoning,
+                    message.Temperature,
+                    message.ElapsedTime,
+                    Timestamp = message.Timestamp.ToString("o")
+                }, tx));
+                return affected > 0;
             });
-            return true;
         }
         catch (Exception ex)
         {
@@ -92,17 +99,19 @@ public class ConversationRepository : IConversationRepository
         }
     }
 
-    public async Task<bool> TouchConversationAsync(int conversationId)
+    public async Task<bool> TouchConversationAsync(int conversationId,
+        IDbConnection? connection = null, IDbTransaction? transaction = null)
     {
         var sql = "UPDATE Conversas SET DataUltimaAtividade = @DataUltimaAtividade WHERE Id = @Id;";
         try
         {
-            using var connection = _context.CreateConnection();
-            int affected = await connection.ExecuteAsync(sql, new
-            {
-                Id = conversationId,
-                DataUltimaAtividade = DateTime.UtcNow.ToString("o")
-            });
+            int affected = await RepositoryScope.RunAsync(_context, connection, transaction,
+                (conn, tx) => conn.ExecuteAsync(new CommandDefinition(sql, new
+                {
+                    Id = conversationId,
+                    DataUltimaAtividade = DateTime.UtcNow.ToString("o")
+                }, tx)));
+
             return affected > 0;
         }
         catch (Exception ex)
@@ -247,6 +256,23 @@ public class ConversationRepository : IConversationRepository
         }
 
         return (contagemConversas, contagemMensagens);
+    }
+
+    public async Task ClearAllConversationsAsync()
+    {
+        const string sql = @"
+DELETE FROM ConversaMensagens;
+DELETE FROM Conversas;
+PRAGMA optimize;";
+        try
+        {
+            using var connection = _context.CreateConnection();
+            await connection.ExecuteAsync(sql);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falha ao apagar todo o histórico de conversas");
+        }
     }
 
     public async Task<bool> DeleteConversationAsync(int conversationId)

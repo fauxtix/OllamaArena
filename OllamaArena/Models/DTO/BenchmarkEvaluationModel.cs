@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace OllamaArena.Models.DTO;
 
 public class BenchmarkEvaluationModel
@@ -73,6 +75,13 @@ public class BenchmarkEvaluationModel
             return $"{(int)ts.TotalMinutes}:{ts.Seconds:D2}";
         }
     }
+
+    /// <summary>
+    /// Data/hora de criação tal como se mostra ao utilizador. A base de dados grava
+    /// em UTC ("o"), pelo que o valor é convertido para hora local; a guarda evita
+    /// uma segunda conversão quando o leitor (Dapper) já devolveu hora local.
+    /// </summary>
     public string DataCriacaoFormatada =>
-        DataCriacao.ToString("dd/MM/yyyy HH:mm");
+        (DataCriacao.Kind == DateTimeKind.Utc ? DataCriacao.ToLocalTime() : DataCriacao)
+            .ToString("dd/MM/yyyy HH:mm", CultureInfo.CurrentCulture);
 }

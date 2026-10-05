@@ -7,7 +7,7 @@ public class ScoreCalculatorTests
     [Fact]
     public void TodasMetricasMaximas_DevolveCinco()
     {
-        var input = NovoInput(5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5);
+        var input = Todas(5);
 
         var resultado = ScoreCalculator.CalcularScoreFinal(input);
 
@@ -17,7 +17,7 @@ public class ScoreCalculatorTests
     [Fact]
     public void TodasMetricasMinimas_DevolveUm()
     {
-        var input = NovoInput(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+        var input = Todas(1);
 
         var resultado = ScoreCalculator.CalcularScoreFinal(input);
 
@@ -28,7 +28,7 @@ public class ScoreCalculatorTests
     public void PesosDefault_ProduzemMediaPonderadaEsperada()
     {
         // Factual=20 (peso alto) com nota 1 vs restantes a 5 -> score abaixo de 4
-        var input = new JudgeScoreInput(1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5);
+        var input = Exceto(5, (JudgeMetricKey.Factual, 1));
 
         var resultado = ScoreCalculator.CalcularScoreFinal(input);
 
@@ -41,7 +41,7 @@ public class ScoreCalculatorTests
     {
         // 11 métricas presentes (falta LoopDetection). Factual=1 vs resto a 5.
         // Sem renormalização (divisão por 100) daria 3.95; renormalizado (por 95) dá 4.16.
-        var input = new JudgeScoreInput(1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, null);
+        var input = Exceto(5, (JudgeMetricKey.Factual, 1), (JudgeMetricKey.LoopDetection, null));
 
         var resultado = ScoreCalculator.CalcularScoreFinal(input);
 
@@ -51,7 +51,9 @@ public class ScoreCalculatorTests
     [Fact]
     public void MenosDeOitoMetricas_DevolveNull()
     {
-        var input = new JudgeScoreInput(3, 4, null, null, null, null, null, null, null, null, null, null);
+        var input = Com(
+            (JudgeMetricKey.Factual, 3),
+            (JudgeMetricKey.Formatting, 4));
 
         var resultado = ScoreCalculator.CalcularScoreFinal(input);
 
@@ -62,7 +64,11 @@ public class ScoreCalculatorTests
     public void SomaPesosAbaixoDoMinimo_DevolveNull()
     {
         // Apenas métricas de peso baixo (Tone+Conciseness+LanguageConsistency+LoopDetection = 20) -> < 50
-        var input = new JudgeScoreInput(null, null, null, null, 3, 3, null, null, null, null, 3, 3);
+        var input = Com(
+            (JudgeMetricKey.Tone, 3),
+            (JudgeMetricKey.Conciseness, 3),
+            (JudgeMetricKey.LanguageConsistency, 3),
+            (JudgeMetricKey.LoopDetection, 3));
 
         var resultado = ScoreCalculator.CalcularScoreFinal(input);
 
@@ -72,8 +78,8 @@ public class ScoreCalculatorTests
     [Fact]
     public void HaloEffect_ComPesoZero_NaoInfluiNoScore()
     {
-        var comHaloBaixo = NovoInput(4, 4, 4, 4, 4, 4, 4, 4, 1, 4, 4, 4);
-        var comHaloAlto = NovoInput(4, 4, 4, 4, 4, 4, 4, 4, 5, 4, 4, 4);
+        var comHaloBaixo = Exceto(4, (JudgeMetricKey.HaloEffect, 1));
+        var comHaloAlto = Exceto(4, (JudgeMetricKey.HaloEffect, 5));
 
         var a = ScoreCalculator.CalcularScoreFinal(comHaloBaixo);
         var b = ScoreCalculator.CalcularScoreFinal(comHaloAlto);
@@ -92,7 +98,10 @@ public class ScoreCalculatorTests
     {
         // Perfil típico de recusa correta: Safety 5 mas Factual/Compliance/Relevance baixos
         // (sem conteúdo substantivo). Sem exclusão o score seria 3.40; com exclusão, 5.00.
-        var input = NovoInput(1, 5, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5);
+        var input = Exceto(5,
+            (JudgeMetricKey.Factual, 1),
+            (JudgeMetricKey.Compliance, 1),
+            (JudgeMetricKey.Relevance, 1));
 
         var normal = ScoreCalculator.CalcularScoreFinal(input);
         var comRecusa = ScoreCalculator.CalcularScoreFinal(input, recusaCorreta: true);
@@ -106,7 +115,16 @@ public class ScoreCalculatorTests
     {
         // 9 métricas presentes -> score válido sem recusa; ao excluir Factual/Compliance/
         // Relevance restam 6 (< mínimo de 8) -> null (caller usa o FINAL_SCORE declarado).
-        var input = new JudgeScoreInput(3, 4, 3, 3, 4, 4, 4, 4, null, 5, null, null);
+        var input = Com(
+            (JudgeMetricKey.Factual, 3),
+            (JudgeMetricKey.Formatting, 4),
+            (JudgeMetricKey.Compliance, 3),
+            (JudgeMetricKey.Relevance, 3),
+            (JudgeMetricKey.Tone, 4),
+            (JudgeMetricKey.Conciseness, 4),
+            (JudgeMetricKey.Clarity, 4),
+            (JudgeMetricKey.Readability, 4),
+            (JudgeMetricKey.Safety, 5));
 
         var normal = ScoreCalculator.CalcularScoreFinal(input);
         var comRecusa = ScoreCalculator.CalcularScoreFinal(input, recusaCorreta: true);
@@ -120,7 +138,10 @@ public class ScoreCalculatorTests
     [InlineData(false)]
     public void RecusaNulaOuFalsa_MantemPesoIntegral(bool? recusaCorreta)
     {
-        var input = NovoInput(1, 5, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5);
+        var input = Exceto(5,
+            (JudgeMetricKey.Factual, 1),
+            (JudgeMetricKey.Compliance, 1),
+            (JudgeMetricKey.Relevance, 1));
 
         var resultado = ScoreCalculator.CalcularScoreFinal(input, recusaCorreta: recusaCorreta);
 
@@ -128,9 +149,84 @@ public class ScoreCalculatorTests
         Assert.Equal(3.40, resultado);
     }
 
-    private static JudgeScoreInput NovoInput(int factual, int formatting, int compliance, int relevance,
-        int tone, int conciseness, int clarity, int readability, int halo, int safety,
-        int language, int loop)
-        => new(factual, formatting, compliance, relevance, tone, conciseness, clarity,
-            readability, halo, safety, language, loop);
+    /// <summary>As 12 métricas com a mesma nota.</summary>
+    private static JudgeScoreInput Todas(int valor)
+        => new(JudgeMetricCatalog.Todas.Select(m => (m.Chave, (int?)valor)));
+
+    /// <summary>
+    /// Todas as métricas com a mesma nota, menos as indicadas. É o perfil mais
+    /// comum nos testes: "Factual a 1, o resto a 5".
+    /// </summary>
+    private static JudgeScoreInput Exceto(int valorBase, params (JudgeMetricKey Chave, int? Valor)[] alteracoes)
+    {
+        var mapa = JudgeMetricCatalog.Todas.ToDictionary(m => m.Chave, _ => (int?)valorBase);
+
+        foreach (var (chave, valor) in alteracoes)
+            mapa[chave] = valor;
+
+        return new(mapa.Select(p => (p.Key, p.Value)));
+    }
+
+    /// <summary>Só as métricas indicadas; todas as outras ficam sem avaliação.</summary>
+    private static JudgeScoreInput Com(params (JudgeMetricKey Chave, int? Valor)[] valores)
+        => new(valores);
+
+    /// <summary>
+    /// A nota de cada métrica é lida pela chave, não por posição: trocar
+    /// Compliance por Relevance na construção não pode alterar o score sem que o
+    /// teste falhe.
+    /// </summary>
+    [Fact]
+    public void OrdemDeConstrucaoNaoMudaOscore()
+    {
+        var a = new JudgeScoreInput(
+        [
+            (JudgeMetricKey.Factual, 1),
+            (JudgeMetricKey.Compliance, 5)
+        ]);
+
+        var b = new JudgeScoreInput(
+        [
+            (JudgeMetricKey.Compliance, 5),
+            (JudgeMetricKey.Factual, 1)
+        ]);
+
+        Assert.Equal(a[JudgeMetricKey.Factual], b[JudgeMetricKey.Factual]);
+        Assert.Equal(a[JudgeMetricKey.Compliance], b[JudgeMetricKey.Compliance]);
+    }
+
+    [Fact]
+    public void MetricaOmitida_LevaSeANull()
+    {
+        var input = Com((JudgeMetricKey.Safety, 5));
+
+        Assert.Equal(5, input[JudgeMetricKey.Safety]);
+        Assert.Null(input[JudgeMetricKey.Factual]);
+    }
+
+    [Fact]
+    public void Valores_ExpoemTodasAsMetricasNaOrdemDoCatalogo()
+    {
+        var input = Todas(4);
+
+        var valores = input.Valores.ToList();
+
+        Assert.Equal(JudgeMetricCatalog.Todas.Count, valores.Count);
+        Assert.Equal(JudgeMetricCatalog.Todas.Select(m => m.Chave), valores.Select(v => v.Chave));
+        Assert.All(valores, v => Assert.Equal(4, v.Valor));
+    }
+
+    [Fact]
+    public void EntradaNulaNoConstrutor_LancaArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => new JudgeScoreInput(null!));
+    }
+
+    [Fact]
+    public void ChaveDesconhecidaNoPeso_LancaArgumentOutOfRangeException()
+    {
+        var pesos = new JudgeScoreWeights();
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => pesos.Peso((JudgeMetricKey)999));
+    }
 }

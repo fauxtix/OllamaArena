@@ -18,6 +18,16 @@
         <div class="help-sections">
 
             <div>
+                <h4>@L["Modelos.HelpNameTitle"]</h4>
+                <p>@L["Modelos.HelpNameBody"]</p>
+            </div>
+
+            <div>
+                <h4>@L["Modelos.HelpFamilyTitle"]</h4>
+                <p>@L["Modelos.HelpFamilyBody"]</p>
+            </div>
+
+            <div>
                 <h4>@L["Modelos.HelpParamsTitle"]</h4>
                 <p>@L["Modelos.HelpParamsBody"]</p>
             </div>
@@ -28,6 +38,11 @@
             </div>
 
             <div>
+                <h4>@L["Modelos.HelpYearTitle"]</h4>
+                <p>@L["Modelos.HelpYearBody"]</p>
+            </div>
+
+            <div>
                 <h4>@L["Modelos.HelpContextTitle"]</h4>
                 <p>@L["Modelos.HelpContextBody"]</p>
                 <ul>
@@ -35,6 +50,11 @@
                     <li>@L["Modelos.HelpContextItem2"]</li>
                     <li>@L["Modelos.HelpContextItem3"]</li>
                 </ul>
+            </div>
+
+            <div>
+                <h4>@L["Modelos.HelpSizeTitle"]</h4>
+                <p>@L["Modelos.HelpSizeBody"]</p>
             </div>
 
             <div>
@@ -55,6 +75,7 @@
                     <li>@L["Modelos.HelpGpuItem2"]</li>
                     <li>@L["Modelos.HelpGpuItem3"]</li>
                 </ul>
+                <p class="help-note">@L["Modelos.HelpGpuNote"]</p>
             </div>
 
         </div>
@@ -97,6 +118,12 @@
 
     .model-columns-info-dialog .help-sections p {
         margin: 0;
+    }
+
+    .model-columns-info-dialog .help-sections p.help-note {
+        margin-top: 6px;
+        font-size: 0.875rem;
+        color: var(--neutral-foreground-hint);
     }
 
     .model-columns-info-dialog .help-sections ul {

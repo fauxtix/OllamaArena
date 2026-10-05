@@ -26,28 +26,33 @@
                                   OnClick="ShowReadme"
                                   Title="@L["ReadmeViewer"]"
                                   aria-label="@L["ReadmeViewer"]"
-                                  Style="min-width: 32px; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                        <FluentIcon Value="@(new Icons.Regular.Size20.DocumentBulletList())" />
+                                  Class="header-btn"
+                                  IconStart="@(new Icons.Regular.Size20.DocumentBulletList())">
+                        <span class="header-btn-label">@L["Header.Readme"]</span>
                     </FluentButton>
                     <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="@(() => Navigation.NavigateTo("/plano-de-testes"))"
                                   Title="@L["TestPlan"]"
                                   aria-label="@L["TestPlan"]"
-                                  Style="min-width: 32px; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                        <FluentIcon Value="@(new Icons.Regular.Size20.CheckmarkCircle())" />
+                                  Class="header-btn"
+                                  IconStart="@(new Icons.Regular.Size20.CheckmarkCircle())">
+                        <span class="header-btn-label">@L["Header.TestPlan"]</span>
                     </FluentButton>
                     <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="@(() => Navigation.NavigateTo("/comparar-modelos"))"
                                   Title="@L["CompareModels"]"
                                   aria-label="@L["CompareModels"]"
-                                  Style="min-width: 32px; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                        <FluentIcon Value="@(new Icons.Regular.Size20.DocumentBulletList())" />
+                                  Class="header-btn"
+                                  IconStart="@(new Icons.Regular.Size20.ArrowSwap())">
+                        <span class="header-btn-label">@L["Header.CompareModels"]</span>
                     </FluentButton>
                     <FluentButton Appearance="Appearance.Stealth"
                                   OnClick="ToggleTheme"
                                   Title="@(Mode == DesignThemeModes.Light ? L["Theme.ToDark"] : L["Theme.ToLight"])"
-                                  Style="font-size: 1.1rem; padding: 4px 8px;">
-                        @(Mode == DesignThemeModes.Light ? "🌙" : "☀️")
+                                  aria-label="@(Mode == DesignThemeModes.Light ? L["Theme.ToDark"] : L["Theme.ToLight"])"
+                                  Class="header-btn">
+                        <span class="header-btn-emoji" aria-hidden="true">@(Mode == DesignThemeModes.Light ? "🌙" : "☀️")</span>
+                        <span class="header-btn-label">@(Mode == DesignThemeModes.Light ? L["Header.Theme.Dark"] : L["Header.Theme.Light"])</span>
                     </FluentButton>
                     <CultureSelector />
                 </div>
@@ -131,6 +136,49 @@
         align-items: center;
         gap: 8px;
         flex: 0 0 auto;
+    }
+
+    /* Botões de acção da appbar: ícone + legenda visível, para não obrigar a hover.
+       O flex/gap e o alinhamento ficam a cargo do FluentButton — aqui só se ajusta
+       a caixa (o `padding: 0` e o `width: 32px` fixos eram de quando era só ícone). */
+    .header-btn {
+        height: 32px;
+        min-width: 32px;
+        padding: 0 10px;
+        font-size: .85rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .header-btn-label {
+        line-height: 1;
+    }
+
+    .header-btn-emoji {
+        font-size: 1.05rem;
+        line-height: 1;
+        margin-inline-end: 4px;
+    }
+
+    /* Responsividade em 3 níveis, por ordem de sacrifício:
+       1) primeiro recolhe o título da app, que é o elemento mais decorativo;
+       2) só depois recolhe as legendas, ficando só os ícones. O `title` mantém a
+          descrição em qualquer largura, e o `aria-label` garante o nome acessível
+          mesmo quando a legenda está em `display: none`. */
+    @@media (max-width: 1100px) {
+        .app-title {
+            display: none;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .header-btn-label {
+            display: none;
+        }
+
+        .header-btn-emoji {
+            margin-inline-end: 0;
+        }
     }
 
     .footer-content {

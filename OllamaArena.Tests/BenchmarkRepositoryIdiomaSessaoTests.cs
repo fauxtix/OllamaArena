@@ -18,7 +18,8 @@ public class BenchmarkRepositoryIdiomaSessaoTests : IDisposable
 {
     private readonly SqliteConnection _anchor;
     private readonly string _connectionString;
-    private readonly BenchmarkRepository _repo;
+    private readonly BenchmarkCommandRepository _comandos;
+    private readonly BenchmarkQueryRepository _consultas;
 
     public BenchmarkRepositoryIdiomaSessaoTests()
     {
@@ -33,15 +34,15 @@ public class BenchmarkRepositoryIdiomaSessaoTests : IDisposable
         var context = new ContextoTeste(_connectionString);
         DatabaseSchemaInitializer.EnsureSchema(context);
 
-        _repo = new BenchmarkRepository(context, NullLogger<BenchmarkRepository>.Instance,
-            Options.Create(new JudgeScoreWeights()));
+        _comandos = new BenchmarkCommandRepository(context, NullLogger<BenchmarkCommandRepository>.Instance);
+        _consultas = new BenchmarkQueryRepository(context, NullLogger<BenchmarkQueryRepository>.Instance);
     }
 
     [Fact]
     public async Task CreateResponseAsync_GravaELerIdiomaSessao()
     {
         int promptId = await CriarPromptAsync();
-        await _repo.CreateResponseAsync(NovaResposta(promptId, "English (en-US)"));
+        await _comandos.CreateResponseAsync(NovaResposta(promptId, "English (en-US)"));
 
         var lida = await LerUnicaRespostaAsync(promptId);
 
@@ -52,7 +53,7 @@ public class BenchmarkRepositoryIdiomaSessaoTests : IDisposable
     public async Task CreateResponseAsync_SemIdioma_LerNull()
     {
         int promptId = await CriarPromptAsync();
-        await _repo.CreateResponseAsync(NovaResposta(promptId, null));
+        await _comandos.CreateResponseAsync(NovaResposta(promptId, null));
 
         var lida = await LerUnicaRespostaAsync(promptId);
 
@@ -113,13 +114,13 @@ public class BenchmarkRepositoryIdiomaSessaoTests : IDisposable
 
     private async Task<int> CriarPromptAsync()
     {
-        var (promptId, _) = await _repo.GetOrCreatePromptIdAsync("Prompt de teste único.", "Teste");
+        var (promptId, _) = await _comandos.GetOrCreatePromptIdAsync("Prompt de teste único.", "Teste");
         return promptId;
     }
 
     private async Task<BenchmarkResponse> LerUnicaRespostaAsync(int promptId)
     {
-        var prompts = await _repo.GetAllBenchmarksAsync();
+        var prompts = await _consultas.GetAllBenchmarksAsync();
         return prompts.Single(p => p.Id == promptId).Answers.Single();
     }
 

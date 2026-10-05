@@ -4,7 +4,8 @@
 @using OllamaArena.Services.Helpers
 @using OllamaArena.Services.Interfaces.Repositories
 @inject IStringLocalizer<SharedResources> L
-@inject IBenchmarkRepository BenchmarkRepo
+@inject IBenchmarkQueryRepository BenchmarkRepo
+@inject ILogger<App> Logger
 
 <FluentDialog Hidden="@(!Visible)"
               Modal="true"
@@ -31,7 +32,7 @@
     </FluentDialogHeader>
 
     <FluentDialogBody>
-        @if (Response != null)
+        @if (Response != null && Visible)
         {
             <div class="detail-container">
                 <hr />
@@ -58,93 +59,49 @@
                                         </div>
                                     </div>
 
-                                    @* 1. FACTUAL *@
-                                    <div class="ratings-row">
-                                        <div class="metric-cell">@L["Evaluation.MetricFactual"]</div>
-                                        <div class="rating-cell">@RenderRating(Response.GeminiFactualRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.OpenRouterFactualRating)</div>
-                                    </div>
-
-                                    @* 2. FORMATAÇÃO *@
-                                    <div class="ratings-row">
-                                        <div class="metric-cell">@L["Evaluation.MetricFormatting"]</div>
-                                        <div class="rating-cell">@RenderRating(Response.GeminiFormattingRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.OpenRouterFormattingRating)</div>
-                                    </div>
-
-                                    @* PONTUAÇÃO GLOBAL *@
-                                    <div class="ratings-row global-row">
-                                        <div class="metric-cell global-metric">@L["Evaluation.MetricOverall"]</div>
-                                        <div class="rating-cell">
-                                            @if (Response.GeminiRating > 0)
-                                            {
-                                                <span class="rating-value global-value">@Response.GeminiRating</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="rating-empty">—</span>
-                                            }
+                                    @* As 12 métricas vêm de JudgeMetricCatalog (fonte única).
+                                       A pontuação global é inserida a seguir à Formatação,
+                                       como antes; as restantes (Language Consistency e
+                                       Loop Detection) passaram finalmente a aparecer. *@
+                                    @{
+                                        var globalInserido = false;
+                                    }
+                                    @foreach (var metrica in JudgeMetricCatalog.Todas)
+                                    {
+                                        <div class="ratings-row">
+                                            <div class="metric-cell">@metrica.Rotulo(L)</div>
+                                            <div class="rating-cell">@RenderRating(metrica.Gemini(Response))</div>
+                                            <div class="rating-cell">@RenderRating(metrica.OpenRouter(Response))</div>
                                         </div>
-                                        <div class="rating-cell">
-                                            @if (Response.OpenRouterRating > 0)
-                                            {
-                                                <span class="rating-value global-value">@Response.OpenRouterRating</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="rating-empty">—</span>
-                                            }
-                                        </div>
-                                    </div>
 
-                                    <div class="ratings-row">
-                                        <div class="metric-cell">@L["Evaluation.MetricCompliance"]</div>
-                                        <div class="rating-cell">@RenderRating(Response.GeminiComplianceRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.OpenRouterComplianceRating)</div>
-                                    </div>
-
-                                    <div class="ratings-row">
-                                        <div class="metric-cell">@L["Evaluation.MetricRelevance"]</div>
-                                        <div class="rating-cell">@RenderRating(Response.GeminiRelevanceRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.OpenRouterRelevanceRating)</div>
-                                    </div>
-
-                                    <div class="ratings-row">
-                                        <div class="metric-cell">@L["Evaluation.MetricTone"]</div>
-                                        <div class="rating-cell">@RenderRating(Response.GeminiToneRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.OpenRouterToneRating)</div>
-                                    </div>
-
-                                    <div class="ratings-row">
-                                        <div class="metric-cell">@L["Evaluation.MetricConciseness"]</div>
-                                        <div class="rating-cell">@RenderRating(Response.GeminiConcisenessRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.OpenRouterConcisenessRating)</div>
-                                    </div>
-
-                                    <div class="ratings-row">
-                                        <div class="metric-cell">@L["Evaluation.MetricClarity"]</div>
-                                        <div class="rating-cell">@RenderRating(Response.GeminiClarityRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.OpenRouterClarityRating)</div>
-                                    </div>
-
-                                    <div class="ratings-row">
-                                        <div class="metric-cell">@L["Evaluation.MetricReadability"]</div>
-                                        <div class="rating-cell">@RenderRating(Response.GeminiReadabilityRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.OpenRouterReadabilityRating)</div>
-                                    </div>
-
-                                    <div class="ratings-row">
-                                        <div class="metric-cell">@L["Evaluation.MetricHaloEffect"]</div>
-                                        <div class="rating-cell">@RenderRating(Response.GeminiHaloEffectRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.OpenRouterHaloEffectRating)</div>
-                                    </div>
-
-                                    <div class="ratings-row">
-                                        <div class="metric-cell">@L["Evaluation.MetricSafety"]</div>
-                                        <div class="rating-cell">@RenderRating(Response.GeminiSafetyRating)</div>
-                                        <div class="rating-cell">@RenderRating(Response.OpenRouterSafetyRating)</div>
-                                    </div>
-
+                                        if (!globalInserido && metrica.Chave == JudgeMetricKey.Formatting)
+                                        {
+                                            globalInserido = true;
+                                            <div class="ratings-row global-row">
+                                                <div class="metric-cell global-metric">@L["Evaluation.MetricOverall"]</div>
+                                                <div class="rating-cell">
+                                                    @if (Response.GeminiRating > 0)
+                                                    {
+                                                        <span class="rating-value global-value">@Response.GeminiRating</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="rating-empty">—</span>
+                                                    }
+                                                </div>
+                                                <div class="rating-cell">
+                                                    @if (Response.OpenRouterRating > 0)
+                                                    {
+                                                        <span class="rating-value global-value">@Response.OpenRouterRating</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="rating-empty">—</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    }
                                 </div>
                             </div>
                         </Content>
@@ -162,6 +119,13 @@
                                 {
                                     <div style="display: flex; justify-content: center; padding: 40px;">
                                         <FluentProgressRing />
+                                    </div>
+                                }
+                                else if (_erroFeedback is not null)
+                                {
+                                    <div class="aviso-erro" role="alert">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Warning())" />
+                                        <span>@_erroFeedback</span>
                                     </div>
                                 }
                                 else
@@ -249,15 +213,23 @@
 </FluentDialog>
 
 @code {
-    [Inject] public IBenchmarkRepository? BenchmarkRepository { get; set; }
     [Parameter, EditorRequired] public BenchmarkEvaluationModel? Response { get; set; }
     [Parameter, EditorRequired] public bool Visible { get; set; }
     [Parameter, EditorRequired] public EventCallback<bool> VisibleChanged { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
 
     protected PromptFeedback Feedback { get; set; } = new();
+
+    /// <summary>
+    /// <c>ResponseId</c> cujos feedbacks já foram carregados. A consulta só volta a
+    /// correr quando muda o registo selecionado; antes, <c>OnParametersSetAsync</c>
+    /// batia na base de dados em cada render do pai (cada tecla na pesquisa, cada
+    /// clique de paginação, cada filtro) e mesmo com o diálogo fechado.
+    /// </summary>
     private int _lastResponseId;
+
     private bool _isLoadingFeedback = false;
+    private string? _erroFeedback;
 
     private bool TemConteudoJuiz(bool primeiro) => primeiro
         ? JudgeOriginResolver.TemConteudo(Response?.GeminiFeedback, Response?.GeminiRating)
@@ -276,26 +248,38 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        if (Response is not null) 
-        {
-            _lastResponseId = Response.Id;
-            await GetJudgesFeedback();
-        }
+        // Só quando o diálogo está aberto e a resposta selecionada mudou.
+        if (!Visible || Response is null || Response.ResponseId == _lastResponseId)
+            return;
+
+        await GetJudgesFeedback();
     }
 
     protected async Task GetJudgesFeedback()
     {
-        if (Response is not null && BenchmarkRepository is not null)
+        if (Response is null)
+            return;
+
+        _isLoadingFeedback = true;
+        _erroFeedback = null;
+
+        try
         {
-            _isLoadingFeedback = true;
-            try
-            {
-                Feedback = await BenchmarkRepository.GetBenchmarkJudgesFeedbackByIdAsync(Response.ResponseId) ?? new();
-            }
-            finally
-            {
-                _isLoadingFeedback = false;
-            }
+            Feedback = await BenchmarkRepo.GetBenchmarkJudgesFeedbackByIdAsync(Response.ResponseId) ?? new();
+            _lastResponseId = Response.ResponseId;
+        }
+        catch (Exception ex)
+        {
+            // O repositório devolve um objeto vazio quando a leitura falha: sem este
+            // tratamento a falha aparecia ao utilizador como "Nenhum feedback
+            // registado", que é uma informação errada.
+            Logger.LogError(ex, "Erro ao carregar os feedbacks dos juízes da resposta {ResponseId}", Response.ResponseId);
+            Feedback = new();
+            _erroFeedback = L["EvalDetail.FeedbackError"].Value;
+        }
+        finally
+        {
+            _isLoadingFeedback = false;
         }
     }
 
@@ -307,20 +291,20 @@
 
     private RenderFragment RenderRating(int? rating) => builder =>
     {
-        if (rating.HasValue && rating > 0)
+        builder.OpenElement(0, "span");
+
+        if (rating is > 0)
         {
-            builder.OpenElement(0, "span");
             builder.AddAttribute(1, "class", "rating-value");
             builder.AddContent(2, rating.Value);
-            builder.CloseElement();
         }
         else
         {
-            builder.OpenElement(0, "span");
             builder.AddAttribute(1, "class", "rating-empty");
             builder.AddContent(2, "—");
-            builder.CloseElement();
         }
+
+        builder.CloseElement();
     };
 }
 
@@ -402,6 +386,19 @@
         font-style: italic;
         text-align: center;
         margin-top: 40px;
+        font-size: 13px;
+    }
+
+    .aviso-erro {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        border: 1px solid var(--warning-stroke-rest, #d19e00);
+        border-left: 4px solid var(--warning-foreground-rest, #d19e00);
+        border-radius: 6px;
+        background: rgba(209, 158, 0, 0.08);
+        color: var(--neutral-foreground-rest);
         font-size: 13px;
     }
 

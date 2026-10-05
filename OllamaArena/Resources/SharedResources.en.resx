@@ -291,9 +291,15 @@
   <data name="Chat.AutoSaveError" xml:space="preserve">
     <value>An error occurred while saving the response automatically. The record may not have been saved.</value>
   </data>
-  <data name="Chat.AutoSaveErrorTitle" xml:space="preserve">
-    <value>Save error</value>
-  </data>
+<data name="Chat.AutoSaveErrorTitle" xml:space="preserve">
+<value>Save error</value>
+</data>
+<data name="Chat.PromptTooLong" xml:space="preserve">
+<value>The conversation uses about {0} tokens and this model only accepts {1}. Shorten the message or start a new conversation.</value>
+</data>
+<data name="Chat.PromptTooLongTitle" xml:space="preserve">
+<value>Message too long</value>
+</data>
   <data name="ConfirmSaveDialog.Title" xml:space="preserve">
     <value>Save record</value>
   </data>
@@ -403,8 +409,26 @@
     <value>Please confirm</value>
   </data>
   <data name="Benchmarks.DeleteAllConfirmMessage" xml:space="preserve">
-    <value>Are you sure you want to delete all Prompts and associated Responses? This operation cannot be undone.</value>
-  </data>
+      <value>Are you sure you want to delete all Prompts and associated Responses? This operation cannot be undone.</value>
+      </data>
+  <data name="Benchmarks.DeleteFilteredConfirmTitle" xml:space="preserve">
+      <value>Delete the filtered responses</value>
+      </data>
+  <data name="Benchmarks.DeleteUnevaluatedConfirmTitle" xml:space="preserve">
+      <value>Delete the unevaluated responses</value>
+      </data>
+  <data name="Benchmarks.DeleteEvaluatedConfirmTitle" xml:space="preserve">
+      <value>Delete the evaluated responses</value>
+      </data>
+  <data name="Benchmarks.DeleteEverythingConfirmTitle" xml:space="preserve">
+      <value>Delete EVERYTHING — irreversible action</value>
+      </data>
+  <data name="Benchmarks.DeleteEverythingConfirmMessage" xml:space="preserve">
+      <value>This clears the entire Prompts table: every prompt, every response and every evaluation of the {0} record(s) currently in the database. It is not limited by the filter or the search, and there is no backup: the data cannot be recovered.</value>
+      </data>
+  <data name="Benchmarks.DeleteEverythingYes" xml:space="preserve">
+      <value>Yes, delete everything permanently</value>
+      </data>
   <data name="Benchmarks.DeleteAllYes" xml:space="preserve">
     <value>Yes, Delete</value>
   </data>
@@ -455,6 +479,12 @@
   </data>
   <data name="Benchmarks.ExportPdfError" xml:space="preserve">
     <value>Error generating the PDF:</value>
+  </data>
+  <data name="Benchmarks.ExportExcelError" xml:space="preserve">
+    <value>Error exporting to Excel:</value>
+  </data>
+  <data name="Benchmarks.DeleteError" xml:space="preserve">
+    <value>Could not delete the responses. The database did not respond — please try again.</value>
   </data>
   <data name="Benchmarks.MultipleGroupsWarning" xml:space="preserve">
     <value>⚠️ Attention - Multiple Prompt Groups</value>
@@ -757,8 +787,14 @@ Do you want to continue?</value>
     <value>Copy Formatted Prompt for the AI Judge</value>
   </data>
   <data name="Benchmarks.CopyForEvaluation" xml:space="preserve">
-    <value>Copy prompt</value>
-  </data>
+      <value>Copy prompt</value>
+    </data>
+  <data name="Benchmarks.CopySuccess" xml:space="preserve">
+      <value>Copied to the clipboard</value>
+    </data>
+  <data name="Benchmarks.CopyError" xml:space="preserve">
+      <value>Could not copy to the clipboard.</value>
+    </data>
   <data name="Benchmarks.AutomateEvaluation" xml:space="preserve">
     <value>Evaluate automatically</value>
   </data>
@@ -999,6 +1035,18 @@ Do you want to continue?</value>
   <data name="Modelos.HelpCount" xml:space="preserve">
     <value>{0} model(s) installed</value>
   </data>
+  <data name="Modelos.HelpNameTitle" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Modelos.HelpNameBody" xml:space="preserve">
+    <value>The model's tag in the local library, as returned by /api/tags: base name, namespace and tag (e.g. llama3.2:3b-instruct-q4_K_M). It is the identifier the Chat sends to Ollama — two different names are two different entries, even when they have the same parameter count.</value>
+  </data>
+  <data name="Modelos.HelpFamilyTitle" xml:space="preserve">
+    <value>Family</value>
+  </data>
+  <data name="Modelos.HelpFamilyBody" xml:space="preserve">
+    <value>The model architecture, as Ollama reports it in details.family (e.g. llama, qwen2, gemma, phi3). It determines the tokenizer and the prompt template, which is why two models of the same family behave similarly even at different sizes, and why switching family also changes the prompt the model expects.</value>
+  </data>
   <data name="Modelos.HelpParamsTitle" xml:space="preserve">
     <value>Parameters</value>
   </data>
@@ -1011,11 +1059,17 @@ Do you want to continue?</value>
   <data name="Modelos.HelpQuantBody" xml:space="preserve">
     <value>How much the weights were compressed when written to the GGUF file. Each weight goes from 32 bits (F32) down to 4 bits (Q4), Q5, Q6… — hence names like Q4_K_M. Fewer bits mean a smaller file, less VRAM and higher speed, at some cost in quality. Q4_K_M is the usual best compromise for general use; Q8 is nearly lossless but takes twice the space.</value>
   </data>
+  <data name="Modelos.HelpYearTitle" xml:space="preserve">
+    <value>Training Year</value>
+  </data>
+  <data name="Modelos.HelpYearBody" xml:space="preserve">
+    <value>The model's training or publication year. The app extracts it from the GGUF metadata date (model_info.*.general.date) and, failing that, scans the Modelfile and the template for a year. It is a heuristic, not a guarantee: when Ollama returns nothing, 2024 is assumed. Useful as a warning — an older model tends to lose on recent benchmarks — and not as an absolute criterion.</value>
+  </data>
   <data name="Modelos.HelpContextTitle" xml:space="preserve">
     <value>Max Context</value>
   </data>
   <data name="Modelos.HelpContextBody" xml:space="preserve">
-    <value />
+    <value>The largest context window the model supports (num_ctx in the GGUF), read from model_info.*.context_length in the /api/show response. If Ollama does not return that field, the app shows 2,048 tokens. Three things to keep in mind:</value>
   </data>
   <data name="Modelos.HelpContextItem1" xml:space="preserve">
     <value>It is not what is actually used in a conversation: Ollama shrinks the window according to the available VRAM, and the app computes that effective value before each conversation.</value>
@@ -1026,20 +1080,26 @@ Do you want to continue?</value>
   <data name="Modelos.HelpContextItem3" xml:space="preserve">
     <value>Prompts or histories longer than the window get truncated, and quality degrades before the absolute limit is reached.</value>
   </data>
+  <data name="Modelos.HelpSizeTitle" xml:space="preserve">
+    <value>Disk Size</value>
+  </data>
+  <data name="Modelos.HelpSizeBody" xml:space="preserve">
+    <value>The GGUF file size in GiB — binary divisions of 1024, rounded to two decimals, as reported by /api/tags (so 4.0 GiB is slightly more than 4 decimal GB). It is the most direct factor in answer speed, and it is also the basis of the GPU Compatibility calculation.</value>
+  </data>
   <data name="Modelos.HelpReasoningTitle" xml:space="preserve">
     <value>Reasoning</value>
   </data>
   <data name="Modelos.HelpReasoningBody" xml:space="preserve">
-    <value />
+    <value>Whether the model declares the "thinking" capability in the capabilities array returned by /api/show — that is, whether it can produce a reasoning step before the answer. Three states on the badge:</value>
   </data>
   <data name="Modelos.HelpReasoningItem1" xml:space="preserve">
-    <value />
+    <value>Supported: the capability is declared. The app sends the think field explicitly (true or false) to these models; for all others the field is omitted, because Ollama returns a 400 error when it is sent to a model without "thinking".</value>
   </data>
   <data name="Modelos.HelpReasoningItem2" xml:space="preserve">
-    <value />
+    <value>Not supported: the model replied without that capability in the array. The think field is omitted and the model answers directly.</value>
   </data>
   <data name="Modelos.HelpReasoningItem3" xml:space="preserve">
-    <value />
+    <value>Unknown: Ollama is too old to return the capabilities array, or the call failed. That is not the same as "not supported" — the app re-checks when it actually sends. The reasoning toggle in the settings is off by default; when off, the reasoning is not even captured.</value>
   </data>
   <data name="Modelos.HelpGpuTitle" xml:space="preserve">
     <value>GPU Compatibility</value>
@@ -1048,13 +1108,16 @@ Do you want to continue?</value>
     <value>Estimate of the memory required versus the graphics card's free VRAM. The calculation compares the model size multiplied by a load factor (1.2×, for the runtime and the context buffer) with the free VRAM already reduced by the reserve the operating system uses on Windows (350 MB).</value>
   </data>
   <data name="Modelos.HelpGpuItem1" xml:space="preserve">
-    <value />
+    <value>Compatible (~N GB): free VRAM, once the Windows reserve is deducted, covers the model size multiplied by the load factor. The model is loaded entirely on the graphics card.</value>
   </data>
   <data name="Modelos.HelpGpuItem2" xml:space="preserve">
-    <value />
+    <value>Exceeds VRAM (~N GB): the model does not fit entirely in VRAM. Ollama can still load it, but part of the layers goes to system RAM — answers get slower, especially the first one (the KV cache does not exist yet).</value>
   </data>
   <data name="Modelos.HelpGpuItem3" xml:space="preserve">
-    <value />
+    <value>VRAM read unavailable: the VRAM could not be read (no nvidia-smi and no WMI detection, or 0 reported), so the app gives no verdict instead of claiming the model does not fit.</value>
+  </data>
+  <data name="Modelos.HelpGpuNote" xml:space="preserve">
+    <value>This is a snapshot: free VRAM changes as other applications use it, so the same model can flip verdict between visits.</value>
   </data>
   <data name="Analysis.NoBestRated" xml:space="preserve">
     <value>No response has been rated by the judges yet to determine the best model.</value>
@@ -1380,6 +1443,9 @@ Do you want to continue?</value>
   <data name="EvalDetail.NoFeedback" xml:space="preserve">
     <value>No feedback registered.</value>
   </data>
+  <data name="EvalDetail.FeedbackError" xml:space="preserve">
+    <value>Could not load the judges' feedback. Try again or reopen the details.</value>
+  </data>
   <data name="EvalDetail.Recommendation" xml:space="preserve">
     <value>Judge Recommendation</value>
   </data>
@@ -1548,6 +1614,21 @@ Do you want to continue?</value>
   <data name="Nav.ExpandToggle" xml:space="preserve">
     <value>Menu expand/collapse toggle</value>
   </data>
+  <data name="Header.Readme" xml:space="preserve">
+    <value>README</value>
+  </data>
+  <data name="Header.TestPlan" xml:space="preserve">
+    <value>Tests</value>
+  </data>
+  <data name="Header.CompareModels" xml:space="preserve">
+    <value>Compare</value>
+  </data>
+  <data name="Header.Theme.Dark" xml:space="preserve">
+    <value>Dark theme</value>
+  </data>
+  <data name="Header.Theme.Light" xml:space="preserve">
+    <value>Light theme</value>
+  </data>
   <data name="Dashboard.PageTitle" xml:space="preserve">
     <value>Dashboard</value>
   </data>
@@ -1657,6 +1738,18 @@ Do you want to continue?</value>
     <value>Models comparison</value>
   </data>
   <data name="CompareModels.Title" xml:space="preserve">
-    <value>Models comparison plan</value>
+    <value>Plan to compare models</value>
+  </data>
+  <data name="HistoryPanel.ClearHistory" xml:space="preserve">
+    <value>Clear history</value>
+  </data>
+  <data name="HistoryPanel.ConfirmClearHistory" xml:space="preserve">
+    <value>This action is irreversible. Clear all history?</value>
+  </data>
+  <data name="HistoryPanel.ConfirmClearConversations" xml:space="preserve">
+    <value>This action is irreversible. Delete all conversations?</value>
+  </data>
+  <data name="HistoryPanel.ClearHistoryDisabledTooltip" xml:space="preserve">
+    <value>Close the current conversation (New Chat) before deleting them.</value>
   </data>
 </root>

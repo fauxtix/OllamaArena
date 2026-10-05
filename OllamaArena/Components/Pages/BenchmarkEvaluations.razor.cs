@@ -1,4 +1,3 @@
-using ClosedXML.Excel;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.JSInterop;
 using OllamaArena.Models.DTO;
@@ -7,35 +6,57 @@ using System.Globalization;
 
 namespace OllamaArena.Components.Pages
 {
-    public partial class BenchmarkEvaluations
+    /// <summary>
+    /// Grelha de avaliações dos benchmarks: filtro, pesquisa, eliminação por âmbito,
+    /// análise local e exportações (Excel/PDF).
+    /// </summary>
+    public partial class BenchmarkEvaluations : IDisposable
     {
-        private IQueryable<BenchmarkEvaluationModel> _benchmarks = Enumerable.Empty<BenchmarkEvaluationModel>().AsQueryable();
+        private IReadOnlyList<BenchmarkEvaluationModel> _benchmarks = Array.Empty<BenchmarkEvaluationModel>();
+
+        /// <summary>
+        /// Resultado de <see cref="AplicarFiltros"/>. É recalculado só quando muda o
+        /// filtro, a pesquisa ou o conjunto de dados: antes, cada uma das contagens
+        /// na barra de ferramentas reexecutava a cadeia de <c>Where</c> sobre todas as
+        /// linhas em cada render (o getter devolvia um objeto de query novo a cada
+        /// acesso, e a grelha enumerava-o várias vezes).
+        /// </summary>
+        private IReadOnlyList<BenchmarkEvaluationModel> _filtrados = Array.Empty<BenchmarkEvaluationModel>();
+
+        /// <summary>
+        /// Mesmos elementos de <see cref="_filtrados"/> na forma que a grelha consome.
+        /// A instância é guardada para que a grelha não veja um objeto novo em cada
+        /// render (o que a fazia reconstruir a página atual para nada).
+        /// </summary>
+        private IQueryable<BenchmarkEvaluationModel> _filtroConsulta =
+            Enumerable.Empty<BenchmarkEvaluationModel>().AsQueryable();
+
         private PaginationState _pagination = new() { ItemsPerPage = 10 };
-        private string? _search;
         private BenchmarkEvaluationModel? _selectedBenchmarkResponse;
         private bool _isDialogVisible = false;
         private bool _isAnalyzing = false;
+        private bool _isExporting = false;
         private bool _mostrarPainelAnalise = false;
         private BenchmarkAnalysisResult? _resultadoLocal;
+
         private CancellationTokenSource? _cts;
 
-        private string _streamingLog = "";
+        private BenchmarkFilter _filtroAtual = BenchmarkFilter.Todos;
+        private string? _pesquisa;
 
-        private int _quantidadePorAvaliar =>
-            _benchmarks.Count(b => !EstaAvaliada(b));
+        // Contagens recalculadas em conjunto com _filtrados.
+        private int _quantidadeFiltrados;
+        private int _quantidadePorAvaliar;
+        private int _quantidadeAvaliadas;
 
-        private int _quantidadeAvaliados =>
-            _benchmarks.Count(b => EstaAvaliada(b));
+        private bool _descartado;
 
-        private int _quantidadeFiltrados =>
-            FilteredBenchmarks.Count();
-
-        private static bool EstaAvaliada(BenchmarkEvaluationModel b) =>
-            b.GeminiRating.HasValue && b.OpenRouterRating.HasValue;
-
-        private bool _podeExportarPdf =>
-            _benchmarks.Any() && _quantidadePorAvaliar == 0;
-
+        /// <summary>
+        /// O relatório só sai quando não há respostas por avaliar, para não haver
+        /// linhas com "—" nos lugares das notas. No Excel o estado parcial é
+        /// aceitável (e útil), por isso a regra só se aplica ao PDF.
+        /// </summary>
+        private bool _podeExportarPdf => _benchmarks.Count > 0 && _quantidadePorAvaliar == 0;
 
         protected override async Task OnInitializedAsync()
         {
@@ -44,56 +65,162 @@ namespace OllamaArena.Components.Pages
 
         private async Task GetAllBenchmarks()
         {
-            var result = await BenchmarkRepo.BenchmarkResponseEvaluationAsync();
-            _benchmarks = result.AsQueryable();
+            var result = await QueryRepo.BenchmarkResponseEvaluationAsync();
+            _benchmarks = result as IReadOnlyList<BenchmarkEvaluationModel> ?? result.ToList();
+            await RecalcularAsync(reporPrimeiraPagina: true);
         }
 
-        private void AlterarItensPorPagina(int novosItens)
+        /// <summary>
+        /// Recalcula a lista filtrada e as contagens e repõe a página atual quando
+        /// deixa de fazer sentido (nova pesquisa/filtro, ou uma eliminação que
+        /// esvaziou a última página).
+        /// </summary>
+        private async Task RecalcularAsync(bool reporPrimeiraPagina = false)
         {
-            _pagination.ItemsPerPage = novosItens;
-            StateHasChanged();
+            var filtrados = AplicarFiltros(_benchmarks, _filtroAtual, _pesquisa);
+
+            _filtrados = filtrados;
+            _filtroConsulta = filtrados.AsQueryable();
+            _quantidadeFiltrados = filtrados.Count;
+            _quantidadePorAvaliar = BenchmarkEvaluationRules.ContarPorAvaliar(_benchmarks);
+            _quantidadeAvaliadas = BenchmarkEvaluationRules.ContarAvaliadas(_benchmarks);
+
+            await AjustarPaginaAsync(reporPrimeiraPagina);
+        }
+
+        /// <summary>
+        /// Mantém <see cref="PaginationState.CurrentPageIndex"/> dentro do intervalo
+        /// válido. Sem isto, apagar a última linha da última página deixava a grelha
+        /// vazia com o paginador a apontar para uma página que já não existe.
+        /// </summary>
+        private async Task AjustarPaginaAsync(bool reporPrimeiraPagina)
+        {
+            var ultimaPagina = _quantidadeFiltrados == 0
+                ? 0
+                : (int)Math.Ceiling(_quantidadeFiltrados / (double)Math.Max(1, _pagination.ItemsPerPage)) - 1;
+
+            var alvo = reporPrimeiraPagina ? 0 : Math.Min(_pagination.CurrentPageIndex, ultimaPagina);
+
+            // CurrentPageIndex é só de leitura: a alteração tem de passar por aqui
+            // para a grelha ser notificada.
+            if (_pagination.CurrentPageIndex != alvo)
+                await _pagination.SetCurrentPageIndexAsync(alvo);
+        }
+
+        private IReadOnlyList<BenchmarkEvaluationModel> AplicarFiltros(
+            IReadOnlyList<BenchmarkEvaluationModel> origem,
+            BenchmarkFilter filtro,
+            string? pesquisa)
+        {
+            IEnumerable<BenchmarkEvaluationModel> consulta = filtro switch
+            {
+                BenchmarkFilter.PorAvaliar => origem.Where(b => !BenchmarkEvaluationRules.EstaAvaliada(b)),
+                BenchmarkFilter.Avaliados => origem.Where(BenchmarkEvaluationRules.EstaAvaliada),
+                _ => origem
+            };
+
+            if (!string.IsNullOrWhiteSpace(pesquisa))
+            {
+                var termo = pesquisa.Trim();
+                consulta = consulta.Where(b => Corresponde(b, termo));
+            }
+
+            return consulta.ToList();
+        }
+
+        /// <summary>
+        /// Pesquisa por texto livre nos campos visíveis da grelha. Os números são
+        /// comparados em ambas as notações — "12,5" (pt) e "12.5" (en) — para que
+        /// o utilizador encontre o valor que vê no ecrã.
+        /// </summary>
+        private static bool Corresponde(BenchmarkEvaluationModel b, string termo)
+        {
+            bool Contem(string? texto) =>
+                texto is not null && texto.Contains(termo, StringComparison.OrdinalIgnoreCase);
+
+            if (Contem(b.NomeModelo) || Contem(b.Descricao) || Contem(b.TextoPrompt))
+                return true;
+
+            return FormatosNumericos(b.TokensPorSegundo).Any(Contem)
+                   || FormatosNumericos(b.TamanhoTokens).Any(Contem);
+        }
+
+        private static IEnumerable<string> FormatosNumericos(double valor)
+        {
+            yield return valor.ToString(CultureInfo.InvariantCulture);
+            yield return valor.ToString(CultureInfo.CurrentCulture);
+        }
+
+        /// <summary>Valor atual da pesquisa, para a <c>FluentSearch</c>.</summary>
+        private string? Pesquisa => _pesquisa;
+
+        private async Task PesquisaAlterada(string? valor)
+        {
+            if (_pesquisa == valor)
+                return;
+
+            _pesquisa = valor;
+            await RecalcularAsync(reporPrimeiraPagina: true);
+        }
+
+        private async Task SelecionarFiltroAsync(BenchmarkFilter filtro)
+        {
+            if (_filtroAtual == filtro)
+                return;
+
+            _filtroAtual = filtro;
+            await RecalcularAsync(reporPrimeiraPagina: true);
         }
 
         private async Task DeleteByScopeAsync(DeleteScope scope)
         {
-            if (DialogService == null) return;
-
             try
             {
                 List<BenchmarkEvaluationModel> alvos;
                 string mensagemChave;
+                string tituloChave;
+                string confirmarChave;
 
                 switch (scope)
                 {
                     case DeleteScope.Filtrados:
-                        alvos = FilteredBenchmarks.ToList();
+                        alvos = _filtrados.ToList();
                         mensagemChave = "Benchmarks.DeleteFilteredConfirmMessage";
+                        tituloChave = "Benchmarks.DeleteFilteredConfirmTitle";
+                        confirmarChave = "Benchmarks.DeleteAllYes";
                         break;
                     case DeleteScope.PorAvaliar:
-                        alvos = _benchmarks.Where(b => !EstaAvaliada(b)).ToList();
+                        alvos = _benchmarks.Where(b => !BenchmarkEvaluationRules.EstaAvaliada(b)).ToList();
                         mensagemChave = "Benchmarks.DeleteUnevaluatedConfirmMessage";
+                        tituloChave = "Benchmarks.DeleteUnevaluatedConfirmTitle";
+                        confirmarChave = "Benchmarks.DeleteAllYes";
                         break;
                     case DeleteScope.Avaliados:
-                        alvos = _benchmarks.Where(b => EstaAvaliada(b)).ToList();
+                        alvos = _benchmarks.Where(BenchmarkEvaluationRules.EstaAvaliada).ToList();
                         mensagemChave = "Benchmarks.DeleteEvaluatedConfirmMessage";
+                        tituloChave = "Benchmarks.DeleteEvaluatedConfirmTitle";
+                        confirmarChave = "Benchmarks.DeleteAllYes";
                         break;
                     default:
                         alvos = _benchmarks.ToList();
-                        mensagemChave = "Benchmarks.DeleteAllConfirmMessage";
+                        mensagemChave = "Benchmarks.DeleteEverythingConfirmMessage";
+                        tituloChave = "Benchmarks.DeleteEverythingConfirmTitle";
+                        confirmarChave = "Benchmarks.DeleteEverythingYes";
                         break;
                 }
 
-                if (alvos.Count == 0) return;
+                if (alvos.Count == 0)
+                    return;
 
                 string mensagemHtml = $@"
                         <div style='padding: 4px; border-left: 4px solid #e73618;'>
-                            <strong style='color: #e73618; font-size: 16px; display: block; margin-bottom: 8px;'>{L["Benchmarks.DeleteAllConfirmTitle"]}</strong>
+                            <strong style='color: #e73618; font-size: 16px; display: block; margin-bottom: 8px;'>{L[tituloChave]}</strong>
                             <span style='color: var(--neutral-foreground-rest);'>{L[mensagemChave, alvos.Count]}</span>
                         </div>";
 
                 var confirmacao = await DialogService.ShowConfirmationAsync(
                     message: mensagemHtml,
-                    L["Benchmarks.DeleteAllYes"],
+                    L[confirmarChave],
                     L["Common.Cancel"],
                     L["Benchmarks.DeleteAllTitle"]);
 
@@ -104,36 +231,38 @@ namespace OllamaArena.Components.Pages
                 {
                     if (scope == DeleteScope.Todos)
                     {
-                        await BenchmarkRepo.DeleteAllPromptsAndHistoryAsync();
+                        // Apaga a tabela Prompts inteira. Recarrega-se do BD em vez de
+                        // filtrar o cache: a eliminação não se limita ao que está em
+                        // memória (outro separador pode ter avaliado benchmarks depois
+                        // desta página ter carregado) e a cache ficaria desfasada.
+                        await CommandRepo.DeleteAllPromptsAsync();
+                        await GetAllBenchmarks();
                     }
                     else
                     {
-                        await BenchmarkRepo.DeleteResponsesAsync(alvos.Select(a => a.ResponseId));
+                        await CommandRepo.DeleteResponsesAsync(alvos.Select(a => a.ResponseId));
+
+                        var idsApagar = alvos.Select(a => a.ResponseId).ToHashSet();
+                        _benchmarks = _benchmarks.Where(b => !idsApagar.Contains(b.ResponseId)).ToList();
+                        await RecalcularAsync();
                     }
 
-                    var idsApagar = alvos.Select(a => a.ResponseId).ToHashSet();
-                    await InvokeAsync(() =>
-                    {
-                        _benchmarks = _benchmarks.Where(b => !idsApagar.Contains(b.ResponseId)).AsQueryable();
-                        StateHasChanged();
-                    });
+                    await InvokeAsync(StateHasChanged);
                 }
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, $"Erro ao apagar os Prompts");
+                Logger.LogError(ex, "Erro ao apagar os benchmarks (âmbito {Scope}).", scope);
+                // Sem isto o erro só ficava no log e o utilizador via o clique
+                // "apagar" aparentemente sem efeito.
+                await DialogService.ShowErrorAsync(L["Benchmarks.DeleteError"], L["Benchmarks.DeleteAllTitle"]);
             }
-
         }
 
         private async Task DeleteBenchmark(int responseId)
         {
-
-            if (DialogService == null) return;
-
             try
             {
-
                 string mensagemHtml = $@"
                         <div style='padding: 4px; border-left: 4px solid #e73618;'>
                             <strong style='color: #e73618; font-size: 16px; display: block; margin-bottom: 8px;'>{L["Benchmarks.DeleteAllConfirmTitle"]}</strong>
@@ -146,201 +275,91 @@ namespace OllamaArena.Components.Pages
                     L["Benchmarks.DeleteOneTitle"]
                 );
 
-                await InvokeAsync(StateHasChanged);
-
                 if (confirmacao == null) return;
                 var resultado = await confirmacao.Result;
 
                 if (resultado != null && !resultado.Cancelled)
                 {
-                    bool eliminado = await BenchmarkRepo.DeleteSpecificResponseAsync(responseId);
+                    bool eliminado = await CommandRepo.DeleteSpecificResponseAsync(responseId);
                     if (eliminado)
                     {
-                        _benchmarks = _benchmarks.Where(b => b.ResponseId != responseId).AsQueryable();
+                        _benchmarks = _benchmarks.Where(b => b.ResponseId != responseId).ToList();
+                        await RecalcularAsync();
                     }
                 }
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, $"Erro ao apagar o Prompt");
-            }
-        }
-
-
-        private IQueryable<BenchmarkEvaluationModel> FilteredBenchmarks
-        {
-            get
-            {
-                IQueryable<BenchmarkEvaluationModel> query = _benchmarks;
-
-                if (_filtroAtual == BenchmarkFilter.PorAvaliar)
-                {
-                    query = query.Where(b => !EstaAvaliada(b));
-                }
-                else if (_filtroAtual == BenchmarkFilter.Avaliados)
-                {
-                    query = query.Where(b => EstaAvaliada(b));
-                }
-
-                if (!string.IsNullOrWhiteSpace(_search))
-                {
-                    var termo = _search.Trim();
-                    query = query.Where(b =>
-                        (b.NomeModelo != null && b.NomeModelo.Contains(termo, StringComparison.OrdinalIgnoreCase)) ||
-                        (b.Descricao != null && b.Descricao.Contains(termo, StringComparison.OrdinalIgnoreCase)) ||
-                        (b.TextoPrompt != null && b.TextoPrompt.Contains(termo, StringComparison.OrdinalIgnoreCase)) ||
-                        b.TokensPorSegundo.ToString(CultureInfo.InvariantCulture).Contains(termo, StringComparison.OrdinalIgnoreCase) ||
-                        b.TamanhoTokens.ToString(CultureInfo.InvariantCulture).Contains(termo, StringComparison.OrdinalIgnoreCase));
-                }
-
-                return query;
+                Logger.LogError(ex, "Erro ao apagar a resposta {ResponseId} do benchmark.", responseId);
+                await DialogService.ShowErrorAsync(L["Benchmarks.DeleteError"], L["Benchmarks.DeleteOneTitle"]);
             }
         }
 
         private async Task ExportarParaExcel()
         {
-            using var workbook = new XLWorkbook();
-            var worksheet = workbook.Worksheets.Add("Benchmarks");
+            if (_isExporting)
+                return;
 
-            worksheet.Cell(1, 2).Value = "Modelo";
-            worksheet.Cell(1, 3).Value = L["Evaluation.Judge1"].Value;
-            worksheet.Cell(1, 4).Value = L["Evaluation.Judge2"].Value;
-            worksheet.Cell(1, 5).Value = "Tokens/s";
-            worksheet.Cell(1, 6).Value = "Tempo";
-            worksheet.Cell(1, 7).Value = "Tokens";
+            var dados = _filtrados;
+            if (dados.Count == 0)
+                return;
 
-            var headerRow = worksheet.Row(1);
-            headerRow.Style.Font.Bold = true;
-            headerRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#F2F2F2");
-            headerRow.Style.Font.FontColor = XLColor.Black;
+            _isExporting = true;
+            StateHasChanged();
 
-            var dadosAgrupados = FilteredBenchmarks
-                .ToList()
-                .GroupBy(b => b.PromptId)
-                .OrderBy(g => g.Key);
-
-            int currentRow = 2;
-
-            foreach (var grupo in dadosAgrupados)
+            try
             {
-                var primeiroItem = grupo.First();
+                var nomeFicheiro = $"Benchmarks_Agrupados_{DateTime.Now:yyyyMMdd_HHmmss}";
+                var download = await ExcelExporter.GerarAsync(dados, nomeFicheiro);
 
-                worksheet.Cell(currentRow, 1).Value = string.Format(L["Benchmarks.ExcelIdGroup"], $"#{primeiroItem.PromptId}", primeiroItem.DataCriacaoFormatada);
-                worksheet.Cell(currentRow, 2).Value = primeiroItem.TextoPrompt;
-
-                worksheet.Range(currentRow, 2, currentRow, 7).Merge();
-
-                var linhaPrompt = worksheet.Row(currentRow);
-                linhaPrompt.Style.Font.Bold = true;
-                linhaPrompt.Style.Fill.BackgroundColor = XLColor.FromHtml("#0078d4");
-                linhaPrompt.Style.Font.FontColor = XLColor.White;
-                linhaPrompt.Style.Alignment.WrapText = true;
-                linhaPrompt.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-
-                int caracteresPorLinha = 150;
-                int tamanhoTexto = primeiroItem.TextoPrompt?.Length ?? 0;
-
-                if (tamanhoTexto > 0)
-                {
-                    int linhasNecessarias = (int)Math.Ceiling((double)tamanhoTexto / caracteresPorLinha);
-
-                    linhaPrompt.Height = (linhasNecessarias * 19) + 10;
-                }
-                else
-                {
-                    linhaPrompt.Height = 25;
-                }
-
-                currentRow++;
-                int linhaInicialModelos = currentRow;
-
-                foreach (var item in grupo)
-                {
-                    worksheet.Cell(currentRow, 1).Value = "   ↳";
-                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
-                    worksheet.Cell(currentRow, 1).Style.Font.FontColor = XLColor.Gray;
-
-                    worksheet.Cell(currentRow, 2).Value = item.NomeModelo;
-                    worksheet.Cell(currentRow, 3).Value = item.GeminiRating;
-                    worksheet.Cell(currentRow, 4).Value = item.OpenRouterRating;
-
-                    var cellTokensSeg = worksheet.Cell(currentRow, 5);
-                    cellTokensSeg.Value = item.TokensPorSegundo;
-                    cellTokensSeg.Style.NumberFormat.Format = "#,##0";
-
-                    worksheet.Cell(currentRow, 6).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                    worksheet.Cell(currentRow, 6).Value = item.TempoPuroFormatado;
-
-                    worksheet.Cell(currentRow, 7).Value = item.TamanhoTokens;
-
-                    currentRow++;
-                }
-
-                int linhaFinalModelos = currentRow - 1;
-
-                if (linhaFinalModelos >= linhaInicialModelos)
-                {
-                    worksheet.Rows(linhaInicialModelos, linhaFinalModelos).Group();
-                }
-
-                currentRow++;
+                // O .xlsx é descarregado por HTTP e não pelo circuito: em base64 o
+                // payload contava com o limite de 32 MB do circuito SignalR.
+                await JS.InvokeVoidAsync(
+                    "downloadBenchmarksExcel",
+                    $"/api/export/benchmarks/{download.Identificador}",
+                    download.NomeFicheiro);
             }
+            catch (JSDisconnectedException)
+            {
+                // Circuito caiu: não há a quem reportar.
+                _descartado = true;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Erro ao exportar os benchmarks para Excel.");
+                await DialogService.ShowErrorAsync($"{L["Benchmarks.ExportExcelError"]} {ex.Message}");
+            }
+            finally
+            {
+                _isExporting = false;
 
-            worksheet.Columns().AdjustToContents();
-            worksheet.Column(2).Width = 80;
-
-            using var stream = new MemoryStream();
-            workbook.SaveAs(stream);
-            var content = stream.ToArray();
-
-            var base64 = Convert.ToBase64String(content);
-            var fileName = $"Benchmarks_Agrupados_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-            await JS.InvokeVoidAsync("downloadFileFromBase64", fileName, base64);
+                if (!_descartado)
+                    await InvokeAsync(StateHasChanged);
+            }
         }
+
 
         private async Task ExportarParaPdfAsync()
         {
+            if (_isExporting)
+                return;
+
             try
             {
-                var dados = FilteredBenchmarks.ToList();
+                var dados = _filtrados;
                 if (dados.Count == 0) return;
 
-                var metricas = new (string Rotulo, Func<BenchmarkEvaluationModel, int?> Gemini, Func<BenchmarkEvaluationModel, int?> OpenRouter)[]
-                {
-                (L["Evaluation.MetricFactual"], b => b.GeminiFactualRating, b => b.OpenRouterFactualRating),
-                (L["Evaluation.MetricFormatting"], b => b.GeminiFormattingRating, b => b.OpenRouterFormattingRating),
-                (L["Evaluation.MetricCompliance"], b => b.GeminiComplianceRating, b => b.OpenRouterComplianceRating),
-                (L["Evaluation.MetricRelevance"], b => b.GeminiRelevanceRating, b => b.OpenRouterRelevanceRating),
-                (L["Evaluation.MetricTone"], b => b.GeminiToneRating, b => b.OpenRouterToneRating),
-                (L["Evaluation.MetricConciseness"], b => b.GeminiConcisenessRating, b => b.OpenRouterConcisenessRating),
-                (L["Evaluation.MetricClarity"], b => b.GeminiClarityRating, b => b.OpenRouterClarityRating),
-                (L["Evaluation.MetricReadability"], b => b.GeminiReadabilityRating, b => b.OpenRouterReadabilityRating),
-                (L["Evaluation.MetricHaloEffect"], b => b.GeminiHaloEffectRating, b => b.OpenRouterHaloEffectRating),
-                (L["Evaluation.MetricSafety"], b => b.GeminiSafetyRating, b => b.OpenRouterSafetyRating),
-                (L["Evaluation.MetricLanguageConsistency"], b => b.GeminiLanguageConsistencyRating, b => b.OpenRouterLanguageConsistencyRating),
-                (L["Evaluation.MetricLoopDetection"], b => b.GeminiLoopDetectionRating, b => b.OpenRouterLoopDetectionRating)
-                };
+                // As 12 métricas vêm do catálogo partilhado: a lista não pode divergir
+                // do que o ranking e a grelha de detalhe consideram.
+                var metricas = JudgeMetricCatalog.Todas
+                    .Select(m => (Rotulo: m.Rotulo(L), m.Gemini, m.OpenRouter))
+                    .ToArray();
 
                 string ValorGlobal(float? v) =>
                     v.HasValue ? Convert.ToInt32(v.Value).ToString(CultureInfo.InvariantCulture) : "—";
 
                 string Valor(int? v) =>
                     v.HasValue ? v.Value.ToString(CultureInfo.InvariantCulture) : "—";
-
-                // No PDF indica-se de onde veio cada juiz: API (automático) ouExterno
-                // (preenchido à mão). É por resposta, porque um mesmo slot pode ter
-                // origens diferentes entre respostas.
-                string RotuloJuiz(string? origem, bool primeiroSlot)
-                {
-                    var slot = primeiroSlot ? L["Evaluation.Judge1"].Value : L["Evaluation.Judge2"].Value;
-                    return JudgeOriginResolver.Normalizar(origem) switch
-                    {
-                        JudgeOriginResolver.Gemini => $"{slot} · {L["Evaluation.JudgeGemini"].Value} ({L["Evaluation.OriginAutomatic"].Value})",
-                        JudgeOriginResolver.OpenRouter => $"{slot} · {L["Evaluation.JudgeOpenRouter"].Value} ({L["Evaluation.OriginAutomatic"].Value})",
-                        JudgeOriginResolver.Externo => $"{slot} · {L["Evaluation.JudgeExternal"].Value}",
-                        _ => slot
-                    };
-                }
 
                 var relatorio = new
                 {
@@ -350,7 +369,6 @@ namespace OllamaArena.Components.Pages
                     rotuloPrompt = L["Benchmarks.ExportPdfPrompt"].Value,
                     rotuloModelo = L["Benchmarks.ExportPdfModel"].Value,
                     rotuloMetrica = L["Benchmarks.ExportPdfMetric"].Value,
-                    rotuloPerformance = L["Benchmarks.ExportPdfPerformance"].Value,
                     rotuloFeedback = L["Benchmarks.ExportPdfFeedback"].Value,
                     rotuloRecomendacao = L["Benchmarks.ExportPdfRecommendation"].Value,
                     rotuloGemini = L["Evaluation.Judge1"].Value,
@@ -398,33 +416,52 @@ namespace OllamaArena.Components.Pages
                                     feedbackOpenRouter = b.OpenRouterFeedback,
                                     recomendacaoGemini = b.GeminiRecommendation,
                                     recomendacaoOpenRouter = b.OpenRouterRecommendation,
-                                    rotuloJuiz1 = RotuloJuiz(b.Juiz1Origem, true),
-                                    rotuloJuiz2 = RotuloJuiz(b.Juiz2Origem, false)
+                                    // O rótulo indica de onde veio cada juiz (API ou
+                                    // preenchimento manual) e é por resposta: o mesmo slot
+                                    // pode ter origens diferentes entre respostas.
+                                    rotuloJuiz1 = JudgeLabelResolver.RotuloComOrigem(L, b.Juiz1Origem, primeiroSlot: true),
+                                    rotuloJuiz2 = JudgeLabelResolver.RotuloComOrigem(L, b.Juiz2Origem, primeiroSlot: false)
                                 };
                             }).ToList()
                         }).ToList()
                 };
 
+                _isExporting = true;
+                StateHasChanged();
+
                 await JS.InvokeVoidAsync("gerarRelatorioPDF", relatorio);
+            }
+            catch (JSDisconnectedException)
+            {
+                _descartado = true;
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Erro ao gerar o relatório PDF.");
                 await DialogService.ShowErrorAsync($"{L["Benchmarks.ExportPdfError"]} {ex.Message}");
             }
+            finally
+            {
+                _isExporting = false;
+
+                if (!_descartado)
+                    await InvokeAsync(StateHasChanged);
+            }
         }
 
         private enum BenchmarkFilter { Todos, PorAvaliar, Avaliados }
-        private BenchmarkFilter _filtroAtual = BenchmarkFilter.Todos;
 
-        private const string _deleteMenuAnchorId = "delete-benchmarks-menu-anchor";
+        private const string DeleteMenuAnchorId = "delete-benchmarks-menu-anchor";
 
         private enum DeleteScope { Filtrados, PorAvaliar, Avaliados, Todos }
 
-        private Appearance GetAppearance(BenchmarkFilter filtro)
+        private static Appearance GetAppearance(BenchmarkFilter atual, BenchmarkFilter filtro)
         {
-            return _filtroAtual == filtro ? Appearance.Accent : Appearance.Stealth;
+            return atual == filtro ? Appearance.Accent : Appearance.Stealth;
         }
+
+        private Appearance GetAppearance(BenchmarkFilter filtro)
+            => GetAppearance(_filtroAtual, filtro);
 
         private void OpenDetailDialog(BenchmarkEvaluationModel? response)
         {
@@ -435,7 +472,7 @@ namespace OllamaArena.Components.Pages
 
         private async Task AnalisarResultadosComModeloLocal()
         {
-            var dadosFiltrados = FilteredBenchmarks.ToList();
+            var dadosFiltrados = _filtrados;
 
             // ===================================
             // Verifica quantidade de grupos de prompts
@@ -471,12 +508,13 @@ namespace OllamaArena.Components.Pages
             }
 
             // === Verificação existente: benchmarks não avaliados ===
-            bool todosAvaliados = dadosFiltrados.All(b =>
-                b.GeminiRating > 0 && b.OpenRouterRating > 0);
+            // A mesma regra da grelha (BenchmarkEvaluationRules): antes contava
+            // "== 0", que é falso para ratings nulos, e o diálogo anunciava
+            // "0 benchmark(s) ainda não avaliados" quando havia dezenas.
+            var naoAvaliados = BenchmarkEvaluationRules.ContarPorAvaliar(dadosFiltrados);
 
-            if (!todosAvaliados)
+            if (naoAvaliados > 0)
             {
-                var naoAvaliados = dadosFiltrados.Count(b => b.GeminiRating == 0 || b.OpenRouterRating == 0);
                 string mensagemHtml = $@"
         <div style='padding: 8px; border-left: 5px solid #e73618;'>
             <strong style='color: #e73618; font-size: 16px;'>{L["Benchmarks.AttentionWarning"]}</strong><br><br>
@@ -511,41 +549,44 @@ namespace OllamaArena.Components.Pages
                 {
                     _resultadoLocal = new BenchmarkAnalysisResult
                     {
-                        Sumario = L["Benchmarks.NoDataForAnalysis"]
+                        Sumario = L["Benchmarks.NoDataForAnalysis"].Value
                     };
                     return;
                 }
 
-                _cts?.Dispose();
+                // Token novo por execução: reutilizar o CTS da análise anterior
+                // devolveria um token já cancelado (o utilizador carregou em
+                // "Cancelar") e a segunda análise abortava de imediato.
+                DescartarToken();
+
                 _cts = new CancellationTokenSource();
+
                 _resultadoLocal = await AnalysisService.AnalisarBenchmarksAsync(
                     dadosFiltrados,
-                    _cts.Token
-                );
+                    _cts.Token);
             }
             catch (OperationCanceledException)
             {
                 Logger.LogWarning("Análise cancelada pelo utilizador.");
                 _resultadoLocal = new BenchmarkAnalysisResult
                 {
-                    Sumario = L["Benchmarks.AnalysisCancelled"],
-                    LinhasAnaliseDetalhada = new List<string>
-                {
-                    L["Benchmarks.AnalysisCancelledDetail"]
-                }
+                    Sumario = L["Benchmarks.AnalysisCancelled"].Value,
+                    LinhasAnaliseDetalhada = new List<BenchmarkAnalysisLine>
+                    {
+                        BenchmarkAnalysisLine.Criar(L["Benchmarks.AnalysisCancelledDetail"].Value)
+                    }
                 };
-                StateHasChanged();
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Erro ao tentar efetuar a análise dos benchmarks.");
                 _resultadoLocal = new BenchmarkAnalysisResult
                 {
-                    Sumario = L["Benchmarks.AnalysisError"],
-                    LinhasAnaliseDetalhada = new List<string>
-                {
-                    L["Benchmarks.AnalysisErrorDetail"]
-                }
+                    Sumario = L["Benchmarks.AnalysisError"].Value,
+                    LinhasAnaliseDetalhada = new List<BenchmarkAnalysisLine>
+                    {
+                        BenchmarkAnalysisLine.Criar(L["Benchmarks.AnalysisErrorDetail"].Value)
+                    }
                 };
             }
             finally
@@ -554,14 +595,38 @@ namespace OllamaArena.Components.Pages
                 StateHasChanged();
             }
         }
-        private void OnPartial(string chunk)
-        {
-            _streamingLog += chunk;
-            StateHasChanged(); // 🔥 Atualiza o UI
-        }
+
         private void CancelarAnaliseDoPai()
         {
-            _cts?.Cancel();
+            try
+            {
+                _cts?.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+                // A análise já terminou e o CTS foi libertado — nada a cancelar.
+            }
+        }
+
+        /// <summary>Liberta o CTS da execução anterior, se já não estiver em uso.</summary>
+        private void DescartarToken()
+        {
+            var anterior = _cts;
+            _cts = null;
+
+            if (anterior is null)
+                return;
+
+            try
+            {
+                anterior.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Já estava libertado.
+            }
+
+            anterior.Dispose();
         }
 
         private void OnDoubleClick(FluentDataGridRow<BenchmarkEvaluationModel> row)
@@ -570,5 +635,22 @@ namespace OllamaArena.Components.Pages
             OpenDetailDialog(row.Item);
         }
 
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_descartado)
+                return;
+
+            if (disposing)
+            {
+                _descartado = true;
+                DescartarToken();
+            }
+        }
     }
 }

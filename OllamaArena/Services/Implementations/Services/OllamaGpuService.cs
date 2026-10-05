@@ -17,16 +17,12 @@ public class OllamaGpuService : IOllamaGpuService
     private string OllamaPsUrl => $"{_options.BaseUrl}/api/ps";
     private string OllamaChatUrl => $"{_options.BaseUrl}/api/chat";
     private string OllamaShowUrl => $"{_options.BaseUrl}/api/show";
-    private readonly IBenchmarkRepository _benchmarks;
 
-
-
-    public OllamaGpuService(HttpClient httpClient, ILogger<OllamaGpuService> logger, IOptions<OllamaOptions> options, IBenchmarkRepository benchmarks)
+    public OllamaGpuService(HttpClient httpClient, ILogger<OllamaGpuService> logger, IOptions<OllamaOptions> options)
     {
         _httpClient = httpClient;
         _logger = logger;
         _options = options.Value;
-        _benchmarks = benchmarks;
     }
 
     /// <summary>

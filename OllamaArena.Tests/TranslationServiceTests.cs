@@ -1,4 +1,5 @@
 using System.Net;
+using System.Data;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
@@ -262,31 +263,18 @@ public class TranslationServiceTests : IDisposable
         }
     }
 
-    /// <summary>Repositório mínimo: a tradução só consulta o melhor modelo (para o Ollama).</summary>
-    private sealed class FakeBenchmarkRepository : IBenchmarkRepository
+    /// <summary>
+    /// Repositório mínimo: a tradução só consulta o melhor modelo (para o Ollama).
+    /// Como a dependência passou a ser <c>IBenchmarkStatsRepository</c> e não o
+    /// repositório inteiro, o duplo só implementa as cinco agregações.
+    /// </summary>
+    private sealed class FakeBenchmarkRepository : IBenchmarkStatsRepository
     {
         public Task<string?> GetBestModelAsync() => Task.FromResult<string?>(ModeloLocal);
 
-        public Task<bool> DeletePromptAndHistoryAsync(int promptId) => throw new NotSupportedException();
-        public Task<bool> DeleteSpecificResponseAsync(int responseId) => throw new NotSupportedException();
-        public Task<int> DeleteResponsesAsync(IEnumerable<int> responseIds) => throw new NotSupportedException();
-        public Task<bool> UpdatePromptAsync(int id, string newText) => throw new NotSupportedException();
-        public Task<bool> UpdateResponseTextAsync(int responseId, string newText) => throw new NotSupportedException();
-        public Task<int> CreatePromptAsync(string textoPrompt, double temperatura, string descricao) => throw new NotSupportedException();
-        public Task<(int PromptId, string Descricao)> GetOrCreatePromptIdAsync(string textoPrompt, string descricao) => throw new NotSupportedException();
-        public Task<string?> FindDescriptionByTextAsync(string textoPrompt) => throw new NotSupportedException();
-        public Task CreateResponseAsync(BenchmarkResponse response) => throw new NotSupportedException();
-        public Task<BenchmarkPrompt?> GetBenchmarkByIdAsync(int promptId) => throw new NotSupportedException();
-        public Task<List<BenchmarkPrompt>> GetAllBenchmarksAsync() => throw new NotSupportedException();
-        public Task<bool> UpdateResponseEvaluationAsync(BenchmarkResponse res) => throw new NotSupportedException();
-        public Task<IEnumerable<BenchmarkEvaluationModel>> BenchmarkResponseEvaluationAsync() => throw new NotSupportedException();
         public Task<List<ModelRanking>> GetModelRankingAsync() => throw new NotSupportedException();
         public Task<List<ModelChartData>> GetModelChartDataAsync() => throw new NotSupportedException();
         public Task<DashboardStats> GetDashboardStatsAsync() => throw new NotSupportedException();
         public Task<List<ModelScoreTimeline>> GetScoreTimelineAsync() => throw new NotSupportedException();
-        public Task<bool> DeleteAllPromptsAndHistoryAsync() => throw new NotSupportedException();
-        public Task<IEnumerable<HistoryResponse>> HistoryResponseAsync() => throw new NotSupportedException();
-        public Task<PromptFeedback> GetBenchmarkJudgesFeedbackByIdAsync(int promptId) => throw new NotSupportedException();
-        public Task<BenchmarkResponse> GetBenchmarkAnswersByIdAsync(int promptId) => throw new NotSupportedException();
     }
 }

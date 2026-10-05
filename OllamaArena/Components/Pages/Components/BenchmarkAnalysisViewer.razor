@@ -3,7 +3,6 @@
 @using OllamaArena.Resources
 @using OllamaArena.Services.Helpers
 @inject IStringLocalizer<SharedResources> L
-@inject IJSRuntime JS
 
 <div class="analysis-container" style="margin-top: 24px;">
     <FluentCard Style="padding: 18px; margin-bottom: 14px; border-left: 6px solid var(--accent-fill-rest); background: var(--neutral-layer-1);">
@@ -23,20 +22,20 @@
         </div>
     </FluentCard>
 
-    @if (!IsAnalyzing && string.IsNullOrEmpty(StreamingLog) && AnaliseResultado == null)
+    @if (!IsAnalyzing && AnaliseResultado == null)
     {
         <FluentCard Style="padding: 60px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center;">
             <FluentIcon Value="@(new Icons.Regular.Size48.BrainCircuit())" Color="@Color.Neutral" style="opacity: 0.5;" />
             <div>
                 <h3 style="margin: 0 0 8px 0; color: var(--neutral-foreground-rest);">@L["AnalysisViewer.ReadyTitle"]</h3>
                 <p style="margin: 0; font-size: 14px; color: var(--neutral-stroke-accessible-rest); max-width: 400px;">
-                    @((MarkupString)L["AnalysisViewer.ReadyHint"].ToString())
+                    @HtmlSeguro(L["AnalysisViewer.ReadyHint"].ToString())
                 </p>
             </div>
         </FluentCard>
     }
 
-    @if (IsAnalyzing || !string.IsNullOrEmpty(StreamingLog) || AnaliseResultado != null)
+    @if (IsAnalyzing || AnaliseResultado != null)
     {
         <FluentCard Style="padding: 16px; display: flex; flex-direction: column; gap: 14px;">
 
@@ -50,7 +49,7 @@
                             <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--neutral-stroke-accessible-rest);">@L["AnalysisViewer.ProcessingHint"]</p>
                         </div>
                     }
-                    else if (AnaliseResultado != null)
+                    else
                     {
                         <FluentIcon Value="@(new Icons.Regular.Size24.CheckmarkCircle())" Color="@Color.Success" />
                         <div>
@@ -69,16 +68,6 @@
                                   OnClick="CancelarAnalise">@L["Common.Cancel"]</FluentButton>
                 }
             </div>
-
-            <!-- STREAMING (durante processamento) -->
-            @if (!string.IsNullOrEmpty(StreamingLog) && AnaliseResultado == null)
-            {
-                <div class="streaming-output"
-                     @ref="_streamingOutputRef"
-                     style="padding: 14px; background: var(--neutral-layer-2); border-radius: 6px; border-left: 4px solid var(--accent-fill-rest); font-family: 'Courier New', monospace; font-size: 12.5px; line-height: 1.5; max-height: 420px; overflow-y: auto; white-space: pre-wrap;">
-                    @MessageFormatter.FormatMessagePlus(StreamingLog);
-                </div>
-            }
 
             @if (AnaliseResultado != null)
             {
@@ -110,14 +99,24 @@
                     </div>
 
                     @* 3. Análise Técnica Detalhada *@
-                    @if (AnaliseResultado.LinhasAnaliseDetalhada?.Any() == true)
+                    @if (AnaliseResultado.LinhasAnaliseDetalhada?.Count > 0)
                     {
                         <div style="padding: 14px; background: var(--neutral-layer-1); border-radius: 6px;">
                             <h5 style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600;">@L["AnalysisViewer.TechnicalAnalysis"]</h5>
                             <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; line-height: 1.5; color: var(--neutral-foreground-rest); max-height: 40vh; min-height: 120px; overflow-y: auto; scrollbar-gutter: stable; padding-right: 8px;">
                                 @foreach (var linha in AnaliseResultado.LinhasAnaliseDetalhada)
                                 {
-                                    <div>@((MarkupString)linha)</div>
+                                    @* O serviço devolve rótulo + texto simples; a
+                                       marcação é montada aqui e o Blazor escapa o
+                                       texto, por isso um nome de modelo vindo da BD
+                                       aparece literalmente em vez de ser interpretado. *@
+                                    <div>
+                                        @if (linha.Rotulo is not null)
+                                        {
+                                            <strong>@linha.Rotulo</strong>
+                                        }
+                                        @linha.Texto
+                                    </div>
                                 }
                             </div>
                         </div>
@@ -131,38 +130,18 @@
 
 @code {
     [Parameter] public bool IsAnalyzing { get; set; }
-    [Parameter] public EventCallback<bool> IsAnalyzingChanged { get; set; }
     [Parameter] public BenchmarkAnalysisResult? AnaliseResultado { get; set; }
-    [Parameter] public EventCallback<BenchmarkAnalysisResult> AnaliseResultadoChanged { get; set; }
     [Parameter] public EventCallback OnCancelarAnalise { get; set; }
 
-    public string StreamingLog { get; set; } = string.Empty;
-
-    private ElementReference _streamingOutputRef;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (IsAnalyzing && !string.IsNullOrEmpty(StreamingLog))
-        {
-            try { await JS.InvokeVoidAsync("chatScroll.scrollToBottom", _streamingOutputRef); } catch { }
-        }
-    }
+    /// <summary>
+    /// Único ponto onde a marcação de um recurso entra no DOM. Só se aplica ao texto
+    /// estático de estado (sem valores interpostos); as linhas da análise já não
+    /// precisam disto porque o serviço devolve rótulo e texto simples.
+    /// </summary>
+    private static MarkupString HtmlSeguro(string? html) =>
+        new(HtmlOutputSanitizer.Sanitize(html));
 
     private async Task CancelarAnalise() => await OnCancelarAnalise.InvokeAsync();
-
-    private string ConvertMarkdownToHtml(string markdown)
-    {
-        if (string.IsNullOrEmpty(markdown)) return string.Empty;
-        return System.Net.WebUtility.HtmlEncode(markdown)
-            .Replace("## ", "<h3 style='margin:10px 0 6px 0;color:var(--neutral-foreground-rest);'>")
-            .Replace("**", "<strong>")
-            .Replace("\n", "<br />");
-    }
-
-    private string FormatMessage(string content)
-    {
-        return MessageFormatter.FormatMessagePlus(content);
-    }
 }
 
 <style>
@@ -180,10 +159,5 @@
             opacity: 1;
             transform: translateY(0);
         }
-    }
-
-    .markdown-content {
-        word-break: break-word;
-        overflow-wrap: break-word;
     }
 </style>

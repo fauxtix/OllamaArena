@@ -59,6 +59,27 @@ public static class JudgeLabelResolver
                 : L["Evaluation.NoResponse"].Value
         };
 
+    /// <summary>
+    /// Rótulo composto "slot · sistema (origem)", para relatórios onde é útil dizer
+    /// explicitamente que a avaliação veio da API ou foi colada à mão
+    /// (export PDF). A origem é sempre a do slot — a mesma em todos os sítios.
+    /// </summary>
+    public static string RotuloComOrigem(IStringLocalizer<SharedResources> L, string? origem, bool primeiroSlot)
+    {
+        var slot = primeiroSlot ? L["Evaluation.Judge1"].Value : L["Evaluation.Judge2"].Value;
+
+        return JudgeOriginResolver.Normalizar(origem) switch
+        {
+            JudgeOriginResolver.Gemini =>
+                $"{slot} · {L["Evaluation.JudgeGemini"].Value} ({L["Evaluation.OriginAutomatic"].Value})",
+            JudgeOriginResolver.OpenRouter =>
+                $"{slot} · {L["Evaluation.JudgeOpenRouter"].Value} ({L["Evaluation.OriginAutomatic"].Value})",
+            JudgeOriginResolver.Externo =>
+                $"{slot} · {L["Evaluation.JudgeExternal"].Value}",
+            _ => slot
+        };
+    }
+
     public static bool SemResposta(string? origem, bool temConteudo)
         => JudgeOriginResolver.Normalizar(origem) is null && !temConteudo;
 }

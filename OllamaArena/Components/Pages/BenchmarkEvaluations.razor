@@ -5,14 +5,19 @@
 @using OllamaArena.Components.Pages.Components
 @using OllamaArena.Services.Interfaces.Repositories
 @using OllamaArena.Services.Interfaces.Services
+@using OllamaArena.Services.Helpers
 @using Microsoft.Extensions.Localization
 @using OllamaArena.Resources
 @inject IStringLocalizer<SharedResources> L
-@inject IBenchmarkRepository BenchmarkRepo
+@inject IBenchmarkQueryRepository QueryRepo
+@inject IBenchmarkCommandRepository CommandRepo
 @inject IDialogService DialogService
 @inject ILogger<App> Logger
 @inject IAnalysisService AnalysisService
 @inject IJSRuntime JS
+@* Gera e serve a folha de cálculo. Vive num serviço (e não na página) porque a
+   geração é CPU-bound e precisa de existir também no endpoint HTTP. *@
+@inject IBenchmarkExcelExporter ExcelExporter
 
 <PageTitle>@L["BenchmarkEvaluations.PageTitle"]</PageTitle>
 
@@ -24,19 +29,23 @@
         <div class="toolbar-content">
 
             <div class="toolbar-row" style="display: flex; gap: 10px; align-items: center; width: 100%; margin:10px; flex-wrap: wrap;">
-                <FluentSearch @bind-Value="_search"
+                @* Value/ValueChanged explícitos: o reset da paginação é assíncrono
+               (SetCurrentPageIndexAsync), por isso não pode ser um setter de
+               propriedade. *@
+                <FluentSearch Value="@Pesquisa"
+                              ValueChanged="@PesquisaAlterada"
                               Placeholder="@L["Benchmarks.SearchPlaceholder"]"
                               class="search-box" />
                     <FluentSpacer />
                     <FluentButton Appearance="Appearance.Outline"
-                                  Disabled="@(_benchmarks.Any() == false)"
+                                  Disabled="@(_quantidadeFiltrados == 0 || _isExporting)"
                                   IconStart="@(new Icons.Regular.Size24.ArrowDownload())"
                                   @onclick="ExportarParaExcel">
                         @L["Common.ExportExcel"]
                     </FluentButton>
                     @* <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;"> *@
                         <FluentButton Appearance="Appearance.Outline"
-                                      Disabled="@(!_podeExportarPdf)"
+                                      Disabled="@(!_podeExportarPdf || _isExporting)"
                                       IconStart="@(new Icons.Regular.Size24.DocumentText())"
                                       @onclick="ExportarParaPdfAsync">
                             @L["Benchmarks.ExportPdf"]
@@ -49,21 +58,21 @@
                         }
                     @* </FluentStack> *@
                     <FluentButton Appearance="Appearance.Accent"
-                                  Disabled="@(_benchmarks.Any() == false || _isAnalyzing)"
+                                  Disabled="@(_quantidadeFiltrados == 0 || _isAnalyzing || _isExporting)"
                                   IconStart="@(new Icons.Regular.Size24.BrainCircuit())"
                                   @onclick="AnalisarResultadosComModeloLocal">
                         @L["Benchmarks.AnalysisLocal"]
                     </FluentButton>
 
-                    <FluentButton Id="@_deleteMenuAnchorId"
+                    <FluentButton Id="@DeleteMenuAnchorId"
                                   Appearance="Appearance.Lightweight"
-                                  Disabled="@(_benchmarks.Any() == false)"
+                                  Disabled="@(_benchmarks.Count == 0 || _isExporting)"
                                   Color="rgba(255, 255,255, 1)"
                                   BackgroundColor="rgba(231, 54, 24, 1)" Style="color:white"
                                   IconStart="@(new Icons.Regular.Size16.Delete())">
                         @L["Benchmarks.DeleteAll"]
                     </FluentButton>
-                    <FluentMenu Anchor="@_deleteMenuAnchorId" Trigger="MouseButton.Left">
+                    <FluentMenu Anchor="@DeleteMenuAnchorId" Trigger="MouseButton.Left">
                         <FluentMenuItem OnClick="@(() => DeleteByScopeAsync(DeleteScope.Filtrados))"
                                         Disabled="@(_quantidadeFiltrados == 0)">
                             @L["Benchmarks.DeleteFiltered", _quantidadeFiltrados]
@@ -73,12 +82,12 @@
                             @L["Benchmarks.DeleteUnevaluated", _quantidadePorAvaliar]
                         </FluentMenuItem>
                         <FluentMenuItem OnClick="@(() => DeleteByScopeAsync(DeleteScope.Avaliados))"
-                                        Disabled="@(_quantidadeAvaliados == 0)">
-                            @L["Benchmarks.DeleteEvaluated", _quantidadeAvaliados]
+                                        Disabled="@(_quantidadeAvaliadas == 0)">
+                            @L["Benchmarks.DeleteEvaluated", _quantidadeAvaliadas]
                         </FluentMenuItem>
                         <FluentMenuItem OnClick="@(() => DeleteByScopeAsync(DeleteScope.Todos))"
-                                        Disabled="@(_benchmarks.Any() == false)">
-                            @L["Benchmarks.DeleteAllWithCount", _benchmarks.Count()]
+                                        Disabled="@(_benchmarks.Count == 0)">
+                            @L["Benchmarks.DeleteAllWithCount", _benchmarks.Count]
                         </FluentMenuItem>
                     </FluentMenu>
 
@@ -87,17 +96,17 @@
             <div class="filter-bar">
                 <FluentButton Appearance="@GetAppearance(BenchmarkFilter.Todos)"
                               IconStart="@(new Icons.Regular.Size20.Grid())"
-                              @onclick="() => _filtroAtual = BenchmarkFilter.Todos">
+                              @onclick="@(() => SelecionarFiltroAsync(BenchmarkFilter.Todos))">
                     @L["Benchmarks.FilterAll"]
                 </FluentButton>
                 <FluentButton Appearance="@GetAppearance(BenchmarkFilter.PorAvaliar)"
                               IconStart="@(new Icons.Regular.Size20.Warning())"
-                              @onclick="() => _filtroAtual = BenchmarkFilter.PorAvaliar">
+                              @onclick="@(() => SelecionarFiltroAsync(BenchmarkFilter.PorAvaliar))">
                     @L["Benchmarks.FilterToEvaluate"]
                 </FluentButton>
                 <FluentButton Appearance="@GetAppearance(BenchmarkFilter.Avaliados)"
                               IconStart="@(new Icons.Regular.Size20.Checkmark())"
-                              @onclick="() => _filtroAtual = BenchmarkFilter.Avaliados">
+                              @onclick="@(() => SelecionarFiltroAsync(BenchmarkFilter.Avaliados))">
                     @L["Benchmarks.FilterEvaluated"]
                 </FluentButton>
             </div>
@@ -107,7 +116,7 @@
     </div>
     <div class="grid-container">
 
-        <FluentDataGrid Items="@FilteredBenchmarks"
+        <FluentDataGrid Items="@_filtroConsulta"
                         TGridItem="BenchmarkEvaluationModel"
                         Pagination="@_pagination" OnRowDoubleClick="OnDoubleClick"
                         RowSize="DataGridRowSize.Medium"
@@ -153,13 +162,15 @@
                     <span class="header-columns">@L["Benchmarks.ColTokensPerSecond"]</span>
                 </HeaderCellTitleTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="@(b => b.TempoPuroFormatado)" Title="@L["Benchmarks.ColTime"]" Align="Align.Center" Width="90px" Sortable="true">
+            @* TempoPuroFormatado/TempoCargaFormatado são "m:ss": sem um comparador
+               próprio a grelha ordenava-os como texto ("10:00" antes de "1:05"). *@
+            <PropertyColumn Property="@(b => b.TempoPuroFormatado)" Title="@L["Benchmarks.ColTime"]" Align="Align.Center" Width="90px" Sortable="true" Comparer="@DurationTextComparer.Instance">
                 <HeaderCellTitleTemplate>
                     <span class="header-columns">@L["Benchmarks.ColTime"]</span>
                 </HeaderCellTitleTemplate>
 
             </PropertyColumn>
-            <PropertyColumn Property="@(b => b.TempoCargaFormatado)" Title="@L["Benchmarks.ColLoad"]" Align="Align.Center" Width="100px" Sortable="true">
+            <PropertyColumn Property="@(b => b.TempoCargaFormatado)" Title="@L["Benchmarks.ColLoad"]" Align="Align.Center" Width="100px" Sortable="true" Comparer="@DurationTextComparer.Instance">
                 <HeaderCellTitleTemplate>
                     <span class="header-columns">@L["Benchmarks.ColLoad"]</span>
                 </HeaderCellTitleTemplate>
@@ -201,10 +212,10 @@
                       TrapFocus="true"
                       AriaLabel="@L["Benchmarks.AriaLabelDetail"]">
             <FluentDialogBody>
+                @* O viewer só recebe o estado: a análise corre no componente pai, que é quem
+               tem o CancellationTokenSource. *@
                 <BenchmarkAnalysisViewer IsAnalyzing="@_isAnalyzing"
-                                         IsAnalyzingChanged="@((b) => _isAnalyzing = b)"
                                          AnaliseResultado="@_resultadoLocal"
-                                         AnaliseResultadoChanged="@((r) => _resultadoLocal = r)"
                                          OnCancelarAnalise="@CancelarAnaliseDoPai" />
             </FluentDialogBody>
             <FluentDialogFooter>

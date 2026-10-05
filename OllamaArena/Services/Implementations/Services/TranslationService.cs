@@ -37,7 +37,7 @@ namespace OllamaArena.Services.Implementations.Services
         private readonly HttpClient _httpOllama;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ApiCredentialsResolver _credentials;
-        private readonly IBenchmarkRepository _benchmarks;
+        private readonly IBenchmarkStatsRepository _benchmarks;
         private readonly ILogger<TranslationService> _logger;
         private readonly PromptFilesService _promptFiles;
 
@@ -45,7 +45,7 @@ namespace OllamaArena.Services.Implementations.Services
             HttpClient http,
             IHttpClientFactory httpClientFactory,
             ApiCredentialsResolver credentials,
-            IBenchmarkRepository benchmarks,
+            IBenchmarkStatsRepository benchmarks,
             ILogger<TranslationService> logger,
             PromptFilesService promptFilesService,
             IOptions<OllamaOptions> options)

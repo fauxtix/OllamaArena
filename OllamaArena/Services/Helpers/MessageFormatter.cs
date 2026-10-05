@@ -1,43 +1,20 @@
 using Markdig;
-using System.Text.RegularExpressions;
+using OllamaArena.Models.DTO;
 
 namespace OllamaArena.Services.Helpers
 {
     /// <summary>
-    /// Formatador de respostas do Ollama otimizado para Fluent UI
-    /// Usa Markdig com pipeline completa + heurísticas + sanitização HTML.
+    /// Formatador de respostas do Ollama otimizado para Fluent UI.
+    /// Usa Markdig com pipeline completa + heurísticas + sanitização HTML por allow-list.
     /// </summary>
     public static partial class MessageFormatter
     {
-        private static readonly HashSet<string> DangerousTags = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "script", "iframe", "object", "embed", "applet", "form",
-            "input", "button", "select", "textarea", "label",
-            "base", "meta", "link"
-        };
-
-        private static readonly Regex DangerousTagRegex = new(
-            @"<\s*/?\s*(script|iframe|object|embed|applet|form|input|button|select|textarea|label|base|meta|link)\b[^>]*>",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-        private static readonly Regex EventHandlerRegex = new(
-            @"\s+on\w+\s*=\s*([""'])(.*?)\1",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-        private static readonly Regex JavascriptUriRegex = new(
-            @"href\s*=\s*([""'])\s*javascript\s*:",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-        private static readonly Regex DataBindingRegex = new(
-            @"\{\{.*?\}\}",
-            RegexOptions.Compiled);
-
         public static string FormatMessagePlus(string content)
         {
             if (string.IsNullOrWhiteSpace(content))
                 return "";
 
-            if (content == "...")
+            if (content == ChatMessage.PendingPlaceholder)
             {
                 return "<div class='typing-dots'><span></span><span></span><span></span></div>";
             }
@@ -65,18 +42,9 @@ namespace OllamaArena.Services.Helpers
 
             html = ConvertParagraphsToDivs(html);
 
-            html = StripDangerousHtml(html);
-
-            return html;
-        }
-
-        private static string StripDangerousHtml(string html)
-        {
-            html = DangerousTagRegex.Replace(html, "");
-            html = EventHandlerRegex.Replace(html, "");
-            html = JavascriptUriRegex.Replace(html, "href=$1#");
-            html = DataBindingRegex.Replace(html, "");
-            return html;
+            // Última barreira antes do (MarkupString): allow-list estrita. Sem isto, o
+            // Markdig emite HTML cru do texto do modelo (ex.: <img src=x onerror=...>).
+            return HtmlOutputSanitizer.Sanitize(html);
         }
 
         private static MarkdownPipeline BuildMarkdownPipeline()

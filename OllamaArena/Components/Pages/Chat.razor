@@ -4,7 +4,6 @@
 @using Microsoft.FluentUI.AspNetCore.Components
 @using OllamaArena.Components.Pages.Components
 
-@inject HttpClient Http
 @inject IJSRuntime JS
 
 <PageTitle>@L["Chat.PageTitle"]</PageTitle>
@@ -212,7 +211,11 @@ else
                 }
             </FluentStack>
         </FluentCard>
-        <HistoryPanel @ref="historyPanel" OnLoadConversation="@LoadConversationAsync" />
+        @* HasOpenConversation: com uma conversa carregada o "Apagar histórico" do
+           painel fica desativado (ver HistoryPanel). *@
+        <HistoryPanel @ref="historyPanel"
+                      OnLoadConversation="@LoadConversationAsync"
+                      HasOpenConversation="@(_conversationId > 0)" />
     </div>
 }
 <style>

@@ -225,7 +225,7 @@ public class MessageFormatterTests
         Assert.Contains(
             "/// &lt;returns&gt;The generated key as a Base64-encoded string.&lt;/returns&gt;\n" +
             "public string GenerateSecureKey(){", html);
-        Assert.Contains("    return &quot;ok&quot;;", html);
+        Assert.Contains("    return \"ok\";", html);
     }
 
     [Fact]
@@ -326,7 +326,9 @@ public class MessageFormatterTests
         Assert.Contains("<pre>", html);
         Assert.Contains("language-python", html);
         Assert.DoesNotContain("pythondef", html);
-        Assert.Contains("def main():\n    print(&quot;hi&quot;)\n    if __name__ == &quot;__main__&quot;:\n        main()", html);
+        // As aspas saem literais: dentro do texto de <pre> não precisam de escape e o
+        // sanitizador não as volta a codificar (o texto renderizado é o mesmo).
+        Assert.Contains("def main():\n    print(\"hi\")\n    if __name__ == \"__main__\":\n        main()", html);
     }
 
     [Fact]

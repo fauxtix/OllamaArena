@@ -35,7 +35,7 @@ public class BenchmarkRepositoryDashboardTests : IDisposable
 
     private readonly SqliteConnection _anchor;
     private readonly string _connectionString;
-    private readonly BenchmarkRepository _repo;
+    private readonly BenchmarkStatsRepository _repo;
 
     public BenchmarkRepositoryDashboardTests()
     {
@@ -51,8 +51,7 @@ public class BenchmarkRepositoryDashboardTests : IDisposable
         DatabaseSchemaInitializer.EnsureSchema(context);
 
         SemearDados();
-        _repo = new BenchmarkRepository(context, NullLogger<BenchmarkRepository>.Instance,
-            Options.Create(new JudgeScoreWeights()));
+        _repo = new BenchmarkStatsRepository(context, Options.Create(new JudgeScoreWeights()));
     }
 
     [Fact]

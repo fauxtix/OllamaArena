@@ -1,15 +1,22 @@
-@* Cabeçalho de página partilhado: título com gradiente moderno, barra de acento
-   e linha divisória, com variante de cor para cada tema.
-   O FluentDesignTheme define document.body.dataset.theme ("light"/"dark"),
-   por isso o tema escuro é o estado base e o claro é o override. *@
-
 <div class="page-header-block">
-    <h2 class="fluent-h2 page-header-title">@Title</h2>
+    <div class="page-header-main">
 
-    @if (!string.IsNullOrWhiteSpace(Subtitle))
-    {
-        <p class="page-header-subtitle">@Subtitle</p>
-    }
+        <div class="page-header-texts">
+            <h2 class="fluent-h2 page-header-title">@Title</h2>
+
+            @if (!string.IsNullOrWhiteSpace(Subtitle))
+            {
+                <p class="page-header-subtitle">@Subtitle</p>
+            }
+        </div>
+
+        @if (Actions is not null)
+        {
+            <div class="page-header-actions">
+                @Actions
+            </div>
+        }
+    </div>
 </div>
 
 @code {
@@ -18,6 +25,9 @@
 
     [Parameter]
     public string? Subtitle { get; set; }
+
+    [Parameter]
+    public RenderFragment? Actions { get; set; }
 }
 <style>
     .page-header-block {
@@ -28,17 +38,36 @@
         border-bottom: 1px solid var(--neutral-stroke-rest);
     }
 
+    .page-header-main {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .page-header-texts {
+        min-width: 0;
+    }
+
+    .page-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 0 0 auto;
+        padding-top: 4px;
+    }
+
     .page-header-title {
         margin: 0;
         font-size: clamp(1.6rem, 4vw, 2.2rem);
         font-weight: 800;
         letter-spacing: .01em;
         line-height: 1.15;
-        background: linear-gradient(90deg, #38BDF8, #A78BFA);
+        color: #38BDF8;
+        background-image: linear-gradient(90deg, #38BDF8, #A78BFA);
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
-        color: transparent;
     }
 
     .page-header-subtitle {
@@ -57,14 +86,15 @@
         width: 88px;
         height: 4px;
         border-radius: 999px;
-        background: linear-gradient(90deg, #38BDF8, #A78BFA);
+        background-image: linear-gradient(90deg, #38BDF8, #A78BFA);
     }
 
     body[data-theme="light"] .page-header-title {
-        background: linear-gradient(90deg, #0284C7, #7C3AED);
+        color: #0284C7;
+        background-image: linear-gradient(90deg, #0284C7, #7C3AED);
     }
 
     body[data-theme="light"] .page-header-block::after {
-        background: linear-gradient(90deg, #0284C7, #7C3AED);
+        background-image: linear-gradient(90deg, #0284C7, #7C3AED);
     }
 </style>

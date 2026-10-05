@@ -15,12 +15,16 @@ namespace OllamaArena.Components.Pages.Components
 {
     public partial class Benchmarks : IAsyncDisposable
     {
-        [Inject] public required IBenchmarkRepository BenchmarkRepo { get; set; }
+        // Só o que este componente lê e o que escreve: cada interface serve um
+        // repositório distinto, injectado com o mesmo lifetime (o SQLite é o mesmo).
+        [Inject] public required IBenchmarkQueryRepository QueryRepo { get; set; }
+        [Inject] public required IBenchmarkCommandRepository CommandRepo { get; set; }
         [Inject] public required IOllamaGpuService GpuService { get; set; }
         [Inject] public required EvaluatePromptTemplate EvaluatePromptTemplate { get; set; }
         [Inject] public AutomatedJudgeService _feedbackService { get; set; } = default!;
         [Inject] public required InternetConnectivityService Internet { get; set; }
         [Inject] public ILogger<App> _logger { get; set; } = default!;
+        [Inject] public IToastService ToastService { get; set; } = default!;
 
         private Orientation _splitterOrientation = Orientation.Horizontal;
         private string _panel1Size = "33.3%";
@@ -56,6 +60,14 @@ namespace OllamaArena.Components.Pages.Components
         private static string ChaveJuiz(string juiz) => $"juiz:{juiz}";
 
         private enum ProgressoEstado { Pendente, Ativo, Concluido, Falhou }
+
+        /// <summary>
+        /// Zebra do painel direito: o tom do cartão alterna a cada posição
+        /// (ímpar/par), para se distinguir de relance um modelo do seguinte.
+        /// As cores vivem no CSS (.tom-odd/.tom-even, com variante por tema);
+        /// aqui decide-se apenas a que faixa o cartão pertence.
+        /// </summary>
+        private static string TomCartao(int indice) => indice % 2 == 0 ? "even" : "odd";
 
         /// <summary>
         /// Uma linha do indicador de progresso (uma fase do fluxo ou um juiz).
@@ -402,7 +414,7 @@ namespace OllamaArena.Components.Pages.Components
             try
             {
                 _promptsList = null;
-                _promptsList = await BenchmarkRepo.GetAllBenchmarksAsync();
+                _promptsList = await QueryRepo.GetAllBenchmarksAsync();
 
                 if (_selectedPrompt != null && _promptsList != null)
                 {
@@ -523,7 +535,7 @@ namespace OllamaArena.Components.Pages.Components
 
                 if (resultado != null && !resultado.Cancelled)
                 {
-                    bool eliminado = await BenchmarkRepo.DeletePromptAndHistoryAsync(prompt.Id);
+                    bool eliminado = await CommandRepo.DeletePromptAsync(prompt.Id);
                     if (eliminado)
                     {
                         if (_selectedPrompt?.Id == prompt.Id) _selectedPrompt = null;
@@ -551,13 +563,21 @@ namespace OllamaArena.Components.Pages.Components
 
                 if (copied)
                 {
-                    // TODO: Mostrar toast de sucesso (FluentToast ou similar)
+                    ToastService.ShowSuccess(L["Benchmarks.CopySuccess"], timeout: 3000);
                     _logger?.LogInformation("Texto copiado para a área de transferência.");
+                }
+                else
+                {
+                    // A área de transferência pode estar bloqueada pelo browser (permissão
+                    // negada, contexto não seguro). O JS devolve false em vez de lançar.
+                    ToastService.ShowError(L["Benchmarks.CopyError"]);
+                    _logger?.LogWarning("O browser recusou a escrita na área de transferência.");
                 }
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Erro ao copiar para o Clipboard.");
+                ToastService.ShowError($"{L["Benchmarks.CopyError"]} {ex.Message}");
             }
             finally
             {
@@ -572,7 +592,7 @@ namespace OllamaArena.Components.Pages.Components
 
         private async Task SaveEvaluationAsync(BenchmarkResponse resposta)
         {
-            if (resposta == null || BenchmarkRepo == null) return;
+            if (resposta == null || CommandRepo == null) return;
 
             try
             {
@@ -596,7 +616,7 @@ namespace OllamaArena.Components.Pages.Components
                     _conteudoAberturaSlot2,
                     resposta.Juiz2Origem);
 
-                bool guardado = await BenchmarkRepo.UpdateResponseEvaluationAsync(resposta);
+                bool guardado = await CommandRepo.UpdateResponseEvaluationAsync(resposta);
 
                 if (guardado)
                 {
@@ -933,7 +953,7 @@ namespace OllamaArena.Components.Pages.Components
         }
         private async Task OpenEvaluation(int id)
         {
-            var benchmarkEvaluation = await BenchmarkRepo.GetBenchmarkAnswersByIdAsync(id);
+            var benchmarkEvaluation = await QueryRepo.GetBenchmarkAnswersByIdAsync(id);
             _selectedEvaluation = benchmarkEvaluation;
             _conteudoAberturaSlot1 = JudgeOriginResolver.TemConteudo(benchmarkEvaluation?.GeminiFeedback, benchmarkEvaluation?.GeminiRating);
             _conteudoAberturaSlot2 = JudgeOriginResolver.TemConteudo(benchmarkEvaluation?.OpenRouterFeedback, benchmarkEvaluation?.OpenRouterRating);

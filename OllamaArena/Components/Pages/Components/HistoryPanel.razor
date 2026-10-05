@@ -4,20 +4,26 @@
 @using OllamaArena.Models.Entities
 @using OllamaArena.Resources
 @using OllamaArena.Services.Interfaces.Repositories
+@using OllamaArena.Services.Helpers
 @using System.Text.Json
 @inject IStringLocalizer<SharedResources> L
 @inject IJSRuntime JS
 @inject ILogger<App> _logger
+@inject IDialogService DialogService
 
 @if (IsOpen)
 {
     <div class="history-overlay" @onclick="Close"></div>
 }
 
-<div class="history-aside @(IsOpen ? "open" : "")" @onclick:stopPropagation>
+@* `inert` enquanto fechado: o painel está fora do ecrã (translateX) mas os seus
+   botões continuavam focáveis pelo Tab e expostos aos leitores de ecrã. *@
+<div class="history-aside @(IsOpen ? "open" : "")" inert="@(!IsOpen)">
     <div class="header">
         <h3>@L["HistoryPanel.Title"]</h3>
-        <FluentButton Appearance="Appearance.Stealth" OnClick="@Close">@L["Common.Close"]</FluentButton>
+        <div class="header-actions">
+            <FluentButton Appearance="Appearance.Stealth" OnClick="@Close">@L["Common.Close"]</FluentButton>
+        </div>
     </div>
 
     <div class="tabs">
@@ -33,9 +39,19 @@
         }
         else
         {
-            <div class="conv-actions">
+            <div class="panel-actions">
                 <FluentButton Appearance="Appearance.Outline" OnClick="@ExportConversationsAsync">@L["HistoryPanel.Export"]</FluentButton>
                 <FluentButton Appearance="Appearance.Outline" OnClick="@ImportConversationsAsync">@L["HistoryPanel.Import"]</FluentButton>
+                @* Destrutivo sempre no fim da linha de acções. Fica desativado
+                   enquanto o chat tiver uma conversa aberta: apagar as conversas
+                   deixaria o `_conversationId` do chat a apontar para uma linha
+                   inexistente e o próximo turno falhava na FK de
+                   `ConversaMensagens.ConversationId`. *@
+               @*  <FluentButton Appearance="Appearance.Accent"
+                              Style="@ClearButtonStyle"
+                              Disabled="@HasOpenConversation"
+                              Title="@ClearConversationsTooltip"
+                              OnClick="@ClearConversationsAsync">@L["HistoryPanel.ClearHistory"]</FluentButton> *@
             </div>
 
             @if (Conversations.Count == 0)
@@ -71,9 +87,14 @@
     }
     else
     {
+        @* <div class="panel-actions">
+            <FluentButton Appearance="Appearance.Accent"
+                          Style="@ClearButtonStyle"
+                          OnClick="@ClearBenchmarksHistoryAsync">@L["HistoryPanel.ClearHistory"]</FluentButton>
+        </div> *@
         <FluentPaginator State="@pagination" SummaryTemplate="@template" />
         <FluentDivider Style="width: 100%;" Role="DividerRole.Separator"></FluentDivider>
-        <div>
+        <div class="history-grid-wrap">
             <FluentDataGrid Items="@History.AsQueryable()"
                             Pagination="@pagination">
                 <PropertyColumn Property="@(h => h.Descricao)"
@@ -84,10 +105,14 @@
                                 Title="@L["HistoryPanel.ColModel"]" />
                 <PropertyColumn Property="@(h => h.DateDisplay)" Align="Align.Center"
                                 Title="@L["HistoryPanel.ColDate"]" />
+                @* DurationDisplay/ProcessDurationDisplay são "HH:mm:ss": sem um
+                   comparador próprio a grelha ordenava-os como texto ("00:59" depois
+                   de "00:100"). A data é "yyyy-MM-dd HH:mm", que já ordena
+                   corretamente como texto. *@
                 <PropertyColumn Property="@(h => h.DurationDisplay)" Align="Align.Center"
-                                Title="@L["HistoryPanel.ColEvalTime"]" />
+                                Title="@L["HistoryPanel.ColEvalTime"]" Comparer="@DurationTextComparer.Instance" />
                 <PropertyColumn Property="@(h => h.ProcessDurationDisplay)" Align="Align.Center"
-                                Title="@L["HistoryPanel.ColProcessTime"]" />
+                                Title="@L["HistoryPanel.ColProcessTime"]" Comparer="@DurationTextComparer.Instance" />
             </FluentDataGrid>
         </div>
     }
@@ -95,8 +120,17 @@
 
 @code {
 
+    /// <summary>Estilo do botão destrutivo, partilhado pelas duas tabs.</summary>
+    private const string ClearButtonStyle =
+        "background-color: var(--color-neutral-stroke-alert-rest); color: var(--color-neutral-foreground-on-alert);";
+
     [Inject]
-    public required IBenchmarkRepository BenchmarksRepo { get; set; }
+    public required IBenchmarkQueryRepository BenchmarksRepo { get; set; }
+
+    /// <summary>Só o repositório de comandos, para a eliminação do histórico de benchmarks.</summary>
+    [Inject]
+    public required IBenchmarkCommandRepository BenchmarksCommands { get; set; }
+
     [Inject]
     public required IConversationRepository ConversationsRepo { get; set; }
     private IEnumerable<HistoryResponse> History { get; set; } = [];
@@ -105,6 +139,18 @@
 
     [Parameter]
     public EventCallback<int> OnLoadConversation { get; set; }
+
+    /// <summary>
+    /// O chat tem uma conversa aberta. Impede apagar as conversas todas: o
+    /// <c>_conversationId</c> do chat ficaria a apontar para uma linha apagada e o
+    /// próximo turno falharia na chave estrangeira de <c>ConversaMensagens</c>.
+    /// </summary>
+    [Parameter]
+    public bool HasOpenConversation { get; set; }
+
+    /// <summary>Motivo mostrado no tooltip enquanto o botão está desativado.</summary>
+    private string? ClearConversationsTooltip =>
+        HasOpenConversation ? L["HistoryPanel.ClearHistoryDisabledTooltip"].Value : null;
 
     public bool IsOpen { get; set; }
 
@@ -177,10 +223,40 @@
         }
     }
 
-    public async Task ClearHistory()
+    private async Task ClearBenchmarksHistoryAsync()
     {
-        History = [];
-        StateHasChanged();
+        var dialog = await DialogService.ShowConfirmationAsync(
+            L["HistoryPanel.ConfirmClearHistory"],
+            primaryText: L["HistoryPanel.ClearHistory"],
+            secondaryText: L["Common.Cancel"],
+            title: L["HistoryPanel.ClearHistory"]);
+
+        if (dialog != null)
+        {
+            await BenchmarksCommands.DeleteAllPromptsAsync();
+            History = [];
+            StateHasChanged();
+        }
+    }
+
+    private async Task ClearConversationsAsync()
+    {
+        // O botão já vem desativado; a guarda cobre o caso de o chat ter ganho uma
+        // conversa enquanto o painel estava aberto.
+        if (HasOpenConversation) return;
+
+        var dialog = await DialogService.ShowConfirmationAsync(
+            L["HistoryPanel.ConfirmClearConversations"],
+            primaryText: L["HistoryPanel.ClearHistory"],
+            secondaryText: L["Common.Cancel"],
+            title: L["HistoryPanel.ClearHistory"]);
+
+        if (dialog != null)
+        {
+            await ConversationsRepo.ClearAllConversationsAsync();
+            Conversations = [];
+            StateHasChanged();
+        }
     }
 }
 
@@ -192,7 +268,7 @@
         width: 100vw;
         height: 100vh;
         background: rgba(0,0,0,0.35);
-        z-index: 9998;
+        z-index: var(--z-panel-overlay);
         animation: fadeIn 0.25s ease;
     }
 
@@ -208,7 +284,7 @@
         padding: 16px;
         overflow-y: auto;
         overflow-x: hidden;
-        z-index: 9999;
+        z-index: var(--z-panel);
         transform: translateX(100%);
         transition: transform 0.35s ease;
     }
@@ -221,9 +297,21 @@
             min-width: 520px;
         }
 
+        /* A grelha tem min-width própria e o painel esconde o overflow-x: sem este
+           contentor as colunas da direita ficavam cortadas e inacessíveis. */
+        .history-aside .history-grid-wrap {
+            overflow-x: auto;
+        }
+
         .history-aside .header {
             display: flex;
             justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-aside .header-actions {
+            display: flex;
+            gap: 8px;
             align-items: center;
         }
 
@@ -233,8 +321,11 @@
             margin: 12px 0;
         }
 
-        .history-aside .conv-actions {
+        /* Linha de acções de cada tab (Conversas: exportar/importar/apagar).
+           O botão destrutivo é o último; `wrap` evita transbordo em ecrãs estreitos. */
+        .history-aside .panel-actions {
             display: flex;
+            flex-wrap: wrap;
             gap: 8px;
             margin-bottom: 12px;
         }

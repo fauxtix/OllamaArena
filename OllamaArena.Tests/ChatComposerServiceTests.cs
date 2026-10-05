@@ -21,6 +21,35 @@ public class ChatComposerServiceTests
 
     private static List<ChatMessage> Historico(params ChatMessage[] msgs) => [.. msgs];
 
+    private static ChatPrepareRequest Req(
+        IReadOnlyList<ChatMessage> mensagens,
+        string prompt,
+        string modelName = "modelo",
+        int contextLength = 2048,
+        bool fitsInGpu = true,
+        bool supportsThinking = false)
+        => new()
+        {
+            Messages = mensagens,
+            UserPrompt = prompt,
+            SystemInstructions = SystemPrompt,
+            WelcomeMessage = Welcome,
+            ModelName = modelName,
+            ContextLength = contextLength,
+            FitsInGpu = fitsInGpu,
+            ModelSupportsThinking = supportsThinking
+        };
+
+    /// <summary>Prepara e exige o estado Ready, devolvendo o pedido pronto a usar.</summary>
+    private static async Task<PreparedChatRequest> PrepararAsync(ChatComposerService servico, ChatPrepareRequest req)
+    {
+        var resultado = await servico.Prepare(req);
+
+        Assert.Equal(ChatPreparationStatus.Ready, resultado.Status);
+        Assert.NotNull(resultado.Request);
+
+        return resultado.Request!;
+    }
     [Fact]
     public void BuildHistory_PrimeiroElementoESystem()
     {
@@ -80,25 +109,27 @@ public class ChatComposerServiceTests
     }
 
     [Fact]
-    public async Task Prepare_SemPromptUserFinal_DevolveNull()
+    public async Task Prepare_SemPromptUserFinal_DevolveEmptyPrompt()
     {
         var servico = CriarServico();
         var mensagens = Historico(
             Msg("resposta sem pergunta", false));
 
-        var preparado = await servico.Prepare(mensagens, "algo", SystemPrompt, Welcome, "modelo", 2048, true);
+        var resultado = await servico.Prepare(Req(mensagens, "algo"));
 
-        Assert.Null(preparado);
+        Assert.Equal(ChatPreparationStatus.EmptyPrompt, resultado.Status);
+        Assert.Null(resultado.Request);
     }
 
     [Fact]
-    public async Task Prepare_PromptVazio_DevolveNull()
+    public async Task Prepare_PromptVazio_DevolveEmptyPrompt()
     {
         var servico = CriarServico();
 
-        var preparado = await servico.Prepare(Historico(), "   ", SystemPrompt, Welcome, "modelo", 2048, true);
+        var resultado = await servico.Prepare(Req(Historico(), "   "));
 
-        Assert.Null(preparado);
+        Assert.Equal(ChatPreparationStatus.EmptyPrompt, resultado.Status);
+        Assert.Null(resultado.Request);
     }
 
     [Fact]
@@ -107,7 +138,7 @@ public class ChatComposerServiceTests
         var servico = CriarServico(("Chat:EnableReasoning", "true"));
         var mensagens = Historico(Msg("O que é a inertia?", true));
 
-        var preparado = await servico.Prepare(mensagens, "O que é a inertia?", SystemPrompt, Welcome, "qwen2.5", 4096, false, modelSupportsThinking: true);
+        var preparado = await PrepararAsync(servico, Req(mensagens, "O que é a inertia?", "qwen2.5", 4096, fitsInGpu: false, supportsThinking: true));
 
         Assert.NotNull(preparado);
         Assert.Equal("qwen2.5", preparado.Payload.Model);
@@ -124,7 +155,7 @@ public class ChatComposerServiceTests
         var servico = CriarServico(("Chat:EnableReasoning", "true"));
         var mensagens = Historico(Msg("O que é a inertia?", true));
 
-        var preparado = await servico.Prepare(mensagens, "O que é a inertia?", SystemPrompt, Welcome, "qwen2.5", 4096, false, modelSupportsThinking: false);
+        var preparado = await PrepararAsync(servico, Req(mensagens, "O que é a inertia?", "qwen2.5", 4096, fitsInGpu: false));
 
         Assert.NotNull(preparado);
         Assert.Null(preparado.Payload.Think);
@@ -136,7 +167,7 @@ public class ChatComposerServiceTests
         var servico = CriarServico(("Chat:EnableReasoning", "false"));
         var mensagens = Historico(Msg("Pergunta", true));
 
-        var preparado = await servico.Prepare(mensagens, "Pergunta", SystemPrompt, Welcome, "deepseek-r1", 4096, true, modelSupportsThinking: true);
+        var preparado = await PrepararAsync(servico, Req(mensagens, "Pergunta", "deepseek-r1", 4096, supportsThinking: true));
 
         Assert.NotNull(preparado);
         Assert.False(preparado.EnableReasoning);
@@ -149,7 +180,7 @@ public class ChatComposerServiceTests
         var servico = CriarServico();
         var mensagens = Historico(Msg("Pergunta", true));
 
-        var preparado = await servico.Prepare(mensagens, "Pergunta", SystemPrompt, Welcome, "deepseek-r1", 4096, true, modelSupportsThinking: true);
+        var preparado = await PrepararAsync(servico, Req(mensagens, "Pergunta", "deepseek-r1", 4096, supportsThinking: true));
 
         Assert.NotNull(preparado);
         Assert.Equal(false, preparado.Payload.Think);
@@ -161,7 +192,7 @@ public class ChatComposerServiceTests
         var servico = CriarServico(("Chat:EnableReasoning", "true"));
         var mensagens = Historico(Msg("Pergunta", true));
 
-        var preparado = await servico.Prepare(mensagens, "Pergunta", SystemPrompt, Welcome, "qwen2.5", 4096, true, modelSupportsThinking: false);
+        var preparado = await PrepararAsync(servico, Req(mensagens, "Pergunta", "qwen2.5", 4096));
 
         Assert.NotNull(preparado);
         Assert.Null(preparado.Payload.Think);
@@ -174,7 +205,7 @@ public class ChatComposerServiceTests
         var prompt = "Traduz para português: hello world";
         double temp = ChatMeasureTemperature.ObterTemperaturaRecomendada(prompt);
 
-        var preparado = await servico.Prepare(Historico(Msg(prompt, true)), prompt, SystemPrompt, Welcome, "modelo", 2048, true);
+        var preparado = await PrepararAsync(servico, Req(Historico(Msg(prompt, true)), prompt));
 
         Assert.NotNull(preparado);
         Assert.Equal(Math.Round(temp, 2), preparado.Payload.Options!["temperature"]);
@@ -188,8 +219,8 @@ public class ChatComposerServiceTests
         var servico = CriarServico();
         var prompt = "Conta-me uma história criativa longa.";
 
-        var semGpu = await servico.Prepare(Historico(Msg(prompt, true)), prompt, SystemPrompt, Welcome, "modelo", 0, false);
-        var comGpu = await servico.Prepare(Historico(Msg(prompt, true)), prompt, SystemPrompt, Welcome, "modelo", 0, true);
+        var semGpu = await PrepararAsync(servico, Req(Historico(Msg(prompt, true)), prompt, contextLength: 0, fitsInGpu: false));
+        var comGpu = await PrepararAsync(servico, Req(Historico(Msg(prompt, true)), prompt, contextLength: 0));
 
         Assert.NotNull(semGpu);
         Assert.NotNull(comGpu);
@@ -200,26 +231,100 @@ public class ChatComposerServiceTests
     public async Task Prepare_MaxTokensNuncaExcedeContexto()
     {
         var servico = CriarServico();
-        const int contexto = 512;
-        var prompt = new string('a', 2000);
+        const int contexto = 2048;
+        var prompt = "O que é a inertia?";
 
-        var preparado = await servico.Prepare(Historico(Msg(prompt, true)), prompt, SystemPrompt, Welcome, "modelo", contexto, true);
+        var preparado = await PrepararAsync(servico, Req(Historico(Msg(prompt, true)), prompt, contextLength: contexto));
 
-        Assert.NotNull(preparado);
         Assert.True(preparado.MaxTokens <= contexto);
     }
 
     [Fact]
-    public async Task Prepare_ComContextoReservadoClampaMaxTokensNoMinimo32()
+    public async Task Prepare_ContextoQuaseEsgotado_ClampaMaxTokensNoMinimo32()
+    {
+        var servico = CriarServico();
+        const int contexto = 512;
+
+        int reserva = (int)(contexto * new OllamaOptions().ContextReserveFraction);
+
+        // Acima deste total de tokens AvailableForOutput fica abaixo de 32 e o serviço tem
+        // de aplicar o mínimo. O prompt entra no histórico já com o bloco de instrução
+        // SUMMARY, por isso o tamanho é calculado a partir do próprio histórico.
+        int limite = contexto - reserva - 32;
+        var prompt = PromptAcimaDeTokens(Historico(), limite);
+
+        var preparado = await PrepararAsync(servico, Req(Historico(Msg(prompt, true)), prompt, contextLength: contexto));
+
+        Assert.Equal(32, preparado.MaxTokens);
+    }
+
+    [Fact]
+    public async Task Prepare_PromptMaiorQueOTodoOCtx_DevolvePromptTooLongComDiagnostico()
     {
         var servico = CriarServico();
         const int contexto = 512;
         var prompt = new string('a', 2000);
 
-        var preparado = await servico.Prepare(Historico(Msg(prompt, true)), prompt, SystemPrompt, Welcome, "modelo", contexto, true);
+        var resultado = await servico.Prepare(Req(Historico(Msg(prompt, true)), prompt, contextLength: contexto));
 
-        Assert.NotNull(preparado);
-        Assert.Equal(32, preparado.MaxTokens);
+        Assert.Equal(ChatPreparationStatus.PromptTooLong, resultado.Status);
+        Assert.Null(resultado.Request);
+
+        // Os números chegam ao utilizador na mensagem de erro, para ele poder decidir.
+        Assert.True(resultado.PromptTokens >= contexto);
+        Assert.Equal(contexto, resultado.ContextLength);
+    }
+
+    [Fact]
+    public async Task Prepare_HistoricoLongoAposApuramentoContinuaNaoCabendo_DevolvePromptTooLong()
+    {
+        var servico = CriarServico();
+        const int contexto = 1024;
+
+        var mensagens = Historico(
+            Msg("pergunta antiga", true),
+            Msg("resposta antiga e longa. ".PadRight(4000, 'x'), false),
+            Msg("pergunta nova " + new string('y', 4000), true));
+
+        var resultado = await servico.Prepare(Req(mensagens, mensagens[^1].Text, contextLength: contexto));
+
+        Assert.Equal(ChatPreparationStatus.PromptTooLong, resultado.Status);
+    }
+
+    [Fact]
+    public async Task Prepare_ContextoDesconhecido_NaoVerificaTamanho()
+    {
+        // ContextLength = 0 significa "não sei o limite do modelo": não pode bloquear.
+        var servico = CriarServico();
+        var prompt = new string('a', 2000);
+
+        var preparado = await PrepararAsync(servico, Req(Historico(Msg(prompt, true)), prompt, contextLength: 0));
+
+        Assert.Equal(0, preparado.Payload.Options!["num_ctx"]);
+    }
+
+    /// <summary>
+    /// Cresce um texto até o histórico construído ultrapassar <paramref name="tokens"/>,
+    /// para o teste não depender do tamanho literal do bloco de instrução SUMMARY (que
+    /// entra no histórico junto com o prompt e conta para o total).
+    /// </summary>
+    private static string PromptAcimaDeTokens(List<ChatMessage> mensagens, int tokens)
+    {
+        var prompt = new string('a', 64);
+
+        while (EstimateTokensNoHistorico(prompt, mensagens) <= tokens)
+            prompt += new string('a', 64);
+
+        return prompt;
+    }
+
+    private static int EstimateTokensNoHistorico(string prompt, List<ChatMessage> mensagens)
+    {
+        var comPrompt = new List<ChatMessage>(mensagens) { Msg(prompt, true) };
+
+        var history = ChatComposerService.BuildHistory(comPrompt, SystemPrompt, Welcome);
+
+        return history.Sum(m => ChatComposerService.EstimateTokens(m.Content));
     }
 
     [Fact]

@@ -1,4 +1,4 @@
-﻿@page "/dashboard"
+@page "/dashboard"
 @using Microsoft.Extensions.Localization
 @using Microsoft.FluentUI.AspNetCore.Components
 @using OllamaArena.Components.Pages.Components
@@ -7,7 +7,7 @@
 @using OllamaArena.Services.Interfaces.Repositories
 @rendermode InteractiveServer
 @inject IStringLocalizer<SharedResources> L
-@inject IBenchmarkRepository BenchmarkRepo
+@inject IBenchmarkStatsRepository BenchmarkRepo
 @inject IJSRuntime JS
 
 <PageTitle>@L["Dashboard.PageTitle"]</PageTitle>

@@ -294,6 +294,12 @@
   <data name="Chat.AutoSaveErrorTitle" xml:space="preserve">
     <value>Erro ao gravar</value>
   </data>
+  <data name="Chat.PromptTooLong" xml:space="preserve">
+    <value>A conversa usa cerca de {0} tokens e o modelo só aceita {1}. Encurte a mensagem ou começa uma conversa nova.</value>
+  </data>
+  <data name="Chat.PromptTooLongTitle" xml:space="preserve">
+    <value>Mensagem demasiado longa</value>
+  </data>
   <data name="ConfirmSaveDialog.Title" xml:space="preserve">
     <value>Guardar registo</value>
   </data>
@@ -403,8 +409,26 @@
     <value>Confirme, por favor</value>
   </data>
   <data name="Benchmarks.DeleteAllConfirmMessage" xml:space="preserve">
-    <value>Tem a certeza que deseja apagar todos os Prompts e Respostas associadas? Esta operação não pode ser revertida.</value>
-  </data>
+      <value>Tem a certeza que deseja apagar todos os Prompts e Respostas associadas? Esta operação não pode ser revertida.</value>
+      </data>
+  <data name="Benchmarks.DeleteFilteredConfirmTitle" xml:space="preserve">
+      <value>Apagar as respostas filtradas</value>
+      </data>
+  <data name="Benchmarks.DeleteUnevaluatedConfirmTitle" xml:space="preserve">
+      <value>Apagar as respostas por avaliar</value>
+      </data>
+  <data name="Benchmarks.DeleteEvaluatedConfirmTitle" xml:space="preserve">
+      <value>Apagar as respostas avaliadas</value>
+      </data>
+  <data name="Benchmarks.DeleteEverythingConfirmTitle" xml:space="preserve">
+      <value>Apagar TUDO — ação irreversível</value>
+      </data>
+  <data name="Benchmarks.DeleteEverythingConfirmMessage" xml:space="preserve">
+      <value>Isto apaga a tabela Prompts inteira: todos os prompts, todas as respostas e todas as avaliações dos {0} registo(s) atualmente na base de dados. Não é limitado ao filtro nem à pesquisa e não há cópia de segurança: não é possível recuperar os dados.</value>
+      </data>
+  <data name="Benchmarks.DeleteEverythingYes" xml:space="preserve">
+      <value>Sim, apagar tudo definitivamente</value>
+      </data>
   <data name="Benchmarks.DeleteAllYes" xml:space="preserve">
     <value>Sim, Apagar</value>
   </data>
@@ -455,6 +479,12 @@
   </data>
   <data name="Benchmarks.ExportPdfError" xml:space="preserve">
     <value>Erro ao gerar o PDF:</value>
+  </data>
+  <data name="Benchmarks.ExportExcelError" xml:space="preserve">
+    <value>Erro ao exportar para Excel:</value>
+  </data>
+  <data name="Benchmarks.DeleteError" xml:space="preserve">
+    <value>Não foi possível eliminar as respostas. A base de dados não respondeu — tenta novamente.</value>
   </data>
   <data name="Benchmarks.MultipleGroupsWarning" xml:space="preserve">
     <value>⚠️ Atenção - Múltiplos Grupos de Prompts</value>
@@ -757,8 +787,14 @@ Deseja continuar?</value>
     <value>Copiar Prompt Formatado para o Juiz IA</value>
   </data>
   <data name="Benchmarks.CopyForEvaluation" xml:space="preserve">
-    <value>Copiar prompt</value>
-  </data>
+      <value>Copiar prompt</value>
+    </data>
+  <data name="Benchmarks.CopySuccess" xml:space="preserve">
+      <value>Copiado para a área de transferência</value>
+    </data>
+  <data name="Benchmarks.CopyError" xml:space="preserve">
+      <value>Não foi possível copiar para a área de transferência.</value>
+    </data>
   <data name="Benchmarks.AutomateEvaluation" xml:space="preserve">
     <value>Avaliar automaticamente</value>
   </data>
@@ -999,6 +1035,18 @@ Deseja continuar?</value>
   <data name="Modelos.HelpCount" xml:space="preserve">
     <value>{0} modelo(s) instalado(s)</value>
   </data>
+  <data name="Modelos.HelpNameTitle" xml:space="preserve">
+    <value>Nome</value>
+  </data>
+  <data name="Modelos.HelpNameBody" xml:space="preserve">
+    <value>Etiqueta do modelo na library local, tal como o /api/tags a devolve: nome-base, namespace e tag (ex.: llama3.2:3b-instruct-q4_K_M). É o identificador que o Chat envia ao Ollama — dois nomes diferentes são duas entradas diferentes na library, mesmo que tenham o mesmo número de parâmetros.</value>
+  </data>
+  <data name="Modelos.HelpFamilyTitle" xml:space="preserve">
+    <value>Família</value>
+  </data>
+  <data name="Modelos.HelpFamilyBody" xml:space="preserve">
+    <value>Arquitectura do modelo, como a reporta o Ollama em details.family (ex.: llama, qwen2, gemma, phi3). Determina o tokenizer e o template de prompt, razão pela qual dois modelos da mesma família se comportam de forma semelhante mesmo com tamanhos diferentes, e pela qual trocar de família muda também o prompt que o modelo espera.</value>
+  </data>
   <data name="Modelos.HelpParamsTitle" xml:space="preserve">
     <value>Parâmetros</value>
   </data>
@@ -1011,11 +1059,17 @@ Deseja continuar?</value>
   <data name="Modelos.HelpQuantBody" xml:space="preserve">
     <value>Grau de compressão com que os pesos foram gravados no ficheiro GGUF. Cada peso passa de 32 bits (F32) para 4 bits (Q4), Q5, Q6… — daí nomes como Q4_K_M. Menos bits significam menos tamanho em disco, menos VRAM e mais velocidade, ao custo de alguma qualidade. Q4_K_M é o melhor compromisso habitual para uso geral; Q8 é quase sem perdas de qualidade, mas ocupa o dobro.</value>
   </data>
+  <data name="Modelos.HelpYearTitle" xml:space="preserve">
+    <value>Ano de Treino</value>
+  </data>
+  <data name="Modelos.HelpYearBody" xml:space="preserve">
+    <value>Ano de treino ou de publicação do modelo. A app extrai-o da data dos metadados GGUF (model_info.*.general.date) e, se não houver, varre o Modelfile e o template à procura de um ano. É uma heurística, não uma garantia: quando o Ollama não devolve nada, assume 2024. Serve para aviso — um modelo antigo tende a perder em benchmarks recentes — e não como critério absoluto.</value>
+  </data>
   <data name="Modelos.HelpContextTitle" xml:space="preserve">
     <value>Contexto Máximo</value>
   </data>
   <data name="Modelos.HelpContextBody" xml:space="preserve">
-    <value />
+    <value>Janela de contexto máxima que o modelo suporta (num_ctx no GGUF), lida de model_info.*.context_length na resposta de /api/show. Se o Ollama não devolver esse campo, a app mostra 2 048 tokens. Três coisas a reter:</value>
   </data>
   <data name="Modelos.HelpContextItem1" xml:space="preserve">
     <value>Não é o que é efetivamente usado numa conversa: o Ollama reduz a janela consoante a VRAM disponível, e a app calcula esse valor efetivo antes de cada conversa.</value>
@@ -1026,20 +1080,26 @@ Deseja continuar?</value>
   <data name="Modelos.HelpContextItem3" xml:space="preserve">
     <value>Prompts ou históricos que ultrapassem a janela são truncados, e a qualidade degrada-se antes de se atingir o limite absoluto.</value>
   </data>
+  <data name="Modelos.HelpSizeTitle" xml:space="preserve">
+    <value>Tamanho no Disco</value>
+  </data>
+  <data name="Modelos.HelpSizeBody" xml:space="preserve">
+    <value>Tamanho do ficheiro GGUF em GiB — divisões binárias de 1024, arredondadas a duas casas, tal como o /api/tags o reporta (por isso 4,0 GiB é um pouco mais de 4 GB decimais). É o factor mais directo na velocidade de resposta, e é também a base do cálculo de Compatibilidade GPU.</value>
+  </data>
   <data name="Modelos.HelpReasoningTitle" xml:space="preserve">
     <value>Raciocínio</value>
   </data>
   <data name="Modelos.HelpReasoningBody" xml:space="preserve">
-    <value />
+    <value>Indica se o modelo declara a capacidade "thinking" no array capabilities que o /api/show devolve — ou seja, se consegue gerar um passo de raciocínio antes da resposta. Três estados no badge:</value>
   </data>
   <data name="Modelos.HelpReasoningItem1" xml:space="preserve">
-    <value />
+    <value>Suporta: a capacidade está declarada. A app envia o campo think explicitamente (true ou false) a estes modelos; nos restantes o campo é omitido, porque o Ollama devolve erro 400 a quem o envia a um modelo sem "thinking".</value>
   </data>
   <data name="Modelos.HelpReasoningItem2" xml:space="preserve">
-    <value />
+    <value>Não suporta: o modelo respondeu sem essa capacidade no array. O campo think é omitido e o modelo responde directamente.</value>
   </data>
   <data name="Modelos.HelpReasoningItem3" xml:space="preserve">
-    <value />
+    <value>Desconhecido: o Ollama é demasiado antigo para devolver o array capabilities, ou a chamada falhou. Não é o mesmo que "não suporta" — a app volta a verificar no momento de enviar. O interruptor de raciocínio nas definições está desligado por omissão; desligado, o raciocínio nem sequer é capturado.</value>
   </data>
   <data name="Modelos.HelpGpuTitle" xml:space="preserve">
     <value>Compatibilidade GPU</value>
@@ -1048,13 +1108,16 @@ Deseja continuar?</value>
     <value>Estimativa de memória necessária face à VRAM livre da placa gráfica. O cálculo compara o tamanho do modelo multiplicado por um fator de carga (1,2×, para o runtime e o buffer de contexto) com a VRAM livre já descontada da reserva usada pelo sistema operativo no Windows (350 MB).</value>
   </data>
   <data name="Modelos.HelpGpuItem1" xml:space="preserve">
-    <value />
+    <value>Compatível (~N GB): a VRAM livre, já descontada a reserva do Windows, cobre o tamanho do modelo multiplicado pelo fator de carga. O modelo é carregado inteiramente na placa gráfica.</value>
   </data>
   <data name="Modelos.HelpGpuItem2" xml:space="preserve">
-    <value />
+    <value>Excede VRAM (~N GB): o modelo não cabe inteiro na VRAM. O Ollama pode ainda assim carregá-lo, mas parte das camadas vai para RAM de sistema — a resposta fica mais lenta, sobretudo a primeira (o KV cache ainda não existe).</value>
   </data>
   <data name="Modelos.HelpGpuItem3" xml:space="preserve">
-    <value />
+    <value>Leitura VRAM Indisponível: não foi possível ler a VRAM (sem nvidia-smi e sem deteção via WMI, ou 0 reportados), por isso a app não emite veredicto em vez de dizer que o modelo não cabe.</value>
+  </data>
+  <data name="Modelos.HelpGpuNote" xml:space="preserve">
+    <value>É uma fotografia de momento: a VRAM livre muda conforme outras aplicações a usam, por isso o mesmo modelo pode mudar de veredicto entre visitas.</value>
   </data>
   <data name="Analysis.NoBestRated" xml:space="preserve">
     <value>Nenhuma resposta foi ainda avaliada pelos juízes para determinar o melhor modelo.</value>
@@ -1380,6 +1443,9 @@ Deseja continuar?</value>
   <data name="EvalDetail.NoFeedback" xml:space="preserve">
     <value>Nenhum feedback registado.</value>
   </data>
+  <data name="EvalDetail.FeedbackError" xml:space="preserve">
+    <value>Não foi possível carregar os feedbacks dos juízes. Tente novamente ou reabra o detalhe.</value>
+  </data>
   <data name="EvalDetail.Recommendation" xml:space="preserve">
     <value>Recomendação do Juiz</value>
   </data>
@@ -1548,6 +1614,21 @@ Deseja continuar?</value>
   <data name="Nav.ExpandToggle" xml:space="preserve">
     <value>Alternar expansão/colapso do menu</value>
   </data>
+  <data name="Header.Readme" xml:space="preserve">
+    <value>README</value>
+  </data>
+  <data name="Header.TestPlan" xml:space="preserve">
+    <value>Testes</value>
+  </data>
+  <data name="Header.CompareModels" xml:space="preserve">
+    <value>Comparar</value>
+  </data>
+  <data name="Header.Theme.Dark" xml:space="preserve">
+    <value>Tema escuro</value>
+  </data>
+  <data name="Header.Theme.Light" xml:space="preserve">
+    <value>Tema claro</value>
+  </data>
   <data name="Dashboard.PageTitle" xml:space="preserve">
     <value>Dashboard</value>
   </data>
@@ -1658,5 +1739,17 @@ Deseja continuar?</value>
   </data>
   <data name="CompareModels.Title" xml:space="preserve">
     <value>Plano para comparar modelos</value>
+  </data>
+  <data name="HistoryPanel.ClearHistory" xml:space="preserve">
+    <value>Apagar histórico</value>
+  </data>
+  <data name="HistoryPanel.ConfirmClearHistory" xml:space="preserve">
+    <value>Esta ação é irreversível. Apagar todo o histórico?</value>
+  </data>
+  <data name="HistoryPanel.ConfirmClearConversations" xml:space="preserve">
+    <value>Esta ação é irreversível. Apagar todas as conversas?</value>
+  </data>
+  <data name="HistoryPanel.ClearHistoryDisabledTooltip" xml:space="preserve">
+    <value>Feche a conversa em curso (Novo Chat) antes de as apagar.</value>
   </data>
 </root>
