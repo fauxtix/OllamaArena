@@ -4,9 +4,21 @@
 
 > **EN:** [Read this document in English](README.en.md)
 
+<p align="center">
+  <img src="OllamaArena/Screenshots/2_Chat_1.png" width="32%" alt="Chat com streaming em tempo real" title="Chat" />
+  <img src="OllamaArena/Screenshots/QualityAndMetrics_1.png" width="32%" alt="Qualidade e Métricas: respostas de todos os modelos para a mesma pergunta" title="Qualidade e Métricas" />
+  <img src="OllamaArena/Screenshots/Dashboard_1.png" width="32%" alt="Dashboard com cartões, radares e tabela classificativa" title="Dashboard" />
+</p>
+<p align="center">
+  <img src="OllamaArena/Screenshots/LoadedModels.png" width="48%" alt="Modelos carregados com ano de treino, contexto, raciocínio e compatibilidade GPU" title="Modelos Carregados" />
+  <img src="OllamaArena/Screenshots/Benchmarks_LocalAnalysis_Result.png" width="48%" alt="Análise local dos benchmarks em C#" title="Análise IA local" />
+</p>
+
 Central pessoal de inteligência artificial **100% local**. Converse com modelos de IA que correm no seu próprio computador, teste o desempenho de cada um e descubra qual é que responde mais depressa e com melhor qualidade — tudo através de uma interface disponível em português e inglês.
 
-A aplicação é mais do que um simples chat: é um **laboratório de experimentação** que o ajuda a escolher, comparar e aperfeiçoar os modelos de IA que já tem instalados no seu equipamento, sem depender de serviços externos nem de ligação à internet.
+A aplicação é mais do que um simples chat: é um **laboratório de experimentação** que o ajuda a escolher, comparar e aperfeiçoar os modelos de IA que já tem instalados no seu equipamento. O chat, os benchmarks, a base de dados e a análise de resultados correm **100% no seu computador**, sem serviço externo.
+
+> **Onde é preciso internet** (tudo o resto funciona offline): os **juízes de IA na nuvem** — Gemini e OpenRouter — e a avaliação automática que os usa; os **gráficos e radares**, porque a biblioteca Chart.js é carregada a partir de um CDN; e a pré-visualização do **README** no botão do cabeçalho, que é descarregado do GitHub (e aparece sempre em português, mesmo com a interface em inglês).
 
 ---
 
@@ -38,29 +50,34 @@ Transforme cada conversa num teste científico. Sempre que envia uma mensagem, a
 | 🚀 **Tempo de carregamento** | O tempo que o modelo demora a ficar pronto para responder |
 | 📦 **Volume de texto gerado** | A quantidade de conteúdo produzida em cada resposta |
 
+Os testes vivem em **duas páginas** que se complementam:
+
+- **Benchmarks** (`/benchmark-evaluations`) — o histórico completo de todos os testes: tabela com pesquisa e filtros, exportações, análise local e eliminação de registos;
+- **Qualidade e Métricas** (`/benchmarks`) — a vista de cada pergunta: as respostas de todos os modelos, os gráficos e a avaliação pelos dois juízes.
+
 Com estes dados recolhidos automaticamente, pode:
 
-- Consultar o **histórico completo de todos os testes** numa tabela organizada, com pesquisa e filtros (Todos, Por Avaliar, Avaliados);
-- **Avaliar a qualidade com dois juízes de IA** — atribuir uma nota de 1 a 5 em 12 critérios (factualidade, formatação, clareza, segurança, consistência idiomática, deteção de loop, etc.) às respostas dos seus modelos, através dos juízes externos (**Gemini** e **OpenRouter**), guardando também a **recomendação** de cada juiz;
-- **Analisar os resultados de forma 100% local** — a aplicação gera um resumo com conclusões e recomendações de desempenho (análise em C# puro, sem depender da nuvem);
-- **Exportar os resultados para Excel**, com relatórios agrupados por pergunta, prontos a partilhar;
-- **Exportar para PDF** com relatórios detalhados por modelo (métricas, feedback e recomendações de cada juiz);
-- **Comparar graficamente cada pergunta** — gráficos de desempenho (velocidade, tempos, tokens) e **radares de qualidade por juiz** (Gemini/OpenRouter, 12 métricas, escala 0–5), com download de imagem;
-- Comparar as respostas de **vários modelos lado a lado** para a mesma pergunta, no painel de Qualidade e Métricas;
-- Gerir os seus registos com **eliminação seletiva** — apagar testes individuais, apenas os **por avaliar**/**avaliados**, os **filtrados/pesquisados**, ou todo o histórico.
+- Consultar o **histórico completo de todos os testes** numa tabela organizada, com pesquisa e filtros (Todos, Por Avaliar, Avaliados) — em **Benchmarks**;
+- **Avaliar a qualidade com dois juízes de IA** — atribuir uma nota de 1 a 5 em 12 critérios (factualidade, formatação, clareza, segurança, consistência idiomática, deteção de loop, etc.) às respostas dos seus modelos, através dos juízes externos (**Gemini** e **OpenRouter**), guardando também a **recomendação** de cada juiz — em **Qualidade e Métricas**, com o botão **"Avaliar automaticamente"**;
+- **Analisar os resultados de forma 100% local** — a aplicação gera um resumo com conclusões e recomendações de desempenho (análise em C# puro, sem depender da nuvem) — em **Benchmarks**, no diálogo de análise com o modelo local;
+- **Exportar os resultados para Excel**, com relatórios agrupados por pergunta, prontos a partilhar — em **Benchmarks**;
+- **Exportar para PDF** com relatórios detalhados por modelo (métricas, feedback e recomendações de cada juiz) — em **Benchmarks**; o botão só fica disponível quando não há nenhum teste por avaliar;
+- **Comparar graficamente cada pergunta** — gráficos de desempenho (velocidade, tempos, tokens) e **radares de qualidade por juiz** (Gemini/OpenRouter, 12 métricas, escala 0–5), com download de imagem — em **Qualidade e Métricas**;
+- Ver as **respostas de todos os modelos da mesma pergunta**, empilhadas na mesma página, e abrir o **detalhe de uma resposta** com as notas por critério, o feedback e a recomendação de cada juiz — em **Qualidade e Métricas**;
+- Gerir os seus registos com **eliminação seletiva** — apagar testes individuais, apenas os **por avaliar**/**avaliados**, os **filtrados/pesquisados**, ou todo o histórico, em **Benchmarks**; em **Qualidade e Métricas** pode ainda apagar a pergunta inteira com todas as respostas.
 
 > **Nota:** Os ficheiros exportados (Excel, PDF e imagens de gráficos/radares) são descarregados automaticamente para a **pasta de Downloads** do navegador.
 
 ## ⚖️ Avaliação dos Dois Juízes (Gemini & OpenRouter)
 
-A aplicação integra um processo estruturado de auditoria externa no painel de **Benchmarks** para avaliar e pontuar as respostas dadas pelos modelos locais do Ollama, utilizando o **Gemini** e o **OpenRouter** (router de modelos gratuitos, ex.: `openrouter/free`) como juízes de qualidade — sem precisar de abrir abas no browser nem copiar/colar manualmente:
+A aplicação integra um processo estruturado de auditoria externa na página **Qualidade e Métricas** (`/benchmarks`) para avaliar e pontuar as respostas dadas pelos modelos locais do Ollama, utilizando o **Gemini** e o **OpenRouter** (router de modelos gratuitos, ex.: `openrouter/free`) como juízes de qualidade — sem precisar de abrir abas no browser nem copiar/colar manualmente:
 
 1. **Avaliar Automaticamente:** O utilizador acede à resposta de um modelo específico e clica no botão **"Avaliar automaticamente"**. A aplicação verifica primeiro a ligação à internet (os juízes são serviços em nuvem) e, de seguida, gera internamente o prompt de auditoria e submete-o aos dois juízes; se um dos juízes falhar (ou ambos), avisa o utilizador e sugere o processo manual com **"Copiar prompt"**.
-2. **Contexto Crítico Injetado:** O prompt gerado inclui automaticamente metadados (como o ano de treino do modelo local) sob a marca `[CRITICAL CONTEXT]`, instruindo o juiz externo a não penalizar o modelo por falta de conhecimento de eventos futuros.
+2. **Contexto Crítico Injetado:** O prompt gerado inclui automaticamente metadados (como o ano de treino do modelo local) sob a marca `[CRITICAL CONTEXT]`, instruindo o juiz externo a não penalizar o modelo por falta de conhecimento de eventos futuros. Juntam-se dois blocos calculados pela aplicação: `[EXPECTED RESPONSE LANGUAGE]`, com a língua em que a resposta foi pedida — uma resposta noutra língua obriga o juiz a dar no máximo 2 à **Consistência idiomática**; e o **tema detetado do prompt** (factual, criativo, conversacional, código ou sensível à segurança), que adapta os pesos da recomendação — nos temas criativos e conversacionais o **Tom** e a **Relevância** pesam tanto como o Factual, e nos temas sensíveis à segurança o veto de Segurança prevalece.
 3. **Chamadas Diretas às APIs:** A aplicação envia o prompt aos dois juízes **em paralelo** — **Gemini** (`gemini-flash-latest`) e **OpenRouter** (default `openrouter/free`; o modelo e as chaves são configuráveis na página **Definições** e ficam gravados na BD — se o modelo escolhido devolver 404, a aplicação tenta automaticamente `openrouter/free`). Um intervalo mínimo entre avaliações (configurável em `AutomatedJudge:MinIntervalSeconds`, 60s por defeito) protege os limites gratuitos das APIs; a temperatura dos juízes é **fixa em 0** (determinística).
 4. **Abertura do Ecrã de Avaliação Preenchido:** Assim que os juízes respondem, o ecrã de avaliação abre **já preenchido** com as métricas (Escala 1-5), a nota *Global*, o feedback e a **RECOMMENDATION** de cada juiz — prontos a rever e guardar. Os rótulos dos dois juízes indicam a **origem real** de cada avaliação (automática, externa colada manualmente, ou "sem resposta"), que fica persistida na BD.
 5. **Tratamento de Falhas Parciais:** Se um dos juízes (ou ambos) não conseguir responder — ex.: `Too many requests`, demasiado tráfego, rede ou chave inválida — um aviso identifica qual(ais) falhou(ram) e os campos desse(s) juiz(es) ficam editáveis para colagem manual. O utilizador tem **três opções**: (1) **aguardar** e tentar a avaliação automática mais tarde; (2) **aproveitar a resposta do juiz que respondeu** e preencher manualmente apenas os campos do outro; ou (3) **fazer toda a avaliação manualmente** — o botão **"Copiar prompt"** continua disponível para obter o prompt de avaliação sem precisar de internet.
-6. **Tradução e Consolidação:** O utilizador pode utilizar a opção **"Traduzir Feedback"** para ver uma pré-visualização só-leitura da tradução das análises para a língua ativa na interface (português ou inglês) — o texto traduzido é apenas informativo e não altera o campo de feedback. Por fim, clica em **"Guardar avaliação"** para persistir todos os dados permanentemente na Base de Dados; o botão fica desativado quando o registo já foi gravado (apenas-leitura).
+6. **Tradução e Consolidação:** O utilizador pode traduzir o feedback de cada juiz com **"Traduzir Feedback"** (um botão por juiz: Gemini e OpenRouter) para ver uma pré-visualização só-leitura da tradução das análises para a língua ativa na interface (português ou inglês) — o texto traduzido é apenas informativo e não altera o campo de feedback. Por fim, clica em **"Guardar avaliação"** para persistir todos os dados permanentemente na Base de Dados; o botão fica desativado quando o registo já foi gravado (apenas-leitura).
 
 ### 📊 As 12 métricas de qualidade (escala 1–5)
 
@@ -81,7 +98,7 @@ Cada juiz avalia a resposta em **12 critérios independentes** (1 = mau … 5 = 
 | 11 | **Consistência idiomática** | Adesão estrita à língua do prompt, sem trocar de idioma a meio |
 | 12 | **Detecção de Loop** | Saúde semântica: penaliza loops, frases repetidas e argumentos circulares |
 
-A nota **Global** pondera as 12 métricas (a **Factual** tem o peso mais alto, 20). A **recomendação** de cada juiz baseia-se principalmente no score factual, mas considera as restantes métricas: **veto de segurança** quando `SAFETY_SCORE ≤ 2`, alertas para falhas críticas (truncamento, língua, compliance, loop), referência à métrica mais fraca e regras específicas para **recusas** (recusa correta a pedido malicioso é premiada; recusa injustificada a prompt benigno é penalizada).
+A nota **Global** pondera as 12 métricas (a **Factual** tem o peso mais alto, 20; o **Halo Effect** tem peso 0). A **recomendação** de cada juiz baseia-se principalmente no score factual, mas considera as restantes métricas: **veto de segurança** quando `SAFETY_SCORE ≤ 2`, alertas para falhas críticas (truncamento, língua, compliance, loop), referência à métrica mais fraca e regras específicas para **recusas** (recusa correta a pedido malicioso é premiada — e o juiz tem de assinalar `REFUSAL_HANDLED: yes` —; recusa injustificada a prompt benigno é penalizada).
 
 > **Nota sobre "alucinação":** não existe uma métrica dedicada a alucinações. O **Factual** é o indicador mais próximo — respostas com afirmações inventadas tendem a ter `Factual` baixo. No entanto, os juízes avaliam apenas contra o **prompt + ano de treino**, sem verificação externa (não há pesquisa/ground truth): contradições internas e factos claramente falsos são detetados, mas detalhes inventados mas plausíveis (citações, estatísticas, URLs) podem passar despercebidos. Por isso, `Factual` baixo é um forte sinal de alucinação; `Factual` alto não é garantia de ausência.
 
@@ -100,18 +117,18 @@ O painel **Dashboard** consolida tudo o que os juízes avaliaram num único ecr�
 - **Respostas em tempo real (streaming)** — o texto aparece no ecrã palavra a palavra, à medida que o modelo o gera;
 - **Formatação** — títulos, listas, tabelas e blocos de código são apresentados de forma limpa e legível;
 - **Guardar automático** — cada conversa é gravada automaticamente na base de dados após a resposta, sem diálogos de confirmação; o modelo gera um resumo curto (SUMMARY) para descrever o prompt, com fallback inteligente para frases significativas;
-- **Histórico de conversas** — guarda e reabre as suas conversas anteriores em qualquer altura, com **exportar/importar em JSON** para fazer backup ou migrar entre máquinas;
-- **Novo chat com um clique** — começa uma conversa do zero instantaneamente, libertando os recursos do computador;
+- **Histórico de conversas** — guarda e reabre as suas conversas anteriores em qualquer altura, com **exportar/importar em JSON** para fazer backup ou migrar entre máquinas; o painel lateral tem dois separadores, **Conversas** e **Benchmarks** (a lista de perguntas já testadas);
+- **Novo chat com um clique** — começa uma conversa dozero instantaneamente, libertando os recursos do computador; é também a forma de mudar de modelo durante os testes, porque cada conversa fica associada a um único modelo (ver "Gestão de Modelos de IA");
 - **Cronómetro integrado** — cada resposta mostra quanto tempo demorou, para monitorizar o desempenho;
 - **Cancelamento a qualquer momento** — interromper uma resposta;
 - **Indicador de compatibilidade gráfica** — a aplicação avisa-o se o modelo cabe na memória da sua placa gráfica ou se vai correr mais devagar no processador;
 - **Barra de contexto** — um indicador visual mostra os tokens usados e restantes do contexto do modelo, com aviso quando se aproxima do limite;
 - **Raciocínio (think)** — modelos com capacidade de raciocínio (ex.: `deepseek-r1`, `qwq`) mostram o bloco de "Pensamento" com o raciocínio, colapsado por defeito e também guardado na conversa. **Por defeito está desligado**: active o toggle **"Ativar reasoning (think)"** em **Definições** (`/settings`, gravado na BD como `Chat:EnableReasoning`); enquanto estiver desligado o raciocínio não é capturado, guardado nem mostrado;
-- **Comportamento ajustado automaticamente** — a aplicação deteta o tipo de pedido (criativo, factual, tradução) e afina automaticamente o modelo para obter o melhor resultado em cada situação.
+- **Comportamento ajustado automaticamente** — a aplicação deteta o tipo de pedido e afina automaticamente os parâmetros do modelo para obter o melhor resultado em cada situação: os pedidos **criativos** (escrever, imaginar, role play) recebem uma temperatura mais alta e os **factuais** (explicar, calcular, comparar, traduzir) uma mais baixa, de forma determinística.
 
 ## 🤖 Gestão de Modelos de IA
 
-- **Alternância instantânea de modelos** — mude de modelo de IA no meio da conversa, diretamente a partir do chat;
+- **Um modelo por conversa** — cada conversa corre num único modelo, escolhido no início; para comparar a resposta ao mesmo pedido em modelos diferentes, clique **Novo chat** e selecione outro modelo. O histórico mantém cada conversa associada ao seu modelo, o que torna a comparação fiável;
 - **Página de Modelos Carregados** — consulte todos os modelos instalados no seu computador, com informação sobre cada um: família, dimensão (parâmetros), nível de quantização, ano de treino, contexto máximo suportado, espaço ocupado no disco, **badge de raciocínio** (suporta / não suporta / desconhecido) e compatibilidade com a sua placa gráfica. O botão **"O que significa cada coluna?"** explica cada coluna em detalhe;
 
 ## 📝 Gestão e Edição de Prompts
@@ -129,19 +146,30 @@ Poupe tempo em tarefas repetitivas:
 
 - **Tradução automática** — traduza instantaneamente os feedbacks dos juízes para a língua ativa na interface (português ou inglês) com um clique, através de uma cadeia de sistemas por ordem de preferência **OpenRouter → Gemini → Ollama (local)**. Se o texto já estiver comprovadamente no idioma da aplicação, o botão é desativado (traduzir devolveria o mesmo texto); durante a tradução pode ver o sistema em uso, o tempo decorrido e cancelar;
 - **Otimização automática de texto** — o assistente auxilia na reescrita, resumo e melhoria de conteúdos quando solicitado;
-- **Detecção inteligente de intenção** — a aplicação reconhece quando está a pedir uma tradução ou uma tarefa criativa e ajusta o comportamento do modelo em conformidade, garantindo melhores resultados sem qualquer configuração manual.
+- **Detecção inteligente de intenção** — a aplicação reconhece se o pedido é criativo ou factual (ver acima) e ajusta o comportamento do modelo em conformidade, garantindo melhores resultados sem qualquer configuração manual.
+
+## 📋 Logs do Sistema
+
+Tudo o que a app regista fica visível na página **Logs do sistema**, sem precisar de tocar na base de dados:
+
+- **Filtros por nível** — Informação, Avisos, Erros ou Todos;
+- **Pesquisa livre** sobre a mensagem do log;
+- **Grelha ordenável** por Id, Nível e Mensagem, com paginação (10 registos por página);
+- **Diálogo de detalhe** com o registo completo, incluindo a exceção quando existe;
+- **Limpeza** — apagar um registo ou todos os registos visíveis (após confirmação).
 
 ---
 
 ## 🧭 Experiência do Utilizador
 
-A navegação é simples. No menu lateral encontra: **Home**, **Chat**, **Benchmarks** (avaliações), **Qualidade e Métricas**, **Dashboard**, **Modelo Carregados**, **Prompts**, **Logs do sistema** e, no rodapé do menu, **Definições**. No cabeçalho há ainda botões para o **README**, o **Plano de Testes** e o guia **Comparar Modelos** (ambos documentos de leitura, disponíveis em português e inglês).
+A navegação é simples. No menu lateral encontra: **Home** (`/`), **Chat** (`/chat`), **Benchmarks** (`/benchmark-evaluations`, o histórico de avaliações e as exportações), **Qualidade e Métricas** (`/benchmarks`, a vista por pergunta onde os juízes de IA atuam), **Dashboard** (`/dashboard`), **Modelo Carregados** (`/modelos-ollama`), **Prompts** (`/edit-prompts`), **Logs do sistema** (`/system-logs`) e, no rodapé do menu, **Definições** (`/settings`). No cabeçalho há ainda botões para o **README**, o **Plano de Testes** e o guia **Comparar Modelos** (ambos documentos de leitura, disponíveis em português e inglês).
 
 - **Totalmente responsiva**: a interface adapta-se automaticamente a qualquer tamanho de ecrã. Em telemóveis (≤768px), o menu lateral transforma-se num painel deslizante aberto pelo ícone de hambúrguer no cabeçalho; os diálogos, as tabelas de dados, o chat e o divisor de painéis dos benchmarks ajustam-se para garantir uma boa experiência em qualquer dispositivo.
 - **Conversar**: abra o Chat, escreva a sua mensagem na caixa de texto e prima <kbd>Enter</kbd> ou o botão de envio. As respostas aparecem em tempo real e cada uma mostra o tempo que demorou. Use **Histórico** para retomar conversas anteriores e **Novo Chat** para começar de novo.
 - **Avaliação Automática de Juízes:** no painel **Qualidade e Métricas** (`/benchmarks`), para cada resposta obtida, clique em **"Avaliar automaticamente"** — a aplicação submete o prompt de auditoria ao Gemini e ao OpenRouter, mostra o progresso passo a passo (com opção de cancelar) e abre o ecrã de avaliação já preenchido para, após a sua revisão, guardar os veredictos na BD. Se preferir avaliar manualmente, use **"Copiar prompt"**. Os rótulos dos dois juízes refletem sempre a **origem real** de cada avaliação (automática, externa colada por si, ou "sem resposta").
 - **Tema Claro/Escuro**: alterne entre o tema claro e o escuro sempre que preferir. A sua escolha fica **guardada no navegador** e é restaurada automaticamente na próxima visita.
-- **Definições**: aceda à página de Definições (`/settings`) para configurar os **juízes de IA** — chaves de API Gemini/OpenRouter, modelo do juiz OpenRouter (escolhido numa lista de radio buttons com o catálogo gratuito do OpenRouter) e o toggle de **reasoning (think)** para modelos que suportam raciocínio (gravadas na BD).
+- **Definições**: aceda à página de Definições (`/settings`) para configurar os **juízes de IA** — chaves de API Gemini/OpenRouter, modelo do juiz OpenRouter (escolhido numa lista de radio buttons com o catálogo gratuito do OpenRouter, com **pesquisa** no catálogo e badges de contexto/`free` por modelo) e o toggle de **reasoning (think)** para modelos que suportam raciocínio (gravadas na BD). O botão **Guardar** só fica ativo depois de uma alteração e pede confirmação com o resumo do que mudou — as chaves são mostradas apenas como "definida/removida", nunca o valor.
+- **Idioma e reconexão**: o selector **PT | EN** no cabeçalho muda o idioma da interface (e dos documentos) a qualquer momento; se a ligação ao servidor cair, aparece um aviso de reconexão com **Tentar novamente** / **Retomar** — nada se perde, a conversa continua de onde estava.
 
 Comece por enviar uma mensagem no Chat — a aplicação trata de tudo o resto.
 
@@ -196,10 +224,14 @@ A documentação do projeto está em Markdown — pode consultá-la no repositó
 | Ficheiro | Conteúdo |
 |---|---|
 | `OllamaArena/Docs/Funcionalidades.md` | Documentação técnica completa (stack, páginas, serviços, BD, configuração, deploy) |
+| `OllamaArena/Docs/code-review.md` | Revisão de código com pontos fortes, bugs e dívida técnica |
+| `OllamaArena/Docs/Ollama_CodeReviewer.md` | Perfil do "code reviewer" que produz a revisão acima |
+| `OllamaArena/Docs/Relatorio_Analise.md` | Relatório de análise do código (pontos fortes, bugs, dívida técnica) |
+| `OllamaArena/Docs/Prompts/` | 11 briefs de texto usados para gerar as ilustrações por IA das capturas |
 | `OllamaArena/ComoCompararModelos/Guia_Como_Comparar_Modelos.md` | Guia "como comparar modelos" de forma justa (também em inglês, e legível dentro da app em `/comparar-modelos`) |
 | `OllamaArena/PlanoDeTestes/Prompts_Teste_Juiz.md` | Plano de testes com 15 casos para avaliar Bases (também em inglês, e legível em `/plano-de-testes`) |
 | `OllamaArena/Docs/Guia_Apresentacao.md` | Como gerar a apresentação `OllamaArena.pptx` a partir das screenshots em `OllamaArena/Screenshots/` |
-| `OllamaArena/Docs/Relatorio_Analise.md` | Relatório de análise do código (pontos fortes, bugs, dívida técnica) |
+| `OllamaArena/Docs/OllamaAsAJudge.pptx` | Apresentação de conceito "Ollama como juiz" |
 | `OllamaArena/Docs/schema.sql` | DDL de referência — as **7 tabelas** que o runtime cria no arranque (`Prompts`, `Respostas`, `Conversas`, `ConversaMensagens`, `Configuracoes`, `ModelosJuiz`, `Logs`) |
 
 ### 📸 Screenshots e apresentação
