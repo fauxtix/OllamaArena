@@ -104,7 +104,7 @@ O painel **Dashboard** consolida tudo o que os juízes avaliaram num único ecr�
 - **Formatação** — títulos, listas, tabelas e blocos de código são apresentados de forma limpa e legível;
 - **Guardar automático** — cada conversa é gravada automaticamente na base de dados após a resposta, sem diálogos de confirmação; o modelo gera um resumo curto (SUMMARY) para descrever o prompt, com fallback inteligente para frases significativas;
 - **Histórico de conversas** — guarda e reabre as suas conversas anteriores em qualquer altura, com **exportar/importar em JSON** para fazer backup ou migrar entre máquinas; o painel lateral tem dois separadores, **Conversas** e **Benchmarks** (a lista de perguntas já testadas);
-- **Novo chat com um clique** — começa uma conversa dozero instantaneamente, libertando os recursos do computador; é também a forma de mudar de modelo durante os testes, porque cada conversa fica associada a um único modelo (ver "Gestão de Modelos de IA");
+- **Novo chat com um clique** — começa uma conversa do zero instantaneamente, libertando os recursos do computador; é também a forma de mudar de modelo durante os testes, porque cada conversa fica associada a um único modelo (ver "Gestão de Modelos de IA");
 - **Cronómetro integrado** — cada resposta mostra quanto tempo demorou, para monitorizar o desempenho;
 - **Cancelamento a qualquer momento** — interromper uma resposta;
 - **Indicador de compatibilidade gráfica** — a aplicação avisa-o se o modelo cabe na memória da sua placa gráfica ou se vai correr mais devagar no processador;
