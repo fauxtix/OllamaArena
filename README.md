@@ -6,7 +6,7 @@ Central pessoal de inteligência artificial **100% local**. Converse com modelos
 
 A aplicação é mais do que um simples chat: é um **laboratório de experimentação** que o ajuda a escolher, comparar e aperfeiçoar os modelos de IA que já tem instalados no seu equipamento. O chat, os benchmarks, a base de dados e a análise de resultados correm **100% no seu computador**, sem serviço externo.
 
-> **Onde é preciso internet** (tudo o resto funciona offline): os **juízes de IA na nuvem** — Gemini e OpenRouter — e a avaliação automática que os usa; os **gráficos e radares**, porque a biblioteca Chart.js é carregada a partir de um CDN; e a pré-visualização do **README** no botão do cabeçalho, que é descarregado do GitHub (e aparece sempre em português, mesmo com a interface em inglês).
+> **Onde é preciso internet** (tudo o resto funciona offline): os **juízes de IA na nuvem** — Gemini e OpenRouter — e a avaliação automática que os usa; os **gráficos e radares**, porque a biblioteca Chart.js é carregada a partir de um CDN.
 
 ---
 
