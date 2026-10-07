@@ -1,5 +1,7 @@
 # 🦙 Ollama Chat & Benchmark Laboratory
 
+> **PT:** [Ler este documento em português](README.md)
+
 Your personal **100% local** artificial intelligence hub. Chat with AI models running on your own computer, benchmark each one's performance and find out which responds fastest and with the best quality — all through a modern, fluid interface available in Portuguese and English.
 
 This application is more than a simple chat: it's an **experimentation laboratory** that helps you choose, compare and fine-tune the AI models already installed on your machine. The chat, the benchmarks, the database and the results analysis run **100% on your computer**, with no external service.
