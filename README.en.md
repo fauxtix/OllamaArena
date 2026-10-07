@@ -4,7 +4,7 @@ Your personal **100% local** artificial intelligence hub. Chat with AI models ru
 
 This application is more than a simple chat: it's an **experimentation laboratory** that helps you choose, compare and fine-tune the AI models already installed on your machine. The chat, the benchmarks, the database and the results analysis run **100% on your computer**, with no external service.
 
-> **Where an internet connection is needed** (everything else works offline): the **cloud AI judges** — Gemini and OpenRouter — and the automatic evaluation that uses them; the **charts and radars**, because the Chart.js library is loaded from a CDN; and the **README** preview behind the header button, which is fetched from GitHub (and always appears in Portuguese, even when the interface is in English).
+> **Where an internet connection is needed** (everything else works offline): the **cloud AI judges** — Gemini and OpenRouter — and the automatic evaluation that uses them; the **charts and radars**, because the Chart.js library is loaded from a CDN.
 
 ---
 
