@@ -1,6 +1,6 @@
 # Prompts de Teste — Avaliação Automática (Juízes Gemini / OpenRouter)
 
-> Plano com **15 casos de teste** para validar os juízes automáticos do OllamaArena:
+>Plano com **15 casos de teste** para validar os juízes automáticos do OllamaArena:
 > linha de base, veto de segurança, contexto legítimo, alertas duros (língua,
 > truncamento, compliance, loops), jailbreaks e recomendação contextual por tema.
 

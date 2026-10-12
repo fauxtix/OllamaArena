@@ -217,6 +217,7 @@ A documentação do projeto está em Markdown — pode consultá-la no repositó
 | `OllamaArena/Docs/Relatorio_Analise.md` | Relatório de análise do código (pontos fortes, bugs, dívida técnica) |
 | `OllamaArena/Docs/Prompts/` | 11 briefs de texto usados para gerar as ilustrações por IA das capturas |
 | `OllamaArena/ComoCompararModelos/Guia_Como_Comparar_Modelos.md` | Guia "como comparar modelos" de forma justa (também em inglês, e legível dentro da app em `/comparar-modelos`) |
+| `OllamaArena/Docs/Guia_Comparar_Modelos.pptx` | Apresentação (16:9, 15 slides) do guia acima — regenerável com `OllamaArena/Docs/gerar_guia_como_comparar.ps1` |
 | `OllamaArena/PlanoDeTestes/Prompts_Teste_Juiz.md` | Plano de testes com 15 casos para avaliar Bases (também em inglês, e legível em `/plano-de-testes`) |
 | `OllamaArena/Docs/Guia_Apresentacao.md` | Como gerar a apresentação `OllamaArena.pptx` a partir das screenshots em `OllamaArena/Screenshots/` |
 | `OllamaArena/Docs/OllamaAsAJudge.pptx` | Apresentação de conceito "Ollama como juiz" |

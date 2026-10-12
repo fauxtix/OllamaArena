@@ -64,6 +64,7 @@ The project's documentation is written in Markdown — browse it in the reposito
 | `OllamaArena/Docs/Relatorio_Analise.md` | Code analysis report (strengths, bugs, technical debt) — in Portuguese |
 | `OllamaArena/Docs/Prompts/` | 11 text briefs used to generate the AI-illustrated screenshots |
 | `OllamaArena/ComoCompararModelos/Guia_Como_Comparar_Modelos.md` | How to use the lab to compare models fairly (an English version ships alongside it, and both are readable in-app at `/comparar-modelos`) |
+| `OllamaArena/Docs/Guia_Comparar_Modelos.pptx` | 16:9, 15-slide presentation of the guide above — regenerable with `OllamaArena/Docs/gerar_guia_como_comparar.ps1` (in Portuguese) |
 | `OllamaArena/PlanoDeTestes/Prompts_Teste_Juiz.md` | Test plan with 15 cases for evaluating models (English version included, readable at `/plano-de-testes`) |
 | `OllamaArena/Docs/Guia_Apresentacao.md` | How to generate the `OllamaArena.pptx` presentation from the screenshots in `OllamaArena/Screenshots/` (in Portuguese) |
 | `OllamaArena/Docs/OllamaAsAJudge.pptx` | "Ollama as a judge" concept presentation |
