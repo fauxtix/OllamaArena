@@ -23,10 +23,10 @@ The solution builds as a **single app project** (`OllamaArena/`) plus a **test p
 ## Execution plan on disk (credit-loss backup)
 
 - **Any non-trivial change must get its plan written to `Docs/plan-<slug>.md` *before* the first edit.** The trigger is the number of steps, not the number of files: a plan is required as soon as the task needs more than one round of tool calls, or more than one edit→verify cycle — whether it touches one file or ten. The only exemption is a single-file, single-edit, unambiguous change (e.g. appending a section to this file). Without that plan an interrupted session (out of credits, crash, context loss) leaves no on-disk trace of what was done, and the next session has to re-derive it from the conversation. Precedent: `Docs/code-review.md`, required by the profile in `Docs/Ollama_CodeReviewer.md`.
-- The plan is the resume point, so it must contain: the goal in one line; the exact list of files to change; a checklist of steps each tagged `pendente` / `feito` / `parcial`; and the verification command (`dotnet build OllamaArena.slnx` + `dotnet test OllamaArena.slnx`).
-- **Update it as the work progresses.** A step only becomes `feito` after the build **and** the tests pass; anything half-done is `parcial` with a note on what is missing. The last section always states explicitly what is left to do.
-- At the start of a session, unfinished `Docs/plan-*.md` files are the source of truth: read them first and continue from the last `feito` step instead of starting over.
-- Once everything is `feito` and verified, the agent **deletes the `Docs/plan-*.md` file it created** (scaffolding, not a deliverable). `Docs/code-review.md` is a deliverable of the code-review profile and is never auto-deleted.
+- The plan is the resume point, so it must contain: the goal in one line; the exact list of files to change; a checklist of steps each tagged `pendente` / `done` / `parcial`; and the verification command (`dotnet build OllamaArena.slnx` + `dotnet test OllamaArena.slnx`).
+- **Update it as the work progresses.** A step only becomes `done` after the build **and** the tests pass; anything half-done is `parcial` with a note on what is missing. The last section always states explicitly what is left to do.
+- At the start of a session, unfinished `Docs/plan-*.md` files are the source of truth: read them first and continue from the last `done` step instead of starting over.
+- Once everything is `done` and verified, the agent **deletes the `Docs/plan-*.md` file it created** (scaffolding, not a deliverable). `Docs/code-review.md` is a deliverable of the code-review profile and is never auto-deleted.
 
 ## Runtime requirements
 
