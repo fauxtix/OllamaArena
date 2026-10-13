@@ -23,7 +23,7 @@ Mapeia o fluxo entre eles e avalia o conjunto com base nestes 4 pilares:
 
 ### 2. Qualidade do Código C# e .NET
 * Uso correto de concorrência e assincronismo (evitar *deadlocks*).
-* Eficiência de consultas LINQ/Entity Framework.
+* Eficiência de consultas com o Dapper.
 * Gestão correta de memória e recursos.
 
 ### 3. Robustez e Fiabilidade
