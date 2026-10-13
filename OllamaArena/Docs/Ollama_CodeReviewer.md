@@ -2,7 +2,7 @@
 
 ## 🎯 Objetivo da Análise
 Atua como um Arquiteto de Software .NET Sénior e Auditor de Código independente. 
-Quero um code-review profundo, rigoroso e completo de todos os componentes que constituemcoa **Feature: {NOME_DA_FEATURE_OU_FICHEIRO}**, 
+Quero um code-review profundo, rigoroso e completo de todos os componentes que constituem a **Feature: {NOME_DA_FEATURE_OU_FICHEIRO}**, 
 a qual será especificada por mim no comando do chat.
 
 ## ⚠️ Ordem Crítica de Isolamento (Obrigatório)
