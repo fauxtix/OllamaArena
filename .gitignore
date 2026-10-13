@@ -82,6 +82,9 @@ ollama_benchmark-*.db
 # Ficheiros de rascunho / testes rápidos
 TesteDuckDuckGo.html
 
+# Rascunhos de divulgação (posts/artigos) - não versionar
+OllamaArena/Docs/Divulgacao/
+
 # StyleCop
 StyleCopReport.xml
 
