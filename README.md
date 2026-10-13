@@ -212,6 +212,7 @@ A documentação do projeto está em Markdown — pode consultá-la no repositó
 | Ficheiro | Conteúdo |
 |---|---|
 | `OllamaArena/Docs/Funcionalidades.md` | Documentação técnica completa (stack, páginas, serviços, BD, configuração, deploy) |
+| `OllamaArena/Docs/Funcionalidades.pptx` | Apresentação (16:9) da documentação técnica acima — regenerável com `OllamaArena/Docs/gerar_funcionalidades.ps1` |
 | `OllamaArena/Docs/code-review.md` | Revisão de código com pontos fortes, bugs e dívida técnica |
 | `OllamaArena/Docs/Ollama_CodeReviewer.md` | Perfil do "code reviewer" que produz a revisão acima |
 | `OllamaArena/Docs/Relatorio_Analise.md` | Relatório de análise do código (pontos fortes, bugs, dívida técnica) |

@@ -10,7 +10,7 @@ The solution builds as a **single app project** (`OllamaArena/`) plus a **test p
 
 - Run: `dotnet watch run` from `OllamaArena/`. The **implicit** launch profile is `http` → `http://localhost:5292`; the `https` profile (`https://localhost:7175`) is only used when you pass `--launch-profile https` explicitly.
 - Build: `dotnet build OllamaArena.slnx` (solution uses the new XML `.slnx` format).
-- Test: `dotnet test OllamaArena.slnx` (257 tests in 20 classes; no test count guarantees, so don't hardcode a number).
+- Test: `dotnet test OllamaArena.slnx` (410 tests in 31 classes; no test count guarantees, so don't hardcode a number).
 - CI: `.github/workflows/deploy-iis.yml` publishes Release and deploys to the author's self-hosted IIS runner (port 4800); not relevant on other machines.
 - Verification: successful build + passing tests + manual run.
 

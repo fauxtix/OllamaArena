@@ -11,7 +11,7 @@ O repositório inclui a pasta **`OllamaArena/Screenshots/`** com **capturas de e
 
 | Item | Descrição |
 |---|---|
-| `*.png` | Capturas de ecrã da app (Home, Chat, Benchmarks, Qualidade e Métricas, Dashboard, Modelos, Prompts, Settings, Logs). Ordenadas por nome (ordem natural), cada uma numa slide com legenda limpa (prefixo numérico removido, `_` → espaço, separação camelCase — ex.: `2_Benchmarks_LocalAnalysis_1.png` → "Benchmarks Local Analysis 1"). |
+| `*.png` | Capturas de ecrã da app (Home, Chat, Benchmarks, Qualidade e Métricas, Dashboard, Modelos, Prompts, Settings, Logs). Ordenadas por nome (ordem natural), cada uma numa slide com legenda limpa (prefixo numérico removido, `_` → espaço, separação camelCase — ex.: `2_Benchmarks_LocalAnalysis_1.png` → "Benchmarks Local Analysis 1"). O prefixo `N_` **não é obrigatório**: capturas como `Chat - History - 1.png` e `ModelosGuardados_Ajuda.png` usam o próprio nome como base da legenda (apenas `_` → espaço e separação camelCase; a ordenação usa o último número do nome). |
 | `AI_Generated/OllamaArena-01.png` … `-09.png` | Ilustrações usadas apenas pela apresentação IA (ver secção 6). Não entram no `OllamaArena.pptx`. |
 | `OllamaArena.pptx` | **Apresentação gerada** a partir das capturas de ecrã (ver estrutura abaixo). |
 | `OllamaArena_IA.pptx` | **Apresentação gerada** a partir das ilustrações de `AI_Generated/`. |
@@ -77,3 +77,21 @@ Diferenças face ao script das capturas de ecrã:
 - lê **apenas** `AI_Generated/OllamaArena-*.png`, ordenadas pelo número, ignorando os `.png` da raiz de `Screenshots/`;
 - estrutura: **capa + 1 slide por ilustração + slide de fecho**;
 - se `OllamaArena_IA.pptx` estiver aberto (em uso), grava em `OllamaArena_IA_v2.pptx`, `OllamaArena_IA_v3.pptx`, … em vez de falhar.
+
+## 7. Decks de documentação em `OllamaArena/Docs/`
+
+Além dos dois decks de capturas em `Screenshots/`, existem **dois decks de documentação** em `OllamaArena/Docs/`, ambos gerados por scripts PowerShell com o mesmo template visual e regidos pelos mesmos pré-requisitos (Windows + PowerPoint 2016+):
+
+| Deck | Origem | Script |
+|---|---|---|
+| `Funcionalidades.pptx` | `OllamaArena/Docs/Funcionalidades.md` | `OllamaArena/Docs/gerar_funcionalidades.ps1` |
+| `Guia_Comparar_Modelos.pptx` | `OllamaArena/ComoCompararModelos/Guia_Como_Comparar_Modelos.md` | `OllamaArena/Docs/gerar_guia_como_comparar.ps1` |
+
+Para regenerar um deles, corra o script a partir de `OllamaArena/Docs/` (ou com o caminho completo):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "OllamaArena\Docs\gerar_funcionalidades.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "OllamaArena\Docs\gerar_guia_como_comparar.ps1"
+```
+
+O `OllamaArena/Docs/OllamaAsAJudge.pptx` continua a ser um artefacto manual, sem script de regeneração.

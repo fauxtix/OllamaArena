@@ -637,7 +637,7 @@ try {
         'Serilog - console + sink SQLite (tabela Logs), nivel minimo Warning; consulta e filtro em /system-logs.',
         'Configuracao - appsettings.json + appsettings.Local.json; chaves recomendadas na pagina Settings (BD).',
         'Localizacao - PT por defeito + EN por cookie; respostas, traducoes e analise seguem a lingua da sessao.',
-        'Testes - 257 testes xUnit (OllamaArena.Tests); validacao = build + testes + execucao manual.',
+        'Testes - 410 testes xUnit em 31 classes (OllamaArena.Tests); validacao = build + testes + execucao manual.',
         'Deploy - GitHub Actions publica e faz deploy em IIS (self-hosted), preservando a BD; smoke test HTTP 200.',
         'Runtime - "ollama serve" ativo na base Ollama:BaseUrl (default http://localhost:11434).'
     ) 60 120 840 300 16 $cLight $cSky 18 -1 | Out-Null

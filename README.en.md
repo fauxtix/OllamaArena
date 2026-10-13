@@ -59,6 +59,7 @@ The project's documentation is written in Markdown — browse it in the reposito
 | File | Content |
 |---|---|
 | `OllamaArena/Docs/Funcionalidades.md` | Full technical documentation (stack, pages, services, DB, configuration, deployment) — in Portuguese |
+| `OllamaArena/Docs/Funcionalidades.pptx` | 16:9 presentation of the technical documentation above — regenerable with `OllamaArena/Docs/gerar_funcionalidades.ps1` (in Portuguese) |
 | `OllamaArena/Docs/code-review.md` | Code review with strengths, bugs and technical debt — in Portuguese |
 | `OllamaArena/Docs/Ollama_CodeReviewer.md` | The "code reviewer" profile that produces the review above — in Portuguese |
 | `OllamaArena/Docs/Relatorio_Analise.md` | Code analysis report (strengths, bugs, technical debt) — in Portuguese |

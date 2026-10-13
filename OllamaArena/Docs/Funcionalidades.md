@@ -32,7 +32,8 @@ Aplicação **Blazor Server** (.NET 10) que funciona como um **chat local com Ol
 - `PlanoDeTestes/*.md` — documentos do plano de testes (PT + EN), lidos pela página `/plano-de-testes`
 - `ComoCompararModelos/*.md` — guia "como comparar modelos" (PT + EN), lido pela página `/comparar-modelos`
 - `wwwroot/fonts/` — TTF embebidos no relatório PDF (`Inter-{Regular,Bold}`, `RobotoMono-Regular`) + `NOTICE.md`/`OFL.txt` (proveniência e licença)
-- `Screenshots/` — capturas de ecrã da app (PNG) + apresentação gerada `OllamaArena.pptx` + script `gerar_apresentacao.ps1` (COM do PowerPoint; ver `Guia_Apresentacao.md`)
+- `Screenshots/` — capturas de ecrã da app (PNG) + apresentações geradas `OllamaArena.pptx` (`gerar_apresentacao.ps1`) e `OllamaArena_IA.pptx` (ilustrações em `AI_Generated/`, `gerar_apresentacao_IA.ps1`) — COM do PowerPoint; ver `Guia_Apresentacao.md`
+- `Docs/` — documentação técnica (`Funcionalidades.md`, `Relatorio_Analise.md`, `Guia_Apresentacao.md`, `Ollama_CodeReviewer.md`, `code-review.md`, `schema.sql`) e decks de apresentação gerados (`Funcionalidades.pptx`, `Guia_Comparar_Modelos.pptx`) com os respetivos scripts (`gerar_*.ps1`)
 
 > **Nota de build:** a solução (`OllamaArena.slnx`) contém o projeto da aplicação (`OllamaArena/`) e o projeto de testes (`OllamaArena.Tests/`, xUnit). Faça um build limpo com `dotnet build OllamaArena.slnx`.
 >
@@ -469,7 +470,7 @@ As **definições dos juízes** (chaves Gemini/OpenRouter, modelo do juiz OpenRo
 - Localização: PT (`pt`) por defeito + `en`; cookie `RequestCultureProvider`. A **tradução de feedbacks**, a **análise local de resultados** e as **respostas do chat** (token `{{TARGET_LANGUAGE}}` no `system-prompt.txt`, substituído por `TargetLanguageResolver.GetTargetLanguage()`) seguem a língua da sessão.
 - **Aviso local de idioma**: após cada resposta do chat (e ao carregar histórico) e nos cartões de resposta dos Benchmarks, o `ResponseLanguageChecker` deteta heuristicamente se o texto é PT ou EN (stopwords + diacríticos; ignora blocos de código e URLs; textos curtos/empatados são inconclusivos). Se conflituar com o idioma da sessão, mostra um badge ⚠ "Resposta possivelmente fora do idioma selecionado" — apenas informativo, não altera métricas nem grava nada na BD.
 
-**Requisitos de runtime:** `ollama serve` ativo na base configurada (`Ollama:BaseUrl`); projeto de testes `OllamaArena.Tests` com **257 testes de unidade** em **20 classes** (ver nota de build na secção 1) — `dotnet test OllamaArena.slnx`; validação = build + testes + execução manual.
+**Requisitos de runtime:** `ollama serve` ativo na base configurada (`Ollama:BaseUrl`); projeto de testes `OllamaArena.Tests` com **410 testes de unidade** em **31 classes** (ver nota de build na secção 1) — `dotnet test OllamaArena.slnx`; validação = build + testes + execução manual.
 
 ---
 
