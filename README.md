@@ -150,7 +150,7 @@ Tudo o que a app regista fica visível na página **Logs do sistema**, sem preci
 
 ## 🧭 Experiência do Utilizador
 
-A navegação é simples. No menu lateral encontra: **Home** (`/`), **Chat** (`/chat`), **Benchmarks** (`/benchmark-evaluations`, o histórico de avaliações e as exportações), **Qualidade e Métricas** (`/benchmarks`, a vista por pergunta onde os juízes de IA atuam), **Dashboard** (`/dashboard`), **Modelo Carregados** (`/modelos-ollama`), **Prompts** (`/edit-prompts`), **Logs do sistema** (`/system-logs`) e, no rodapé do menu, **Definições** (`/settings`). No cabeçalho há ainda botões para o **README**, o **Plano de Testes** e o guia **Comparar Modelos** (ambos documentos de leitura, disponíveis em português e inglês).
+A navegação é simples. No menu lateral encontra: **Home** (`/`), **Chat** (`/chat`), **Benchmarks** (`/benchmark-evaluations`, o histórico de avaliações e as exportações), **Qualidade e Métricas** (`/benchmarks`, a vista por pergunta onde os juízes de IA atuam), **Dashboard** (`/dashboard`), **Modelos Carregados** (`/modelos-ollama`), **Prompts** (`/edit-prompts`), **Logs do sistema** (`/system-logs`) e, no rodapé do menu, **Definições** (`/settings`). No cabeçalho há ainda botões para o **README**, o **Plano de Testes** e o guia **Comparar Modelos** (ambos documentos de leitura, disponíveis em português e inglês).
 
 - **Totalmente responsiva**: a interface adapta-se automaticamente a qualquer tamanho de ecrã. Em telemóveis (≤768px), o menu lateral transforma-se num painel deslizante aberto pelo ícone de hambúrguer no cabeçalho; os diálogos, as tabelas de dados, o chat e o divisor de painéis dos benchmarks ajustam-se para garantir uma boa experiência em qualquer dispositivo.
 - **Conversar**: abra o Chat, escreva a sua mensagem na caixa de texto e prima <kbd>Enter</kbd> ou o botão de envio. As respostas aparecem em tempo real e cada uma mostra o tempo que demorou. Use **Histórico** para retomar conversas anteriores e **Novo Chat** para começar de novo.
@@ -219,7 +219,7 @@ A documentação do projeto está em Markdown — pode consultá-la no repositó
 | `OllamaArena/Docs/Prompts/` | 11 briefs de texto usados para gerar as ilustrações por IA das capturas |
 | `OllamaArena/ComoCompararModelos/Guia_Como_Comparar_Modelos.md` | Guia "como comparar modelos" de forma justa (também em inglês, e legível dentro da app em `/comparar-modelos`) |
 | `OllamaArena/Docs/Guia_Comparar_Modelos.pptx` | Apresentação (16:9, 15 slides) do guia acima — regenerável com `OllamaArena/Docs/gerar_guia_como_comparar.ps1` |
-| `OllamaArena/PlanoDeTestes/Prompts_Teste_Juiz.md` | Plano de testes com 15 casos para avaliar Bases (também em inglês, e legível em `/plano-de-testes`) |
+| `OllamaArena/PlanoDeTestes/Prompts_Teste_Juiz.md` | Plano de testes com 15 casos para validar os juízes automáticos (também em inglês, e legível em `/plano-de-testes`) |
 | `OllamaArena/Docs/Guia_Apresentacao.md` | Como gerar a apresentação `OllamaArena.pptx` a partir das screenshots em `OllamaArena/Screenshots/` |
 | `OllamaArena/Docs/OllamaAsAJudge.pptx` | Apresentação de conceito "Ollama como juiz" |
 | `OllamaArena/Docs/schema.sql` | DDL de referência — as **7 tabelas** que o runtime cria no arranque (`Prompts`, `Respostas`, `Conversas`, `ConversaMensagens`, `Configuracoes`, `ModelosJuiz`, `Logs`) |
@@ -232,7 +232,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "OllamaArena\Screenshots\ger
 ```
 
 Requer **Windows com PowerPoint 2016+** (automação COM). Detalhes em `OllamaArena/Docs/Guia_Apresentacao.md`.
-
 
 ## ℹ️ Nota à navegação
 
