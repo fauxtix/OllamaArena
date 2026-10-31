@@ -4,6 +4,10 @@
   <img width="1024" height="600" alt="OllamaWithFluentUI" src="https://github.com/user-attachments/assets/561c8f8e-57c0-4c6d-ad6b-409b40329f9d" />
 </p>
 
+### 📸 Screenshots e apresentação
+A pasta **`OllamaArena/Screenshots/`** guarda capturas de ecrã das principais páginas e a apresentação **`OllamaArena.pptx`** (16:9) que as organiza num deck com **template profissional IT** (fundo azul-escuro, acento Fluent), **transições modernas** e **avanço por clique ou após 10 s**. Existe também uma variante gerada a partir de ilustrações por IA — imagens em `Screenshots/AI_Generated/` (a partir dos briefs em `OllamaArena/Docs/Prompts/`) em `Screenshots/OllamaArena_IA.pptx`, com o respetivo script. Para regenerar a apresentação principal (ex.: depois de adicionar capturas), corra:
+
+
 > **EN:** [Read this document in English](README.en.md)
 
 Central pessoal de inteligência artificial **100% local**. Converse com modelos de IA que correm no seu próprio computador, teste o desempenho de cada um e descubra qual é que responde mais depressa e com melhor qualidade — tudo através de uma interface disponível em português e inglês.
