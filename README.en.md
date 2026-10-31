@@ -1,5 +1,9 @@
 # 🦙 Ollama Chat & Benchmark Laboratory
 
+<p align="center">
+  <img width="1024" height="600" alt="OllamaWithFluentUI" src="https://github.com/user-attachments/assets/561c8f8e-57c0-4c6d-ad6b-409b40329f9d" />
+</p>
+
 > **PT:** [Ler este documento em português](README.md)
 
 Your personal **100% local** artificial intelligence hub. Chat with AI models running on your own computer, benchmark each one's performance and find out which responds fastest and with the best quality — all through an interface available in Portuguese and English.
