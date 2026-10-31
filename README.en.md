@@ -14,6 +14,16 @@ This application is more than a simple chat: it's an **experimentation laborator
 
 ---
 
+### 📸 Screenshots and presentation
+The **`OllamaArena/Screenshots/`** folder holds screenshots of the main pages and the **`OllamaArena.pptx`** (16:9) presentation that organizes them into a deck with a **professional IT template** (dark blue background, Fluent accent), **modern transitions** and **advance by click or after 10 s**. There is also an AI-generated variant — images in `Screenshots/AI_Generated/en` (produced from the briefs in `OllamaArena/Docs/Prompts/`) in `Screenshots/OllamaArena_IA.pptx`, with its own script. To regenerate the main presentation (e.g. after adding captures), run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "OllamaArena\Screenshots\gerar_apresentacao.ps1"
+```
+
+Requires **Windows with PowerPoint 2016+** (COM automation). Details in `OllamaArena/Docs/Guia_Apresentacao.md`.
+---
+
 ## 🎯 Motivation, Philosophy and Selection Engineering
 
 This laboratory was born to solve a practical, everyday challenge in the local ecosystem: **how do you choose the right AI model for the right task?** In the world of open models, size does not always dictate effectiveness. A `1.5B` or `3B` model can deliver better factual and formatting performance than a larger model for a given type of prompt.
@@ -227,15 +237,6 @@ The project's documentation is written in Markdown — browse it in the reposito
 | `OllamaArena/Docs/Guia_Apresentacao.md` | How to generate the `OllamaArena.pptx` presentation from the screenshots in `OllamaArena/Screenshots/` (in Portuguese) |
 | `OllamaArena/Docs/OllamaAsAJudge.pptx` | "Ollama as a judge" concept presentation |
 | `OllamaArena/Docs/schema.sql` | Reference DDL — the **7 tables** the runtime creates on startup (`Prompts`, `Respostas`, `Conversas`, `ConversaMensagens`, `Configuracoes`, `ModelosJuiz`, `Logs`) |
-
-### 📸 Screenshots and presentation
-The **`OllamaArena/Screenshots/`** folder holds screenshots of the main pages and the **`OllamaArena.pptx`** (16:9) presentation that organizes them into a deck with a **professional IT template** (dark blue background, Fluent accent), **modern transitions** and **advance by click or after 10 s**. There is also an AI-generated variant — images in `Screenshots/AI_Generated/en` (produced from the briefs in `OllamaArena/Docs/Prompts/`) in `Screenshots/OllamaArena_IA.pptx`, with its own script. To regenerate the main presentation (e.g. after adding captures), run:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "OllamaArena\Screenshots\gerar_apresentacao.ps1"
-```
-
-Requires **Windows with PowerPoint 2016+** (COM automation). Details in `OllamaArena/Docs/Guia_Apresentacao.md`.
 
 ## ℹ️ A note on navigation
 
