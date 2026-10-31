@@ -1,12 +1,10 @@
 # 🦙 Ollama Chat & Benchmark Laboratory
 
-> **EN:** [Read this document in English](README.en.md)
-
 <p align="center">
   <img width="600" height="400" alt="OllamaAsAJudge" src="https://github.com/user-attachments/assets/f7a6f232-1a30-4877-912b-878e3f8f4c98" />
 </p>
 
----
+> **EN:** [Read this document in English](README.en.md)
 
 Central pessoal de inteligência artificial **100% local**. Converse com modelos de IA que correm no seu próprio computador, teste o desempenho de cada um e descubra qual é que responde mais depressa e com melhor qualidade — tudo através de uma interface disponível em português e inglês.
 
