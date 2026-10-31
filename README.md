@@ -3,9 +3,11 @@
 > **EN:** [Read this document in English](README.en.md)
 
 <div class="d-flex justify-content-center align-temd-center text-center">
-<img width="600" height="400" alt="OllamaAsAJudge" src="https://github.com/user-attachments/assets/f7a6f232-1a30-4877-912b-878e3f8f4c98" />
+   <img width="600" height="400" alt="OllamaAsAJudge" src="https://github.com/user-attachments/assets/f7a6f232-1a30-4877-912b-878e3f8f4c98" />
 </div>
+
 ---
+
 Central pessoal de inteligência artificial **100% local**. Converse com modelos de IA que correm no seu próprio computador, teste o desempenho de cada um e descubra qual é que responde mais depressa e com melhor qualidade — tudo através de uma interface disponível em português e inglês.
 
 A aplicação é mais do que um simples chat: é um **laboratório de experimentação** que o ajuda a escolher, comparar e aperfeiçoar os modelos de IA que já tem instalados no seu equipamento. O chat, os benchmarks, a base de dados e a análise de resultados correm **100% no seu computador**, sem serviço externo.
