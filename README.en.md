@@ -21,7 +21,7 @@ The **`OllamaArena/Screenshots/`** folder holds screenshots of the main pages an
 powershell -NoProfile -ExecutionPolicy Bypass -File "OllamaArena\Screenshots\gerar_apresentacao.ps1"
 ```
 
-Requer **Windows com PowerPoint 2016+** (automação COM). Detalhes em `OllamaArena/Docs/Guia_Apresentacao.md`.
+Requires **Windows with PowerPoint 2016 or later** (COM automation). Details in `OllamaArena/Docs/Guia_Apresentacao.md`.
 
 ---
 
