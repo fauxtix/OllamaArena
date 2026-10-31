@@ -17,6 +17,15 @@
     <None Remove="Prompts\translation-prompt.txt" />
     <None Remove="PlanoDeTestes\Prompts_Teste_Juiz.md" />
     <None Remove="PlanoDeTestes\Prompts_Teste_Juiz.en.md" />
+    <None Remove="Screenshots\AI_Generated\en\EditPrompts.jpg" />
+    <None Remove="Screenshots\AI_Generated\en\Infográfico Tech do Ollama Arena.png" />
+    <None Remove="Screenshots\AI_Generated\en\Ollama_2.png" />
+    <None Remove="Screenshots\AI_Generated\en\Ollama_3.png" />
+    <None Remove="Screenshots\AI_Generated\en\Ollama_5.jpg" />
+    <None Remove="Screenshots\AI_Generated\en\Ollama_6.jpg" />
+    <None Remove="Screenshots\AI_Generated\en\Ollama_7.jpg" />
+    <None Remove="Screenshots\AI_Generated\en\Ollama_8.jpg" />
+    <None Remove="Screenshots\AI_Generated\en\QualityAndMetrics.jpg" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,6 +51,33 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="PlanoDeTestes\Prompts_Teste_Juiz.en.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Screenshots\AI_Generated\en\EditPrompts.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Screenshots\AI_Generated\en\Infográfico Tech do Ollama Arena.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Screenshots\AI_Generated\en\Ollama_2.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Screenshots\AI_Generated\en\Ollama_3.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Screenshots\AI_Generated\en\Ollama_5.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Screenshots\AI_Generated\en\Ollama_6.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Screenshots\AI_Generated\en\Ollama_7.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Screenshots\AI_Generated\en\Ollama_8.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Screenshots\AI_Generated\en\QualityAndMetrics.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
