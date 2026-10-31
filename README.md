@@ -2,9 +2,9 @@
 
 > **EN:** [Read this document in English](README.en.md)
 
-<div class="d-flex justify-content-center align-temd-center text-center">
-   <img width="600" height="400" alt="OllamaAsAJudge" src="https://github.com/user-attachments/assets/f7a6f232-1a30-4877-912b-878e3f8f4c98" />
-</div>
+<p align="center">
+  <img width="600" height="400" alt="OllamaAsAJudge" src="https://github.com/user-attachments/assets/f7a6f232-1a30-4877-912b-878e3f8f4c98" />
+</p>
 
 ---
 
