@@ -9,6 +9,8 @@
 ### 📸 Screenshots e apresentação
 A pasta **`OllamaArena/Screenshots/`** guarda capturas de ecrã das principais páginas e a apresentação **`OllamaArena.pptx`** (16:9) que as organiza num deck com **template profissional IT** (fundo azul-escuro, acento Fluent), **transições modernas** e **avanço por clique ou após 10 s**. Existe também uma variante gerada a partir de ilustrações por IA — imagens em `Screenshots/AI_Generated/` (a partir dos briefs em `OllamaArena/Docs/Prompts/`) em `Screenshots/OllamaArena_IA.pptx`, com o respetivo script. Para regenerar a apresentação principal (ex.: depois de adicionar capturas), corra:
 
+---
+
 Central pessoal de inteligência artificial **100% local**. Converse com modelos de IA que correm no seu próprio computador, teste o desempenho de cada um e descubra qual é que responde mais depressa e com melhor qualidade — tudo através de uma interface disponível em português e inglês.
 
 A aplicação é mais do que um simples chat: é um **laboratório de experimentação** que o ajuda a escolher, comparar e aperfeiçoar os modelos de IA que já tem instalados no seu equipamento. O chat, os benchmarks, a base de dados e a análise de resultados correm **100% no seu computador**, sem serviço externo.
