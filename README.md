@@ -1,7 +1,7 @@
 # 🦙 Ollama Chat & Benchmark Laboratory
 
 <p align="center">
-  <img width="1024" height="800" alt="OllamaWithFluentUI" src="https://github.com/user-attachments/assets/561c8f8e-57c0-4c6d-ad6b-409b40329f9d" />
+  <img width="1024" height="600" alt="OllamaWithFluentUI" src="https://github.com/user-attachments/assets/561c8f8e-57c0-4c6d-ad6b-409b40329f9d" />
 </p>
 
 > **EN:** [Read this document in English](README.en.md)
