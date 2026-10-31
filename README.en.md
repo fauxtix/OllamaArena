@@ -18,10 +18,11 @@ This application is more than a simple chat: it's an **experimentation laborator
 The **`OllamaArena/Screenshots/`** folder holds screenshots of the main pages and the **`OllamaArena.pptx`** (16:9) presentation that organizes them into a deck with a **professional IT template** (dark blue background, Fluent accent), **modern transitions** and **advance by click or after 10 s**. There is also an AI-generated variant — images in `Screenshots/AI_Generated/en` (produced from the briefs in `OllamaArena/Docs/Prompts/`) in `Screenshots/OllamaArena_IA.pptx`, with its own script. To regenerate the main presentation (e.g. after adding captures), run:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "OllamaArena\Screenshots\gerar_apresentacao.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File "OllamaArena\Screenshots\gerar_apresentacao.ps1"
 ```
 
-Requires **Windows with PowerPoint 2016+** (COM automation). Details in `OllamaArena/Docs/Guia_Apresentacao.md`.
+Requer **Windows com PowerPoint 2016+** (automação COM). Detalhes em `OllamaArena/Docs/Guia_Apresentacao.md`.
+
 ---
 
 ## 🎯 Motivation, Philosophy and Selection Engineering
