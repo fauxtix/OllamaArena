@@ -17,6 +17,12 @@ A aplicação é mais do que um simples chat: é um **laboratório de experiment
 ### 📸 Screenshots e apresentação
 A pasta **`OllamaArena/Screenshots/`** guarda capturas de ecrã das principais páginas e a apresentação **`OllamaArena.pptx`** (16:9) que as organiza num deck com **template profissional IT** (fundo azul-escuro, acento Fluent), **transições modernas** e **avanço por clique ou após 10 s**. Existe também uma variante gerada a partir de ilustrações por IA — imagens em `Screenshots/AI_Generated/` (a partir dos briefs em `OllamaArena/Docs/Prompts/`) em `Screenshots/OllamaArena_IA.pptx`, com o respetivo script. Para regenerar a apresentação principal (ex.: depois de adicionar capturas), corra:
 
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "OllamaArena\Screenshots\gerar_apresentacao.ps1"
+```
+
+Requer **Windows com PowerPoint 2016+** (automação COM). Detalhes em `OllamaArena/Docs/Guia_Apresentacao.md`.
+
 ---
 
 ## 🎯 Motivação, Filosofia e Engenharia de Seleção
@@ -233,14 +239,6 @@ A documentação do projeto está em Markdown — pode consultá-la no repositó
 | `OllamaArena/Docs/OllamaAsAJudge.pptx` | Apresentação de conceito "Ollama como juiz" |
 | `OllamaArena/Docs/schema.sql` | DDL de referência — as **7 tabelas** que o runtime cria no arranque (`Prompts`, `Respostas`, `Conversas`, `ConversaMensagens`, `Configuracoes`, `ModelosJuiz`, `Logs`) |
 
-### 📸 Screenshots e apresentação
-A pasta **`OllamaArena/Screenshots/`** guarda capturas de ecrã das principais páginas e a apresentação **`OllamaArena.pptx`** (16:9) que as organiza num deck com **template profissional IT** (fundo azul-escuro, acento Fluent), **transições modernas** e **avanço por clique ou após 10 s**. Existe também uma variante gerada a partir de ilustrações por IA — imagens em `Screenshots/AI_Generated/` (a partir dos briefs em `OllamaArena/Docs/Prompts/`) em `Screenshots/OllamaArena_IA.pptx`, com o respetivo script. Para regenerar a apresentação principal (ex.: depois de adicionar capturas), corra:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "OllamaArena\Screenshots\gerar_apresentacao.ps1"
-```
-
-Requer **Windows com PowerPoint 2016+** (automação COM). Detalhes em `OllamaArena/Docs/Guia_Apresentacao.md`.
 
 ## ℹ️ Nota à navegação
 
